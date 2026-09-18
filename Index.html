@@ -414,6 +414,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#1a1a2e
     <button class="ctx-as-btn" onclick="ctxQuickPreview()"><div class="ctx-as-ico" style="background:rgba(52,199,89,.12)">👁</div><div class="ctx-as-lbl">معاينة سريعة</div></button>
     <button class="ctx-as-btn" onclick="ctxMove()"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)">🗂</div><div class="ctx-as-lbl">نقل إلى مجلد</div></button>
     <button class="ctx-as-btn" onclick="ctxEdit()"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)">✎</div><div class="ctx-as-lbl">تعديل</div></button>
+    <button class="ctx-as-btn" onclick="ctxDuplicate()"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)">⧉</div><div class="ctx-as-lbl">نسخ القطعة</div></button>
     <button class="ctx-as-btn" onclick="ctxDel()"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)">🗑</div><div class="ctx-as-lbl red">حذف</div></button>
   </div>
   <div class="ctx-as-cancel"><button class="ctx-as-cancel-btn" onclick="closeCtx()">إلغاء</button></div>
@@ -519,7 +520,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#1a1a2e
         <div class="srow" onclick="confirmDel(null,'folder-all')"><div class="srowiw" style="background:rgba(255,59,48,.15)">🗑</div><div class="srowl" style="color:var(--red)">مسح كل البيانات</div></div>
       </div>
       <div class="sgroup">
-        <div class="srow" style="cursor:default"><div><div class="srowl">المخزن</div><div class="srowd">توثيق وحصر المقتنيات — v7.0</div></div></div>
+        <div class="srow" style="cursor:default"><div><div class="srowl">المخزن</div><div class="srowd">توثيق وحصر المقتنيات — v7.1</div></div></div>
       </div>
     </div>
   </div>
@@ -676,6 +677,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#1a1a2e
     <div class="sgroup" style="margin:0 20px 16px">
       <div class="fsh-row"><span class="fsh-lbl">الحالة</span><select class="fsh-sel" id="fp-cond" onchange="applyFilter()"><option value="">الكل</option><option>ممتازة</option><option>جيدة جداً</option><option>جيدة</option><option>مقبولة</option><option>ضعيفة</option><option>للإتلاف</option></select></div>
       <div class="fsh-row"><span class="fsh-lbl">المجلد</span><select class="fsh-sel" id="fp-folder" onchange="applyFilter()"><option value="">الكل</option></select></div>
+      <div class="fsh-row"><span class="fsh-lbl">الموقع</span><select class="fsh-sel" id="fp-loc" onchange="applyFilter()"><option value="">الكل</option></select></div>
       <div class="fsh-row"><span class="fsh-lbl">تقييم AI</span><select class="fsh-sel" id="fp-ai" onchange="applyFilter()"><option value="">الكل</option><option value="yes">مقيّمة فقط</option><option value="no">غير مقيّمة</option></select></div>
       <div class="fsh-row"><span class="fsh-lbl">السعر</span><select class="fsh-sel" id="fp-price" onchange="applyFilter()"><option value="">الكل</option><option value="yes">لها سعر</option><option value="no">بدون سعر</option></select></div>
     </div>
@@ -865,6 +867,8 @@ function openFilterSheet(){
   // populate folder options
   const fp=$('fp-folder');
   if(fp) fp.innerHTML=`<option value="">الكل</option>`+db.folders.map(f=>`<option value="${f.id}">${f.icon} ${f.name}</option>`).join('');
+  const fl=$('fp-loc');
+  if(fl) fl.innerHTML=`<option value="">الكل</option>`+db.locations.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
   openSh('filter');
 }
 function openSortSheet(){
@@ -887,13 +891,13 @@ function applyFilter(){
   if(activeFolderId)renderFolderView(activeFolderId);else renderRoot();
 }
 function resetFilters(){
-  ['fp-cond','fp-folder','fp-ai','fp-price'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  ['fp-cond','fp-folder','fp-loc','fp-ai','fp-price'].forEach(id=>{const el=$(id);if(el)el.value='';});
   updFilterBadge();
   if(activeFolderId)renderFolderView(activeFolderId);else renderRoot();
 }
 function updFilterBadge(){
   const F=getFilters();
-  const count=[F.cond,F.folder,F.ai,F.price].filter(Boolean).length;
+  const count=[F.cond,F.folder,F.loc,F.ai,F.price].filter(Boolean).length;
   const btn=$('filter-btn'),badge=$('filter-badge');
   if(btn) btn.className='fsact-btn gl-s'+(count?' has-filters':'');
   if(badge) badge.textContent=count;
@@ -902,6 +906,7 @@ function getFilters(){
   return{
     cond:$('fp-cond')?.value||'',
     folder:$('fp-folder')?.value||'',
+    loc:$('fp-loc')?.value||'',
     ai:$('fp-ai')?.value||'',
     price:$('fp-price')?.value||''
   };
@@ -971,9 +976,10 @@ function renderItems(allItems,folderCtx){
   const F=getFilters();
   let items=[...allItems];
   if(cf!=='all') items=items.filter(i=>i.cat===cf);
-  if(q) items=items.filter(i=>(i.name||'').toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q));
+  if(q) items=items.filter(i=>(i.name||'').toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.barcode||'').toLowerCase().includes(q)||(i.brand||'').toLowerCase().includes(q)||(i.desc||'').toLowerCase().includes(q)||getcat(i.cat).name.toLowerCase().includes(q));
   if(F.cond) items=items.filter(i=>i.cond===F.cond);
   if(F.folder) items=items.filter(i=>i.folderId===F.folder);
+  if(F.loc) items=items.filter(i=>i.loc===F.loc);
   if(F.ai==='yes') items=items.filter(i=>i.aiData);
   if(F.ai==='no') items=items.filter(i=>!i.aiData);
   if(F.price==='yes') items=items.filter(i=>i.price);
@@ -1112,7 +1118,16 @@ function ctxOpen(){closeCtx();setTimeout(()=>openDet(ctxItemId),100);}
 function ctxQuickPreview(){closeCtx();setTimeout(()=>openQuickPreview(ctxItemId),100);}
 function ctxMove(){closeCtx();setTimeout(()=>openMoveSheet(ctxItemId),100);}
 function ctxEdit(){closeCtx();setTimeout(()=>{openDet(ctxItemId);setTimeout(()=>openEdit(ctxItemId),50);},100);}
+function ctxDuplicate(){const id=ctxItemId;closeCtx();setTimeout(()=>duplicateItem(id),100);}
 function ctxDel(){closeCtx();setTimeout(()=>confirmDel(ctxItemId),100);}
+
+// ══ DUPLICATE ══
+function duplicateItem(id){
+  const item=db.items.find(i=>i.id===id);if(!item)return;
+  const copy={...item,id:uid(),sku:gsku(),name:(item.name||'')+' (نسخة)',createdAt:Date.now(),updatedAt:Date.now()};
+  db.items.unshift(copy);
+  sv();toast('تم نسخ القطعة ⧉');
+}
 
 // ══ QUICK PREVIEW ══
 function openQuickPreview(id){
@@ -1129,6 +1144,8 @@ function openQuickPreview(id){
       ${qr('الحالة',item.cond||'—')}
       ${item.price?qr('سعر التقييم',item.price):''}
       ${item.brand?qr('البراند',item.brand):''}
+      ${item.sku?qr('الرمز',item.sku):''}
+      ${item.barcode?qr('الباركود',item.barcode):''}
     </div>
     ${item.desc?`<div style="background:rgba(255,255,255,.6);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--ts);line-height:1.6;margin-top:0">${item.desc}</div>`:''}
   </div>`;
@@ -1524,7 +1541,7 @@ async function runAI(){
   try{
     const b64=cImg.split(',')[1],mime=cImg.match(/data:([^;]+);/)?.[1]||'image/jpeg';
     const name=$('f-name').value.trim(),catName=getcat($('f-cat').value).name;
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':db.settings.apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:`أنت خبير تقييم مقتنيات نادرة وثمينة. حلّل هذه الصورة وأجب بـ JSON فقط:\n{"description":"وصف دقيق في جملتين","condition":"ممتازة|جيدة جداً|جيدة|مقبولة|ضعيفة","localScore":7,"globalScore":6,"suggestedPrice":"5,000-8,000 ر.س","evaluation":"تقييم موجز"}${name?'\nالاسم: '+name:''}${catName?'\nالتصنيف: '+catName:''}`}]}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':db.settings.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-5',max_tokens:600,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:`أنت خبير تقييم مقتنيات نادرة وثمينة. حلّل هذه الصورة وأجب بـ JSON فقط:\n{"description":"وصف دقيق في جملتين","condition":"ممتازة|جيدة جداً|جيدة|مقبولة|ضعيفة","localScore":7,"globalScore":6,"suggestedPrice":"5,000-8,000 ر.س","evaluation":"تقييم موجز"}${name?'\nالاسم: '+name:''}${catName?'\nالتصنيف: '+catName:''}`}]}]})});
     if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'خطأ');}
     const data=await resp.json(),m=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!m)throw new Error('استجابة غير متوقعة');
@@ -1552,7 +1569,7 @@ function saveKey(){const k=$('apikey').value.trim();if(!k){toast('أدخل ال�
 async function testKey(){
   const k=$('apikey').value.trim()||db.settings.apiKey;if(!k){toast('أدخل المفتاح','⚠');return;}
   toast('جارٍ الاختبار...','⏳');
-  try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})});toast(r.ok?'المفتاح صحيح ✦':'مفتاح غير صحيح',r.ok?'✓':'✕');}
+  try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})});toast(r.ok?'المفتاح صحيح ✦':'مفتاح غير صحيح',r.ok?'✓':'✕');}
   catch{toast('خطأ في الشبكة','✕');}
 }
 function updAPI(){const ok=!!db.settings.apiKey;const r=$('apiok');if(r)r.style.display=ok?'':'none';}
