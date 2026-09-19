@@ -22,8 +22,9 @@ import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
+import { onSubscriptionChange, startPlanWatch } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -71,6 +72,11 @@ async function boot() {
     if (!isGateOpen()) await offerLocalUpload();
   });
 
+  // Plan and usage arrive from the server after boot and change while the app
+  // is open (a record added on another device, an upgrade taking effect), so
+  // the quota banner and the Settings card follow them.
+  onSubscriptionChange(() => renderAll());
+
   watchConnectivity((status) => {
     if (repository.session.mode !== 'cloud') return;
     repository.setSync(status === FirebaseStatus.OFFLINE ? SyncState.OFFLINE : SyncState.SYNCED);
@@ -110,6 +116,9 @@ async function loadApplicationData(firebase, session) {
     await repository.start(cloudReady
       ? { mode: 'cloud', workspaceId: session.workspaceId, userId: session.user.uid, role: session.role }
       : { mode: 'local', workspaceId: 'local', userId: 'local-device', role: ROLES.OWNER });
+    startPlanWatch(cloudReady
+      ? { mode: 'cloud', workspaceId: session.workspaceId }
+      : { mode: 'local', workspaceId: null });
   } catch (error) {
     console.error('[app] data load failed', error);
     toastError(error, 'تعذّر تحميل البيانات');

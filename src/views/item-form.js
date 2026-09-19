@@ -3,6 +3,8 @@
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
 import { CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID } from '../config.js';
 import { repository, ConflictError } from '../repository.js';
+import { canAddItem } from '../subscription.js';
+import { openPlansSheet } from './plans.js';
 import { bindImageSrc, uploadImage } from '../storage.js';
 import { $, el, render, setText, uid } from '../utils.js';
 import {
@@ -314,6 +316,18 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
 
   const item = itemId ? repository.item(itemId) : null;
+
+  // At the ceiling, say so before the form is filled in — and never for an
+  // edit, so a full workspace can still be corrected and cleaned up. The
+  // server refuses the write regardless; this is only the explanation.
+  if (!item) {
+    const decision = canAddItem();
+    if (!decision.allowed) {
+      openPlansSheet(`${decision.message} ${decision.detail || ''}`.trim());
+      return;
+    }
+  }
+
   form.itemId = item?.id || uid('itm');
   form.isNew = !item;
   form.baseVersion = item?.version ?? null;

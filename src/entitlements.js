@@ -295,7 +295,7 @@ export function usageSummary({ entitlement, usage }) {
   return [
     { key: 'items', label: 'القطع', used: usage.items ?? 0, limit: limits.items, format: (n) => String(n) },
     { key: 'storage', label: 'الصور', used: usage.storageBytes ?? 0, limit: limits.storageBytes, format: formatBytes },
-    { key: 'ai', label: 'تحليل AI', used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
+    { key: 'ai', label: 'مساعد المخزن', used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
     { key: 'members', label: 'الأعضاء', used: usage.members ?? 1, limit: limits.members, format: (n) => String(n) },
   ];
 }

@@ -1,6 +1,6 @@
 // Item detail, quick preview, move-to-folder, delete and duplicate flows.
 
-import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, isAnalysisStale } from '../ai.js';
+import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, isAnalysisStale } from '../ai.js';
 import { repository } from '../repository.js';
 import { bindImageSrc } from '../storage.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
@@ -68,7 +68,7 @@ function aiPanel(item) {
         ai.suggestedValuation ? pill('تقدير أولي', formatValuation(ai.suggestedValuation, { compact: true })) : null,
       ]),
       el('div', { class: 'ai-disclaimer', text: AI_DISCLAIMER }),
-      ai.analyzedAt ? el('div', { class: 'ai-meta', text: `${ai.model || 'Claude'} · ${formatDate(ai.analyzedAt)}` }) : null,
+      ai.analyzedAt ? el('div', { class: 'ai-meta', text: `${ASSISTANT_NAME} · ${formatDate(ai.analyzedAt)}` }) : null,
     ]),
   ]);
 }
@@ -109,7 +109,7 @@ export function openDetail(itemId) {
         detailRow('الباركود', item.barcode),
         detailRow('البراند', item.brand),
         item.valuation ? detailRow('التقييم', formatValuation(item.valuation)) : null,
-        item.valuation ? detailRow('مصدر التقييم', item.valuation.source === 'ai' ? 'تقدير AI' : 'يدوي') : null,
+        item.valuation ? detailRow('مصدر التقييم', item.valuation.source === 'ai' ? `تقدير من ${ASSISTANT_NAME}` : 'يدوي') : null,
       ]),
       item.description ? el('div', {
         class: 'desc-block',

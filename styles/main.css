@@ -600,3 +600,53 @@ body.gated .app,body.gated .tbar{display:none}
   .gate-headline{font-size:34px}
   .gate-brand-lg{font-size:50px}
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v9.1 — plan, usage and the upgrade sheet.
+   ───────────────────────────────────────────────────────────────────────── */
+.quota-banner{display:flex;align-items:center;gap:10px;margin:0 16px 10px;padding:9px 14px;border-radius:12px;
+  background:rgba(0,122,255,.10);border:1px solid rgba(0,122,255,.18)}
+.quota-banner.warn{background:rgba(255,149,0,.12);border-color:rgba(255,149,0,.24)}
+.quota-banner.full{background:rgba(255,59,48,.10);border-color:rgba(255,59,48,.22)}
+.qb-txt{flex:1;font-size:12px;font-weight:600;color:var(--blue);line-height:1.5}
+.quota-banner.warn .qb-txt{color:var(--orange)}
+.quota-banner.full .qb-txt{color:var(--red)}
+.qb-act{border:none;background:rgba(255,255,255,.75);color:var(--blue);font-family:var(--font);font-size:12px;
+  font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;flex-shrink:0}
+.quota-banner.warn .qb-act{color:var(--orange)}
+.quota-banner.full .qb-act{color:var(--red)}
+.qb-close{border:none;background:none;color:var(--tt);font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0}
+
+.plan-price{font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0}
+.plan-alert{margin:10px 0 0;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.6;
+  background:rgba(0,122,255,.10);color:var(--blue)}
+.plan-alert.warn{background:rgba(255,149,0,.12);color:var(--orange)}
+.plan-alert.full{background:rgba(255,59,48,.10);color:var(--red)}
+
+.usage-list{display:flex;flex-direction:column;gap:10px;padding:12px 4px 2px}
+.usage-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.usage-label{font-size:12px;font-weight:600;color:var(--ts)}
+.usage-value{font-size:11px;font-weight:700;color:var(--tp);font-variant-numeric:tabular-nums}
+.usage-track{height:6px;border-radius:20px;background:rgba(120,120,128,.16);overflow:hidden}
+.usage-fill{height:100%;border-radius:20px;background:var(--blue);transition:width .3s ease}
+.usage-fill.notice{background:var(--blue)}
+.usage-fill.warn{background:var(--orange)}
+.usage-fill.full{background:var(--red)}
+
+.plan-note{font-size:12px;color:var(--ts);line-height:1.6;padding:0 4px 12px;margin:0}
+.plan-list{display:flex;flex-direction:column;gap:12px;padding-bottom:12px}
+.plan-card{position:relative;padding:16px;border-radius:var(--r);background:rgba(255,255,255,.55);
+  border:1px solid var(--gbs)}
+.plan-card.featured{border:1.5px solid var(--blue)}
+.plan-card.current{background:rgba(0,122,255,.06)}
+.plan-badge{position:absolute;top:-10px;inset-inline-start:16px;background:var(--blue);color:#fff;font-size:10px;
+  font-weight:700;padding:3px 10px;border-radius:20px}
+.plan-name{font-size:16px;font-weight:700;color:var(--tp)}
+.plan-cost{display:flex;align-items:baseline;gap:5px;margin:4px 0 10px}
+.plan-amount{font-size:26px;font-weight:800;color:var(--tp);letter-spacing:-1px}
+.plan-unit,.plan-custom{font-size:13px;color:var(--ts);font-weight:600}
+.plan-features{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:5px}
+.plan-features li{font-size:12.5px;color:var(--ts);padding-inline-start:16px;position:relative}
+.plan-features li::before{content:'✓';position:absolute;inset-inline-start:0;color:var(--green);font-weight:700}
+.plan-card .btn{width:100%}
+.plan-current-tag{text-align:center;font-size:12px;font-weight:700;color:var(--blue);padding:8px 0}

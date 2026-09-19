@@ -3,6 +3,7 @@
 
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { repository } from '../repository.js';
+import { quotaStatus } from '../subscription.js';
 import { bindImageSrc } from '../storage.js';
 import {
   EMPTY_FILTERS, SORT_MODES, activeFilterCount, clampPage, paginationModel, queryItems,
@@ -12,6 +13,7 @@ import { formatValuation, primaryImage } from '../validation.js';
 import { closeSheet, emptyState, openSheet, optionList, toast } from '../ui.js';
 import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateItemFlow } from './detail.js';
 import { openItemForm } from './item-form.js';
+import { openPlansSheet } from './plans.js';
 
 export const view = {
   page: 1,
@@ -168,7 +170,8 @@ function cardNode(item) {
           position: 'absolute', bottom: '5px', left: '5px', background: 'rgba(102,126,234,.9)',
           color: 'white', fontSize: '9px', padding: '2px 6px', borderRadius: '20px', fontWeight: '700',
         },
-        text: '✦AI',
+        text: '✦',
+        title: 'حُلِّلت بمساعد المخزن',
       }) : null,
     ]),
     el('div', { class: 'icbody' }, [
@@ -231,6 +234,38 @@ function renderPills(scopeItems) {
     pill('all', 'الكل'),
     ...used.map((c) => pill(c.id, `${c.icon} ${c.name}`)),
     hasUncategorized ? pill(UNCATEGORIZED_ID, '📦 غير مصنّف') : null,
+  ]);
+}
+
+// ── plan quota banner ──
+//
+// A customer should learn they are running out at 70%, again at 90%, and never
+// be surprised at record 51. Dismissing hides it until the level changes.
+let dismissedQuotaLevel = null;
+
+function renderQuotaBanner() {
+  const banner = $('quota-banner');
+  if (!banner) return;
+  const quota = quotaStatus();
+
+  if (!quota || quota.level === 'none' || quota.level === dismissedQuotaLevel) {
+    banner.style.display = 'none';
+    render(banner, []);
+    return;
+  }
+
+  banner.style.display = 'flex';
+  banner.className = `quota-banner ${quota.level}`;
+  render(banner, [
+    el('span', { class: 'qb-txt', text: quota.message }),
+    el('button', {
+      class: 'qb-act', type: 'button', text: quota.level === 'full' ? 'ترقية' : 'الخطط',
+      onClick: () => { openPlansSheet(); },
+    }),
+    quota.level === 'full' ? null : el('button', {
+      class: 'qb-close', type: 'button', text: '✕', 'aria-label': 'إخفاء',
+      onClick: () => { dismissedQuotaLevel = quota.level; renderQuotaBanner(); },
+    }),
   ]);
 }
 
@@ -307,6 +342,7 @@ export function renderHome() {
 
   renderStats();
   renderFolders();
+  renderQuotaBanner();
 
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';
 

@@ -117,6 +117,8 @@
       </button>
     </div>
 
+    <div class="quota-banner" id="quota-banner" role="status" style="display:none"></div>
+
     <div class="active-filters" id="active-filters" role="status" style="display:none"></div>
 
     <div class="vscroll" id="hscroll">
@@ -184,7 +186,10 @@
       <div class="shdr"><h2 class="stitle">الحساب</h2></div>
       <div class="sgroup" id="auth-panel"></div>
 
-      <div class="shdr"><h2 class="stitle">الذكاء الاصطناعي</h2></div>
+      <div class="shdr"><h2 class="stitle">الخطة والاشتراك</h2></div>
+      <div class="sgroup" id="plan-panel"></div>
+
+      <div class="shdr"><h2 class="stitle">✦ مساعد المخزن</h2></div>
       <div class="sgroup" id="ai-settings"></div>
 
       <div class="shdr"><h2 class="stitle">البيانات</h2></div>
@@ -234,10 +239,10 @@
 
     <div id="ai-section" style="display:none">
       <div class="aipanel">
-        <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label">تحليل بصري بالذكاء الاصطناعي</span></div>
+        <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label">مساعد المخزن</span></div>
         <div class="aibody">
           <div id="aicontent"><div class="aiph">أضف صورة ثم اضغط تحليل</div></div>
-          <button class="btn btn-ai" id="aibtn" type="button" disabled style="margin-top:10px">✦ تحليل بالذكاء الاصطناعي</button>
+          <button class="btn btn-ai" id="aibtn" type="button" disabled style="margin-top:10px">✦ حلّل بمساعد المخزن</button>
         </div>
       </div>
     </div>
@@ -431,7 +436,7 @@
       <div class="fsh-row"><label class="fsh-lbl" for="fp-cond">الحالة</label><select class="fsh-sel" id="fp-cond"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-folder">المجلد</label><select class="fsh-sel" id="fp-folder"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-loc">الموقع</label><select class="fsh-sel" id="fp-loc"></select></div>
-      <div class="fsh-row"><label class="fsh-lbl" for="fp-ai">التحليل البصري</label><select class="fsh-sel" id="fp-ai"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-ai">تحليل مساعد المخزن</label><select class="fsh-sel" id="fp-ai"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-price">التقييم</label><select class="fsh-sel" id="fp-price"></select></div>
     </div>
   </div>
@@ -446,6 +451,14 @@
   <div class="shscroll" style="padding:0">
     <div class="sgroup" style="margin:0 20px 16px" id="sort-options"></div>
   </div>
+</div>
+
+<!-- PLANS -->
+<div class="ov" id="ov-plans"></div>
+<div class="sh" id="sh-plans" tabindex="-1" style="max-height:88vh" aria-labelledby="plans-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="plans-title">الخطط والأسعار</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll"><div id="plans-body"></div></div>
 </div>
 
 <!-- EXPORT ACTION SHEET -->

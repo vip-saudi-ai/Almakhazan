@@ -12,6 +12,11 @@ import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, applyRestore, exportExcel, exportJSON, readJsonFile } from '../exporting.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
+import {
+  assistantLabel, currentPlan, onSubscriptionChange, planStatus, planUsage, quotaStatus,
+} from '../subscription.js';
+import { UNLIMITED } from '../entitlements.js';
+import { openPlansSheet } from './plans.js';
 import { bindImageSrc } from '../storage.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { primaryImage, validateImport } from '../validation.js';
@@ -476,6 +481,7 @@ async function runImport(mode) {
 // ── settings ──
 export function renderSettings() {
   renderAuthPanel();
+  renderPlanPanel();
   renderAiPanel();
   renderDataPanel();
   renderMigrationPanel();
@@ -579,6 +585,86 @@ function authAction(button, action) {
   });
 }
 
+// ── plan & subscription ────────────────────────────────────────────────────
+const STATUS_LABELS = {
+  free: 'الخطة المجانية',
+  trialing: 'فترة تجريبية',
+  active: 'اشتراك نشط',
+  past_due: 'دفعة متأخرة',
+  canceled: 'اشتراك ملغى',
+  inactive: 'اشتراك متوقف',
+  local: 'هذا الجهاز فقط',
+};
+
+function usageBar(row) {
+  const unlimited = row.limit === UNLIMITED;
+  const ratio = unlimited ? 0 : Math.min(1, row.limit > 0 ? row.used / row.limit : 1);
+  // A one-seat plan is always "full" on members; that is the plan, not a
+  // problem, so it is not coloured like one.
+  const fixed = row.key === 'members' && row.limit === 1;
+  const tone = fixed ? '' : ratio >= 1 ? 'full' : ratio >= 0.9 ? 'warn' : ratio >= 0.7 ? 'notice' : '';
+
+  return el('div', { class: 'usage-row' }, [
+    el('div', { class: 'usage-head' }, [
+      el('span', { class: 'usage-label', text: row.label }),
+      el('span', {
+        class: 'usage-value',
+        text: unlimited ? `${row.format(row.used)} · بلا حد` : `${row.format(row.used)} من ${row.format(row.limit)}`,
+      }),
+    ]),
+    el('div', { class: 'usage-track' }, [
+      el('div', { class: `usage-fill ${tone}`.trim(), style: { width: `${Math.round(ratio * 100)}%` } }),
+    ]),
+  ]);
+}
+
+/**
+ * Shows the plan the server says is in force, and what is left of it. The
+ * numbers come from counters only the backend writes, so this card cannot be
+ * talked into showing a bigger allowance than the customer has.
+ */
+export function renderPlanPanel() {
+  const panel = $('plan-panel');
+  if (!panel) return;
+
+  const status = planStatus();
+  if (status === 'local') {
+    render(panel, [
+      el('div', { class: 'srow', style: { cursor: 'default' } }, [
+        el('div', { class: 'srowiw', style: { background: 'rgba(142,142,147,.15)' }, text: '📱', 'aria-hidden': 'true' }),
+        el('div', { style: { flex: '1' } }, [
+          el('div', { class: 'srowl', text: 'هذا الجهاز فقط' }),
+          el('div', { class: 'srowd', text: 'بلا حساب: لا مزامنة ولا حدود خطة. أنشئ حساباً لمزامنة مخزنك وحفظه.' }),
+        ]),
+      ]),
+    ]);
+    return;
+  }
+
+  const plan = currentPlan();
+  const assistant = assistantLabel();
+  const quota = quotaStatus();
+  const rows = planUsage();
+
+  render(panel, [
+    el('div', { class: 'srow', style: { cursor: 'default' } }, [
+      el('div', { class: 'srowiw', style: { background: 'rgba(0,122,255,.15)' }, text: '◆', 'aria-hidden': 'true' }),
+      el('div', { style: { flex: '1' } }, [
+        el('div', { class: 'srowl', text: `خطة ${plan.name.ar}` }),
+        el('div', { class: 'srowd', text: `${STATUS_LABELS[status] || status} · مساعد المخزن: ${assistant.label}` }),
+      ]),
+      plan.price?.monthly ? el('span', { class: 'plan-price', text: `${plan.price.monthly} ر.س / شهر` }) : null,
+    ]),
+    quota && quota.level !== 'none' ? el('div', { class: `plan-alert ${quota.level}`, role: 'status', text: quota.message }) : null,
+    el('div', { class: 'usage-list' }, rows.map(usageBar)),
+    el('button', {
+      class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '10px' },
+      text: plan.id === 'free' ? 'عرض الخطط والترقية' : 'تغيير الخطة',
+      onClick: () => openPlansSheet(),
+    }),
+  ]);
+}
+
 function renderAiPanel() {
   const panel = $('ai-settings');
   if (!panel) return;
@@ -589,7 +675,7 @@ function renderAiPanel() {
     el('div', { class: 'srow', style: { cursor: 'default' } }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(102,126,234,.15)' }, text: '✦', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: 'التحليل البصري بالذكاء الاصطناعي' }),
+        el('div', { class: 'srowl', text: '✦ مساعد المخزن' }),
         el('div', { class: 'srowd', text: 'يُنفَّذ على الخادم — لا يُخزَّن أي مفتاح في المتصفح' }),
       ]),
       el('span', { class: 'ai-status' }, [
