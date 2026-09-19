@@ -1,0 +1,158 @@
+rules_version = '2';
+
+// Authorization lives here, not in the client. Every path requires an
+// authenticated member of the workspace, and the role decides what they may do.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ──
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
+    }
+
+    function isMember(workspaceId) {
+      return isSignedIn() && exists(memberPath(workspaceId));
+    }
+
+    function role(workspaceId) {
+      return get(memberPath(workspaceId)).data.role;
+    }
+
+    function isViewer(workspaceId) {
+      return isMember(workspaceId);
+    }
+
+    function isEditor(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) in ['editor', 'admin', 'owner'];
+    }
+
+    function isAdmin(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) in ['admin', 'owner'];
+    }
+
+    function isOwner(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) == 'owner';
+    }
+
+    // ── user profiles ──
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ── workspace root ──
+    match /workspaces/{workspaceId} {
+      // A user may create only their own personal workspace and must name
+      // themselves as its owner.
+      allow create: if isSignedIn()
+                    && workspaceId == request.auth.uid
+                    && request.resource.data.ownerId == request.auth.uid;
+      allow read:   if isMember(workspaceId);
+      allow update: if isAdmin(workspaceId)
+                    && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isOwner(workspaceId);
+
+      // ── membership and roles ──
+      match /members/{userId} {
+        allow read: if isMember(workspaceId);
+
+        // Bootstrap: the workspace creator writes their own owner record.
+        allow create: if isSignedIn()
+                      && workspaceId == request.auth.uid
+                      && userId == request.auth.uid
+                      && request.resource.data.role == 'owner';
+
+        // Afterwards only admins manage members, and nobody may grant a role
+        // above their own or edit their own role.
+        allow create, update: if isAdmin(workspaceId)
+                              && userId != request.auth.uid
+                              && request.resource.data.role in ['viewer', 'editor', 'admin']
+                              && (request.resource.data.role != 'admin' || isOwner(workspaceId));
+        allow delete: if isAdmin(workspaceId) && userId != request.auth.uid;
+      }
+
+      // ── inventory items ──
+      match /items/{itemId} {
+        allow read: if isViewer(workspaceId);
+
+        allow create: if isEditor(workspaceId)
+                      && request.resource.data.version == 1
+                      && validItem(request.resource.data);
+
+        // The version must advance by exactly one, which is what makes the
+        // client-side optimistic-concurrency check meaningful here too.
+        allow update: if isEditor(workspaceId)
+                      && request.resource.data.version == resource.data.version + 1
+                      && validItem(request.resource.data);
+
+        // Soft delete is an update; permanent removal is an admin action.
+        allow delete: if isAdmin(workspaceId);
+      }
+
+      match /folders/{folderId} {
+        allow read: if isViewer(workspaceId);
+        allow create, update: if isEditor(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if isEditor(workspaceId);
+      }
+
+      match /categories/{categoryId} {
+        allow read: if isViewer(workspaceId);
+        allow create, update: if isEditor(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if isEditor(workspaceId);
+      }
+
+      match /locations/{locationId} {
+        allow read: if isViewer(workspaceId);
+        allow create, update: if isEditor(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if isEditor(workspaceId);
+      }
+
+      // ── audit log: append-only, never rewritten ──
+      match /activityLogs/{logId} {
+        allow read: if isViewer(workspaceId);
+        allow create: if isEditor(workspaceId)
+                      && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // ── validation ──
+    function validName(name, maxLength) {
+      return name is string && name.size() > 0 && name.size() <= maxLength;
+    }
+
+    function validItem(data) {
+      return validName(data.name, 200)
+             && data.quantity is number
+             && data.quantity >= 0
+             && data.unit is string
+             && data.images is list
+             && data.images.size() <= 12
+             && (!('description' in data) || data.description is string)
+             && (!('sku' in data) || (data.sku is string && data.sku.size() <= 64))
+             && (!('barcode' in data) || (data.barcode is string && data.barcode.size() <= 64))
+             && (!('valuation' in data) || data.valuation == null || validValuation(data.valuation));
+    }
+
+    function validValuation(v) {
+      return v.min is number && v.max is number
+             && v.min >= 0 && v.max >= v.min
+             && v.currency in ['SAR', 'USD', 'EUR', 'GBP'];
+    }
+
+    // The v7 single-document store stays readable for migration, and is never
+    // written again.
+    match /almakhzan/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

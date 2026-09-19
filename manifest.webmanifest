@@ -1,0 +1,19 @@
+{
+  "name": "المخزن — توثيق وحصر المقتنيات",
+  "short_name": "المخزن",
+  "description": "تطبيق جرد وتوثيق المقتنيات النادرة والثمينة",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#c8d8f0",
+  "theme_color": "#c8d8f0",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

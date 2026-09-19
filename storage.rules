@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Image objects are readable by workspace members and writable by editors.
+// Membership is read from Firestore so Storage and Firestore agree on roles.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function member(workspaceId) {
+      return firestore.get(/databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+
+    function isMember(workspaceId) {
+      return isSignedIn()
+             && firestore.exists(/databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+
+    function isEditor(workspaceId) {
+      return isMember(workspaceId) && member(workspaceId).data.role in ['editor', 'admin', 'owner'];
+    }
+
+    function isAdmin(workspaceId) {
+      return isMember(workspaceId) && member(workspaceId).data.role in ['admin', 'owner'];
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|avif)');
+    }
+
+    function withinSizeLimit() {
+      return request.resource.size <= 12 * 1024 * 1024;
+    }
+
+    match /workspaces/{workspaceId}/items/{itemId}/{variant}/{fileName} {
+      allow read:   if isMember(workspaceId);
+      allow create: if isEditor(workspaceId)
+                    && variant in ['original', 'thumbnails']
+                    && isImage()
+                    && withinSizeLimit();
+      // An uploaded object is replaced by deleting and re-creating it, so that
+      // an existing documentation image cannot be silently overwritten.
+      allow update: if false;
+      allow delete: if isEditor(workspaceId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

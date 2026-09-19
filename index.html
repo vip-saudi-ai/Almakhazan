@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<!-- user-scalable / maximum-scale intentionally omitted so zoom stays available -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.googleapis.com https://lh3.googleusercontent.com;
+  connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com;
+  frame-src https://almakhzan-3d808.firebaseapp.com https://accounts.google.com;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="المخزن">
+<meta name="theme-color" content="#c8d8f0">
+<meta name="description" content="المخزن — توثيق وحصر المقتنيات">
+<title>المخزن</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div class="bg"><div class="orb o1"></div><div class="orb o2"></div></div>
+
+<div class="boot" id="boot">
+  <div class="boot-inner">
+    <div class="boot-mark">المخزن<span>.</span></div>
+    <div class="boot-spin" aria-hidden="true"></div>
+    <div class="boot-label" id="boot-label" role="status">جارٍ التشغيل…</div>
+  </div>
+</div>
+
+<div class="tstack" id="tstack" aria-live="polite" aria-atomic="false"></div>
+
+<!-- DESTRUCTIVE CONFIRM -->
+<div class="del-confirm" id="del-confirm" role="alertdialog" aria-modal="true" aria-labelledby="del-title" aria-describedby="del-sub" aria-hidden="true">
+  <div class="del-bg" id="del-bg"></div>
+  <div class="del-card">
+    <div class="del-ico" id="del-ico" aria-hidden="true">🗑</div>
+    <div class="del-title" id="del-title">حذف القطعة؟</div>
+    <div class="del-sub" id="del-sub">لا يمكن التراجع عن هذا الإجراء.</div>
+    <div class="del-phrase-wrap" id="del-phrase-wrap" style="display:none">
+      <label class="del-phrase-label" id="del-phrase-label" for="del-phrase"></label>
+      <input class="del-phrase" id="del-phrase" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="del-actions">
+      <button class="btn btn-s" id="del-cancel-btn" type="button">إلغاء</button>
+      <button class="btn btn-d del-go" id="del-confirm-btn" type="button">حذف</button>
+    </div>
+  </div>
+</div>
+<div class="del-success" id="del-success" aria-hidden="true"><div class="del-success-ico">✅</div></div>
+
+<!-- LONG-PRESS CONTEXT SHEET -->
+<div class="ov" id="ov-ctx"></div>
+<div class="ctx-as" id="ctx-as" role="dialog" aria-modal="true" aria-labelledby="ctx-name" aria-hidden="true">
+  <div class="ctx-as-header">
+    <div class="ctx-as-title">
+      <div class="ctx-as-thumb" id="ctx-thumb"></div>
+      <div><div class="ctx-as-name" id="ctx-name">—</div><div class="ctx-as-cat" id="ctx-cat"></div></div>
+    </div>
+  </div>
+  <div class="ctx-as-body">
+    <button class="ctx-as-btn" id="ctx-open" type="button"><div class="ctx-as-ico" style="background:rgba(0,122,255,.12)" aria-hidden="true">🔍</div><div class="ctx-as-lbl">فتح</div></button>
+    <button class="ctx-as-btn" id="ctx-preview" type="button"><div class="ctx-as-ico" style="background:rgba(52,199,89,.12)" aria-hidden="true">👁</div><div class="ctx-as-lbl">معاينة سريعة</div></button>
+    <button class="ctx-as-btn" id="ctx-move" type="button"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)" aria-hidden="true">🗂</div><div class="ctx-as-lbl">نقل إلى مجلد</div></button>
+    <button class="ctx-as-btn" id="ctx-edit" type="button"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)" aria-hidden="true">✎</div><div class="ctx-as-lbl">تعديل</div></button>
+    <button class="ctx-as-btn" id="ctx-duplicate" type="button"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)" aria-hidden="true">⧉</div><div class="ctx-as-lbl">نسخ القطعة</div></button>
+    <button class="ctx-as-btn" id="ctx-delete" type="button"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)" aria-hidden="true">🗑</div><div class="ctx-as-lbl red">حذف</div></button>
+  </div>
+  <div class="ctx-as-cancel"><button class="ctx-as-cancel-btn" id="ctx-cancel" type="button">إلغاء</button></div>
+</div>
+
+<div class="app">
+  <!-- INVENTORY -->
+  <section class="view active" id="v-home" role="tabpanel" aria-labelledby="t-home">
+    <div class="nbar" id="home-nbar"></div>
+
+    <div class="sfrow" id="home-sfrow">
+      <div class="sbar gl" style="flex:1">
+        <span class="sico" aria-hidden="true">⌕</span>
+        <label class="visually-hidden" for="hsearch">بحث في المخزن</label>
+        <input id="hsearch" type="search" placeholder="بحث في كل المخزن..." autocomplete="off">
+        <button class="sclear" id="sclear" type="button" aria-label="مسح البحث">✕</button>
+      </div>
+    </div>
+
+    <div class="fsact-row" id="home-actrow">
+      <button class="fsact-btn gl-s" id="filter-btn" type="button">
+        <span class="fsact-btn-ico" aria-hidden="true">⚡</span>
+        <span class="fsact-btn-lbl">فلتر</span>
+        <span class="fsact-btn-badge" id="filter-badge">0</span>
+      </button>
+      <button class="fsact-btn gl-s" id="sort-btn" type="button">
+        <span class="fsact-btn-ico" aria-hidden="true">↕</span>
+        <span class="fsact-sort-col">
+          <span class="fsact-btn-lbl">ترتيب حسب</span>
+          <span class="fsact-sort-val" id="sort-label">الأحدث</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="active-filters" id="active-filters" role="status" style="display:none"></div>
+
+    <div class="vscroll" id="hscroll">
+      <div class="sgrid" id="statsrow">
+        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">📦</div><div class="snum" id="s-total">0</div><div class="slbl">عدد السجلات</div><div class="ssub" style="color:var(--blue)" id="s-cats">—</div></div>
+        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">🗂</div><div class="snum" id="s-folds">0</div><div class="slbl">المجلدات</div><div class="ssub" style="color:var(--purple)" id="s-foldsub">—</div></div>
+        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">✦</div><div class="snum" id="s-ai">0</div><div class="slbl">مُحلّلة بصرياً</div><div class="ssub" style="color:var(--teal)" id="s-aipct">0%</div></div>
+        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">💎</div><div class="snum" id="s-price">0</div><div class="slbl">لها تقييم</div><div class="ssub" style="color:var(--orange)" id="s-pricepct">0%</div></div>
+      </div>
+
+      <div id="folds-section">
+        <div class="shdr">
+          <h2 class="stitle">المجلدات</h2>
+          <button class="link-btn" id="new-folder-link" type="button">+ جديد</button>
+        </div>
+        <div class="fld-row" id="fld-row"></div>
+      </div>
+
+      <div class="cpills" id="hpills" role="group" aria-label="تصفية حسب التصنيف"></div>
+
+      <div class="shdr">
+        <h2 class="stitle" id="htitle">الجرد</h2>
+        <div class="shdr-acts">
+          <span class="tag tb" id="hcount" style="font-size:12px">0</span>
+          <button class="ibtn gls view-toggle" id="tg" type="button" aria-label="عرض شبكي" aria-pressed="true">⊞</button>
+          <button class="ibtn gls view-toggle" id="tl" type="button" aria-label="عرض قائمة" aria-pressed="false">≡</button>
+        </div>
+      </div>
+
+      <div class="igrid" id="hgrid"></div>
+      <div class="lgroup" id="hlist" style="display:none"></div>
+
+      <div class="empty" id="hempty" style="display:none">
+        <div class="emico" aria-hidden="true">📦</div>
+        <div class="emtitle" id="hempty-title">المخزن فارغ</div>
+        <div class="emsub" id="hempty-sub">اضغط + لإضافة أول قطعة</div>
+        <button class="btn btn-p empty-cta" id="add-first-item" type="button">+ إضافة قطعة</button>
+      </div>
+
+      <nav class="pag" id="hpag" aria-label="تنقل بين الصفحات"></nav>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section class="view" id="v-ov" role="tabpanel" aria-labelledby="t-ov" aria-hidden="true">
+    <div class="nbar"><h1 class="ntitle">نظرة عامة<span>.</span></h1></div>
+    <div class="vscroll" id="ov-scroll"></div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="view" id="v-cats" role="tabpanel" aria-labelledby="t-cats" aria-hidden="true">
+    <div class="nbar">
+      <h1 class="ntitle">التصنيفات</h1>
+      <button class="ibtn gl" id="new-cat-btn" type="button" style="font-size:22px;font-weight:300" aria-label="تصنيف جديد">+</button>
+    </div>
+    <div class="vscroll"><div class="catgrid" id="catgrid"></div></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-set" role="tabpanel" aria-labelledby="t-set" aria-hidden="true">
+    <div class="nbar"><h1 class="ntitle">الإعدادات</h1></div>
+    <div class="vscroll">
+      <div class="sgroup" id="migration-panel" style="display:none"></div>
+
+      <div class="shdr"><h2 class="stitle">الحساب</h2></div>
+      <div class="sgroup" id="auth-panel"></div>
+
+      <div class="shdr"><h2 class="stitle">الذكاء الاصطناعي</h2></div>
+      <div class="sgroup" id="ai-settings"></div>
+
+      <div class="shdr"><h2 class="stitle">البيانات</h2></div>
+      <div class="sgroup" id="data-panel"></div>
+
+      <div class="shdr"><h2 class="stitle">منطقة الخطر</h2></div>
+      <div class="sgroup" id="danger-panel"></div>
+
+      <div class="sgroup">
+        <div class="srow" style="cursor:default">
+          <div><div class="srowl">المخزن</div><div class="srowd" id="app-version">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TAB BAR -->
+<nav class="tbar gl" role="tablist" aria-label="أقسام التطبيق">
+  <button class="ti on" id="t-home" type="button" role="tab" aria-selected="true" aria-controls="v-home"><span class="tico" aria-hidden="true">⊞</span><span class="tilbl">الجرد</span></button>
+  <button class="ti" id="t-ov" type="button" role="tab" aria-selected="false" aria-controls="v-ov"><span class="tico" aria-hidden="true">◉</span><span class="tilbl">نظرة عامة</span></button>
+  <button class="ti" id="t-cats" type="button" role="tab" aria-selected="false" aria-controls="v-cats"><span class="tico" aria-hidden="true">◈</span><span class="tilbl">التصنيفات</span></button>
+  <button class="ti" id="t-set" type="button" role="tab" aria-selected="false" aria-controls="v-set"><span class="tico" aria-hidden="true">⚙</span><span class="tilbl">الإعدادات</span></button>
+</nav>
+
+<!-- ADD / EDIT -->
+<div class="ov" id="ov-add"></div>
+<div class="sh" id="sh-add" tabindex="-1" aria-labelledby="addtitle">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="addtitle">إضافة قطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <div class="fsec">
+      <div class="fstitle">الصور <span class="fstitle-sub" id="img-count">لا توجد صور</span></div>
+      <div class="img-strip" id="img-strip"></div>
+      <div class="img-progress" id="img-progress" style="display:none">
+        <div class="img-progress-track"><div class="img-progress-bar" id="img-progress-bar"></div></div>
+        <div class="img-progress-label" id="img-progress-label"></div>
+      </div>
+      <input type="file" id="imgInput" accept="image/jpeg,image/png,image/webp,image/avif" multiple class="visually-hidden">
+      <div class="field-hint">تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
+    </div>
+
+    <div class="desc-toggle" role="group" aria-label="نمط الوصف">
+      <button class="desc-toggle-btn on" id="dtbtn-manual" type="button" aria-pressed="true">✏️ يدوي</button>
+      <button class="desc-toggle-btn" id="dtbtn-ai" type="button" aria-pressed="false">✦ تحليل بصري</button>
+    </div>
+
+    <div id="ai-section" style="display:none">
+      <div class="aipanel">
+        <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label">تحليل بصري بالذكاء الاصطناعي</span></div>
+        <div class="aibody">
+          <div id="aicontent"><div class="aiph">أضف صورة ثم اضغط تحليل</div></div>
+          <button class="btn btn-ai" id="aibtn" type="button" disabled style="margin-top:10px">✦ تحليل بالذكاء الاصطناعي</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fstitle">معلومات القطعة</div>
+      <div class="frow"><label for="f-name">الاسم</label><input id="f-name" placeholder="اسم القطعة"></div>
+      <div class="frow"><label for="f-sku">الرمز SKU</label><input id="f-sku" placeholder="تلقائي"></div>
+      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" inputmode="numeric"></div>
+    </div>
+
+    <div class="fsec">
+      <div class="fstitle">التصنيف والموقع</div>
+      <div class="frow"><label for="f-cat">التصنيف</label><select id="f-cat"></select></div>
+      <div class="frow"><label for="f-folder">المجلد</label><select id="f-folder"></select></div>
+      <div class="frow"><label for="f-loc">الموقع</label><select id="f-loc"></select></div>
+    </div>
+
+    <div class="fsec">
+      <div class="fstitle">بيانات القطعة</div>
+      <div class="frow">
+        <label for="f-qty">الكمية</label>
+        <input id="f-qty" inputmode="decimal" placeholder="1">
+        <select id="f-unit" style="width:100px;flex-shrink:0" aria-label="الوحدة"></select>
+      </div>
+      <div class="field-hint" id="f-qty-hint"></div>
+      <div class="frow"><label for="f-cond">الحالة</label><select id="f-cond"></select></div>
+      <div class="frow"><label for="f-brand">البراند</label><input id="f-brand" placeholder="اسم البراند / الصانع"></div>
+      <div class="frow">
+        <label for="f-valuation">التقييم</label>
+        <input id="f-valuation" inputmode="decimal" placeholder="5000 أو 5000-8000">
+        <select id="f-currency" style="width:100px;flex-shrink:0" aria-label="العملة"></select>
+      </div>
+      <div class="field-hint" id="f-valuation-preview"></div>
+    </div>
+
+    <div class="fsec" id="desc-manual-sec">
+      <div class="frow frowv"><label for="f-desc">الوصف / الملاحظات</label><textarea id="f-desc" placeholder="أي تفاصيل إضافية..."></textarea></div>
+    </div>
+  </div>
+  <div class="shfoot">
+    <button class="btn btn-d" type="button" data-close style="flex:1;padding:12px">إلغاء</button>
+    <button class="btn btn-p" id="save-item-btn" type="button" style="flex:2;padding:12px">✓ حفظ</button>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="ov" id="ov-det"></div>
+<div class="sh" id="sh-det" tabindex="-1" aria-labelledby="dettitle">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="dettitle">تفاصيل</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll" id="detbody"></div>
+  <div class="shfoot">
+    <button class="btn btn-d" id="detdel" type="button" style="flex:1;padding:12px">حذف</button>
+    <button class="btn btn-g" id="detmove" type="button" style="flex:1;padding:12px">🗂 نقل</button>
+    <button class="btn btn-p" id="detedit" type="button" style="flex:2;padding:12px">✎ تعديل</button>
+  </div>
+</div>
+
+<!-- QUICK PREVIEW -->
+<div class="ov" id="ov-qp"></div>
+<div class="sh" id="sh-qp" tabindex="-1" style="max-height:75vh" aria-labelledby="qptitle">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="qptitle">معاينة سريعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll" id="qpbody"></div>
+  <div class="shfoot"><button class="btn btn-p" id="qp-open" type="button" style="flex:1;padding:12px">فتح التفاصيل</button></div>
+</div>
+
+<!-- FOLDER -->
+<div class="ov" id="ov-fld"></div>
+<div class="sh" id="sh-fld" tabindex="-1" style="max-height:72vh" aria-labelledby="fldshtitle">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="fldshtitle">مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <div class="fsec">
+      <div class="frow"><label for="fld-name">الاسم</label><input id="fld-name" placeholder="مثال: مجموعة الجد"></div>
+      <div class="frow"><label for="fld-desc">الوصف</label><input id="fld-desc" placeholder="اختياري"></div>
+    </div>
+    <div class="fstitle">الأيقونة</div>
+    <div class="pick-row" id="fldiclist" role="group" aria-label="أيقونة المجلد"></div>
+    <div class="fstitle">اللون</div>
+    <div class="pick-row" id="fldcolorlist" role="group" aria-label="لون المجلد"></div>
+  </div>
+  <div class="shfoot">
+    <button class="btn btn-d" id="flddelbtn" type="button" style="flex:1;padding:12px;display:none">حذف</button>
+    <button class="btn btn-p" id="save-folder-btn" type="button" style="flex:2;padding:12px">✓ حفظ المجلد</button>
+  </div>
+</div>
+
+<!-- MOVE -->
+<div class="ov" id="ov-mv"></div>
+<div class="sh" id="sh-mv" tabindex="-1" style="max-height:70vh" aria-labelledby="mv-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="mv-title">نقل إلى مجلد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll" id="mvlist"></div>
+</div>
+
+<!-- CATEGORY -->
+<div class="ov" id="ov-cat"></div>
+<div class="sh" id="sh-cat" tabindex="-1" style="max-height:62vh" aria-labelledby="cat-sheet-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title">تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <div class="fsec"><div class="frow"><label for="cat-name">الاسم</label><input id="cat-name" placeholder="مثال: لوحات زيتية"></div></div>
+    <div class="fstitle">الأيقونة</div>
+    <div class="pick-row" id="caticolist" role="group" aria-label="أيقونة التصنيف"></div>
+  </div>
+  <div class="shfoot"><button class="btn btn-p" id="save-cat-btn" type="button" style="width:100%;padding:12px">✓ حفظ التصنيف</button></div>
+</div>
+
+<!-- REASSIGN BEFORE CATEGORY DELETE -->
+<div class="ov" id="ov-reassign"></div>
+<div class="sh" id="sh-reassign" tabindex="-1" style="max-height:52vh" aria-labelledby="reassign-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="reassign-title">حذف التصنيف</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <p class="sheet-note" id="reassign-message"></p>
+    <div class="fsec"><div class="frow"><label for="reassign-target">الوجهة</label><select id="reassign-target"></select></div></div>
+  </div>
+  <div class="shfoot">
+    <button class="btn btn-s" type="button" data-close style="flex:1;padding:12px">إلغاء</button>
+    <button class="btn btn-d" id="reassign-confirm" type="button" style="flex:2;padding:12px">حذف ونقل</button>
+  </div>
+</div>
+
+<!-- LOCATIONS -->
+<div class="ov" id="ov-loc"></div>
+<div class="sh" id="sh-loc" tabindex="-1" style="max-height:70vh" aria-labelledby="loc-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="loc-title">المواقع</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <div class="fsec">
+      <div class="frow">
+        <label for="loc-name">موقع جديد</label>
+        <input id="loc-name" placeholder="مثال: الرف C">
+        <button class="btn btn-p" id="loc-add" type="button" style="width:80px;flex-shrink:0;padding:8px">إضافة</button>
+      </div>
+    </div>
+    <div class="sgroup" id="loc-list"></div>
+  </div>
+</div>
+
+<!-- TRASH -->
+<div class="ov" id="ov-trash"></div>
+<div class="sh" id="sh-trash" tabindex="-1" style="max-height:80vh" aria-labelledby="trash-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="trash-title">سلة المحذوفات</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll" id="trash-list"></div>
+</div>
+
+<!-- IMPORT -->
+<div class="ov" id="ov-import"></div>
+<div class="sh" id="sh-import" tabindex="-1" style="max-height:76vh" aria-labelledby="import-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="import-title">استيراد بيانات</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <p class="sheet-note">الملف: <b id="import-file">—</b></p>
+    <div class="imp-stats" id="import-stats"></div>
+    <div class="imp-warnings" id="import-warnings" style="display:none"></div>
+    <div class="imp-modes">
+      <div class="imp-mode">
+        <div class="imp-mode-title">دمج</div>
+        <div class="imp-mode-desc">يضيف السجلات الجديدة فقط ولا يمسّ السجلات الحالية.</div>
+      </div>
+      <div class="imp-mode">
+        <div class="imp-mode-title">استبدال</div>
+        <div class="imp-mode-desc">يحذف الجرد الحالي بالكامل ويستبدله بمحتوى الملف، بعد نسخة احتياطية وتأكيد كتابي.</div>
+      </div>
+    </div>
+  </div>
+  <div class="shfoot">
+    <button class="btn btn-s" type="button" data-close style="flex:1;padding:12px">إلغاء</button>
+    <button class="btn btn-g" id="import-merge" type="button" style="flex:1;padding:12px">دمج</button>
+    <button class="btn btn-d" id="import-restore" type="button" style="flex:1;padding:12px">استبدال</button>
+  </div>
+</div>
+
+<!-- FILTER -->
+<div class="ov" id="ov-filter"></div>
+<div class="sh" id="sh-filter" tabindex="-1" style="max-height:72vh" aria-labelledby="filter-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr">
+    <h2 class="shtitle" id="filter-title">الفلتر</h2>
+    <div class="shhdr-acts">
+      <button class="reset-btn" id="filter-reset" type="button">إعادة ضبط</button>
+      <button class="shclose" type="button" data-close aria-label="إغلاق">✕</button>
+    </div>
+  </div>
+  <div class="shscroll" style="padding:0">
+    <div class="sgroup" style="margin:0 20px 16px">
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-cond">الحالة</label><select class="fsh-sel" id="fp-cond"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-folder">المجلد</label><select class="fsh-sel" id="fp-folder"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-loc">الموقع</label><select class="fsh-sel" id="fp-loc"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-ai">التحليل البصري</label><select class="fsh-sel" id="fp-ai"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-price">التقييم</label><select class="fsh-sel" id="fp-price"></select></div>
+    </div>
+  </div>
+  <div class="shfoot"><button class="btn btn-p" id="filter-apply" type="button" data-close style="padding:13px;width:100%">تطبيق الفلتر</button></div>
+</div>
+
+<!-- SORT -->
+<div class="ov" id="ov-sort"></div>
+<div class="sh" id="sh-sort" tabindex="-1" style="max-height:60vh" aria-labelledby="sort-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="sort-title">ترتيب حسب</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll" style="padding:0">
+    <div class="sgroup" style="margin:0 20px 16px" id="sort-options"></div>
+  </div>
+</div>
+
+<!-- EXPORT ACTION SHEET -->
+<div class="ov" id="ov-as"></div>
+<div class="asht" id="sh-as" tabindex="-1" role="dialog" aria-modal="true" aria-label="تصدير واستيراد">
+  <div class="ashg">
+    <div class="asht-t">البيانات</div>
+    <button class="ashbtn" id="as-excel" type="button">📊 تصدير Excel</button>
+    <button class="ashbtn" id="as-json" type="button">💾 نسخة احتياطية JSON</button>
+    <button class="ashbtn" id="as-import" type="button">📥 استيراد</button>
+  </div>
+  <div class="ashcancel"><button class="ashbtn" type="button" data-close style="font-weight:600">إلغاء</button></div>
+</div>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
