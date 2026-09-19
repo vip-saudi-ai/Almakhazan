@@ -23,6 +23,10 @@ import { bindManageViews, openFolderSheet, renderCategories, renderSettings } fr
 
 const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign'];
 
+// Tells the boot guard (a classic script) that module code is running, so it
+// can distinguish "scripts never started" from "startup stalled".
+window.__almakhzanStarted = true;
+
 // ── boot ──
 async function boot() {
   showBootState('جارٍ التشغيل…');

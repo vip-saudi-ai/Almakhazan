@@ -84,6 +84,9 @@ function transform(file) {
     throw new Error(`Default exports are not supported by this bundler (${file})`);
   }
 
+  // Remaining dynamic imports are remote SDK loads; see __noImport above.
+  source = source.replace(/\bimport\(/g, '__noImport(');
+
   const bindings = [...exported]
     .map((entryName) => (entryName.includes(':') ? entryName : `${entryName}`))
     .join(', ');
@@ -97,6 +100,12 @@ transform(entry);
 
 const runtime = `
 (() => {
+  // A classic script cannot rely on dynamic import() being available in every
+  // viewer. This build has no cloud anyway (it runs from file://), so the
+  // Firebase loader is stubbed out rather than left to parse-and-fail.
+  const __noImport = (specifier) =>
+    Promise.reject(new Error('cloud services are not available in the single-file build: ' + specifier));
+
   const __factories = new Map();
   const __cache = new Map();
   const __def = (id, factory) => __factories.set(id, factory);
@@ -116,13 +125,20 @@ const body = [...modules.values()].filter(Boolean).join('\n\n');
 const bundle = `${runtime}\n${body}\n__req(${JSON.stringify(entry)});\n})();`;
 
 const css = readFileSync(join(root, 'styles/main.css'), 'utf8');
+const bootGuard = readFileSync(join(root, 'src/boot-guard.js'), 'utf8');
 let html = readFileSync(join(root, 'index.html'), 'utf8');
+
+// Emitted as a *classic* script, not a module: iOS Quick Look and some embedded
+// web views silently refuse to execute `type="module"`, which is exactly the
+// case this build exists to serve. The registry needs no module semantics.
+const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
 
 // Replacements go through a function: in a replacement *string*, `$` is special
 // and would mangle any `$` in the code or CSS being inlined.
 html = html
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
-  .replace('<script type="module" src="src/app.js"></script>', () => `<script type="module">\n${bundle}\n</script>`)
+  .replace('<script src="src/boot-guard.js"></script>\n', '')
+  .replace('<script type="module" src="src/app.js"></script>', () => inlineScript)
   // The meta CSP would block the inlined script; the served app keeps its CSP.
   .replace(/<meta http-equiv="Content-Security-Policy"[\s\S]*?">\n/, '')
   .replace('<link rel="manifest" href="manifest.webmanifest">\n', '')
