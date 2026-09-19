@@ -181,6 +181,12 @@ export function validateAiData(raw, context = {}) {
     imageHash: typeof raw.imageHash === 'string' && /^[a-f0-9]{8,64}$/i.test(raw.imageHash)
       ? raw.imageHash
       : (context.imageHash || null),
+    // Suggestions for the form. They are proposals the customer applies, never
+    // values written on their behalf, so they are cleaned but not required.
+    suggestedName: cleanText(raw.suggestedName, TEXT_LIMITS.name) || '',
+    suggestedCategory: cleanText(raw.suggestedCategory, 60) || '',
+    brand: cleanText(raw.brand, TEXT_LIMITS.brand) || '',
+    visibleText: cleanText(raw.visibleText, 500) || '',
   };
 
   const hasContent = result.description || result.evaluation || result.condition

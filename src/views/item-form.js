@@ -1,9 +1,11 @@
 // Add / edit sheet: fields, multi-image management, AI analysis, save.
 
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
-import { CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID } from '../config.js';
+import {
+  CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
+} from '../config.js';
 import { repository, ConflictError } from '../repository.js';
-import { canAddItem } from '../subscription.js';
+import { canAddItem, canUseAssistant } from '../subscription.js';
 import { openPlansSheet } from './plans.js';
 import { bindImageSrc, uploadImage } from '../storage.js';
 import { $, el, render, setText, uid } from '../utils.js';
@@ -19,6 +21,8 @@ const form = {
   images: [],
   primaryImageId: null,
   aiData: null,
+  autoAnalyzed: false,
+  assistantValuationText: null,
   descriptionMode: 'manual',
   provisionalSku: null,
 };
@@ -191,6 +195,158 @@ async function handleFiles(fileList) {
   $('img-progress-bar').style.width = '0%';
   $('imgInput').value = '';
   refreshAiPanel();
+  await maybeAutoAnalyze();
+}
+
+/**
+ * The promise on the welcome screen: photograph the thing and let the
+ * assistant propose its details. It runs once, only on a new record whose
+ * name is still empty, only when a credit is available, and it still only
+ * produces suggestions the customer has to accept.
+ */
+async function maybeAutoAnalyze() {
+  if (!form.isNew || form.aiData || form.autoAnalyzed) return;
+  if ($('f-name').value.trim()) return;
+  if (aiAvailability() !== AiAvailability.READY) return;
+
+  const image = primaryFormImage();
+  if (!image || image.storagePath?.startsWith('local:')) return;
+  if (!canUseAssistant().allowed) return;
+
+  form.autoAnalyzed = true;
+  const box = $('ai-suggest');
+  box.style.display = '';
+  render(box, [el('div', { class: 'suggest-working' }, [
+    el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
+    el('span', { text: 'مساعد المخزن يقرأ الصورة…' }),
+  ])]);
+
+  try {
+    form.aiData = await analyzeItem({
+      workspaceId: repository.session.workspaceId,
+      itemId: form.itemId,
+      image,
+      name: '',
+      categoryName: '',
+      categories: repository.state.categories.map((c) => c.name).filter(Boolean),
+    });
+    refreshAiPanel();
+    renderSuggestions();
+  } catch (error) {
+    // Reading the photo is a bonus, not the job: a failure is reported quietly
+    // and the form stays exactly as the customer left it.
+    console.error('[form] automatic analysis failed', error);
+    box.style.display = 'none';
+    render(box, []);
+  }
+}
+
+// ── suggestions from the assistant ─────────────────────────────────────────
+//
+// Nothing here writes to the item. Each suggestion is shown with what it would
+// put where, and applies only when the customer taps it — an assistant that
+// silently rewrites someone's inventory is worse than no assistant.
+
+const BARCODE_SHAPE = /^[A-Za-z0-9][A-Za-z0-9\-_/]{5,63}$/;
+
+function suggestionsFrom(aiData) {
+  if (!aiData) return [];
+  const rows = [];
+
+  if (aiData.suggestedName) {
+    rows.push({ key: 'name', label: 'الاسم', value: aiData.suggestedName, apply: () => { $('f-name').value = aiData.suggestedName; } });
+  }
+
+  if (aiData.suggestedCategory) {
+    const category = repository.state.categories.find((c) => c.name === aiData.suggestedCategory);
+    if (category) {
+      rows.push({
+        key: 'category', label: 'التصنيف', value: `${category.icon || ''} ${category.name}`.trim(),
+        apply: () => { $('f-cat').value = category.id; },
+      });
+    }
+  }
+
+  if (aiData.brand) {
+    rows.push({ key: 'brand', label: 'العلامة', value: aiData.brand, apply: () => { $('f-brand').value = aiData.brand; } });
+  }
+
+  if (aiData.condition) {
+    rows.push({ key: 'condition', label: 'الحالة', value: aiData.condition, apply: () => { $('f-cond').value = aiData.condition; } });
+  }
+
+  if (aiData.suggestedValuation) {
+    const { min, max, currency } = aiData.suggestedValuation;
+    rows.push({
+      key: 'valuation',
+      label: 'تقدير أولي',
+      value: formatValuation(aiData.suggestedValuation, { compact: true }),
+      apply: () => {
+        const text = min === max ? String(min) : `${min}-${max}`;
+        $('f-valuation').value = text;
+        $('f-currency').value = currency;
+        form.assistantValuationText = text;
+        updateValuationPreview();
+      },
+    });
+  }
+
+  if (aiData.visibleText) {
+    const asBarcode = BARCODE_SHAPE.test(aiData.visibleText);
+    rows.push({
+      key: 'text',
+      label: asBarcode ? 'رقم مقروء من الصورة' : 'نص مقروء من الصورة',
+      value: aiData.visibleText,
+      apply: () => {
+        if (asBarcode) { $('f-barcode').value = aiData.visibleText; return; }
+        const current = $('f-desc').value.trim();
+        $('f-desc').value = current ? `${current}\n${aiData.visibleText}` : aiData.visibleText;
+      },
+    });
+  }
+
+  return rows;
+}
+
+function renderSuggestions() {
+  const box = $('ai-suggest');
+  if (!box) return;
+  const rows = suggestionsFrom(form.aiData);
+
+  if (!rows.length) {
+    box.style.display = 'none';
+    render(box, []);
+    return;
+  }
+
+  box.style.display = '';
+  render(box, [
+    el('div', { class: 'suggest-head' }, [
+      el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
+      el('span', { class: 'suggest-title', text: 'اقتراحات مساعد المخزن' }),
+      el('button', {
+        class: 'suggest-all', type: 'button', text: 'طبّق الكل',
+        onClick: () => {
+          for (const row of rows) row.apply();
+          toast('طُبّقت الاقتراحات — راجعها قبل الحفظ', '✦');
+          renderSuggestions();
+        },
+      }),
+    ]),
+    el('div', { class: 'suggest-rows' }, rows.map((row) => el('button', {
+      class: 'suggest-row', type: 'button',
+      onClick: (event) => {
+        row.apply();
+        event.currentTarget.classList.add('applied');
+        event.currentTarget.querySelector('.suggest-apply').textContent = '✓';
+      },
+    }, [
+      el('span', { class: 'suggest-label', text: row.label }),
+      el('span', { class: 'suggest-value', text: row.value }),
+      el('span', { class: 'suggest-apply', text: '+', 'aria-hidden': 'true' }),
+    ]))),
+    el('div', { class: 'suggest-note', text: 'اقتراحات مبنية على الصورة — راجعها، فهي ليست توثيقاً معتمداً.' }),
+  ]);
 }
 
 // ── AI ──
@@ -266,22 +422,12 @@ async function runAnalysis() {
         image,
         name: $('f-name').value.trim(),
         categoryName: repository.category($('f-cat').value).name,
+        categories: repository.state.categories.map((c) => c.name).filter(Boolean),
       });
 
       form.aiData = aiData;
       refreshAiPanel();
-
-      // Suggestions fill only empty fields; they never overwrite the user.
-      if (!$('f-name').value.trim() && aiData.description) {
-        $('f-name').value = aiData.description.split(' ').slice(0, 5).join(' ');
-      }
-      if (aiData.condition && !$('f-cond').value) $('f-cond').value = aiData.condition;
-      if (aiData.suggestedValuation && !$('f-valuation').value.trim()) {
-        const { min, max, currency } = aiData.suggestedValuation;
-        $('f-valuation').value = min === max ? String(min) : `${min}-${max}`;
-        $('f-currency').value = currency;
-        updateValuationPreview();
-      }
+      renderSuggestions();
       toast('اكتمل التحليل ✦');
     } catch (error) {
       toastError(error, 'تعذّر إجراء التحليل');
@@ -293,9 +439,17 @@ async function runAnalysis() {
 function readValuation() {
   const text = $('f-valuation').value.trim();
   if (!text) return null;
+  // An estimate the customer accepted from the assistant stays attributed to
+  // it, so the detail view never presents it as their own figure. Editing the
+  // number makes it theirs again.
+  const fromAssistant = text === form.assistantValuationText;
   return normalizeValuation({
-    ...parseValuationText(text, { currency: $('f-currency').value }),
+    ...parseValuationText(text, {
+      currency: $('f-currency').value,
+      source: fromAssistant ? VALUATION_SOURCES.AI : VALUATION_SOURCES.MANUAL,
+    }),
     currency: $('f-currency').value,
+    source: fromAssistant ? VALUATION_SOURCES.AI : VALUATION_SOURCES.MANUAL,
   });
 }
 
@@ -334,6 +488,8 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   form.images = item ? [...item.images] : [];
   form.primaryImageId = item?.primaryImageId || null;
   form.aiData = item?.aiData || null;
+  form.autoAnalyzed = false;
+  form.assistantValuationText = null;
 
   setText('addtitle', item ? 'تعديل القطعة' : 'إضافة قطعة');
   fillSelects(item);
@@ -354,6 +510,8 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   renderImages();
   setDescriptionMode(item?.aiData ? 'ai' : 'manual');
   refreshAiPanel();
+  // An existing record already carries whatever the customer accepted.
+  if (item) { $('ai-suggest').style.display = 'none'; render($('ai-suggest'), []); }
 
   openSheet('add', { focus: '#f-name' });
 }

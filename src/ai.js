@@ -43,7 +43,7 @@ const ERROR_MESSAGES = {
  * Requests an analysis for an item's primary image.
  * @returns {Promise<object>} validated aiData ready to store on the item
  */
-export async function analyzeItem({ workspaceId, itemId, image, name, categoryName }) {
+export async function analyzeItem({ workspaceId, itemId, image, name, categoryName, categories = [] }) {
   const availability = aiAvailability();
   if (availability === AiAvailability.OFFLINE) {
     throw new AppError('التحليل يحتاج اتصالاً بالإنترنت', { code: 'ai/offline' });
@@ -67,6 +67,9 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
       storagePath: image.storagePath,
       name: name || '',
       categoryName: categoryName || '',
+      // The workspace's own category names, so a suggestion lands in the
+      // customer's taxonomy instead of inventing a new one.
+      categories,
     });
   } catch (error) {
     console.error('[ai] callable failed', error);

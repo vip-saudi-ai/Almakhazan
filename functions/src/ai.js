@@ -30,34 +30,54 @@ const BURST_LIMIT = { max: 12, windowMs: 10 * 60 * 1000 };
 const SYSTEM_PROMPT = [
   'أنت خبير في تقييم المقتنيات والمعدات والمخزون.',
   'مهمتك تحليل بصري أولي للصورة المرفقة فقط: صف القطعة، قدّر حالتها، وأعطِ تقديراً سعرياً مبدئياً.',
+  'اقترح كذلك اسماً عربياً قصيراً للقطعة، وتصنيفاً من القائمة المعطاة، والعلامة التجارية إن ظهرت،',
+  'وانسخ أي نص مقروء في الصورة كما هو (رقم تسلسلي، موديل، ملصق) دون تخمين.',
+  'اترك أي حقل فارغاً ("") إن لم تكن واثقاً منه؛ التخمين أسوأ من الفراغ.',
   'هذا ليس توثيقاً احترافياً ولا تقييماً معتمداً، ولا تدّعِ أنه كذلك.',
   'إن لم تتمكن من تحديد القطعة بثقة، قل ذلك صراحة في التقييم واخفض درجات الثقة.',
   'استخدم أداة record_analysis لتسجيل النتيجة، ولا تكتب أي نص خارجها.',
 ].join('\n');
 
-const ANALYSIS_TOOL = {
-  name: 'record_analysis',
-  description: 'يسجّل نتيجة التحليل البصري للقطعة.',
-  strict: true,
-  input_schema: {
-    type: 'object',
-    properties: {
-      description: { type: 'string', description: 'وصف دقيق للقطعة في جملتين' },
-      evaluation: { type: 'string', description: 'تقييم موجز يذكر درجة اليقين' },
-      condition: { type: 'string', enum: CONDITIONS },
-      localScore: { type: 'integer', minimum: 0, maximum: 10 },
-      globalScore: { type: 'integer', minimum: 0, maximum: 10 },
-      suggestedValuationMin: { type: 'number', minimum: 0 },
-      suggestedValuationMax: { type: 'number', minimum: 0 },
-      currency: { type: 'string', enum: CURRENCIES },
+/**
+ * Built per call: the category list belongs to the workspace, so the model
+ * chooses from the customer's own taxonomy instead of inventing one. Names
+ * only — ids never leave the browser's mapping, and the answer is checked
+ * against this same list before it is returned.
+ */
+function analysisTool(categoryNames) {
+  const categoryField = categoryNames.length
+    ? { type: 'string', enum: ['', ...categoryNames], description: 'التصنيف الأنسب من قائمة المستخدم، أو "" إن لم يناسب أي منها' }
+    : { type: 'string', description: 'اتركه فارغاً' };
+
+  return {
+    name: 'record_analysis',
+    description: 'يسجّل نتيجة التحليل البصري للقطعة.',
+    strict: true,
+    input_schema: {
+      type: 'object',
+      properties: {
+        suggestedName: { type: 'string', description: 'اسم عربي قصير للقطعة (٢-٥ كلمات)، أو "" إن لم تتعرّف عليها' },
+        suggestedCategory: categoryField,
+        brand: { type: 'string', description: 'العلامة التجارية إن ظهرت، وإلا ""' },
+        visibleText: { type: 'string', description: 'النص الظاهر في الصورة حرفياً (رقم تسلسلي، موديل، ملصق)، وإلا ""' },
+        description: { type: 'string', description: 'وصف دقيق للقطعة في جملتين' },
+        evaluation: { type: 'string', description: 'تقييم موجز يذكر درجة اليقين' },
+        condition: { type: 'string', enum: CONDITIONS },
+        localScore: { type: 'integer', minimum: 0, maximum: 10 },
+        globalScore: { type: 'integer', minimum: 0, maximum: 10 },
+        suggestedValuationMin: { type: 'number', minimum: 0 },
+        suggestedValuationMax: { type: 'number', minimum: 0 },
+        currency: { type: 'string', enum: CURRENCIES },
+      },
+      required: [
+        'suggestedName', 'suggestedCategory', 'brand', 'visibleText',
+        'description', 'evaluation', 'condition', 'localScore', 'globalScore',
+        'suggestedValuationMin', 'suggestedValuationMax', 'currency',
+      ],
+      additionalProperties: false,
     },
-    required: [
-      'description', 'evaluation', 'condition', 'localScore', 'globalScore',
-      'suggestedValuationMin', 'suggestedValuationMax', 'currency',
-    ],
-    additionalProperties: false,
-  },
-};
+  };
+}
 
 async function enforceBurstLimit(uid) {
   const ref = db.doc(`rateLimits/${uid}`);
@@ -116,8 +136,10 @@ async function loadImage(workspaceId, mediaId) {
 }
 
 /** Schema conformance is not the same as sanity; re-check the values. */
-function validateAnalysis(raw) {
+function validateAnalysis(raw, categoryNames = []) {
   if (!raw || typeof raw !== 'object') return null;
+
+  const text = (value, max) => (typeof value === 'string' ? value.slice(0, max).trim() : '');
 
   const score = (value) => {
     const n = Number(value);
@@ -144,6 +166,10 @@ function validateAnalysis(raw) {
     };
   }
 
+  // A suggested category is only honoured when it is one of the workspace's
+  // own categories; anything else is dropped rather than created.
+  const suggestedCategory = categoryNames.includes(raw.suggestedCategory) ? raw.suggestedCategory : '';
+
   return {
     description,
     evaluation,
@@ -151,6 +177,10 @@ function validateAnalysis(raw) {
     localScore: score(raw.localScore),
     globalScore: score(raw.globalScore),
     suggestedValuation,
+    suggestedName: text(raw.suggestedName, 200),
+    suggestedCategory,
+    brand: text(raw.brand, 120),
+    visibleText: text(raw.visibleText, 500),
   };
 }
 
@@ -195,6 +225,14 @@ exports.analyzeInventoryItem = onCall(
     const mediaId = requireString(request.data?.mediaId ?? request.data?.imageId, 'mediaId', 128);
     const name = typeof request.data?.name === 'string' ? request.data.name.slice(0, 200) : '';
     const categoryName = typeof request.data?.categoryName === 'string' ? request.data.categoryName.slice(0, 200) : '';
+    // The workspace's own category names, used only to bound what the model
+    // may answer. At most 40, trimmed, deduplicated and length-capped.
+    const categoryNames = Array.isArray(request.data?.categories)
+      ? [...new Set(request.data.categories
+        .filter((value) => typeof value === 'string')
+        .map((value) => value.trim().slice(0, 60))
+        .filter(Boolean))].slice(0, 40)
+      : [];
 
     await requireMember(uid, workspaceId, 'editor');
     await assertWithinLimits(workspaceId, 'ai');
@@ -219,7 +257,7 @@ exports.analyzeInventoryItem = onCall(
         fallbacks: 'default',
         system: SYSTEM_PROMPT,
         output_config: { effort: 'medium' },
-        tools: [ANALYSIS_TOOL],
+        tools: [analysisTool(categoryNames)],
         tool_choice: { type: 'tool', name: 'record_analysis' },
         messages: [{
           role: 'user',
@@ -254,7 +292,7 @@ exports.analyzeInventoryItem = onCall(
       throw new HttpsError('internal', 'لم يُرجع التحليل نتيجة قابلة للاستخدام');
     }
 
-    const analysis = validateAnalysis(toolUse.input);
+    const analysis = validateAnalysis(toolUse.input, categoryNames);
     if (!analysis) throw new HttpsError('internal', 'نتيجة التحليل غير صالحة');
 
     // Metering and the audit entry are written server-side so neither can be

@@ -7,7 +7,7 @@
 // the difference between "you have 8 records left" and an unexplained refusal.
 
 import {
-  assistantPresentation, checkCreateItem, itemQuotaStatus, planById,
+  assistantPresentation, checkCreateItem, checkUseAI, itemQuotaStatus, planById,
   resolveEntitlement, usageSummary, DEFAULT_PLAN,
 } from './entitlements.js';
 import { firebaseContext } from './firebase.js';
@@ -145,6 +145,12 @@ export function quotaStatus() {
 export function canAddItem() {
   if (!state.entitlement) return { allowed: true };
   return checkCreateItem({ entitlement: state.entitlement, usage: state.usage });
+}
+
+/** Whether the assistant may run — credits, freeze and plan all considered. */
+export function canUseAssistant() {
+  if (!state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد المخزن يتطلب حساباً' };
+  return checkUseAI({ entitlement: state.entitlement, usage: state.usage });
 }
 
 export function planUsage() {
