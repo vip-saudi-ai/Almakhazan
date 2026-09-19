@@ -1,28 +1,23 @@
-// The NAZM symbol as a DOM node.
+// The NAZM symbol and wordmark as DOM nodes.
 //
 // Built with createElementNS rather than innerHTML: the app forbids injecting
-// markup, and that rule does not get an exception for our own assets. It
-// inherits currentColor, so one mark serves light, dark and reversed contexts.
+// markup, and that rule does not get an exception for our own assets. The
+// geometry comes from symbol-geometry.js — the same numbers the asset files
+// are generated from — so the mark on screen and the mark on disk cannot drift.
 
+import { SMALL_BELOW, SYMBOL, symbolPaths } from './symbol-geometry.js';
 import { WORDMARK_AR } from './wordmark-ar.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 let counter = 0;
 
-/**
- * @param {number} size rendered size in px
- * @param {{ className?: string, title?: string }} [options]
- */
-export function symbolNode(size = 28, { className = 'nazm-mark', title, gradient = false } = {}) {
-  const seq = ++counter;
-  const id = `nazm-n-${seq}`;
-  const gradientId = `nazm-g-${seq}`;
+function svgRoot(viewBox, { title, className, width, height }) {
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 96 96');
-  svg.setAttribute('width', String(size));
-  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', viewBox);
   svg.setAttribute('focusable', 'false');
-  svg.setAttribute('class', className);
+  if (width) svg.setAttribute('width', String(width));
+  if (height) svg.setAttribute('height', String(height));
+  if (className) svg.setAttribute('class', className);
   if (title) {
     svg.setAttribute('role', 'img');
     const label = document.createElementNS(NS, 'title');
@@ -31,81 +26,91 @@ export function symbolNode(size = 28, { className = 'nazm-mark', title, gradient
   } else {
     svg.setAttribute('aria-hidden', 'true');
   }
+  return svg;
+}
 
-  const mask = document.createElementNS(NS, 'mask');
-  mask.setAttribute('id', id);
-  const plate = document.createElementNS(NS, 'rect');
-  plate.setAttribute('width', '96');
-  plate.setAttribute('height', '96');
-  plate.setAttribute('fill', '#fff');
-  const n = document.createElementNS(NS, 'path');
-  n.setAttribute('d', 'M34 67V29l28 38V29');
-  n.setAttribute('fill', 'none');
-  n.setAttribute('stroke', '#000');
-  n.setAttribute('stroke-width', size < 26 ? '12.5' : '11');
-  n.setAttribute('stroke-linecap', 'round');
-  n.setAttribute('stroke-linejoin', 'round');
-  mask.append(plate, n);
+function gradientDef(id) {
+  const def = document.createElementNS(NS, 'linearGradient');
+  def.setAttribute('id', id);
+  def.setAttribute('x1', '8');
+  def.setAttribute('y1', '4');
+  def.setAttribute('x2', '88');
+  def.setAttribute('y2', '92');
+  def.setAttribute('gradientUnits', 'userSpaceOnUse');
+  for (const [offset, color] of [['0', '#2563FF'], ['0.55', '#6366F1'], ['1', '#93C5FD']]) {
+    const stop = document.createElementNS(NS, 'stop');
+    stop.setAttribute('offset', offset);
+    stop.setAttribute('stop-color', color);
+    def.appendChild(stop);
+  }
+  return def;
+}
+
+/**
+ * @param {number} size rendered size in px
+ * @param {{ className?: string, title?: string, gradient?: boolean }} [options]
+ */
+export function symbolNode(size = 28, { className = 'nazm-mark', title, gradient = false } = {}) {
+  const variant = size <= SMALL_BELOW ? 'small' : 'regular';
+  const { ring, blade } = symbolPaths(variant);
+  const svg = svgRoot(`0 0 ${SYMBOL.size} ${SYMBOL.size}`, {
+    title, className, width: size, height: size,
+  });
 
   // The branded gradient is reserved for hero moments; everywhere else the
   // mark takes the surrounding text colour.
   let paint = 'currentColor';
   if (gradient) {
-    const def = document.createElementNS(NS, 'linearGradient');
-    def.setAttribute('id', gradientId);
-    def.setAttribute('x1', '8'); def.setAttribute('y1', '6');
-    def.setAttribute('x2', '88'); def.setAttribute('y2', '92');
-    def.setAttribute('gradientUnits', 'userSpaceOnUse');
-    for (const [offset, color] of [['0', '#2563FF'], ['0.55', '#6366F1'], ['1', '#93C5FD']]) {
-      const stop = document.createElementNS(NS, 'stop');
-      stop.setAttribute('offset', offset);
-      stop.setAttribute('stop-color', color);
-      def.appendChild(stop);
-    }
-    svg.appendChild(def);
-    paint = `url(#${gradientId})`;
+    const id = `nazm-gradient-${++counter}`;
+    svg.appendChild(gradientDef(id));
+    paint = `url(#${id})`;
   }
 
-  const plateOuter = document.createElementNS(NS, 'rect');
-  plateOuter.setAttribute('x', '2');
-  plateOuter.setAttribute('y', '2');
-  plateOuter.setAttribute('width', '92');
-  plateOuter.setAttribute('height', '92');
-  plateOuter.setAttribute('rx', '26');
-  plateOuter.setAttribute('fill', paint);
-  plateOuter.setAttribute('mask', `url(#${id})`);
+  const frame = document.createElementNS(NS, 'rect');
+  frame.setAttribute('x', String(ring.x));
+  frame.setAttribute('y', String(ring.y));
+  frame.setAttribute('width', String(ring.size));
+  frame.setAttribute('height', String(ring.size));
+  frame.setAttribute('rx', String(ring.rx));
+  frame.setAttribute('fill', 'none');
+  frame.setAttribute('stroke', paint);
+  frame.setAttribute('stroke-width', String(ring.strokeWidth));
 
-  svg.append(mask, plateOuter);
+  const shape = document.createElementNS(NS, 'path');
+  shape.setAttribute('d', blade);
+  shape.setAttribute('fill', paint);
+
+  svg.append(frame, shape);
   return svg;
 }
 
 /**
  * The Arabic wordmark. Inline vector, not an <img>: it must render before any
  * network request resolves, and it must survive being bundled into one file.
+ * The fatha and sukun are a separate path so they can carry the brand blue.
  */
-export function wordmarkNode(height = 26, { title } = {}) {
-  const { width, height: h, transform, path } = WORDMARK_AR;
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${width} ${h}`);
-  svg.setAttribute('height', String(height));
-  svg.setAttribute('width', String(Math.round((width / h) * height)));
-  svg.setAttribute('focusable', 'false');
-  svg.setAttribute('class', 'nazm-wordmark');
-  if (title) {
-    svg.setAttribute('role', 'img');
-    const label = document.createElementNS(NS, 'title');
-    label.textContent = title;
-    svg.appendChild(label);
-  } else {
-    svg.setAttribute('aria-hidden', 'true');
-  }
+export function wordmarkNode(height = 26, { title, twoTone = true } = {}) {
+  const { width, height: h, transform, letters, marks } = WORDMARK_AR;
+  const svg = svgRoot(`0 0 ${width} ${h}`, {
+    title,
+    className: 'nazm-wordmark',
+    height,
+    width: Math.round((width / h) * height),
+  });
 
   const group = document.createElementNS(NS, 'g');
   group.setAttribute('transform', transform);
-  const shape = document.createElementNS(NS, 'path');
-  shape.setAttribute('d', path);
-  shape.setAttribute('fill', 'currentColor');
-  group.appendChild(shape);
+
+  const body = document.createElementNS(NS, 'path');
+  body.setAttribute('d', letters);
+  body.setAttribute('fill', 'currentColor');
+
+  const diacritics = document.createElementNS(NS, 'path');
+  diacritics.setAttribute('d', marks);
+  diacritics.setAttribute('fill', twoTone ? 'var(--brand)' : 'currentColor');
+  diacritics.setAttribute('class', 'nazm-wordmark-marks');
+
+  group.append(body, diacritics);
   svg.appendChild(group);
   return svg;
 }

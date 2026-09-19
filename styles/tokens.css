@@ -166,16 +166,19 @@
 }
 
 /* ── the application backdrop ──
-   A calm mist, not a light show: two slow orbs over a cool gradient. */
+   The brandbook's rule: surfaces stay calm and neutral, and colour is spent on
+   state and action. So the backdrop is near-white with the faintest cool cast,
+   and the two orbs are barely there — enough to keep glass from looking flat,
+   not enough to tint the content sitting on it. */
 :root {
-  --app-bg: linear-gradient(135deg, #E8EEFF 0%, #EDEBFF 35%, #E6F0FF 65%, #F2F5FF 100%);
-  --orb-1: rgba(37, 99, 255, 0.22);
-  --orb-2: rgba(99, 102, 241, 0.20);
+  --app-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 42%, #EDF1F8 100%);
+  --orb-1: rgba(37, 99, 255, 0.10);
+  --orb-2: rgba(99, 102, 241, 0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --app-bg: linear-gradient(135deg, #060E22 0%, #0A1430 45%, #0B1F4B 100%);
-    --orb-1: rgba(37, 99, 255, 0.20);
-    --orb-2: rgba(99, 102, 241, 0.16);
+    --app-bg: linear-gradient(180deg, #060E22 0%, #08122A 45%, #0B1F4B 100%);
+    --orb-1: rgba(37, 99, 255, 0.18);
+    --orb-2: rgba(99, 102, 241, 0.14);
   }
 }

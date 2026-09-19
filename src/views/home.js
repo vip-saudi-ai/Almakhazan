@@ -369,7 +369,7 @@ export function renderHome() {
   view.page = clampPage(view.page, total, PAGE_SIZE);
   const pageItems = results.slice((view.page - 1) * PAGE_SIZE, view.page * PAGE_SIZE);
 
-  setText('htitle', searching ? `نتائج البحث` : folder ? `${folder.icon} ${folder.name}` : 'الجرد');
+  setText('htitle', searching ? `نتائج البحث` : folder ? `${folder.icon} ${folder.name}` : 'القطع');
   setText('hcount', formatNumber(total));
 
   renderNavBar(folder);
@@ -429,7 +429,7 @@ function renderNavBar(folder) {
 
   if (folder) {
     render(bar, [
-      el('button', { class: 'nback', type: 'button', text: '‹ الجرد', onClick: exitFolder }),
+      el('button', { class: 'nback', type: 'button', text: '‹ المخزون', onClick: exitFolder }),
       actions,
     ]);
   } else {
@@ -438,7 +438,7 @@ function renderNavBar(folder) {
         // One quiet mark, not the whole logo: this is the customer's inventory,
         // not our billboard.
         symbolNode(26, { className: 'nazm-mark ntitle-mark' }),
-        'الجرد',
+        'المخزون',
         el('span', { id: 'syncDot', class: 'syncdot', role: 'status', 'aria-label': 'حالة المزامنة' }),
       ]),
       actions,
@@ -456,7 +456,7 @@ export function openFilterSheet() {
 
   optionList($('fp-folder'), [
     { value: '', label: 'الكل' },
-    { value: '__root__', label: '📦 الجرد الرئيسي' },
+    { value: '__root__', label: '📦 المخزون الرئيسي' },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
   ], view.filters.folderId);
 

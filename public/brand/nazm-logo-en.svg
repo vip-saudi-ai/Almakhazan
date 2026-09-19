@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262 96" role="img" aria-label="NAZM">
-  <title>NAZM</title>
-  <g><!-- Direction 04: a rounded container holding an N that climbs left to right.
-       Containment, structure, forward movement. The N is negative space, so the
-       mark survives being scaled down to a favicon. -->
-  <mask id="nazm-n-en">
-    <rect width="96" height="96" fill="#fff"/>
-    <path d="M34 67V29l28 38V29" fill="none" stroke="#000" stroke-width="11"
-          stroke-linecap="round" stroke-linejoin="round"/>
-  </mask>
-  <rect x="2" y="2" width="92" height="92" rx="26" fill="currentColor" mask="url(#nazm-n-en)"/></g>
-  <g transform="translate(122.00 25.00) scale(0.46000)"><!-- Drawn, not set: one stroke weight, one cap style and one tracking value
-       shared with the symbol, so the two read as one family. -->
-  <path d="M7.5 92.5V7.5L50.5 92.5V7.5 M87.5 92.5L109.0 7.5L130.5 92.5M96.5 62H121.5 M167.5 7.5H204.5L167.5 92.5H204.5 M241.5 92.5V7.5L269.0 62L296.5 7.5V92.5" fill="none" stroke="currentColor" stroke-width="15"
-        stroke-linecap="round" stroke-linejoin="round"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262 96" role="img" aria-label="NAZM"><title>NAZM</title><rect x="4.75" y="4.75" width="86.5" height="86.5" rx="25" fill="none" stroke="currentColor" stroke-width="9.5"/><path d="M26.50 96.00 L26.50 33.50 A6.50 7.50 0 0 1 39.21 29.29 L75.00 82.01 L75.00 96.00 L66.37 96.00 L39.50 56.43 L39.50 96.00 Z" fill="currentColor"/><g transform="translate(121.92 25.00) scale(0.46000)"><path d="M7.5 92.5V7.5L50.5 92.5V7.5 M87.5 92.5L109.0 7.5L130.5 92.5M96.5 62H121.5 M167.5 7.5H204.5L167.5 92.5H204.5 M241.5 92.5V7.5L269.0 62L296.5 7.5V92.5" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/></g></svg>

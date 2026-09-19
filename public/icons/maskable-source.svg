@@ -1,13 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="NAZM">
-  <!-- Maskable: the mark stays inside the inner 80% safe area, so a circular
-       or squircle mask never clips it. -->
-  <defs>
-    <linearGradient id="mg" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2563FF"/><stop offset="0.55" stop-color="#6366F1"/><stop offset="1" stop-color="#93C5FD"/>
-    </linearGradient>
-    <mask id="mn"><rect width="96" height="96" fill="#fff"/>
-      <path d="M37 63V33l22 30V33" fill="none" stroke="#000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-    </mask>
-  </defs>
-  <rect width="96" height="96" fill="url(#mg)" mask="url(#mn)"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="NAZM"><title>NAZM</title><defs><linearGradient id="plate" x1="8" y1="4" x2="88" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2563FF"/><stop offset="0.55" stop-color="#6366F1"/><stop offset="1" stop-color="#93C5FD"/></linearGradient></defs><rect width="96" height="96" fill="#0B1F4B"/><g transform="translate(24.00 24.00) scale(0.5)"><rect x="4.75" y="4.75" width="86.5" height="86.5" rx="25" fill="none" stroke="#FFFFFF" stroke-width="9.5"/><path d="M26.50 96.00 L26.50 33.50 A6.50 7.50 0 0 1 39.21 29.29 L75.00 82.01 L75.00 96.00 L66.37 96.00 L39.50 56.43 L39.50 96.00 Z" fill="#FFFFFF"/></g></svg>

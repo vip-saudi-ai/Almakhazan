@@ -40,22 +40,31 @@ asserts this (`tests/browser/gate.test.mjs`, check G7).
 
 ## The symbol
 
-Direction 04: a rounded container holding an N that climbs left to right —
-containment, structure, forward movement. The N is negative space, so the mark
-survives being scaled to a favicon.
+Direction 04, redrawn as production geometry: **a rounded frame that holds an N
+whose right stem is the frame itself.** The blade leaves the apex, is cut
+vertically at its foot, and opens a notch against the stem on the way down —
+that notch is what stops the mark reading as a slashed box.
 
-Geometry, in a 96×96 box:
+The brandbook's own note asked for exactly this: the approved artwork is a
+visual direction, and a clean geometric vector had to be drawn before
+registration and wide commercial use. This is that vector.
 
-| | |
-|---|---|
-| Container | `x=2 y=2 w=92 h=92 rx=26` |
-| N path | `M34 67V29l28 38V29` |
-| Stroke | 11, round caps, round joins |
-| Small-size variant | stroke 13, `rx=22`, full bleed |
+Geometry lives in **one** place — `src/views/symbol-geometry.js`. The asset
+files are generated from it (`node tools/build-brand.mjs`) and the app draws
+from it at runtime, so a file on disk and the mark on screen cannot drift.
 
-Below ~24px use `nazm-symbol-small.svg` (or `symbolNode()` with a size under
-26, which switches weight automatically): the production stroke loses its
-counter at that size.
+In a 96×96 box:
+
+| | Regular | Small (≤26px) |
+|---|---|---|
+| Frame stroke | 9.5 | 11 |
+| Frame radius | 25 | 22 |
+| Stem centre / width | 33 / 13 | 33 / 14.5 |
+| Blade width | 15 | 16.5 |
+| Apex | y 33.5 | y 31 |
+| Blade cut | x 75 | x 76 |
+
+`symbolNode()` picks the variant by size, so nothing has to remember.
 
 ## Files
 
@@ -90,9 +99,10 @@ bundled into the single-file demo build.
 a 100-unit cap height), round caps and one tracking value, so it belongs to the
 same family as the symbol.
 
-**Arabic** — outlined from Tajawal ExtraBold (SIL OFL, modification permitted),
-with the fatha and sukun enlarged 8% and lifted so they hold at small sizes,
-then frozen as vectors.
+**Arabic** — outlined from Tajawal ExtraBold (SIL OFL, modification
+permitted), with the fatha and sukun enlarged 8%, lifted, and kept on their own
+path so they can carry the brand blue against navy letters — the two-tone
+treatment in the brandbook. Frozen as vectors.
 
 > **Still owed.** The Arabic mark is production-ready but it is refined type,
 > not bespoke type. A type designer should still draw نَظْم from scratch:
