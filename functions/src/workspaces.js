@@ -59,12 +59,17 @@ exports.createWorkspace = onCall({ region: 'us-central1' }, async (request) => {
   const categories = DEFAULT_CATEGORY_SETS[useCase] || DEFAULT_CATEGORY_SETS.other;
   const batch = db.batch();
 
+  const defaultPlan = PLAN_CONFIG.plans[PLAN_CONFIG.defaultPlan];
+
   batch.set(db.doc(`workspaces/${workspaceId}`), {
     name,
     ownerId: uid,
     useCase,
     plan: PLAN_CONFIG.defaultPlan,
     planSource: 'system',
+    // Denormalised so Security Rules can enforce the record limit without
+    // knowing the plan table. Only this backend ever writes it.
+    limits: defaultPlan.limits,
     schemaVersion: 2,
     readOnly: false,
     trialEndsAt: PLAN_CONFIG.trialDays > 0

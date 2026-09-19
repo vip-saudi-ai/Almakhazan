@@ -57,6 +57,33 @@ service cloud.firestore {
       return isEditor(workspaceId) && isWritable(workspaceId);
     }
 
+    /**
+     * The plan's limits are denormalised onto the workspace by the backend
+     * (createWorkspace and the billing webhook) precisely so that rules can
+     * enforce them. A client cannot write them — see entitlementFieldsUnchanged.
+     */
+    function planLimit(workspaceId, key, fallback) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId))
+               .data.get('limits', {}).get(key, fallback);
+    }
+
+    function currentUsage(workspaceId, key) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId)/usage/current)
+        ? get(/databases/$(database)/documents/workspaces/$(workspaceId)/usage/current).data.get(key, 0)
+        : 0;
+    }
+
+    /**
+     * Item creation is refused at the plan's record limit, here rather than
+     * only in the UI — a patched frontend gains nothing. Counters are
+     * maintained by a trigger, so a rapid burst may land a small number over;
+     * that is a billing tolerance, not a security boundary.
+     */
+    function withinItemQuota(workspaceId) {
+      let limit = planLimit(workspaceId, 'items', 50);
+      return limit == -1 || currentUsage(workspaceId, 'items') < limit;
+    }
+
     // ── validation helpers ────────────────────────────────────────────────
     function validName(name, maxLength) {
       return name is string && name.size() > 0 && name.size() <= maxLength;
@@ -91,7 +118,8 @@ service cloud.firestore {
              && after.get('subscriptionId', null) == before.get('subscriptionId', null)
              && after.get('trialEndsAt', null) == before.get('trialEndsAt', null)
              && after.get('readOnly', false) == before.get('readOnly', false)
-             && after.get('retentionUntil', null) == before.get('retentionUntil', null);
+             && after.get('retentionUntil', null) == before.get('retentionUntil', null)
+             && after.get('limits', {}) == before.get('limits', {});
     }
 
     // ── user profiles ─────────────────────────────────────────────────────
@@ -181,6 +209,7 @@ service cloud.firestore {
       match /items/{itemId} {
         allow read: if isMember(workspaceId);
         allow create: if canWrite(workspaceId)
+                      && withinItemQuota(workspaceId)
                       && request.resource.data.version == 1
                       && validItem(request.resource.data);
         // The version must advance by exactly one, which is what makes the

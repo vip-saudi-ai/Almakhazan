@@ -433,24 +433,35 @@ class Repository {
 
     const { db, sdk } = firebaseContext();
     const ref = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', 'sku');
-    try {
-      const value = await sdk.firestore.runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) {
-          tx.set(ref, { value: 1, updatedAt: sdk.firestore.serverTimestamp() });
-          return 1;
-        }
-        const next = (snap.data().value ?? 0) + 1;
-        tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
-        return next;
-      });
-      return Repository.formatSku(value);
-    } catch (error) {
-      // A failed reservation must not block the save; fall back to the local
-      // guess and let the duplicate check catch a collision.
-      console.error('[repo] SKU reservation failed, using provisional value', error);
-      return this.provisionalSku();
+
+    // Contention between devices is the expected failure here, and it is
+    // transient — so retry. What must never happen is falling back to a
+    // locally guessed number, which is exactly how two devices collide.
+    let lastError = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const value = await sdk.firestore.runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) {
+            tx.set(ref, { value: 1, updatedAt: sdk.firestore.serverTimestamp() });
+            return 1;
+          }
+          const next = (snap.data().value ?? 0) + 1;
+          tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
+          return next;
+        });
+        return Repository.formatSku(value);
+      } catch (error) {
+        lastError = error;
+        console.error(`[repo] SKU reservation attempt ${attempt + 1} failed`, error);
+        await new Promise((resolve) => setTimeout(resolve, 150 * 2 ** attempt));
+      }
     }
+
+    throw new AppError('تعذّر حجز رمز للقطعة — تحقق من الاتصال وحاول مرة أخرى', {
+      code: 'repo/sku-unavailable',
+      cause: lastError,
+    });
   }
 
   _provisionalSequence() {

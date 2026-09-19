@@ -284,8 +284,14 @@ async function applySubscriptionUpdate(update, eventId) {
     const workspaceId = update.workspaceId ?? previous?.workspaceId;
     if (workspaceId) {
       const live = ['active', 'trialing', 'past_due'].includes(update.status);
+      const effectivePlanId = live ? update.planId : PLAN_CONFIG.defaultPlan;
+      const effectivePlan = PLANS[effectivePlanId] || PLANS[PLAN_CONFIG.defaultPlan];
+
       tx.set(db.doc(`workspaces/${workspaceId}`), {
-        plan: live ? update.planId : PLAN_CONFIG.defaultPlan,
+        plan: effectivePlanId,
+        // Kept in step with the plan so Security Rules enforce the right
+        // ceiling the moment a subscription starts or lapses.
+        limits: effectivePlan.limits,
         planSource: 'subscription',
         subscriptionId,
         // Losing a subscription tightens limits; it never freezes or deletes

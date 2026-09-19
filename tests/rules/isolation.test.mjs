@@ -206,6 +206,66 @@ async function main() {
     updateDoc(doc(b, 'workspaces', B), { plan: 'team' }),
   ));
 
+  console.log('\nPlan limits are enforced by rules, not only by the UI');
+  const QUOTA_WS = 'quota-ws';
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const d = ctx.firestore();
+    // A free workspace carrying the denormalised plan limits, sitting at 49/50.
+    await setDoc(doc(d, 'workspaces', QUOTA_WS), {
+      name: 'quota', ownerId: A, plan: 'free', limits: { items: 50, storageBytes: 1073741824, members: 1 },
+    });
+    await setDoc(doc(d, 'workspaces', QUOTA_WS, 'members', A), { role: 'owner' });
+    await setDoc(doc(d, 'workspaces', QUOTA_WS, 'usage', 'current'), { items: 49 });
+  });
+  const quotaDb = db(A);
+  const newItem = (name) => ({ name, quantity: 1, unit: 'قطعة', images: [], version: 1 });
+
+  await check('record 50 is accepted', () => assertSucceeds(
+    setDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i50'), newItem('القطعة ٥٠')),
+  ));
+
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'workspaces', QUOTA_WS, 'usage', 'current'), { items: 50 });
+  });
+
+  await check('record 51 is refused by the rules, whatever the client does', () => assertFails(
+    setDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i51'), newItem('القطعة ٥١')),
+  ));
+  await check('a full workspace can still be read', () => assertSucceeds(
+    getDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i50')),
+  ));
+  await check('a full workspace can still edit what it has', () => assertSucceeds(
+    updateDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i50'), { ...newItem('اسم جديد'), version: 2 }),
+  ));
+  await check('a full workspace can still delete, freeing room', () => assertSucceeds(
+    deleteDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i50')),
+  ));
+  await check('the owner cannot raise their own limit', () => assertFails(
+    updateDoc(doc(quotaDb, 'workspaces', QUOTA_WS), { limits: { items: 999999 } }),
+  ));
+
+  await check('upgrading the plan lifts the ceiling immediately', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      // What the billing webhook writes when a subscription starts.
+      await setDoc(doc(ctx.firestore(), 'workspaces', QUOTA_WS), {
+        name: 'quota', ownerId: A, plan: 'personal',
+        limits: { items: 1000, storageBytes: 5368709120, members: 1 },
+      });
+    });
+    await assertSucceeds(setDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i51'), newItem('القطعة ٥١')));
+  });
+
+  await check('an unlimited plan has no ceiling', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const d = ctx.firestore();
+      await setDoc(doc(d, 'workspaces', QUOTA_WS), {
+        name: 'quota', ownerId: A, plan: 'enterprise', limits: { items: -1 },
+      });
+      await setDoc(doc(d, 'workspaces', QUOTA_WS, 'usage', 'current'), { items: 500000 });
+    });
+    await assertSucceeds(setDoc(doc(quotaDb, 'workspaces', QUOTA_WS, 'items', 'i-unlimited'), newItem('بلا حد')));
+  });
+
   console.log('\nUnauthenticated access is denied outright');
   const anon = env.unauthenticatedContext().firestore();
   await check('anonymous cannot read an item', () => assertFails(getDoc(doc(anon, 'workspaces', A, 'items', 'secret-item'))));

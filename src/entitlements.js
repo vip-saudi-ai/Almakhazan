@@ -75,6 +75,7 @@ function decision(allowed, options = {}) {
     allowed,
     reason: options.reason || null,
     message: options.message || null,
+    detail: options.detail || null,
     used: options.used ?? null,
     limit: options.limit ?? null,
     planId: options.planId ?? null,
@@ -120,11 +121,50 @@ export function checkCreateItem({ entitlement, usage }) {
 
   return decision(false, {
     reason: 'limit/items',
-    message: `وصلت إلى حد خطة ${entitlement.plan.name.ar}: ${used} من ${limit} قطعة.`,
+    message: `اكتمل الحد — ${used} من ${limit} قطعة.`,
+    detail: 'جميع بياناتك ستبقى محفوظة ويمكنك الوصول إليها دائماً. للمتابعة وإضافة المزيد، اختر الخطة المناسبة لك.',
     used,
     limit,
     planId: entitlement.planId,
   });
+}
+
+/**
+ * Warns before the wall, not at it. A customer should learn they are running
+ * out at 70% and again at 90%, never be surprised at record 51.
+ *
+ * @returns {{level: 'none'|'notice'|'warn'|'full', message: string|null, used: number, limit: number, ratio: number}}
+ */
+export function itemQuotaStatus({ entitlement, usage }) {
+  const limit = entitlement.plan.limits.items;
+  const used = usage.items ?? 0;
+  if (limit === UNLIMITED) return { level: 'none', message: null, used, limit, ratio: 0 };
+
+  const ratio = limit > 0 ? used / limit : 1;
+  const { noticeAt, warnAt } = PLAN_CONFIG.usageWarnings;
+
+  if (used >= limit) {
+    return {
+      level: 'full',
+      message: `اكتمل الحد — ${used} من ${limit} قطعة`,
+      used, limit, ratio,
+    };
+  }
+  if (ratio >= warnAt) {
+    return {
+      level: 'warn',
+      message: `بقي لك ${limit - used} قطع في خطة ${entitlement.plan.name.ar}.`,
+      used, limit, ratio,
+    };
+  }
+  if (ratio >= noticeAt) {
+    return {
+      level: 'notice',
+      message: `استخدمت ${Math.round(ratio * 100)}% من مساحة خطة ${entitlement.plan.name.ar}.`,
+      used, limit, ratio,
+    };
+  }
+  return { level: 'none', message: null, used, limit, ratio };
 }
 
 export function checkUploadBytes({ entitlement, usage }, bytes) {
@@ -210,6 +250,18 @@ export function checkCreateWorkspace({ entitlement, usage }) {
     limit,
     planId: entitlement.planId,
   });
+}
+
+/**
+ * How the Assistant allowance should be presented. Paid plans say "included"
+ * rather than advertising a credit number; the meter still runs server-side.
+ */
+export function assistantPresentation({ entitlement }) {
+  const assistant = entitlement.plan.assistant || { display: 'counted' };
+  return {
+    included: assistant.display === 'included',
+    label: assistant.label?.ar || 'غير متاح',
+  };
 }
 
 export function checkFeature({ entitlement }, feature) {
