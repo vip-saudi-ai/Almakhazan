@@ -9,7 +9,8 @@ import {
   signInWithEmail, signInWithGoogle, signOutUser,
 } from '../auth.js';
 import { FirebaseStatus, firebaseContext } from '../firebase.js';
-import { applyMerge, applyRestore, exportExcel, exportJSON, readJsonFile } from '../exporting.js';
+import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
+import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
 import {
@@ -450,14 +451,12 @@ async function runImport(mode) {
   if (mode === 'restore') {
     const confirmed = await confirmAction({
       title: 'استبدال كل البيانات الحالية؟',
-      message: `سيُحذف الجرد الحالي بالكامل (${formatNumber(repository.state.items.length)} قطعة) ويُستبدل بمحتوى الملف. نزّل نسخة احتياطية أولاً.`,
+      message: `سيُستبدل المخزون الحالي (${formatNumber(repository.state.items.length)} قطعة) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
       icon: '⚠️',
       confirmLabel: 'استبدال',
       requirePhrase: 'استبدال',
     });
     if (!confirmed) return;
-    // A safety net the user did not have to remember to take.
-    try { exportJSON(); } catch (error) { console.error('[import] pre-restore backup failed', error); }
   }
 
   await withBusy($(mode === 'merge' ? 'import-merge' : 'import-restore'), 'جارٍ التنفيذ…', async () => {
@@ -466,13 +465,23 @@ async function runImport(mode) {
         const { added } = await applyMerge(data);
         toast(`أُضيف ${formatNumber(added)} سجل`, '✓');
       } else {
-        const { restored } = await applyRestore(data);
-        toast(`استُعيد ${formatNumber(restored)} سجل`, '✓');
+        const result = await restoreFromBackup(data, {
+          saveBackup: (text) => saveBackupFile(text, 'nazm_safety'),
+          onProgress: ({ stage, done, total }) => {
+            const label = stageLabel(stage);
+            setText('import-progress', stage === RestoreStage.DONE || total <= 1
+              ? label
+              : `${label} ${formatNumber(done)} / ${formatNumber(total)}`);
+          },
+        });
+        toast(`استُعيد ${formatNumber(result.restored)} سجل`, '✓');
       }
       pendingImport = null;
+      setText('import-progress', '');
       closeSheet('import');
       renderHome();
     } catch (error) {
+      setText('import-progress', '');
       toastError(error, 'فشل الاستيراد');
     }
   });

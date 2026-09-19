@@ -27,6 +27,19 @@ function stamp() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Hands a backup file to the customer, and throws if the browser refuses.
+ * The restore path depends on this throwing: a silent failure here would mean
+ * the safety net was never actually there.
+ */
+export function saveBackupFile(text, prefix = 'nazm_backup') {
+  if (typeof text !== 'string' || text.length < 2) {
+    throw new AppError('نسخة الأمان فارغة', { code: 'export/empty' });
+  }
+  const blob = new Blob([text], { type: 'application/json' });
+  download(blob, `${prefix}_${stamp()}.json`);
+}
+
 export function exportExcel() {
   const repo = repository;
   const items = repo.liveItems();
@@ -196,30 +209,6 @@ export async function applyMerge(data) {
     skipped: Object.values(skipped).reduce((a, b) => a + b, 0),
   });
   return { added: operations.length, skipped };
-}
-
-/**
- * Replaces the current dataset with the imported one. The caller is responsible
- * for taking a backup and confirming first — both are enforced in the UI.
- */
-export async function applyRestore(data) {
-  const repo = repository;
-  const operations = [
-    ...repo.state.items.map((i) => ({ type: 'delete', collection: 'items', id: i.id })),
-    ...repo.state.folders.map((f) => ({ type: 'delete', collection: 'folders', id: f.id })),
-    ...repo.state.categories.map((c) => ({ type: 'delete', collection: 'categories', id: c.id })),
-    ...repo.state.locations.map((l) => ({ type: 'delete', collection: 'locations', id: l.id })),
-    ...(data.categories || []).map((r) => ({ type: 'set', collection: 'categories', id: r.id, data: r, merge: false })),
-    ...(data.locations || []).map((r) => ({ type: 'set', collection: 'locations', id: r.id, data: r, merge: false })),
-    ...(data.folders || []).map((r) => ({ type: 'set', collection: 'folders', id: r.id, data: r, merge: false })),
-    ...(data.items || []).map((r) => ({ type: 'set', collection: 'items', id: r.id, data: r, merge: false })),
-  ];
-  await repo.bulkWrite(operations);
-  await repo.log(ACTIONS.IMPORT_RESTORED, {
-    items: data.items?.length || 0,
-    folders: data.folders?.length || 0,
-  });
-  return { restored: data.items?.length || 0 };
 }
 
 /** Summary line used in the import confirmation sheet. */

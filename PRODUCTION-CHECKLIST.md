@@ -32,7 +32,7 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | 17 | Webhook idempotent and replay-safe | 🟡 | event id claimed in a transaction before applying; stale events ignored. **Untested without a provider** |
 | 18 | App Check | ⬜ **[YOU]** | integration written, disabled behind a null site key — `DEPLOYMENT.md` §5 |
 | 19 | v7 → v8 migration, idempotent and resumable | 🟡 | `src/migration.js` — backs up first, checkpoints per item, verifies counts. Logic reviewed; **not run against production data** |
-| 20 | Restore integrity for large datasets | ⬜ | Import validates fully before applying and takes a backup first, but restore is still batched writes. The staged `restoreJobs/` namespace is in the rules; the commit path is **not implemented** |
+| 20 | Restore integrity for large datasets | ✅ | Staged: a verified safety backup, then the incoming records, then only the removals the backup implies. A failed backup aborts everything; an interruption leaves a superset, never an empty workspace — `tests/browser/restore.test.mjs` R1–R14 breaks the run at each point |
 | 21 | SKU uniqueness under concurrency | ✅ | workspace counter transaction; rules permit only `+1`, verified in the isolation suite |
 | 22 | Soft delete / Trash | ✅ | browser suite: delete → trash → restore |
 | 23 | Audit log, append-only | ✅ | rules deny update and delete on `activityLogs` |

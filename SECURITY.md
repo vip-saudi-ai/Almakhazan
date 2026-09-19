@@ -13,6 +13,7 @@ An inventory is a map of what someone owns and where it is. Treat it as such.
 | Anyone | Guess a Storage object path | Storage rules do the same membership lookup; a path is not a capability |
 | Anyone | Forge a webhook to activate a plan | Signature verification, then an idempotency claim before anything is applied |
 | A malicious record | Inject script through an item name, AI output or an import | No `innerHTML` for data; every node is built with `textContent` |
+| An interrupted restore | Leave a workspace with neither the old records nor the new | A verified safety backup first, incoming records written before any removal, and an abort if the backup cannot be saved; `tests/browser/restore.test.mjs` breaks the run at each point |
 | A compromised account | Burn the AI budget | Monthly plan credits plus a per-user burst limit, both server-side |
 | An invited email | Escalate to owner | Invitations are single-use hashed tokens with an expiry; acceptance is server-side and cannot grant owner |
 

@@ -883,3 +883,5 @@ body.gated .app,body.gated .tbar{display:none}
 .plan-meter-value{font-size:13px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .plan-meter-of{color:var(--text-secondary);font-weight:600}
 .plan-meter-included{color:var(--success)}
+.import-progress{font-size:12.5px;font-weight:600;color:var(--brand);text-align:center;padding:10px 0 2px;
+  font-variant-numeric:tabular-nums;min-height:18px}
