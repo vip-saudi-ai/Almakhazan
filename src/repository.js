@@ -14,6 +14,7 @@
 import { ACTIONS, DEFAULT_CATEGORIES, DEFAULT_LOCATIONS, ROLES, UNCATEGORIZED_ID, roleAtLeast } from './config.js';
 import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
+import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
@@ -468,6 +469,14 @@ class Repository {
     const before = this.item(id);
     this.setSync(SyncState.SAVING);
     await this.backend.update('items', id, { ...patch, updatedBy: this.session.userId }, expectedVersion);
+
+    // Images added or removed by this edit change what the media assets are
+    // referenced by; the files themselves are reclaimed by the backend once
+    // nothing points at them.
+    if (patch.images) {
+      await applyReferenceDelta(this.session, before, { ...before, ...patch });
+    }
+
     const changes = Repository.diff(before, { ...before, ...patch }, [
       'name', 'sku', 'barcode', 'categoryId', 'folderId', 'locationId',
       'quantity', 'unit', 'condition', 'brand', 'valuation', 'description',
@@ -510,12 +519,16 @@ class Repository {
     this.assertCanAdmin();
     const item = this.item(id);
     await this.backend.purge('items', id);
+    // Releases this item's hold on its images. Any image another item still
+    // references keeps a non-zero count and survives.
+    if (item) await releaseAll(this.session, item);
     await this.log(ACTIONS.ITEM_PURGED, { itemId: id, itemName: item?.name });
   }
 
   /**
-   * Duplicates the record, not its history and not its binary images: the copy
-   * references the same Storage objects, so no file is uploaded twice.
+   * Duplicates the record, not its history and not its bytes: the copy shares
+   * the source's media assets and raises their reference count, so no file is
+   * uploaded twice and neither item can delete a file the other still shows.
    */
   async duplicateItem(id) {
     this.assertCanWrite();
@@ -537,6 +550,7 @@ class Repository {
     }, { userId: this.session.userId });
 
     await this.backend.create('items', copy);
+    await retainAll(this.session, copy);
     await this.log(ACTIONS.ITEM_DUPLICATED, { itemId: copy.id, itemName: copy.name, sourceId: id });
     return copy;
   }

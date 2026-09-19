@@ -1,0 +1,35 @@
+{
+  "name": "almakhzan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test:rules": "firebase emulators:exec --only firestore --project demo-almakhzan \"node tests/rules/isolation.test.mjs && node tests/rules/media-refcount.test.mjs\"",
+    "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "build:demo": "node tools/build-single-file.mjs",
+    "dev": "npx http-server -p 8080 -c-1",
+    "sync:plans": "node tools/sync-plans.mjs",
+    "test": "npm run test:unit && npm run test:rules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vip-saudi-ai/Almakhazan.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vip-saudi-ai/Almakhazan/issues"
+  },
+  "homepage": "https://github.com/vip-saudi-ai/Almakhazan#readme",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.10.0",
+    "firebase-tools": "^15.30.2"
+  },
+  "private": true,
+  "type": "module"
+}

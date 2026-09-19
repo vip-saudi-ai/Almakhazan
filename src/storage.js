@@ -11,6 +11,7 @@
 import { IMAGE_LIMITS } from './config.js';
 import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
+import { mediaReference, mediaStore } from './media.js';
 import { AppError, sha256Hex, uid } from './utils.js';
 
 const EXTENSIONS = {
@@ -186,8 +187,14 @@ export async function uploadImage(file, ctx, onProgress) {
       thumbnailType: 'image/jpeg',
       meta: base,
     });
+    const asset = await mediaStore({ mode: 'local', workspaceId: ctx.workspaceId || 'local' }).create({
+      ...base,
+      storagePath: `local:${imageId}`,
+      thumbnailPath: `local:${imageId}`,
+      createdBy: ctx.userId,
+    });
     onProgress?.(100);
-    return { ...base, storagePath: `local:${imageId}`, thumbnailPath: `local:${imageId}`, url: null, thumbnailUrl: null };
+    return mediaReference({ ...asset, storagePath: `local:${imageId}`, thumbnailPath: `local:${imageId}` });
   }
 
   const { storage, sdk } = firebaseContext();
@@ -229,7 +236,11 @@ export async function uploadImage(file, ctx, onProgress) {
     ]);
     onProgress?.(100);
 
-    return { ...base, storagePath, thumbnailPath, url, thumbnailUrl };
+    // The media asset owns the file and carries the reference count; the item
+    // only points at it.
+    const asset = await mediaStore({ mode: 'cloud', workspaceId: ctx.workspaceId })
+      .create({ ...base, storagePath, thumbnailPath, url, thumbnailUrl, createdBy: ctx.userId });
+    return mediaReference({ ...asset, storagePath, thumbnailPath, url, thumbnailUrl });
   } catch (error) {
     console.error('[image] upload failed', error);
     if (error?.code === 'storage/unauthorized') {

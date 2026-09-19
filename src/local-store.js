@@ -5,8 +5,10 @@
 import { AppError } from './utils.js';
 
 const DB_NAME = 'almakhzan';
-const DB_VERSION = 1;
-export const STORES = ['items', 'folders', 'categories', 'locations', 'activity', 'images', 'meta'];
+// Bumped when STORES gains an entry; onupgradeneeded creates whatever is
+// missing, so an existing database upgrades in place without losing data.
+const DB_VERSION = 2;
+export const STORES = ['items', 'folders', 'categories', 'locations', 'activity', 'images', 'mediaAssets', 'meta'];
 
 let dbPromise = null;
 

@@ -194,8 +194,13 @@ export function normalizeImage(raw) {
   const url = cleanText(raw.url, 2048);
   if (!path && !url) return null;
   if (url && !/^https?:\/\//i.test(url)) return null;
+  const id = cleanText(raw.id, 64) || uid('img');
   return {
-    id: cleanText(raw.id, 64) || uid('img'),
+    id,
+    // Points at workspaces/{id}/media/{mediaId}, which owns the file and holds
+    // the reference count. Older records predate media assets and fall back to
+    // their own id.
+    mediaId: cleanText(raw.mediaId, 64) || id,
     storagePath: path || null,
     thumbnailPath: cleanText(raw.thumbnailPath, 512) || null,
     url: url || null,
