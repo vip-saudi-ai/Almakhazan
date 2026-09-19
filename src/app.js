@@ -27,16 +27,34 @@ const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 
 async function boot() {
   showBootState('جارٍ التشغيل…');
 
+  // Each step can take a few seconds on a slow connection, so the boot screen
+  // says what it is waiting for rather than showing a silent spinner.
+  const slowNotice = setTimeout(
+    () => showBootState('الاتصال بطيء — سيبدأ التطبيق محلياً إن تعذّر'),
+    3000,
+  );
+  showBootState('جارٍ الاتصال بالخدمة السحابية…');
   const firebase = await initializeFirebase();
+  clearTimeout(slowNotice);
+
+  showBootState('جارٍ التحقق من الحساب…');
   const session = await initializeAuthentication();
+
+  showBootState('جارٍ تحميل البيانات…');
   await loadApplicationData(firebase, session);
+
   initializeUI();
+
+  // Asked only once the UI is up: it waits on a dialog, and the boot overlay
+  // would sit on top of it.
+  await offerLocalUpload();
 
   onSessionChange(async (next) => {
     const wanted = next.user ? 'cloud' : 'local';
     if (repository.session.mode === wanted && repository.session.workspaceId === next.workspaceId) return;
     await loadApplicationData(firebaseContext(), next);
     renderAll();
+    await offerLocalUpload();
   });
 
   watchConnectivity((status) => {
@@ -61,10 +79,7 @@ async function loadApplicationData(firebase, session) {
   } catch (error) {
     console.error('[app] data load failed', error);
     toastError(error, 'تعذّر تحميل البيانات');
-    return;
   }
-
-  if (cloudReady) await offerLocalUpload();
 }
 
 /**
@@ -73,6 +88,8 @@ async function loadApplicationData(firebase, session) {
  * so nothing can overwrite a newer cloud state on its own.
  */
 async function offerLocalUpload() {
+  if (repository.session.mode !== 'cloud') return;
+
   let localItems = [];
   try {
     localItems = await local.getAll('items');

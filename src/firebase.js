@@ -15,6 +15,21 @@ export const FirebaseStatus = {
   UNCONFIGURED: 'unconfigured', // no project configured
 };
 
+// Startup must never be able to hang. A slow CDN, a captive portal, or an
+// origin where Firebase cannot run all resolve to "no cloud" instead of an
+// await that never settles.
+const BOOTSTRAP_TIMEOUT_MS = 8000;
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error(`${label} timed out after ${ms}ms`)),
+      ms,
+    )),
+  ]);
+}
+
 let bootstrapPromise = null;
 
 /** @type {{status: string, app: any, db: any, storage: any, auth: any, functions: any, sdk: any, error: Error|null}} */
@@ -69,9 +84,17 @@ export function initializeFirebase() {
       return context;
     }
 
+    // Firebase Auth and Firestore cannot operate on a file:// origin — Auth in
+    // particular never reports a state there, which would stall startup.
+    if (window.location.protocol === 'file:') {
+      console.warn('[firebase] file:// origin — running locally without cloud services');
+      context = { ...context, status: FirebaseStatus.UNCONFIGURED };
+      return context;
+    }
+
     let sdk;
     try {
-      sdk = await loadSdk();
+      sdk = await withTimeout(loadSdk(), BOOTSTRAP_TIMEOUT_MS, 'Firebase SDK load');
     } catch (error) {
       console.error('[firebase] SDK could not be loaded', error);
       context = { ...context, status: FirebaseStatus.UNAVAILABLE, error };
@@ -80,7 +103,8 @@ export function initializeFirebase() {
 
     try {
       const app = sdk.app.initializeApp(FIREBASE_CONFIG);
-      await enableAppCheck(app);
+      await withTimeout(enableAppCheck(app), BOOTSTRAP_TIMEOUT_MS, 'App Check')
+        .catch((error) => console.error('[firebase] App Check did not settle', error));
 
       // Firestore's own IndexedDB cache is the offline store; the app does not
       // keep a second copy of cloud data anywhere else.

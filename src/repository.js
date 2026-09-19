@@ -286,9 +286,25 @@ class Repository {
 
     await new Promise((resolve) => {
       const pending = new Set(COLLECTIONS);
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(guard);
+        resolve();
+      };
+      // Listeners normally deliver a first snapshot (from cache if offline)
+      // immediately. If one never does, open the app anyway — late snapshots
+      // still flow in through the same handler.
+      const guard = setTimeout(() => {
+        if (done) return;
+        console.error('[repo] first snapshot did not arrive for', [...pending]);
+        finish();
+      }, 10_000);
+
       const settle = (name) => {
         pending.delete(name);
-        if (!pending.size) resolve();
+        if (!pending.size) finish();
       };
 
       for (const name of COLLECTIONS) {

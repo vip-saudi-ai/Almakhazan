@@ -36,6 +36,22 @@ export function initializeAuthentication() {
 
   return new Promise((resolve) => {
     let settled = false;
+    const settle = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+
+    // Auth normally reports within a few hundred milliseconds. If it does not
+    // report at all, start signed out rather than stalling startup; a later
+    // callback still switches the app into cloud mode through onSessionChange.
+    const timer = setTimeout(() => {
+      if (settled) return;
+      console.error('[auth] no auth state within 8s — starting signed out');
+      emit({ user: null, workspaceId: null, role: null, ready: true, local: false });
+      settle(session);
+    }, 8000);
+
     sdk.auth.onAuthStateChanged(auth, async (user) => {
       if (!user) {
         emit({ user: null, workspaceId: null, role: null, ready: true, local: false });
@@ -48,7 +64,8 @@ export function initializeAuthentication() {
           emit({ user: toProfile(user), workspaceId: null, role: null, ready: true, error, local: false });
         }
       }
-      if (!settled) { settled = true; resolve(session); }
+      clearTimeout(timer);
+      settle(session);
     });
   });
 }
