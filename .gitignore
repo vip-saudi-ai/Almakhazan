@@ -6,3 +6,4 @@ firebase-debug.log
 .DS_Store
 .env
 .env.*
+dist/

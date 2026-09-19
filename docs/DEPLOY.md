@@ -136,3 +136,13 @@ workspaces/{workspaceId}/items/{itemId}/thumbnails/{imageId}.jpg
 | كامل | الاثنان معاً | — |
 
 لنسخ احتياطي مجدول لـ Firestore: `gcloud firestore export gs://<bucket>/backups/$(date +%F)`
+
+## 10. نسخة بملف واحد (للتجربة فقط)
+
+النسخة المنشورة تعمل بوحدات ES ولا تحتاج بناءً. لكن فتح `index.html` مباشرة من القرص (`file://`) لا يعمل لأن المتصفح يمنع استيراد الوحدات هناك. لتجربة سريعة بدون خادم:
+
+```bash
+node tools/build-single-file.mjs   # → dist/almakhzan.html
+```
+
+الملف الناتج مستقل بالكامل ويُفتح بالنقر المزدوج. في هذا الوضع يعمل التطبيق محلياً على IndexedDB فقط — لا تسجيل دخول ولا مزامنة ولا تحليل بصري. **لا تنشر هذا الملف**؛ النشر يكون من `index.html` و`src/`.
