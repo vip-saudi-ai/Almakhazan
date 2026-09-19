@@ -108,7 +108,7 @@ function renderImages() {
     }, [
       el('span', { class: 'ipicotext', text: '📷', 'aria-hidden': 'true' }),
       el('span', { class: 'iptxt', text: form.images.length ? 'إضافة صورة' : 'أضف صورة' }),
-      el('span', { class: 'ipsub', text: 'JPG · PNG · WEBP' }),
+      el('span', { class: 'ipsub', text: 'كل الصيغ' }),
     ]) : null,
   ]);
 
@@ -156,15 +156,25 @@ async function handleFiles(fileList) {
   const progress = $('img-progress');
   progress.style.display = '';
 
-  for (const file of files) {
+  const STAGES = {
+    prepare: 'جارٍ تجهيز الصورة…',
+    upload: 'جارٍ الرفع…',
+    save: 'جارٍ الحفظ…',
+  };
+
+  for (const [index, file] of files.entries()) {
     try {
-      setText('img-progress-label', `جارٍ رفع ${file.name}…`);
+      const counter = files.length > 1 ? ` (${index + 1}/${files.length})` : '';
+      setText('img-progress-label', STAGES.prepare + counter);
       const image = await uploadImage(file, {
         mode: repository.session.mode,
         workspaceId: repository.session.workspaceId,
         itemId: form.itemId,
         userId: repository.session.userId,
-      }, (percent) => { $('img-progress-bar').style.width = `${percent}%`; });
+      }, (percent, stage) => {
+        $('img-progress-bar').style.width = `${percent}%`;
+        if (stage) setText('img-progress-label', STAGES[stage] + counter);
+      });
 
       form.images.push(image);
       form.primaryImageId ||= image.id;

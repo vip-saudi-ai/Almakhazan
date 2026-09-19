@@ -136,7 +136,16 @@ async function migrateEmbeddedImage(dataUrl, ctx) {
   };
 
   if (ctx.mode !== 'cloud') {
-    await local.put('images', { id: imageId, itemId: ctx.itemId, original: blob, thumbnail: blob, meta });
+    // ArrayBuffers, not Blobs — see the note in storage.js.
+    await local.put('images', {
+      id: imageId,
+      itemId: ctx.itemId,
+      original: bytes.buffer,
+      originalType: meta.mimeType,
+      thumbnail: bytes.buffer,
+      thumbnailType: meta.mimeType,
+      meta,
+    });
     return { ...meta, storagePath: `local:${imageId}`, thumbnailPath: `local:${imageId}`, url: null, thumbnailUrl: null };
   }
 

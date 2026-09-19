@@ -17,10 +17,20 @@ const EXTENSIONS = {
   'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif',
 };
 
+const IMAGE_EXTENSION = /\.(jpe?g|png|webp|avif|heic|heif|gif|bmp|tiff?|jfif|dng)$/i;
+
+/**
+ * Accepts anything that plausibly is an image. iOS often reports an empty
+ * `type` for camera captures and library picks, so the real gate is whether
+ * the browser can decode it — checked in prepare().
+ */
 function assertAcceptable(file) {
   if (!file) throw new AppError('لم يتم اختيار ملف');
-  if (!IMAGE_LIMITS.allowedTypes.includes(file.type)) {
-    throw new AppError('صيغة الصورة غير مدعومة (JPG · PNG · WEBP · AVIF)', { code: 'image/type' });
+
+  const looksLikeImage = (file.type && file.type.startsWith('image/'))
+    || (!file.type && IMAGE_EXTENSION.test(file.name || ''));
+  if (!looksLikeImage) {
+    throw new AppError('الملف المختار ليس صورة', { code: 'image/type' });
   }
   if (file.size > IMAGE_LIMITS.maxBytes) {
     const mb = Math.round(IMAGE_LIMITS.maxBytes / 1024 / 1024);
@@ -28,10 +38,16 @@ function assertAcceptable(file) {
   }
 }
 
-async function loadBitmap(file) {
+/**
+ * Decodes the file. `resizeTo` lets the browser downscale during decode, which
+ * is far faster than decoding a 48MP photo in full and scaling afterwards.
+ */
+async function loadBitmap(file, resizeTo) {
   if ('createImageBitmap' in window) {
     try {
-      return await createImageBitmap(file);
+      return await createImageBitmap(file, resizeTo
+        ? { resizeWidth: resizeTo.width, resizeHeight: resizeTo.height, resizeQuality: 'high' }
+        : undefined);
     } catch (error) {
       console.error('[image] createImageBitmap failed, falling back to <img>', error);
     }
@@ -41,7 +57,10 @@ async function loadBitmap(file) {
     const img = new Image();
     await new Promise((resolve, reject) => {
       img.onload = resolve;
-      img.onerror = () => reject(new AppError('تعذّر قراءة الصورة', { code: 'image/decode' }));
+      img.onerror = () => reject(new AppError(
+        'تعذّر فتح هذه الصورة — جرّب صيغة أخرى',
+        { code: 'image/decode' },
+      ));
       img.src = url;
     });
     return img;
@@ -81,14 +100,29 @@ function canvasToBlob(canvas, type, quality) {
  * and inscriptions stay readable. PNG is never transcoded to JPEG.
  */
 async function prepare(file) {
-  const bitmap = await loadBitmap(file);
+  let bitmap;
+  try {
+    bitmap = await loadBitmap(file);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('تعذّر فتح هذه الصورة — جرّب صيغة أخرى', { code: 'image/decode', cause: error });
+  }
+
   const { width, height } = bitmap;
+  if (!width || !height) {
+    throw new AppError('تعذّر فتح هذه الصورة — جرّب صيغة أخرى', { code: 'image/decode' });
+  }
+
+  const webSafe = IMAGE_LIMITS.webSafeTypes.includes(file.type);
+  const oversized = Math.max(width, height) > IMAGE_LIMITS.maxOriginalEdge;
 
   let originalBlob = file;
   let originalWidth = width;
   let originalHeight = height;
 
-  if (Math.max(width, height) > IMAGE_LIMITS.maxOriginalEdge) {
+  // Re-encode only when we must: the file is too large to keep at full size, or
+  // its format (HEIC from an iPhone, TIFF, BMP…) would not display elsewhere.
+  if (oversized || !webSafe) {
     const drawn = drawScaled(bitmap, IMAGE_LIMITS.maxOriginalEdge);
     const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
     originalBlob = await canvasToBlob(drawn.canvas, type, 0.95);
@@ -105,7 +139,8 @@ async function prepare(file) {
     originalBlob,
     originalWidth,
     originalHeight,
-    originalType: originalBlob.type || file.type,
+    originalType: originalBlob.type || file.type || 'image/jpeg',
+    sourceType: file.type || null,
     thumbnailBlob,
   };
 }
@@ -117,8 +152,13 @@ async function prepare(file) {
 export async function uploadImage(file, ctx, onProgress) {
   assertAcceptable(file);
   const imageId = uid('img');
+  // Decoding and re-encoding a modern phone photo takes seconds; say so before
+  // starting rather than leaving the bar at zero.
+  onProgress?.(3, 'prepare');
   const prepared = await prepare(file);
-  const hash = await sha256Hex(new Uint8Array(await prepared.originalBlob.arrayBuffer()));
+  onProgress?.(30, ctx.mode === 'cloud' ? 'upload' : 'save');
+  const originalBuffer = await prepared.originalBlob.arrayBuffer();
+  const hash = await sha256Hex(new Uint8Array(originalBuffer));
   const extension = EXTENSIONS[prepared.originalType] || 'jpg';
 
   const base = {
@@ -134,9 +174,17 @@ export async function uploadImage(file, ctx, onProgress) {
   };
 
   if (ctx.mode !== 'cloud') {
-    // Blobs live in IndexedDB; object URLs are minted on read.
+    // Stored as ArrayBuffers, not Blobs: WebKit has long-standing bugs reading
+    // Blobs back out of IndexedDB, which surfaced as a failed save on iPhone.
+    const thumbnailBuffer = await prepared.thumbnailBlob.arrayBuffer();
     await local.put('images', {
-      id: imageId, itemId: ctx.itemId, original: prepared.originalBlob, thumbnail: prepared.thumbnailBlob, meta: base,
+      id: imageId,
+      itemId: ctx.itemId,
+      original: originalBuffer,
+      originalType: prepared.originalType,
+      thumbnail: thumbnailBuffer,
+      thumbnailType: 'image/jpeg',
+      meta: base,
     });
     onProgress?.(100);
     return { ...base, storagePath: `local:${imageId}`, thumbnailPath: `local:${imageId}`, url: null, thumbnailUrl: null };
@@ -160,7 +208,10 @@ export async function uploadImage(file, ctx, onProgress) {
     const task = sdk.storage.uploadBytesResumable(originalRef, prepared.originalBlob, metadata);
     await new Promise((resolve, reject) => {
       task.on('state_changed',
-        (snapshot) => onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 90)),
+        (snapshot) => onProgress?.(
+          30 + Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 60),
+          'upload',
+        ),
         reject,
         resolve);
     });
@@ -223,8 +274,15 @@ export async function imageSrc(image, { thumbnail = true } = {}) {
   try {
     const rows = await local.getAll('images');
     const record = rows.find((r) => r.id === image.id);
-    const blob = thumbnail ? (record?.thumbnail || record?.original) : (record?.original || record?.thumbnail);
-    if (!blob) return null;
+    if (!record) return null;
+
+    const [data, type] = thumbnail
+      ? [record.thumbnail ?? record.original, record.thumbnailType || 'image/jpeg']
+      : [record.original ?? record.thumbnail, record.originalType || 'image/jpeg'];
+    if (!data) return null;
+
+    // Older records held Blobs directly; newer ones hold ArrayBuffers.
+    const blob = data instanceof Blob ? data : new Blob([data], { type });
     const url = URL.createObjectURL(blob);
     objectUrlCache.set(cacheKey, url);
     return url;

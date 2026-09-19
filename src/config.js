@@ -70,9 +70,13 @@ export const CHART_COLORS = ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF3B3
 export const IMAGE_LIMITS = {
   maxOriginalEdge: 2560,
   thumbnailEdge: 640,
-  maxBytes: 12 * 1024 * 1024,
+  // An iPhone photo routinely exceeds 12MB, and RAW/HEIC more so.
+  maxBytes: 40 * 1024 * 1024,
   maxPerItem: 12,
-  allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+  // Formats every browser can render. Anything else the browser can decode
+  // (HEIC/HEIF from iPhone, TIFF, BMP…) is accepted and transcoded to JPEG so
+  // it displays on other devices too.
+  webSafeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
 };
 
 export const TEXT_LIMITS = {

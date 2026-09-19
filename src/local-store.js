@@ -37,6 +37,19 @@ function open() {
   return dbPromise;
 }
 
+/** A full quota is the common failure here, and it needs its own advice. */
+function storageError(cause, aborted = false) {
+  if (cause?.name === 'QuotaExceededError') {
+    return new AppError('مساحة التخزين على هذا الجهاز ممتلئة — احذف صوراً أو سجّل الدخول للحفظ سحابياً', {
+      code: 'idb/quota', cause,
+    });
+  }
+  return new AppError(
+    aborted ? 'أُلغيت عملية التخزين المحلي' : `فشل الحفظ المحلي${cause?.name ? ` (${cause.name})` : ''}`,
+    { code: aborted ? 'idb/tx-aborted' : 'idb/tx-failed', cause },
+  );
+}
+
 function run(storeName, mode, operation) {
   return open().then((db) => new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, mode);
@@ -50,12 +63,8 @@ function run(storeName, mode, operation) {
       return;
     }
     tx.oncomplete = () => resolve(result && typeof result.result !== 'undefined' ? result.result : result);
-    tx.onerror = () => reject(new AppError('فشلت عملية التخزين المحلي', {
-      code: 'idb/tx-failed', cause: tx.error,
-    }));
-    tx.onabort = () => reject(new AppError('أُلغيت عملية التخزين المحلي', {
-      code: 'idb/tx-aborted', cause: tx.error,
-    }));
+    tx.onerror = () => reject(storageError(tx.error));
+    tx.onabort = () => reject(storageError(tx.error, true));
   }));
 }
 
