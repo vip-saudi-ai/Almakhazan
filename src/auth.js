@@ -77,6 +77,7 @@ function toProfile(user) {
     displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
     photoURL: user.photoURL || null,
     isAnonymous: user.isAnonymous,
+    emailVerified: user.emailVerified,
   };
 }
 
@@ -164,6 +165,30 @@ export async function registerWithEmail(email, password, displayName) {
   }
 }
 
+/**
+ * Apple sign-in. Requires the Apple provider to be enabled in the Firebase
+ * console and an Apple Developer Services ID — see DEPLOYMENT.md § Auth.
+ * Until then the call returns a clear, actionable error rather than a stack
+ * trace, and the button is hidden by appleSignInAvailable().
+ */
+export async function signInWithApple() {
+  const { auth, sdk } = firebaseContext();
+  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  try {
+    const provider = new sdk.auth.OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    provider.setCustomParameters({ locale: 'ar' });
+    await sdk.auth.signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error('[auth] Apple sign-in failed', error);
+    if (error?.code === 'auth/operation-not-allowed') {
+      throw new AppError('الدخول عبر Apple غير مفعّل في المشروع بعد', { code: error.code });
+    }
+    throw authError(error);
+  }
+}
+
 export async function signInWithGoogle() {
   const { auth, sdk } = firebaseContext();
   if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
@@ -173,6 +198,53 @@ export async function signInWithGoogle() {
     console.error('[auth] Google sign-in failed', error);
     throw authError(error);
   }
+}
+
+/** Sends (or resends) the verification email for the signed-in account. */
+export async function sendVerification() {
+  const { auth, sdk } = firebaseContext();
+  const user = auth?.currentUser;
+  if (!user) throw new AppError('لا يوجد حساب نشط');
+  try {
+    await sdk.auth.sendEmailVerification(user);
+  } catch (error) {
+    console.error('[auth] verification email failed', error);
+    if (error?.code === 'auth/too-many-requests') {
+      throw new AppError('أُرسلت رسائل كثيرة — انتظر قليلاً ثم حاول', { code: error.code });
+    }
+    throw new AppError('تعذّر إرسال رسالة التفعيل', { cause: error });
+  }
+}
+
+/**
+ * Re-reads the account from the server. Clicking the link in the email does not
+ * notify this tab, so verification is confirmed by asking.
+ */
+export async function refreshVerification() {
+  const { auth } = firebaseContext();
+  const user = auth?.currentUser;
+  if (!user) return false;
+  try {
+    await user.reload();
+    if (user.emailVerified) {
+      // The ID token carries email_verified, which Security Rules read.
+      await user.getIdToken(true);
+      emit({ user: { ...toProfile(user), emailVerified: true } });
+    }
+    return user.emailVerified;
+  } catch (error) {
+    console.error('[auth] could not refresh verification state', error);
+    return false;
+  }
+}
+
+export function needsVerification() {
+  const { auth } = firebaseContext();
+  const user = auth?.currentUser;
+  if (!user) return false;
+  // Federated identities arrive verified; only password accounts need this.
+  return !user.emailVerified
+    && user.providerData.some((p) => p.providerId === 'password');
 }
 
 export async function sendPasswordReset(email) {

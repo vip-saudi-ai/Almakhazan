@@ -761,6 +761,7 @@ export function bindManageViews() {
   });
   $('as-import')?.addEventListener('click', () => { closeSheet('as'); startImport(); });
 
+  window.addEventListener('almakhzan:start-import', startImport);
   window.addEventListener('almakhzan:new-folder', () => openFolderSheet());
   window.addEventListener('almakhzan:edit-folder', (event) => openFolderSheet(event.detail));
 }

@@ -21,6 +21,7 @@ import {
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
+import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 
 const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign'];
 
@@ -50,22 +51,50 @@ async function boot() {
 
   initializeUI();
 
-  // Asked only once the UI is up: it waits on a dialog, and the boot overlay
-  // would sit on top of it.
-  await offerLocalUpload();
+  // The public face. Shown only when the cloud is reachable and nobody is
+  // signed in — a device-only user goes straight to their inventory rather
+  // than being asked to create an account to see their own things.
+  if (needsGate(firebase, session)) {
+    openGate({ onComplete: (result) => afterOnboarding(result) });
+  } else {
+    // Asked only once the UI is up: it waits on a dialog, and the boot overlay
+    // would sit on top of it.
+    await offerLocalUpload();
+  }
 
   onSessionChange(async (next) => {
+    gateOnSession(next);
     const wanted = next.user ? 'cloud' : 'local';
     if (repository.session.mode === wanted && repository.session.workspaceId === next.workspaceId) return;
     await loadApplicationData(firebaseContext(), next);
     renderAll();
-    await offerLocalUpload();
+    if (!isGateOpen()) await offerLocalUpload();
   });
 
   watchConnectivity((status) => {
     if (repository.session.mode !== 'cloud') return;
     repository.setSync(status === FirebaseStatus.OFFLINE ? SyncState.OFFLINE : SyncState.SYNCED);
   });
+}
+
+/** The gate is for real cloud sign-up only, never for local or demo use. */
+function needsGate(firebase, session) {
+  const cloudReachable = firebase.status === FirebaseStatus.READY
+    || firebase.status === FirebaseStatus.OFFLINE;
+  return cloudReachable && !session.user;
+}
+
+async function afterOnboarding(result) {
+  closeGate();
+  await loadApplicationData(firebaseContext(), currentSession());
+  renderAll();
+  await offerLocalUpload();
+
+  if (result?.intent === 'add-item') {
+    setTimeout(() => openItemForm({}), 300);
+  } else if (result?.intent === 'import') {
+    setTimeout(() => window.dispatchEvent(new CustomEvent('almakhzan:start-import')), 300);
+  }
 }
 
 function showBootState(message) {

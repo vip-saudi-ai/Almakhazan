@@ -511,3 +511,92 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#1a1a2e
 /* flex children need min-width:0 or a text input's intrinsic size pushes the
    trailing unit/currency select out of the row */
 .frow input,.frow select,.frow textarea{min-width:0}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   v9 — the public gate: welcome, auth, verification, onboarding.
+   Same glass, same type, same RTL as the app behind it.
+   ══════════════════════════════════════════════════════════════════ */
+.gate{position:fixed;inset:0;z-index:900;display:none;
+  background:linear-gradient(135deg,#c8d8f0,#d4c8f0 35%,#c8e0f0 65%,#e0c8f0)}
+.gate.open{display:block}
+body.gated .app,body.gated .tbar{display:none}
+.gate-scroll{position:absolute;inset:0;overflow-y:auto;display:flex;align-items:center;justify-content:center;
+  padding:calc(var(--st) + 24px) 20px calc(var(--sb) + 32px);scrollbar-width:none}
+.gate-scroll::-webkit-scrollbar{display:none}
+.gate-panel{width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px}
+
+.gate-brand{font-weight:700;letter-spacing:-.5px;color:var(--tp);line-height:1;text-align:center}
+.gate-brand span{color:var(--blue)}
+.gate-brand-lg{font-size:44px}
+.gate-brand-sm{font-size:26px;margin-bottom:6px}
+
+.gate-hero{text-align:center;padding:12px 0 6px;display:flex;flex-direction:column;gap:14px}
+.gate-headline{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.35;color:var(--tp);margin:0}
+.gate-sub{font-size:15px;color:var(--ts);line-height:1.8;margin:0}
+.gate-head{text-align:center;display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.gate-title{font-size:22px;font-weight:700;color:var(--tp);margin:0}
+
+.gate-actions{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.gate-btn{width:100%;padding:14px 18px;border-radius:14px;border:none;font-family:var(--font);
+  font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.gate-btn:active{transform:scale(.985);opacity:.9}
+.gate-btn:disabled{opacity:.55}
+.gate-btn-primary{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(0,122,255,.28)}
+.gate-btn-secondary{background:rgba(255,255,255,.8);color:var(--tp);border:1px solid var(--gb)}
+.gate-btn-provider{background:rgba(255,255,255,.88);color:var(--tp);border:1px solid var(--gb);font-size:15px}
+.gate-provider-mark{font-size:17px;line-height:1}
+.gate-provider-google{font-weight:700;color:#4285F4}
+
+.gate-note{font-size:12.5px;color:var(--ts);text-align:center;margin:2px 0 0}
+.gate-fineprint{font-size:11.5px;color:var(--tt);text-align:center;line-height:1.7;margin:0}
+
+.gate-divider{display:flex;align-items:center;gap:10px;margin:6px 0;color:var(--tt);font-size:12px}
+.gate-divider::before,.gate-divider::after{content:"";flex:1;height:1px;background:rgba(0,0,0,.1)}
+
+.gate-field{display:flex;flex-direction:column;gap:6px}
+.gate-field-label{font-size:13px;font-weight:600;color:var(--ts)}
+.gate-input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.85);font-family:var(--font);font-size:16px;color:var(--tp);outline:none}
+.gate-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+
+.gate-link{border:none;background:none;color:var(--blue);font-family:var(--font);font-size:14px;
+  font-weight:600;cursor:pointer;padding:8px}
+.gate-foot{text-align:center;font-size:14px;color:var(--ts);margin-top:2px}
+.gate-pricing-link{margin-top:2px}
+
+.gate-magic{display:flex;align-items:flex-start;gap:9px;background:rgba(255,255,255,.55);
+  border:1px solid var(--gbs);border-radius:var(--r);padding:13px 15px;font-size:13.5px;
+  color:var(--ts);line-height:1.75;margin-top:6px}
+.gate-magic-mark{color:#5b6ed8;font-size:15px;line-height:1.5}
+
+.gate-icon{width:56px;height:56px;border-radius:50%;background:rgba(0,122,255,.12);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto}
+.gate-icon-ok{background:rgba(52,199,89,.14);color:var(--green)}
+
+.gate-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gate-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  padding:18px 10px;border-radius:var(--r);border:1px solid var(--gb);background:rgba(255,255,255,.78);
+  font-family:var(--font);font-size:14px;font-weight:600;color:var(--tp);cursor:pointer;min-height:96px}
+.gate-choice.on{border-color:var(--blue);background:rgba(0,122,255,.08)}
+.gate-choice:active{transform:scale(.97)}
+.gate-choice-icon{font-size:26px}
+
+.gate-plans{display:flex;flex-direction:column;gap:10px}
+.gate-plan{position:relative;background:rgba(255,255,255,.8);border:1px solid var(--gb);
+  border-radius:var(--r);padding:16px}
+.gate-plan.featured{border-color:var(--blue);box-shadow:0 4px 16px rgba(0,122,255,.16)}
+.gate-plan-badge{position:absolute;top:-9px;inset-inline-start:16px;background:var(--blue);color:#fff;
+  font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px}
+.gate-plan-name{font-size:17px;font-weight:700;margin-bottom:4px}
+.gate-plan-price{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+.gate-plan-amount{font-size:28px;font-weight:700;letter-spacing:-.5px}
+.gate-plan-unit,.gate-plan-custom{font-size:13px;color:var(--ts)}
+.gate-plan-custom{font-size:18px;font-weight:600;color:var(--tp)}
+.gate-plan-items{font-size:13.5px;color:var(--tp);font-weight:600}
+.gate-plan-line{font-size:12.5px;color:var(--ts);margin-top:3px}
+
+@media (min-width:560px){
+  .gate-headline{font-size:34px}
+  .gate-brand-lg{font-size:50px}
+}
