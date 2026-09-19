@@ -79,6 +79,11 @@
   --state-hover:      rgba(11, 31, 75, 0.04);
   --state-pressed:    rgba(11, 31, 75, 0.08);
   --state-selected:   rgba(37, 99, 255, 0.10);
+  /* A track is the empty half of a progress bar or a slider. */
+  --track:            rgba(11, 31, 75, 0.09);
+  /* Sheets and dialogs sit on their own plate, not on glass. */
+  --sheet-surface:    #F2F2F7;
+  --scrim:            rgba(11, 31, 75, 0.45);
 
   /* ── the NAZM glass system ──
      Five tiers, one set of values. Nothing invents its own blur. */
@@ -165,6 +170,9 @@
     --state-hover:    rgba(255, 255, 255, 0.05);
     --state-pressed:  rgba(255, 255, 255, 0.09);
     --state-selected: rgba(91, 140, 255, 0.18);
+    --track:          rgba(255, 255, 255, 0.14);
+    --sheet-surface:  #0E1A33;
+    --scrim:          rgba(0, 0, 0, 0.62);
 
     --glass-primary:   rgba(19, 32, 64, 0.72);
     --glass-secondary: rgba(19, 32, 64, 0.52);
@@ -189,12 +197,16 @@
    not enough to tint the content sitting on it. */
 :root {
   --app-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 42%, #EDF1F8 100%);
+  /* The empty-photo plate. It must read as "nothing here yet", which means it
+     follows the surface in both themes rather than staying pale in the dark. */
+  --thumb-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(226, 232, 240, 0.45));
   --orb-1: rgba(37, 99, 255, 0.10);
   --orb-2: rgba(99, 102, 241, 0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --app-bg: linear-gradient(180deg, #060E22 0%, #08122A 45%, #0B1F4B 100%);
+    --thumb-bg: linear-gradient(135deg, rgba(30, 47, 88, 0.85), rgba(19, 32, 64, 0.85));
     --orb-1: rgba(37, 99, 255, 0.18);
     --orb-2: rgba(99, 102, 241, 0.14);
   }

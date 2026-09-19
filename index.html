@@ -246,10 +246,10 @@
         <div class="img-progress-track"><div class="img-progress-bar" id="img-progress-bar"></div></div>
         <div class="img-progress-label" id="img-progress-label"></div>
       </div>
-      <input type="file" id="imgInput" accept="image/*" multiple class="visually-hidden">
+      <input type="file" id="imgInput" accept="image/*" multiple class="visually-hidden" aria-label="اختيار صور" tabindex="-1">
       <!-- capture="environment" opens the camera directly on a phone; on a
            desktop the browser falls back to the file picker by itself. -->
-      <input type="file" id="camInput" accept="image/*" capture="environment" class="visually-hidden">
+      <input type="file" id="camInput" accept="image/*" capture="environment" class="visually-hidden" aria-label="التقاط صورة بالكاميرا" tabindex="-1">
       <div class="suggest" id="ai-suggest" style="display:none" role="group" aria-label="اقتراحات مساعد نَظْم"></div>
       <div class="field-hint" id="img-hint">كل صيغ الصور مقبولة، وصور الآيفون (HEIC) تُحوَّل تلقائياً. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
     </div>

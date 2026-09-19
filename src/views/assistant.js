@@ -165,7 +165,7 @@ function gauge(score, band) {
     circle.setAttribute('stroke-width', '12');
     circle.setAttribute('stroke-linecap', 'round');
   }
-  track.setAttribute('stroke', 'var(--nazm-mist)');
+  track.setAttribute('stroke', 'var(--track)');
   value.setAttribute('stroke', 'var(--brand)');
   value.setAttribute('stroke-dasharray', String(circumference));
   value.setAttribute('stroke-dashoffset', String(circumference * (1 - score / 100)));
