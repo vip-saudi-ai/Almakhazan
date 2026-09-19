@@ -5,7 +5,7 @@
 // only so the app can be opened straight from disk (file://), where module
 // imports are blocked by the browser.
 //
-//   node tools/build-single-file.mjs   →  dist/almakhzan.html
+//   node tools/build-single-file.mjs   →  dist/nazm.html
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -124,7 +124,11 @@ const runtime = `
 const body = [...modules.values()].filter(Boolean).join('\n\n');
 const bundle = `${runtime}\n${body}\n__req(${JSON.stringify(entry)});\n})();`;
 
-const css = readFileSync(join(root, 'styles/main.css'), 'utf8');
+// Tokens first: every value the stylesheet reads is defined there.
+const css = [
+  readFileSync(join(root, 'styles/tokens.css'), 'utf8'),
+  readFileSync(join(root, 'styles/main.css'), 'utf8'),
+].join('\n');
 const bootGuard = readFileSync(join(root, 'src/boot-guard.js'), 'utf8');
 let html = readFileSync(join(root, 'index.html'), 'utf8');
 
@@ -136,6 +140,7 @@ const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
 // Replacements go through a function: in a replacement *string*, `$` is special
 // and would mangle any `$` in the code or CSS being inlined.
 html = html
+  .replace('<link rel="stylesheet" href="styles/tokens.css">', '')
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
   .replace('<script src="src/boot-guard.js"></script>\n', '')
   .replace('<script type="module" src="src/app.js"></script>', () => inlineScript)
@@ -146,6 +151,6 @@ html = html
   .replace(/<link rel="apple-touch-icon"[^>]*>\n/, '');
 
 mkdirSync(join(root, 'dist'), { recursive: true });
-writeFileSync(join(root, 'dist/almakhzan.html'), html);
+writeFileSync(join(root, 'dist/nazm.html'), html);
 
-console.log(`bundled ${modules.size} modules → dist/almakhzan.html (${Math.round(html.length / 1024)} KB)`);
+console.log(`bundled ${modules.size} modules → dist/nazm.html (${Math.round(html.length / 1024)} KB)`);

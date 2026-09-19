@@ -110,7 +110,7 @@ async function addPhoto(page) {
     })),
     note: document.querySelector('.suggest-note')?.textContent || '',
   }));
-  check('S1 suggestions appear after the photo', panel.shown && panel.title === 'اقتراحات مساعد المخزن', JSON.stringify(panel.shown));
+  check('S1 suggestions appear after the photo', panel.shown && panel.title === 'اقتراحات مساعد نَظْم', JSON.stringify(panel.shown));
   check('S2 name, category, brand, condition, price and the read text',
     panel.rows.length === 6
     && panel.rows[0].value === 'ساعة جيب فضية'

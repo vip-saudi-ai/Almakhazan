@@ -122,7 +122,7 @@ export const ACTION_LABELS = {
   ITEM_PURGED: 'حُذفت قطعة نهائياً',
   ITEM_DUPLICATED: 'نُسخت قطعة',
   ITEM_MOVED: 'نُقلت قطعة',
-  AI_ANALYZED: 'تحليل بمساعد المخزن',
+  AI_ANALYZED: 'تحليل بمساعد نَظْم',
   FOLDER_CREATED: 'أُنشئ مجلد',
   FOLDER_UPDATED: 'عُدّل مجلد',
   FOLDER_DELETED: 'حُذف مجلد',

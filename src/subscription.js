@@ -149,7 +149,7 @@ export function canAddItem() {
 
 /** Whether the assistant may run — credits, freeze and plan all considered. */
 export function canUseAssistant() {
-  if (!state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد المخزن يتطلب حساباً' };
+  if (!state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد نَظْم يتطلب حساباً' };
   return checkUseAI({ entitlement: state.entitlement, usage: state.usage });
 }
 

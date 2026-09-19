@@ -100,11 +100,27 @@ function formatBytes(bytes) {
  * @property {{items?: number, storageBytes?: number, members?: number, aiCreditsUsed?: number, workspaces?: number}} usage
  */
 
+/**
+ * Arabic counts in four shapes: one, two, a few (3–10) and many. A message
+ * that says "بقي لك 2 قطع" reads like a machine wrote it.
+ */
+function pieces(n) {
+  if (n === 1) return 'قطعة واحدة';
+  if (n === 2) return 'قطعتان';
+  if (n <= 10) return `${n} قطع`;
+  return `${n} قطعة`;
+}
+
+/** "الخطة المجانية" reads better than "خطة مجاني". */
+function planPhrase(plan) {
+  return plan.id === 'free' ? 'الخطة المجانية' : `خطة ${plan.name.ar}`;
+}
+
 export function checkFrozen({ entitlement }) {
   if (entitlement.readOnly) {
     return decision(false, {
       reason: 'workspace/read-only',
-      message: 'المخزن للقراءة فقط حالياً — جدّد الاشتراك لاستئناف التعديل.',
+      message: 'مساحتك للقراءة فقط حالياً — جدّد الاشتراك لاستئناف التعديل.',
       planId: entitlement.planId,
     });
   }
@@ -121,7 +137,9 @@ export function checkCreateItem({ entitlement, usage }) {
 
   return decision(false, {
     reason: 'limit/items',
-    message: `اكتمل الحد — ${used} من ${limit} قطعة.`,
+    message: entitlement.planId === 'free'
+      ? `اكتمل الحد المجاني — ${used} من ${limit} قطعة.`
+      : `اكتمل حد ${planPhrase(entitlement.plan)} — ${used} من ${limit} قطعة.`,
     detail: 'جميع بياناتك ستبقى محفوظة ويمكنك الوصول إليها دائماً. للمتابعة وإضافة المزيد، اختر الخطة المناسبة لك.',
     used,
     limit,
@@ -146,21 +164,25 @@ export function itemQuotaStatus({ entitlement, usage }) {
   if (used >= limit) {
     return {
       level: 'full',
-      message: `اكتمل الحد — ${used} من ${limit} قطعة`,
+      message: entitlement.planId === 'free'
+        ? `اكتمل الحد المجاني — ${used} من ${limit} قطعة`
+        : `اكتمل حد ${planPhrase(entitlement.plan)} — ${used} من ${limit} قطعة`,
       used, limit, ratio,
     };
   }
   if (ratio >= warnAt) {
     return {
       level: 'warn',
-      message: `بقي لك ${limit - used} قطع في خطة ${entitlement.plan.name.ar}.`,
+      message: `بقي لك ${pieces(limit - used)} في ${planPhrase(entitlement.plan)}.`,
       used, limit, ratio,
     };
   }
   if (ratio >= noticeAt) {
     return {
       level: 'notice',
-      message: `استخدمت ${Math.round(ratio * 100)}% من مساحة خطة ${entitlement.plan.name.ar}.`,
+      message: entitlement.planId === 'free'
+        ? `استخدمت ${Math.round(ratio * 100)}% من المساحة المجانية.`
+        : `استخدمت ${Math.round(ratio * 100)}% من مساحة ${planPhrase(entitlement.plan)}.`,
       used, limit, ratio,
     };
   }
@@ -224,7 +246,7 @@ export function checkUseAI({ entitlement, usage }) {
   if (limit === 0) {
     return decision(false, {
       reason: 'feature/ai',
-      message: `التحليل البصري غير متاح في خطة ${entitlement.plan.name.ar}.`,
+      message: `مساعد نَظْم غير متاح في ${planPhrase(entitlement.plan)}.`,
       used, limit, planId: entitlement.planId,
     });
   }
@@ -295,7 +317,7 @@ export function usageSummary({ entitlement, usage }) {
   return [
     { key: 'items', label: 'القطع', used: usage.items ?? 0, limit: limits.items, format: (n) => String(n) },
     { key: 'storage', label: 'الصور', used: usage.storageBytes ?? 0, limit: limits.storageBytes, format: formatBytes },
-    { key: 'ai', label: 'مساعد المخزن', used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
+    { key: 'ai', label: 'مساعد نَظْم', used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
     { key: 'members', label: 'الأعضاء', used: usage.members ?? 1, limit: limits.members, format: (n) => String(n) },
   ];
 }

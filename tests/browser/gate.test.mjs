@@ -97,8 +97,8 @@ const text = (page) => page.evaluate(() => document.getElementById('gate-panel')
 
   const t = await text(page);
   check('G6 welcome copy', t.includes('كل ما تملك، في مكانه.') && t.includes('ابدأ مجاناً') && t.includes('تسجيل الدخول')
-    && t.includes('مجاني حتى 50 قطعة') && t.includes('مساعد المخزن'), t.replace(/\n/g, ' / ').slice(0, 200));
-  check('G7 AI is never called Claude', !/claude|كلود/i.test(t));
+    && t.includes('مجاني حتى 50 قطعة') && t.includes('مساعد نَظْم'), t.replace(/\n/g, ' / ').slice(0, 200));
+  check('G7 the assistant carries no other name', !/claude|كلود|المخزن|almakhzan/i.test(t), t.slice(0, 120));
 
   // pricing
   await page.click('.gate-pricing-link');
@@ -108,12 +108,28 @@ const text = (page) => page.evaluate(() => document.getElementById('gate-panel')
     items: p.querySelector('.gate-plan-items')?.textContent,
     badge: p.querySelector('.gate-plan-badge')?.textContent || null,
   })));
-  check('G8 five plans at launch prices',
+  check('G8 five plans at the NAZM monthly prices',
     plans.length === 5
-    && plans[0].price === '0' && plans[0].items.includes('50')
-    && plans[1].price === '29' && plans[2].price === '59' && plans[3].price === '179'
+    && plans[0].price === 'مجاناً' && plans[0].items.includes('50')
+    && plans[1].price === '69' && plans[2].price === '159' && plans[3].price === '279'
     && plans[4].price === 'حسب الاتفاق',
     JSON.stringify(plans));
+  check('G8b enterprise is custom limits, never "unlimited"',
+    plans[4].items === 'حدود مخصصة', plans[4].items);
+  await page.click('.gate-billing-opt:nth-child(2)');
+  const annual = await page.evaluate(() => ({
+    prices: [...document.querySelectorAll('.gate-plan-amount')].map(n => n.textContent),
+    unit: document.querySelector('.gate-plan-unit')?.textContent,
+    note: document.querySelector('.gate-annual-note')?.textContent || '',
+    pressed: document.querySelector('.gate-billing-opt:nth-child(2)')?.getAttribute('aria-pressed'),
+  }));
+  check('G8c annual shows the published yearly figures',
+    JSON.stringify(annual.prices) === JSON.stringify(['690', '1,590', '2,790'])
+    && annual.unit === 'ريال / سنة' && annual.pressed === 'true',
+    JSON.stringify(annual));
+  check('G8d annual says what the customer saves', annual.note.includes('شهران مجاناً'), annual.note);
+  await page.click('.gate-billing-opt:nth-child(1)');
+
   check('G9 Pro carries the badge', plans[2].badge === 'الأكثر شعبية' && plans.filter(p => p.badge).length === 1,
     plans.map(p => p.badge).join('|'));
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="NAZM">
+  <title>NAZM</title>
+  <!-- Direction 04: a rounded container holding an N that climbs left to right.
+       Containment, structure, forward movement. The N is negative space, so the
+       mark survives being scaled down to a favicon. -->
+  <mask id="nazm-n">
+    <rect width="96" height="96" fill="#fff"/>
+    <path d="M34 67V29l28 38V29" fill="none" stroke="#000" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <rect x="2" y="2" width="92" height="92" rx="26" fill="#000000" mask="url(#nazm-n)"/>
+</svg>

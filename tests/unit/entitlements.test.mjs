@@ -160,9 +160,9 @@ test('usage summary renders every metered dimension', () => {
 test('the five launch plans carry the agreed prices and record limits', () => {
   const expected = {
     free:       { monthly: 0,   yearly: 0,    items: 50,    members: 1,  workspaces: 1,  gb: 1 },
-    personal:   { monthly: 29,  yearly: 290,  items: 1000,  members: 1,  workspaces: 1,  gb: 5 },
-    pro:        { monthly: 59,  yearly: 590,  items: 5000,  members: 3,  workspaces: 3,  gb: 25 },
-    business:   { monthly: 179, yearly: 1790, items: 20000, members: 10, workspaces: 10, gb: 100 },
+    personal:   { monthly: 69,  yearly: 690,  items: 1000,  members: 1,  workspaces: 1,  gb: 5 },
+    pro:        { monthly: 159, yearly: 1590, items: 5000,  members: 3,  workspaces: 3,  gb: 25 },
+    business:   { monthly: 279, yearly: 2790, items: 20000, members: 10, workspaces: 10, gb: 100 },
   };
   for (const [id, want] of Object.entries(expected)) {
     const plan = PLANS[id];
@@ -178,6 +178,23 @@ test('the five launch plans carry the agreed prices and record limits', () => {
   assert.equal(PLANS.enterprise.contactOnly, true);
   assert.equal(PLANS.enterprise.limits.items, UNLIMITED);
   assert.equal(PLANS.pro.badge.ar, 'الأكثر شعبية');
+});
+
+test('annual prices are explicit figures, not twelve months minus a discount', () => {
+  // Ten months' worth: the "two months free" promise has to hold exactly.
+  for (const id of ['personal', 'pro', 'business']) {
+    assert.equal(PLANS[id].price.yearly, PLANS[id].price.monthly * 10, `${id} annual price`);
+  }
+});
+
+test('every plan records which price list it was sold under', () => {
+  for (const plan of Object.values(PLANS)) {
+    assert.match(plan.priceVersion, /^\d{4}-\d{2}-/, `${plan.id} priceVersion`);
+  }
+});
+
+test('enterprise is described as custom limits, never as unlimited', () => {
+  assert.equal(PLANS.enterprise.limitsLabel.ar, 'حدود مخصصة');
 });
 
 test('the free plan allows 10 assistant actions a month and shows the number', () => {

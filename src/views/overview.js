@@ -207,7 +207,7 @@ export function renderOverview() {
         kpi('🏠', `${avgLocal.toFixed(1)}/10`, 'متوسط السوق المحلي', `${formatNumber(withLocal.length)} سجل`, 'var(--teal)'),
         avgGlobal !== null ? kpi('🌍', `${avgGlobal.toFixed(1)}/10`, 'متوسط السوق العالمي', `${formatNumber(withGlobal.length)} سجل`, 'var(--purple)') : null,
       ]),
-      el('div', { class: 'ov-note', text: 'تقديرات أولية من مساعد المخزن، لا تُغني عن التقييم المعتمد.' }),
+      el('div', { class: 'ov-note', text: 'تقديرات أولية من مساعد نَظْم، لا تُغني عن التقييم المعتمد.' }),
     ]));
   }
 

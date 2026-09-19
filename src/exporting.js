@@ -35,9 +35,9 @@ export function exportExcel() {
     'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
     'الكمية', 'الوحدة', 'الحالة', 'البراند',
     'أدنى تقييم', 'أعلى تقييم', 'العملة', 'مصدر التقييم',
-    'تقييم محلي (مساعد المخزن)', 'تقييم عالمي (مساعد المخزن)',
-    'أدنى تقدير (مساعد المخزن)', 'أعلى تقدير (مساعد المخزن)',
-    'وصف من مساعد المخزن', 'الوصف', 'تاريخ الإضافة', 'آخر تحديث',
+    'تقييم محلي (نَظْم)', 'تقييم عالمي (نَظْم)',
+    'أدنى تقدير (نَظْم)', 'أعلى تقدير (نَظْم)',
+    'وصف من نَظْم', 'الوصف', 'تاريخ الإضافة', 'آخر تحديث',
   ]];
 
   for (const item of items) {
@@ -122,7 +122,7 @@ export function exportExcel() {
   }
 
   try {
-    download(buildWorkbook(sheets), `المخزن_${stamp()}.xlsx`);
+    download(buildWorkbook(sheets), `نظم_${stamp()}.xlsx`);
   } catch (error) {
     console.error('[export] Excel export failed', error);
     throw new AppError('فشل تصدير Excel', { cause: error });
@@ -145,7 +145,7 @@ export function exportJSON() {
   };
   try {
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    download(blob, `almakhzan_backup_${stamp()}.json`);
+    download(blob, `nazm_backup_${stamp()}.json`);
   } catch (error) {
     console.error('[export] JSON export failed', error);
     throw new AppError('فشل إنشاء النسخة الاحتياطية', { cause: error });

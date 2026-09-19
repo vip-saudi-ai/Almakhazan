@@ -107,7 +107,7 @@ export function isAnalysisStale(item) {
 }
 
 export const AI_DISCLAIMER = 'هذا التقدير مبني على الصور والمعلومات المتاحة، ولا يُعد توثيقاً احترافياً ولا تقييماً معتمداً.';
-export const ASSISTANT_NAME = 'مساعد المخزن';
+export const ASSISTANT_NAME = 'مساعد نَظْم';
 export const ASSISTANT_MARK = '✦';
 export const AI_TITLE = ASSISTANT_NAME;
 export const AI_SUBTITLE = 'تقدير أولي';

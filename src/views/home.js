@@ -14,6 +14,7 @@ import { closeSheet, emptyState, openSheet, optionList, toast } from '../ui.js';
 import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateItemFlow } from './detail.js';
 import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
+import { symbolNode } from './mark.js';
 
 export const view = {
   page: 1,
@@ -171,7 +172,7 @@ function cardNode(item) {
           color: 'white', fontSize: '9px', padding: '2px 6px', borderRadius: '20px', fontWeight: '700',
         },
         text: '✦',
-        title: 'حُلِّلت بمساعد المخزن',
+        title: 'حُلِّلت بمساعد نَظْم',
       }) : null,
     ]),
     el('div', { class: 'icbody' }, [
@@ -259,7 +260,7 @@ function renderQuotaBanner() {
   render(banner, [
     el('span', { class: 'qb-txt', text: quota.message }),
     el('button', {
-      class: 'qb-act', type: 'button', text: quota.level === 'full' ? 'ترقية' : 'الخطط',
+      class: 'qb-act', type: 'button', text: 'عرض الباقات',
       onClick: () => { openPlansSheet(); },
     }),
     quota.level === 'full' ? null : el('button', {
@@ -433,10 +434,11 @@ function renderNavBar(folder) {
     ]);
   } else {
     render(bar, [
-      el('div', { class: 'ntitle' }, [
-        'المخزن',
-        el('span', { text: '.' }),
-        ' ',
+      el('div', { class: 'ntitle ntitle-brand' }, [
+        // One quiet mark, not the whole logo: this is the customer's inventory,
+        // not our billboard.
+        symbolNode(26, { className: 'nazm-mark ntitle-mark' }),
+        'الجرد',
         el('span', { id: 'syncDot', class: 'syncdot', role: 'status', 'aria-label': 'حالة المزامنة' }),
       ]),
       actions,

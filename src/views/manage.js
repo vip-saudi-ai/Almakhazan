@@ -509,7 +509,7 @@ function renderAuthPanel() {
 
   if (!session.user) {
     render(panel, [
-      el('div', { class: 'auth-intro', text: 'سجّل الدخول لمزامنة المخزن بين أجهزتك وتفعيل التحليل البصري.' }),
+      el('div', { class: 'auth-intro', text: 'سجّل الدخول لمزامنة مقتنياتك بين أجهزتك وتفعيل التعرّف على الصور.' }),
       el('div', { class: 'frow' }, [
         el('label', { for: 'auth-email', text: 'البريد' }),
         el('input', { id: 'auth-email', type: 'email', autocomplete: 'email', placeholder: 'name@example.com' }),
@@ -562,7 +562,7 @@ function renderAuthPanel() {
       onClick: (event) => authAction(event.currentTarget, signOutUser),
     }),
     el('button', {
-      class: 'auth-link', type: 'button', text: 'عرض أعضاء المخزن',
+      class: 'auth-link', type: 'button', text: 'عرض أعضاء مساحة العمل',
       onClick: async () => {
         try {
           const members = await listMembers(session.workspaceId);
@@ -651,7 +651,7 @@ export function renderPlanPanel() {
       el('div', { class: 'srowiw', style: { background: 'rgba(0,122,255,.15)' }, text: '◆', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
         el('div', { class: 'srowl', text: `خطة ${plan.name.ar}` }),
-        el('div', { class: 'srowd', text: `${STATUS_LABELS[status] || status} · مساعد المخزن: ${assistant.label}` }),
+        el('div', { class: 'srowd', text: `${STATUS_LABELS[status] || status} · مساعد نَظْم: ${assistant.label}` }),
       ]),
       plan.price?.monthly ? el('span', { class: 'plan-price', text: `${plan.price.monthly} ر.س / شهر` }) : null,
     ]),
@@ -659,7 +659,7 @@ export function renderPlanPanel() {
     el('div', { class: 'usage-list' }, rows.map(usageBar)),
     el('button', {
       class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '10px' },
-      text: plan.id === 'free' ? 'عرض الخطط والترقية' : 'تغيير الخطة',
+      text: plan.id === 'free' ? 'عرض الباقات' : 'تغيير الخطة',
       onClick: () => openPlansSheet(),
     }),
   ]);
@@ -675,7 +675,7 @@ function renderAiPanel() {
     el('div', { class: 'srow', style: { cursor: 'default' } }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(102,126,234,.15)' }, text: '✦', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: '✦ مساعد المخزن' }),
+        el('div', { class: 'srowl', text: '✦ مساعد نَظْم' }),
         el('div', { class: 'srowd', text: 'يُنفَّذ على الخادم — لا يُخزَّن أي مفتاح في المتصفح' }),
       ]),
       el('span', { class: 'ai-status' }, [

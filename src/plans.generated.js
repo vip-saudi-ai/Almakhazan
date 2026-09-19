@@ -1,7 +1,7 @@
 // GENERATED FILE — edit shared/plans.json and run `npm run sync:plans`.
 
 export const PLAN_CONFIG = {
-  "$comment": "Canonical plan and entitlement configuration. Edit ONLY this file, then run `npm run sync:plans` to regenerate the browser and Cloud Functions copies. Item limits count inventory RECORDS, never quantities: one record with quantity 500 costs one.",
+  "$comment": "Canonical plan and entitlement configuration. Edit ONLY this file, then run `npm run sync:plans` to regenerate the browser and Cloud Functions copies. Item limits count inventory RECORDS, never quantities: one record with quantity 500 costs one. Annual prices are explicit commercial figures, never derived from the monthly ones. priceVersion exists so a future price change can leave existing subscribers on the terms they bought.",
   "schemaVersion": 2,
   "defaultPlan": "free",
   "trialDays": 0,
@@ -65,7 +65,8 @@ export const PLAN_CONFIG = {
         "qrLabels": true,
         "sharing": false,
         "customFields": false
-      }
+      },
+      "priceVersion": "2026-09-nazm-1"
     },
     "personal": {
       "id": "personal",
@@ -79,8 +80,8 @@ export const PLAN_CONFIG = {
         "en": "For your own collection"
       },
       "price": {
-        "monthly": 29,
-        "yearly": 290,
+        "monthly": 69,
+        "yearly": 690,
         "currency": "SAR"
       },
       "purchasable": true,
@@ -116,7 +117,8 @@ export const PLAN_CONFIG = {
         "qrLabels": true,
         "sharing": false,
         "customFields": false
-      }
+      },
+      "priceVersion": "2026-09-nazm-1"
     },
     "pro": {
       "id": "pro",
@@ -126,12 +128,12 @@ export const PLAN_CONFIG = {
         "en": "Pro"
       },
       "tagline": {
-        "ar": "للفرق الصغيرة والمجموعات الكبيرة",
-        "en": "For small teams and large collections"
+        "ar": "للفرق والمجموعات الكبيرة",
+        "en": "For teams and large collections"
       },
       "price": {
-        "monthly": 59,
-        "yearly": 590,
+        "monthly": 159,
+        "yearly": 1590,
         "currency": "SAR"
       },
       "purchasable": true,
@@ -170,7 +172,8 @@ export const PLAN_CONFIG = {
         "qrLabels": true,
         "sharing": true,
         "customFields": true
-      }
+      },
+      "priceVersion": "2026-09-nazm-1"
     },
     "business": {
       "id": "business",
@@ -184,8 +187,8 @@ export const PLAN_CONFIG = {
         "en": "For warehouses and stores"
       },
       "price": {
-        "monthly": 179,
-        "yearly": 1790,
+        "monthly": 279,
+        "yearly": 2790,
         "currency": "SAR"
       },
       "purchasable": true,
@@ -221,7 +224,8 @@ export const PLAN_CONFIG = {
         "qrLabels": true,
         "sharing": true,
         "customFields": true
-      }
+      },
+      "priceVersion": "2026-09-nazm-1"
     },
     "enterprise": {
       "id": "enterprise",
@@ -231,8 +235,8 @@ export const PLAN_CONFIG = {
         "en": "Enterprise"
       },
       "tagline": {
-        "ar": "احتياجات أكبر ودعم مخصص",
-        "en": "Larger needs and dedicated support"
+        "ar": "حدود مخصصة ودعم مخصص",
+        "en": "Custom limits and dedicated support"
       },
       "price": {
         "monthly": null,
@@ -277,7 +281,18 @@ export const PLAN_CONFIG = {
         "qrLabels": true,
         "sharing": true,
         "customFields": true
+      },
+      "priceVersion": "2026-09-nazm-1",
+      "limitsLabel": {
+        "ar": "حدود مخصصة",
+        "en": "Custom limits"
       }
     }
+  },
+  "priceVersion": "2026-09-nazm-1",
+  "entitlementsVersion": 2,
+  "annualNote": {
+    "ar": "شهران مجاناً مع الاشتراك السنوي",
+    "en": "Two months free on annual billing"
   }
 };

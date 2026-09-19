@@ -9,6 +9,7 @@
 // marketing site.
 
 import { orderedPlans } from '../entitlements.js';
+import { PLAN_CONFIG } from '../plans.generated.js';
 import {
   currentSession, needsVerification, refreshVerification, registerWithEmail,
   sendPasswordReset, sendVerification, signInWithApple, signInWithEmail,
@@ -16,6 +17,8 @@ import {
 } from '../auth.js';
 import { firebaseContext } from '../firebase.js';
 import { $, el, render } from '../utils.js';
+import { symbolNode, wordmarkNode } from './mark.js';
+import { BRAND } from '../brand.js';
 import { toast, toastError, withBusy } from '../ui.js';
 
 const USE_CASES = [
@@ -43,6 +46,9 @@ const state = {
   useCase: null,
   step: 1,
   onComplete: null,
+  billing: 'monthly',
+  /** What the visitor picked before they had an account, if anything. */
+  intendedPlan: null,
 };
 
 function gate() {
@@ -97,9 +103,11 @@ function link(text, onClick) {
 }
 
 function brand(size = 'lg') {
+  const marks = { lg: [72, 46], sm: [40, 26] };
+  const [symbol, wordmark] = marks[size] || marks.lg;
   return el('div', { class: `gate-brand gate-brand-${size}` }, [
-    'المخزن',
-    el('span', { text: '.' }),
+    symbolNode(symbol, { className: 'nazm-mark gate-symbol', title: 'نَظْم', gradient: size === 'lg' }),
+    wordmarkNode(wordmark, { title: 'نَظْم' }),
   ]);
 }
 
@@ -118,8 +126,8 @@ function welcomeScreen() {
   return [
     el('div', { class: 'gate-hero' }, [
       brand(),
-      el('h1', { class: 'gate-headline', text: 'كل ما تملك، في مكانه.' }),
-      el('p', { class: 'gate-sub', text: 'صوّر مقتنياتك، صنّفها، واعثر عليها متى احتجتها.' }),
+      el('h1', { class: 'gate-headline', text: BRAND.tagline }),
+      el('p', { class: 'gate-sub', text: 'صوّر مقتنياتك، وثّقها، واعثر عليها متى احتجتها.' }),
     ]),
     el('div', { class: 'gate-actions' }, [
       primary('ابدأ مجاناً', () => show('signup')),
@@ -128,7 +136,7 @@ function welcomeScreen() {
     ]),
     el('div', { class: 'gate-magic' }, [
       el('span', { class: 'gate-magic-mark', text: '✦', 'aria-hidden': 'true' }),
-      el('span', { text: 'صوّر القطعة ودع مساعد المخزن يقترح بياناتها تلقائياً.' }),
+      el('span', { text: `صوّر القطعة فقط، ودع ${BRAND.assistant} يقترح بياناتها تلقائياً.` }),
     ]),
     el('button', {
       class: 'gate-link gate-pricing-link', type: 'button', text: 'الخطط والأسعار',
@@ -223,7 +231,7 @@ function verifyScreen() {
         toast('أُرسلت الرسالة', '✉');
       } catch (error) { toastError(error); }
     }),
-    el('p', { class: 'gate-fineprint', text: 'يمكنك تصفح التطبيق، لكن المزامنة والمشاركة تحتاجان بريداً مفعّلاً.' }),
+    el('p', { class: 'gate-fineprint', text: 'بياناتك خاصة. لا يطلع على مقتنياتك إلا أنت ومن تمنحهم صلاحية.' }),
     link('تسجيل الخروج', () => signOutUser().catch(toastError)),
   ];
 }
@@ -256,7 +264,7 @@ function onboardingScreen() {
       el('div', { class: 'gate-head' }, [
         el('h2', { class: 'gate-title', text: 'ماذا تريد أن تسمّي مخزنك؟' }),
       ]),
-      field('gate-workspace', 'اسم المخزن', 'text', NAME_SUGGESTIONS[state.useCase] || 'مخزني', 'off'),
+      field('gate-workspace', 'اسم المخزن', 'text', NAME_SUGGESTIONS[state.useCase] || 'مقتنياتي', 'off'),
       primary('متابعة', (event) => run(event.currentTarget, 'جارٍ التجهيز…', async () => {
         const name = $('gate-workspace').value.trim() || NAME_SUGGESTIONS[state.useCase] || 'مخزني';
         await createWorkspaceForUser(name, state.useCase);
@@ -296,29 +304,88 @@ async function createWorkspaceForUser(name, useCase) {
 }
 
 function pricingScreen() {
+  const annual = state.billing === 'yearly';
+
+  const toggle = el('div', { class: 'gate-billing', role: 'group', 'aria-label': 'دورة الفوترة' }, [
+    el('button', {
+      class: `gate-billing-opt${annual ? '' : ' on'}`, type: 'button', text: 'شهري',
+      'aria-pressed': String(!annual),
+      onClick: () => { state.billing = 'monthly'; renderGate(); },
+    }),
+    el('button', {
+      class: `gate-billing-opt${annual ? ' on' : ''}`, type: 'button', text: 'سنوي',
+      'aria-pressed': String(annual),
+      onClick: () => { state.billing = 'yearly'; renderGate(); },
+    }),
+  ]);
+
   return [
     el('div', { class: 'gate-head' }, [
       brand('sm'),
-      el('h2', { class: 'gate-title', text: 'الخطط والأسعار' }),
+      el('h2', { class: 'gate-title', text: 'اختر الخطة المناسبة لك.' }),
+      el('p', { class: 'gate-sub', text: 'ابدأ مجاناً، وطوّر خطتك عندما تحتاج مساحة أكبر.' }),
     ]),
-    el('div', { class: 'gate-plans' }, orderedPlans().map((plan) => el('div', {
-      class: `gate-plan${plan.badge ? ' featured' : ''}`,
-    }, [
-      plan.badge ? el('div', { class: 'gate-plan-badge', text: plan.badge.ar }) : null,
-      el('div', { class: 'gate-plan-name', text: plan.name.ar }),
-      el('div', { class: 'gate-plan-price' }, plan.price.custom
-        ? [el('span', { class: 'gate-plan-custom', text: plan.price.custom.ar })]
-        : [
-          el('span', { class: 'gate-plan-amount', text: String(plan.price.monthly) }),
-          el('span', { class: 'gate-plan-unit', text: 'ريال / شهر' }),
-        ]),
-      el('div', { class: 'gate-plan-items', text: plan.limits.items === -1
-        ? 'قطع بلا حد'
-        : `${plan.limits.items.toLocaleString('en-US')} قطعة` }),
-      el('div', { class: 'gate-plan-line', text: `مساعد المخزن: ${plan.assistant.label.ar}` }),
-    ]))),
+    toggle,
+    annual ? el('p', { class: 'gate-annual-note', text: PLAN_CONFIG.annualNote.ar }) : null,
+    el('div', { class: 'gate-plans' }, orderedPlans().map((plan) => planCard(plan, annual))),
     secondary('رجوع', () => show('welcome')),
   ];
+}
+
+/**
+ * One card per plan. Annual prices come from the plan table as published
+ * figures — they are never computed from the monthly price, because the
+ * commercial decision is the price, not the discount.
+ */
+function planCard(plan, annual) {
+  const custom = Boolean(plan.price.custom);
+  const free = !custom && plan.price.monthly === 0;
+  const amount = annual ? plan.price.yearly : plan.price.monthly;
+  const unit = annual ? 'ريال / سنة' : 'ريال / شهر';
+
+  // The paid plan we recommend carries the only filled button on the screen.
+  const emphasised = Boolean(plan.badge);
+
+  let price;
+  if (custom) price = [el('span', { class: 'gate-plan-custom', text: plan.price.custom.ar })];
+  else if (free) price = [el('span', { class: 'gate-plan-custom', text: 'مجاناً' })];
+  else price = [
+    el('span', { class: 'gate-plan-amount', text: amount.toLocaleString('en-US') }),
+    el('span', { class: 'gate-plan-unit', text: unit }),
+  ];
+
+  return el('div', { class: `gate-plan${emphasised ? ' featured' : ''}` }, [
+    plan.badge ? el('div', { class: 'gate-plan-badge', text: plan.badge.ar }) : null,
+    el('div', { class: 'gate-plan-name', text: plan.name.ar }),
+    el('div', { class: 'gate-plan-price' }, price),
+    el('div', { class: 'gate-plan-items', text: plan.limitsLabel
+      ? plan.limitsLabel.ar
+      : `${plan.limits.items.toLocaleString('en-US')} قطعة` }),
+    el('div', { class: 'gate-plan-line', text: `${BRAND.assistant}: ${plan.assistant.label.ar}` }),
+    el('button', {
+      class: `gate-btn ${emphasised ? 'gate-btn-primary' : 'gate-btn-secondary'} gate-plan-cta`,
+      type: 'button',
+      text: planCta(plan),
+      onClick: () => (plan.id === 'free' ? show('signup') : choosePlan(plan)),
+    }),
+  ]);
+}
+
+function planCta(plan) {
+  if (plan.id === 'free') return 'ابدأ مجاناً';
+  if (plan.contactOnly) return 'تواصل معنا';
+  return `اختر ${plan.name.ar}`;
+}
+
+function choosePlan(plan) {
+  // Signing up comes first: a plan is bought against an account, never before
+  // one exists. The choice is remembered so checkout can resume after setup.
+  state.intendedPlan = { id: plan.id, billing: state.billing };
+  if (plan.contactOnly) {
+    toast(`راسلنا على ${BRAND.salesEmail} لترتيب خطة المؤسسات`, '✉');
+    return;
+  }
+  show(currentSession().user ? 'onboarding' : 'signup');
 }
 
 // ── render ─────────────────────────────────────────────────────────────────

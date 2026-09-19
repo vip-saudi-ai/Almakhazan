@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="NAZM">
+  <title>NAZM</title>
+  <defs>
+    <linearGradient id="fg" x1="6" y1="4" x2="90" y2="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563FF"/><stop offset="0.55" stop-color="#6366F1"/><stop offset="1" stop-color="#93C5FD"/>
+    </linearGradient>
+    <mask id="fn"><rect width="96" height="96" fill="#fff"/>
+      <path d="M32 69V27l32 42V27" fill="none" stroke="#000" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#fg)" mask="url(#fn)"/>
+</svg>

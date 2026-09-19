@@ -154,6 +154,27 @@ const banner = (page) => page.evaluate(() => {
   check('Q16 the sheet promises no data loss', sheet.note.includes('لا يحذف'), sheet.note.slice(0, 60));
   check('Q17 the popular plan is highlighted', sheet.featured === 'احترافي', String(sheet.featured));
 
+  const monthly = await page.evaluate(() => [...document.querySelectorAll('#plans-body .plan-amount')].map(n => n.textContent));
+  check('Q17b in-app monthly prices match the published table',
+    JSON.stringify(monthly) === JSON.stringify(['69', '159', '279']), JSON.stringify(monthly));
+
+  await page.click('#plans-body .gate-billing-opt:nth-child(2)');
+  await page.waitForTimeout(250);
+  const yearly = await page.evaluate(() => ({
+    prices: [...document.querySelectorAll('#plans-body .plan-amount')].map(n => n.textContent),
+    unit: document.querySelector('#plans-body .plan-unit')?.textContent,
+    note: document.querySelector('#plans-body .gate-annual-note')?.textContent || '',
+    enterprise: [...document.querySelectorAll('#plans-body .plan-card')].pop()?.innerText || '',
+  }));
+  check('Q17c the annual cycle shows the published yearly figures',
+    JSON.stringify(yearly.prices) === JSON.stringify(['690', '1,590', '2,790'])
+    && yearly.unit === 'ريال / سنة' && yearly.note.includes('شهران مجاناً'), JSON.stringify(yearly.prices));
+  check('Q17d enterprise promises custom limits, not unlimited',
+    yearly.enterprise.includes('حدود مخصصة') && !yearly.enterprise.includes('بلا حد'),
+    yearly.enterprise.replace(/\n/g, ' / ').slice(0, 120));
+  await page.click('#plans-body .gate-billing-opt:nth-child(1)');
+  await page.waitForTimeout(200);
+
   // nothing may claim a plan was bought while no provider is connected
   const activated = await page.evaluate(async () => {
     const cards = [...document.querySelectorAll('#plans-body .plan-card')];

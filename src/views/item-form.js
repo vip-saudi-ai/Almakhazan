@@ -218,7 +218,7 @@ async function maybeAutoAnalyze() {
   box.style.display = '';
   render(box, [el('div', { class: 'suggest-working' }, [
     el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
-    el('span', { text: 'مساعد المخزن يقرأ الصورة…' }),
+    el('span', { text: 'مساعد نَظْم يقرأ الصورة…' }),
   ])]);
 
   try {
@@ -323,7 +323,7 @@ function renderSuggestions() {
   render(box, [
     el('div', { class: 'suggest-head' }, [
       el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
-      el('span', { class: 'suggest-title', text: 'اقتراحات مساعد المخزن' }),
+      el('span', { class: 'suggest-title', text: 'اقتراحات مساعد نَظْم' }),
       el('button', {
         class: 'suggest-all', type: 'button', text: 'طبّق الكل',
         onClick: () => {

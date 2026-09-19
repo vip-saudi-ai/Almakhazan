@@ -5,13 +5,14 @@
 // page, and never touches Firestore, Storage or Cloud Function traffic — those
 // have their own offline story and must not be served stale.
 
-const VERSION = 'v8.0.0';
+const VERSION = 'v10.0.0';
 const SHELL_CACHE = `almakhzan-shell-${VERSION}`;
 
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './styles/tokens.css',
   './styles/main.css',
   './src/app.js',
   './src/config.js',
@@ -34,6 +35,14 @@ const SHELL = [
   './src/views/item-form.js',
   './src/views/overview.js',
   './src/views/manage.js',
+  './src/views/welcome.js',
+  './src/views/plans.js',
+  './src/subscription.js',
+  './src/entitlements.js',
+  './src/plans.generated.js',
+  './public/brand/nazm-symbol.svg',
+  './public/brand/nazm-logo-ar.svg',
+  './public/icons/favicon.svg',
 ];
 
 self.addEventListener('install', (event) => {
