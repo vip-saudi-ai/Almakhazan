@@ -21,6 +21,7 @@ import {
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
+import { bindAssistant, renderAssistant } from './views/assistant.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 import { onSubscriptionChange, startPlanWatch } from './subscription.js';
 
@@ -189,6 +190,7 @@ function initializeUI() {
 
   registerTab('home', renderHome);
   registerTab('ov', renderOverview);
+  registerTab('ai', renderAssistant);
   registerTab('cats', renderCategories);
   registerTab('set', renderSettings);
 
@@ -199,6 +201,7 @@ function initializeUI() {
   bindContextActions();
   bindItemForm();
   bindManageViews();
+  bindAssistant();
   bindToolbar();
   bindConfirmDialog();
   bindKeyboard();
@@ -226,6 +229,7 @@ function renderAll() {
     renderHome();
     const active = document.querySelector('.view.active')?.id;
     if (active === 'v-ov') renderOverview();
+    if (active === 'v-ai') renderAssistant();
     if (active === 'v-cats') renderCategories();
     if (active === 'v-set') renderSettings();
     persistPrefs();
@@ -237,7 +241,8 @@ function persistPrefs() {
 }
 
 function bindToolbar() {
-  for (const tab of ['home', 'ov', 'cats', 'set']) {
+  // Every tab that has a button in the bar. 'cats' has a view but no button.
+  for (const tab of ['home', 'ov', 'ai', 'set']) {
     $(`t-${tab}`)?.addEventListener('click', () => goTab(tab));
   }
   $('tg')?.addEventListener('click', () => setGridMode(true));

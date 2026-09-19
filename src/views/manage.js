@@ -702,6 +702,8 @@ function renderDataPanel() {
   ]);
 
   render(panel, [
+    // Categories lost their tab to the assistant; they live here now.
+    row('◈', 'rgba(99,102,241,.15)', 'التصنيفات والمواقع', 'تنظيم التصنيفات والمواقع المستخدمة في المخزون', () => goTab('cats')),
     row('📊', 'rgba(52,199,89,.15)', 'تصدير Excel', 'جرد كامل بقيم رقمية وتواريخ حقيقية', () => {
       try { exportExcel(); toast('تم التصدير', '📊'); } catch (error) { toastError(error); }
     }),
@@ -847,6 +849,7 @@ export function bindManageViews() {
   });
   $('as-import')?.addEventListener('click', () => { closeSheet('as'); startImport(); });
 
+  $('cats-back')?.addEventListener('click', () => goTab('set'));
   window.addEventListener('almakhzan:start-import', startImport);
   window.addEventListener('almakhzan:new-folder', () => openFolderSheet());
   window.addEventListener('almakhzan:edit-folder', (event) => openFolderSheet(event.detail));

@@ -125,10 +125,20 @@ const body = [...modules.values()].filter(Boolean).join('\n\n');
 const bundle = `${runtime}\n${body}\n__req(${JSON.stringify(entry)});\n})();`;
 
 // Tokens first: every value the stylesheet reads is defined there.
-const css = [
+let css = [
   readFileSync(join(root, 'styles/tokens.css'), 'utf8'),
   readFileSync(join(root, 'styles/main.css'), 'utf8'),
 ].join('\n');
+
+// The demo opens from file://, where a relative font URL resolves to nothing.
+// Inline the faces so Arabic renders at the right weight with no server.
+for (const weight of [400, 500, 700, 800]) {
+  const font = readFileSync(join(root, `public/fonts/tajawal-${weight}.woff2`)).toString('base64');
+  css = css.replace(
+    `url('../public/fonts/tajawal-${weight}.woff2')`,
+    () => `url(data:font/woff2;base64,${font})`,
+  );
+}
 const bootGuard = readFileSync(join(root, 'src/boot-guard.js'), 'utf8');
 let html = readFileSync(join(root, 'index.html'), 'utf8');
 
@@ -141,6 +151,7 @@ const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
 // and would mangle any `$` in the code or CSS being inlined.
 html = html
   .replace('<link rel="stylesheet" href="styles/tokens.css">', '')
+  .replace(/<link rel="preload" href="public\/fonts\/[^"]+"[^>]*>/g, '')
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
   .replace('<script src="src/boot-guard.js"></script>\n', '')
   .replace('<script type="module" src="src/app.js"></script>', () => inlineScript)

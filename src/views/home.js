@@ -15,6 +15,7 @@ import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateI
 import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
 import { symbolNode } from './mark.js';
+import { goTab } from '../navigation.js';
 
 export const view = {
   page: 1,
@@ -24,6 +25,8 @@ export const view = {
   query: '',
   filters: { ...EMPTY_FILTERS },
   folderId: null,
+  /** A set of ids handed over by the assistant, with the label that explains it. */
+  assistantSet: null,
 };
 
 let contextItemId = null;
@@ -270,6 +273,42 @@ function renderQuotaBanner() {
   ]);
 }
 
+// ── an answer handed over by the assistant ──
+export function applyAssistantFilter({ label, ids }) {
+  view.assistantSet = { label, ids: new Set(ids) };
+  view.query = '';
+  view.folderId = null;
+  view.categoryPill = 'all';
+  view.filters = { ...EMPTY_FILTERS };
+  resetPage();
+  syncFilterControls();
+  goTab('home');
+  renderHome();
+  $('hscroll')?.scrollTo(0, 0);
+}
+
+export function clearAssistantFilter() {
+  view.assistantSet = null;
+  resetPage();
+  renderHome();
+}
+
+function renderAssistantBanner() {
+  const banner = $('assistant-banner');
+  if (!banner) return;
+  if (!view.assistantSet) {
+    banner.style.display = 'none';
+    render(banner, []);
+    return;
+  }
+  banner.style.display = 'flex';
+  render(banner, [
+    el('span', { class: 'ab-mark', text: '✦', 'aria-hidden': 'true' }),
+    el('span', { class: 'ab-txt', text: view.assistantSet.label }),
+    el('button', { class: 'ab-clear', type: 'button', text: 'إلغاء', onClick: clearAssistantFilter }),
+  ]);
+}
+
 // ── active filters banner ──
 function renderFilterBanner(searching) {
   const banner = $('active-filters');
@@ -347,7 +386,7 @@ export function renderHome() {
 
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';
 
-  const { results, searching } = queryItems({
+  let { results, searching } = queryItems({
     items: repository.state.items,
     query: view.query,
     filters: view.filters,
@@ -357,12 +396,21 @@ export function renderHome() {
     lookups: repository.lookups(),
   });
 
+  // An answer from the assistant narrows the same screen rather than opening a
+  // second one: the customer stays where their inventory already lives.
+  if (view.assistantSet) {
+    const ids = view.assistantSet.ids;
+    results = repository.liveItems().filter((item) => ids.has(item.id));
+    searching = true;
+  }
+
   // The pill list reflects what is reachable in the current scope, not the page.
   const scopeItems = searching
     ? repository.liveItems()
     : repository.liveItems().filter((i) => (view.folderId ? i.folderId === view.folderId : !i.folderId));
   renderPills(scopeItems);
   renderFilterBanner(searching);
+  renderAssistantBanner();
 
   const total = results.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

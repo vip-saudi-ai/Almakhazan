@@ -3,7 +3,9 @@
 
 import { $ } from './utils.js';
 
-const TABS = ['home', 'ov', 'cats', 'set'];
+// 'cats' keeps a view but no longer a tab: categories are managed from
+// Settings, and the tab bar belongs to the four screens a customer lives in.
+const TABS = ['home', 'ov', 'ai', 'cats', 'set'];
 const renderers = new Map();
 
 export function registerTab(name, render) {

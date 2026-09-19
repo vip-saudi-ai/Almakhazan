@@ -1,4 +1,21 @@
 /* ─────────────────────────────────────────────────────────────────────────
+   Tajawal, served from this origin.
+   SIL Open Font License 1.1 — see public/fonts/OFL.txt.
+
+   Self-hosted rather than linked: the app then needs no third-party origin in
+   its CSP, renders the same offline, and shows Arabic at the right weight on
+   the first paint instead of after a round trip to a font CDN.
+   ───────────────────────────────────────────────────────────────────────── */
+@font-face{font-family:Tajawal;src:url('../public/fonts/tajawal-400.woff2') format('woff2');
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:Tajawal;src:url('../public/fonts/tajawal-500.woff2') format('woff2');
+  font-weight:500 600;font-style:normal;font-display:swap}
+@font-face{font-family:Tajawal;src:url('../public/fonts/tajawal-700.woff2') format('woff2');
+  font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:Tajawal;src:url('../public/fonts/tajawal-800.woff2') format('woff2');
+  font-weight:800 900;font-style:normal;font-display:swap}
+
+/* ─────────────────────────────────────────────────────────────────────────
    NAZM design tokens.
 
    Three layers, in this order:
