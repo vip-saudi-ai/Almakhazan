@@ -11,8 +11,13 @@ export const FIREBASE_CONFIG = {
   appId: '1:356609664014:web:6ec089c2102b9ba22ec85f',
 };
 
-// Set to a reCAPTCHA v3 site key to enable App Check; null disables it.
+// App Check. Set the site key to enable attestation; null disables it.
+// The backend enforces separately, through ENFORCE_APP_CHECK — see
+// DEPLOYMENT.md §5. Turn the client on first, watch the console for a week,
+// then enforce: enforcing before the client sends tokens locks everyone out.
 export const APP_CHECK_SITE_KEY = null;
+/** Honoured only on localhost. Never commit a token for a deployed origin. */
+export const APP_CHECK_DEBUG_TOKEN = null;
 
 export const FUNCTIONS_REGION = 'us-central1';
 

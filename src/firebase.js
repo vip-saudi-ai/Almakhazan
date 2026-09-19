@@ -4,7 +4,7 @@
 // status. Nothing else in the app guesses at readiness from a global flag, and
 // no data is loaded or written before this settles.
 
-import { APP_CHECK_SITE_KEY, FIREBASE_CONFIG, FUNCTIONS_REGION } from './config.js';
+import { APP_CHECK_DEBUG_TOKEN, APP_CHECK_SITE_KEY, FIREBASE_CONFIG, FUNCTIONS_REGION } from './config.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.0';
 
@@ -57,9 +57,22 @@ async function loadSdk() {
   return { app: appMod, firestore: firestoreMod, storage: storageMod, auth: authMod, functions: functionsMod };
 }
 
+/** True on a developer machine, where a debug token is the only way in. */
+function isLocalHost() {
+  const host = globalThis.location?.hostname || '';
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.local');
+}
+
 async function enableAppCheck(app) {
   if (!APP_CHECK_SITE_KEY) return;
   try {
+    // A debug token is honoured only on a developer machine. Registering one
+    // from a deployed origin would hand anyone a way around attestation, so
+    // the check is on the host, not on a build flag someone can forget.
+    if (isLocalHost() && APP_CHECK_DEBUG_TOKEN) {
+      globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = APP_CHECK_DEBUG_TOKEN;
+    }
+
     const { initializeAppCheck, ReCaptchaV3Provider } = await import(`${SDK}/firebase-app-check.js`);
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),

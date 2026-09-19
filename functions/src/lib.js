@@ -16,6 +16,21 @@ if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 const bucket = () => admin.storage().bucket();
 
+// ── callable defaults ──
+//
+// One place decides the region and whether App Check is enforced, so turning
+// attestation on is an environment change rather than an edit to thirteen
+// functions — and so it cannot be turned on for some of them and forgotten for
+// the rest. Deploy with ENFORCE_APP_CHECK=true once a site key exists; see
+// DEPLOYMENT.md §5.
+const REGION = process.env.FUNCTIONS_REGION || 'us-central1';
+const ENFORCE_APP_CHECK = process.env.ENFORCE_APP_CHECK === 'true';
+
+/** @param {object} [extra] per-function options, merged over the defaults. */
+function callable(extra = {}) {
+  return { region: REGION, enforceAppCheck: ENFORCE_APP_CHECK, ...extra };
+}
+
 const EDITOR_ROLES = new Set(['editor', 'admin', 'owner']);
 const ADMIN_ROLES = new Set(['admin', 'owner']);
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due']);
@@ -184,6 +199,7 @@ async function assertWithinLimits(workspaceId, dimension, amount = 1) {
 }
 
 module.exports = {
+  REGION, ENFORCE_APP_CHECK, callable,
   admin,
   db,
   bucket,

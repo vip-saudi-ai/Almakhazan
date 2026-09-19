@@ -9,7 +9,9 @@
 
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onCall } = require('firebase-functions/v2/https');
-const { admin, db, logger, requireAuth, requireMember, resolveEntitlement, readUsage, monthKey } = require('./lib');
+const {
+  admin, db, callable, logger, requireAuth, requireMember, resolveEntitlement, readUsage, monthKey,
+} = require('./lib');
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -122,7 +124,7 @@ async function recalculate(workspaceId) {
   return { items: items.data().count, storageBytes, members: members.data().count };
 }
 
-exports.recalculateUsage = onCall({ region: 'us-central1' }, async (request) => {
+exports.recalculateUsage = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = String(request.data?.workspaceId || '');
   await requireMember(uid, workspaceId, 'admin');
@@ -132,7 +134,7 @@ exports.recalculateUsage = onCall({ region: 'us-central1' }, async (request) => 
 });
 
 /** One call for the subscription card: plan, limits and usage together. */
-exports.getWorkspaceStatus = onCall({ region: 'us-central1' }, async (request) => {
+exports.getWorkspaceStatus = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = String(request.data?.workspaceId || '');
   await requireMember(uid, workspaceId, 'viewer');

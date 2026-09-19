@@ -7,7 +7,7 @@
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall } = require('firebase-functions/v2/https');
-const { admin, db, bucket, logger, requireAuth, requireMember } = require('./lib');
+const { admin, db, bucket, callable, logger, requireAuth, requireMember } = require('./lib');
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -120,7 +120,7 @@ exports.onItemMediaChanged = require('firebase-functions/v2/firestore').onDocume
 );
 
 /** Admin-triggered reconciliation, for support and post-migration checks. */
-exports.reconcileMedia = onCall({ region: 'us-central1', timeoutSeconds: 540 }, async (request) => {
+exports.reconcileMedia = onCall(callable({ timeoutSeconds: 540 }), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = String(request.data?.workspaceId || '');
   await requireMember(uid, workspaceId, 'admin');

@@ -55,8 +55,11 @@ acting on it.
 Stated plainly, because a checklist that hides these is worse than useless.
 
 1. **App Check is not enforced.** The integration is written and disabled
-   behind a null site key. Until you complete `DEPLOYMENT.md` §5, the backend
-   is protected by auth and rules but not by attestation.
+   behind a null site key. Enforcement is one environment variable
+   (`ENFORCE_APP_CHECK`) read by every callable through `callable()` in
+   `functions/src/lib.js`, so there is no per-function flag to miss — but until
+   you complete `DEPLOYMENT.md` §5, the backend is protected by auth and rules
+   and not by attestation.
 2. **Storage rules have no automated test.** Firestore rules are covered by the
    emulator suite. The Storage emulator is not part of the test run, so
    `storage.rules` is reviewed but not proven. Add

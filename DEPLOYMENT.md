@@ -110,17 +110,33 @@ firebase firestore:indexes       # expect the 4 composite indexes
 App Check is implemented but **disabled**, because enabling it requires a key
 only you can create.
 
-**[YOU]** To enable:
+**[YOU]** To enable, in this order. The order matters: enforcing before the
+client sends tokens locks every customer out.
 
 1. Firebase console → App Check → register the web app with **reCAPTCHA v3**.
-2. Put the site key in `APP_CHECK_SITE_KEY` in `src/config.js`.
-3. Add a debug token for local development
-   (App Check → Apps → Manage debug tokens), otherwise you will lock yourself
-   out of the emulator and of `localhost`.
-4. Set `enforceAppCheck: true` in `functions/src/ai.js` (and any other callable
-   you want gated).
-5. Enable enforcement in the console **only after** steps 1–4 are deployed and
-   verified, and start with Firestore/Storage in *monitor* mode for a day.
+2. Put the site key in `APP_CHECK_SITE_KEY` in `src/config.js` and deploy.
+   The client now sends tokens; nothing is rejected yet.
+3. For local work, create a debug token (App Check → Apps → Manage debug
+   tokens) and put it in `APP_CHECK_DEBUG_TOKEN`. It is honoured **only on
+   localhost** — the code checks the hostname, not a build flag, so a token
+   left in the file cannot weaken a deployed origin. Still: do not commit one.
+4. Watch the console's App Check metrics for a few days. Verified vs
+   unverified requests tells you whether step 2 actually reached everyone —
+   old cached bundles, embedded webviews and PWA installs are the usual
+   stragglers.
+5. Deploy the functions with enforcement on:
+
+   ```bash
+   firebase deploy --only functions --set-env-vars ENFORCE_APP_CHECK=true
+   ```
+
+   Every callable reads that one variable through `callable()` in
+   `functions/src/lib.js`, so there is no per-function flag to forget. The
+   billing webhook is deliberately exempt: it is called by the payment
+   provider, not by a browser, and its authenticity comes from its signature.
+
+6. Only then turn on enforcement for Firestore and Storage in the console, and
+   start in *monitor* mode for a day.
 
 Until step 5, App Check is registered but not enforced — treat it as not yet
 providing protection.

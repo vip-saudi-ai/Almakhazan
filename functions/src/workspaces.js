@@ -12,6 +12,7 @@ const crypto = require('node:crypto');
 const {
   admin, db, bucket, logger, PLAN_CONFIG,
   requireAuth, requireString, requireMember, assertWithinLimits, resolveEntitlement,
+  callable,
 } = require('./lib');
 
 const FieldValue = admin.firestore.FieldValue;
@@ -33,7 +34,7 @@ const DEFAULT_CATEGORY_SETS = {
  * Runs server-side so the plan, trial window and owner membership are all set
  * from values a client cannot influence.
  */
-exports.createWorkspace = onCall({ region: 'us-central1' }, async (request) => {
+exports.createWorkspace = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const name = requireString(request.data?.name, 'name', 120);
   const useCase = String(request.data?.useCase || 'other');
@@ -126,7 +127,7 @@ async function enforceInviteRate(uid) {
   });
 }
 
-exports.inviteMember = onCall({ region: 'us-central1' }, async (request) => {
+exports.inviteMember = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = requireString(request.data?.workspaceId, 'workspaceId', 128);
   const email = requireString(request.data?.email, 'email', 254).toLowerCase();
@@ -166,7 +167,7 @@ exports.inviteMember = onCall({ region: 'us-central1' }, async (request) => {
   return { ok: true, inviteId: inviteRef.id, token, expiresInDays: INVITE_TTL_MS / 86_400_000 };
 });
 
-exports.acceptInvitation = onCall({ region: 'us-central1' }, async (request) => {
+exports.acceptInvitation = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const inviteId = requireString(request.data?.inviteId, 'inviteId', 128);
   const token = requireString(request.data?.token, 'token', 256);
@@ -225,7 +226,7 @@ exports.acceptInvitation = onCall({ region: 'us-central1' }, async (request) => 
  * documents and Storage objects cannot be removed reliably inside one request.
  * The sweeper below does the work, and the grace window makes it recoverable.
  */
-exports.requestWorkspaceDeletion = onCall({ region: 'us-central1' }, async (request) => {
+exports.requestWorkspaceDeletion = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = requireString(request.data?.workspaceId, 'workspaceId', 128);
   const confirmName = requireString(request.data?.confirmName, 'confirmName', 200);
@@ -250,7 +251,7 @@ exports.requestWorkspaceDeletion = onCall({ region: 'us-central1' }, async (requ
   return { ok: true, purgeAfterDays: graceDays };
 });
 
-exports.cancelWorkspaceDeletion = onCall({ region: 'us-central1' }, async (request) => {
+exports.cancelWorkspaceDeletion = onCall(callable(), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = requireString(request.data?.workspaceId, 'workspaceId', 128);
   await requireMember(uid, workspaceId, 'owner');

@@ -16,7 +16,7 @@
 
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret, defineString } = require('firebase-functions/params');
-const { admin, db, logger, requireAuth, requireMember, PLANS, PLAN_CONFIG } = require('./lib');
+const { admin, db, callable, logger, requireAuth, requireMember, PLANS, PLAN_CONFIG } = require('./lib');
 
 const BILLING_PROVIDER = defineString('BILLING_PROVIDER', { default: 'none' });
 const BILLING_WEBHOOK_SECRET = defineSecret('BILLING_WEBHOOK_SECRET');
@@ -102,7 +102,7 @@ function provider() {
 // ── callable API ───────────────────────────────────────────────────────────
 
 exports.createCheckoutSession = onCall(
-  { region: 'us-central1', secrets: [BILLING_API_KEY] },
+  callable({ secrets: [BILLING_API_KEY] }),
   async (request) => {
     const uid = requireAuth(request);
     const workspaceId = String(request.data?.workspaceId || '');
@@ -142,7 +142,7 @@ exports.createCheckoutSession = onCall(
 );
 
 exports.createPortalSession = onCall(
-  { region: 'us-central1', secrets: [BILLING_API_KEY] },
+  callable({ secrets: [BILLING_API_KEY] }),
   async (request) => {
     const uid = requireAuth(request);
     const workspaceId = String(request.data?.workspaceId || '');
@@ -161,7 +161,7 @@ exports.createPortalSession = onCall(
 );
 
 exports.cancelSubscription = onCall(
-  { region: 'us-central1', secrets: [BILLING_API_KEY] },
+  callable({ secrets: [BILLING_API_KEY] }),
   async (request) => {
     const uid = requireAuth(request);
     const workspaceId = String(request.data?.workspaceId || '');

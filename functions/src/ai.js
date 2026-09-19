@@ -14,6 +14,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const {
   admin, db, bucket, logger,
   requireAuth, requireString, requireMember, assertWithinLimits, monthKey,
+  callable,
 } = require('./lib');
 const { consumeAiCredit } = require('./usage');
 
@@ -210,14 +211,7 @@ function mapAnthropicError(error) {
 }
 
 exports.analyzeInventoryItem = onCall(
-  {
-    region: 'us-central1',
-    secrets: [ANTHROPIC_API_KEY],
-    timeoutSeconds: 120,
-    memory: '512MiB',
-    // Flip to true once App Check is registered — see DEPLOYMENT.md.
-    enforceAppCheck: false,
-  },
+  callable({ secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, memory: '512MiB' }),
   async (request) => {
     const uid = requireAuth(request);
     const workspaceId = requireString(request.data?.workspaceId, 'workspaceId', 128);
@@ -332,7 +326,7 @@ async function recordUsage(entry) {
  * Health endpoint so Settings can say "متصل" only when the service really is
  * configured — not merely because the Functions SDK loaded.
  */
-exports.aiHealth = onCall({ region: 'us-central1', secrets: [ANTHROPIC_API_KEY] }, async (request) => {
+exports.aiHealth = onCall(callable({ secrets: [ANTHROPIC_API_KEY] }), async (request) => {
   const uid = requireAuth(request);
   const workspaceId = String(request.data?.workspaceId || '');
   await requireMember(uid, workspaceId, 'viewer');
