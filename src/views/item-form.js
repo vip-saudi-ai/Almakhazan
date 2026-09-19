@@ -3,7 +3,7 @@
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
 import { CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID } from '../config.js';
 import { repository, ConflictError } from '../repository.js';
-import { bindImageSrc, deleteImage, uploadImage } from '../storage.js';
+import { bindImageSrc, uploadImage } from '../storage.js';
 import { $, el, render, setText, uid } from '../utils.js';
 import {
   formatValuation, normalizeValuation, parseValuationText, validateQuantity,
@@ -18,6 +18,7 @@ const form = {
   primaryImageId: null,
   aiData: null,
   descriptionMode: 'manual',
+  provisionalSku: null,
 };
 
 // ── field helpers ──
@@ -130,21 +131,21 @@ async function removeImage(imageId) {
   const image = form.images.find((i) => i.id === imageId);
   if (!image) return;
   const confirmed = await confirmAction({
-    title: 'حذف الصورة؟',
-    message: 'سيُحذف الملف نهائياً عند حفظ القطعة.',
+    title: 'إزالة الصورة من هذه القطعة؟',
+    message: 'لن تتأثر أي قطعة أخرى تستخدم نفس الصورة.',
     icon: '🖼',
-    confirmLabel: 'حذف',
+    confirmLabel: 'إزالة',
   });
   if (!confirmed) return;
 
+  // Only the reference is dropped here. The file itself is reclaimed by the
+  // backend once no item points at it, so removing it from one item can never
+  // destroy the copy another item still shows.
   form.images = form.images.filter((i) => i.id !== imageId);
   if (form.primaryImageId === imageId) form.primaryImageId = form.images[0]?.id || null;
-  pendingDeletions.push(image);
   renderImages();
   refreshAiPanel();
 }
-
-let pendingDeletions = [];
 
 async function handleFiles(fileList) {
   const files = [...fileList].slice(0, IMAGE_LIMITS.maxPerItem - form.images.length);
@@ -313,8 +314,6 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
 
   const item = itemId ? repository.item(itemId) : null;
-  pendingDeletions = [];
-
   form.itemId = item?.id || uid('itm');
   form.isNew = !item;
   form.baseVersion = item?.version ?? null;
@@ -326,7 +325,8 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   fillSelects(item);
 
   $('f-name').value = item?.name || '';
-  $('f-sku').value = item?.sku || repository.nextSku();
+  form.provisionalSku = repository.provisionalSku();
+  $('f-sku').value = item?.sku || form.provisionalSku;
   $('f-barcode').value = item?.barcode || '';
   $('f-qty').value = item ? String(item.quantity) : '';
   $('f-brand').value = item?.brand || '';
@@ -364,7 +364,7 @@ async function saveItem() {
       confirmLabel: 'توليد رمز جديد',
     });
     if (!proceed) return;
-    $('f-sku').value = repository.nextSku();
+    $('f-sku').value = await repository.reserveSku();
     return saveItem();
   }
 
@@ -379,10 +379,17 @@ async function saveItem() {
     if (!proceed) return;
   }
 
+  // The field shows a provisional number so the form looks complete. If the
+  // user left it untouched, take an authoritative one from the workspace
+  // counter now — two devices saving at once must not land on the same SKU.
+  const resolvedSku = (form.isNew && (!sku || sku === form.provisionalSku))
+    ? await repository.reserveSku()
+    : sku;
+
   const payload = {
     id: form.itemId,
     name,
-    sku: sku || repository.nextSku(),
+    sku: resolvedSku,
     barcode,
     categoryId: $('f-cat').value || UNCATEGORIZED_ID,
     folderId: $('f-folder').value || null,
@@ -408,11 +415,6 @@ async function saveItem() {
         toast('تم التحديث', '✓');
       }
 
-      // Storage cleanup only after the record is safely written.
-      for (const image of pendingDeletions) {
-        await deleteImage(image, { mode: repository.session.mode });
-      }
-      pendingDeletions = [];
       closeSheet('add');
     } catch (error) {
       if (error instanceof ConflictError) {

@@ -218,7 +218,7 @@ service cloud.firestore {
       match /media/{mediaId} {
         allow read: if isMember(workspaceId);
         allow create: if canWrite(workspaceId)
-                      && request.resource.data.refCount == 1
+                      && request.resource.data.refCount == 0
                       && request.resource.data.storagePath is string
                       && request.resource.data.storagePath.matches('workspaces/' + workspaceId + '/.*');
         allow update: if canWrite(workspaceId)

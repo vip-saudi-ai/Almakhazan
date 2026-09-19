@@ -118,16 +118,20 @@ async function main() {
 
   console.log('\nThe duplicate-and-delete scenario');
   const MEDIA = 'media-shared';
-
-  await check('upload creates the asset with one reference', async () => {
-    await setDoc(doc(db, 'workspaces', WS, 'media', MEDIA), {
-      storagePath: `workspaces/${WS}/items/a/original/x.jpg`, refCount: 1,
-    });
-    assert.equal(await refCount(db, MEDIA), 1);
-  });
-
   const itemA = { id: 'item-a', images: [{ mediaId: MEDIA }] };
   const itemB = { id: 'item-b', images: [{ mediaId: MEDIA }] };
+
+  await check('an upload starts unreferenced, so an abandoned form leaves no orphan', async () => {
+    await setDoc(doc(db, 'workspaces', WS, 'media', MEDIA), {
+      storagePath: `workspaces/${WS}/items/a/original/x.jpg`, refCount: 0, orphanedAt: Date.now(),
+    });
+    assert.equal(await refCount(db, MEDIA), 0);
+  });
+
+  await check('saving item A claims it', async () => {
+    for (const [id, delta] of referenceDelta(null, itemA)) await adjust(db, id, delta);
+    assert.equal(await refCount(db, MEDIA), 1);
+  });
 
   await check('duplicating item A to B raises the count to 2', async () => {
     for (const [id, delta] of referenceDelta(null, itemB)) await adjust(db, id, delta);

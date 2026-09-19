@@ -78,12 +78,13 @@ class CloudMediaStore {
       hash: asset.hash ?? null,
       createdAt: this.fs.serverTimestamp(),
       createdBy: asset.createdBy ?? null,
-      // Starts at 1: the upload itself is the first reference, held by the
-      // open editor until the item is saved or the form is abandoned.
-      refCount: 1,
-      orphanedAt: null,
+      // Starts unreferenced: saving the item is what claims it. A form the user
+      // abandons therefore leaves an asset at zero, which the backend sweeper
+      // reclaims after its grace window — no orphan survives a cancelled edit.
+      refCount: 0,
+      orphanedAt: this.fs.serverTimestamp(),
     });
-    return { ...asset, id, refCount: 1 };
+    return { ...asset, id, refCount: 0 };
   }
 
   async get(mediaId) {
@@ -127,7 +128,7 @@ class CloudMediaStore {
 class LocalMediaStore {
   async create(asset) {
     const id = asset.id || uid('med');
-    const record = { ...asset, id, refCount: 1, orphanedAt: null };
+    const record = { ...asset, id, refCount: 0, orphanedAt: Date.now() };
     await local.put('mediaAssets', record);
     return record;
   }

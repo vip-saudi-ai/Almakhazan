@@ -398,10 +398,16 @@ class Repository {
   }
 
   // ── SKU ──
-  /** Sequential, readable and unique within the workspace: INV-2026-000123 */
-  nextSku() {
-    const year = new Date().getFullYear();
-    const prefix = `INV-${year}-`;
+  static formatSku(sequence, year = new Date().getFullYear()) {
+    return `INV-${year}-${String(sequence).padStart(6, '0')}`;
+  }
+
+  /**
+   * A best guess for the form field, computed from what this device has
+   * loaded. It is only a placeholder — two devices can produce the same one.
+   */
+  provisionalSku() {
+    const prefix = `INV-${new Date().getFullYear()}-`;
     let highest = 0;
     for (const item of this.state.items) {
       if (typeof item.sku === 'string' && item.sku.startsWith(prefix)) {
@@ -409,7 +415,54 @@ class Repository {
         if (Number.isFinite(n) && n > highest) highest = n;
       }
     }
-    return `${prefix}${String(highest + 1).padStart(6, '0')}`;
+    return Repository.formatSku(highest + 1);
+  }
+
+  /**
+   * Takes the next SKU authoritatively. The counter lives in the workspace and
+   * is advanced in a transaction, so two devices saving at the same moment get
+   * different numbers. Security Rules only permit +1, so the sequence cannot be
+   * rewritten or rewound by a client.
+   */
+  async reserveSku() {
+    if (this.session.mode !== 'cloud') {
+      const next = (await local.getMeta('counter.sku', 0)) + 1;
+      await local.setMeta('counter.sku', next);
+      return Repository.formatSku(Math.max(next, this._provisionalSequence()));
+    }
+
+    const { db, sdk } = firebaseContext();
+    const ref = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', 'sku');
+    try {
+      const value = await sdk.firestore.runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) {
+          tx.set(ref, { value: 1, updatedAt: sdk.firestore.serverTimestamp() });
+          return 1;
+        }
+        const next = (snap.data().value ?? 0) + 1;
+        tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
+        return next;
+      });
+      return Repository.formatSku(value);
+    } catch (error) {
+      // A failed reservation must not block the save; fall back to the local
+      // guess and let the duplicate check catch a collision.
+      console.error('[repo] SKU reservation failed, using provisional value', error);
+      return this.provisionalSku();
+    }
+  }
+
+  _provisionalSequence() {
+    const prefix = `INV-${new Date().getFullYear()}-`;
+    let highest = 0;
+    for (const item of this.state.items) {
+      if (typeof item.sku === 'string' && item.sku.startsWith(prefix)) {
+        const n = Number.parseInt(item.sku.slice(prefix.length), 10);
+        if (Number.isFinite(n) && n > highest) highest = n;
+      }
+    }
+    return highest + 1;
   }
 
   skuConflict(sku, exceptId) {
@@ -460,6 +513,9 @@ class Repository {
     });
     this.setSync(SyncState.SAVING);
     await this.backend.create('items', item);
+    // Claims the images this item uses. Until now they were unreferenced, which
+    // is what lets an abandoned form be cleaned up automatically.
+    await retainAll(this.session, item);
     await this.log(ACTIONS.ITEM_CREATED, { itemId: item.id, itemName: item.name });
     return item;
   }
@@ -537,7 +593,7 @@ class Repository {
     const copy = normalizeItem({
       ...source,
       id: uid('itm'),
-      sku: this.nextSku(),
+      sku: await this.reserveSku(),
       barcode: '', // barcodes identify a physical object; a copy has none yet
       name: `${source.name} (نسخة)`,
       createdAt: null,

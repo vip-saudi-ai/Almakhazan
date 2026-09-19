@@ -1,7 +1,13 @@
 rules_version = '2';
 
 // Image objects are readable by workspace members and writable by editors.
-// Membership is read from Firestore so Storage and Firestore agree on roles.
+// Membership and role are read from Firestore, so Storage and Firestore can
+// never disagree about who a customer is.
+//
+// A path is not a permission: guessing another workspace's object path gains
+// nothing, because the membership lookup is keyed on the path's own
+// {workspaceId} segment.
+
 service firebase.storage {
   match /b/{bucket}/o {
 
@@ -9,7 +15,7 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function member(workspaceId) {
+    function memberDoc(workspaceId) {
       return firestore.get(/databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
     }
 
@@ -19,31 +25,53 @@ service firebase.storage {
     }
 
     function isEditor(workspaceId) {
-      return isMember(workspaceId) && member(workspaceId).data.role in ['editor', 'admin', 'owner'];
+      return isMember(workspaceId) && memberDoc(workspaceId).data.role in ['editor', 'admin', 'owner'];
     }
 
     function isAdmin(workspaceId) {
-      return isMember(workspaceId) && member(workspaceId).data.role in ['admin', 'owner'];
+      return isMember(workspaceId) && memberDoc(workspaceId).data.role in ['admin', 'owner'];
     }
 
+    /** A workspace frozen for non-payment or pending deletion accepts no uploads. */
+    function isWritable(workspaceId) {
+      return firestore.get(/databases/(default)/documents/workspaces/$(workspaceId)).data.get('readOnly', false) != true;
+    }
+
+    // Content type is taken from the upload metadata, never from the filename.
     function isImage() {
       return request.resource.contentType.matches('image/(jpeg|png|webp|avif)');
     }
 
     function withinSizeLimit() {
-      return request.resource.size <= 12 * 1024 * 1024;
+      return request.resource.size > 0 && request.resource.size <= 40 * 1024 * 1024;
     }
 
+    // ── item media ──
+    // workspaces/{workspaceId}/items/{itemId}/original/{fileName}
+    // workspaces/{workspaceId}/items/{itemId}/thumbnails/{fileName}
     match /workspaces/{workspaceId}/items/{itemId}/{variant}/{fileName} {
-      allow read:   if isMember(workspaceId);
+      allow read: if isMember(workspaceId);
+
       allow create: if isEditor(workspaceId)
+                    && isWritable(workspaceId)
                     && variant in ['original', 'thumbnails']
                     && isImage()
                     && withinSizeLimit();
-      // An uploaded object is replaced by deleting and re-creating it, so that
-      // an existing documentation image cannot be silently overwritten.
+
+      // An existing documentation image is never silently replaced in place;
+      // a new version is a new object with a new id.
       allow update: if false;
-      allow delete: if isEditor(workspaceId);
+
+      // Physical deletion belongs to the backend sweeper, which checks the
+      // media asset's reference count first. Allowing it here would let one
+      // item destroy a file a duplicate still displays.
+      allow delete: if false;
+    }
+
+    // ── workspace-level exports produced by the backend ──
+    match /workspaces/{workspaceId}/exports/{fileName} {
+      allow read: if isAdmin(workspaceId);
+      allow write: if false;
     }
 
     match /{allPaths=**} {

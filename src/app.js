@@ -9,6 +9,7 @@ import { FirebaseStatus, firebaseContext, initializeFirebase, watchConnectivity 
 import { currentSession, initializeAuthentication, onSessionChange } from './auth.js';
 import { SYNC_LABELS, SyncState, repository } from './repository.js';
 import * as local from './local-store.js';
+import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
 import { goTab, registerTab } from './navigation.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
@@ -90,40 +91,55 @@ async function loadApplicationData(firebase, session) {
  * When a signed-in user has records sitting in this device's local store and a
  * still-empty cloud workspace, the upload is offered — never performed silently,
  * so nothing can overwrite a newer cloud state on its own.
+ *
+ * The run uploads every locally stored image to Storage and rewrites its
+ * reference, so no cloud document is left pointing at this device.
  */
 async function offerLocalUpload() {
   if (repository.session.mode !== 'cloud') return;
 
-  let localItems = [];
+  let summary;
+  let state;
   try {
-    localItems = await local.getAll('items');
+    [summary, state] = await Promise.all([localDataSummary(), deviceUploadState()]);
   } catch (error) {
     console.error('[app] local store unreadable', error);
     return;
   }
-  if (!localItems.length || repository.state.items.length) return;
 
+  if (state.status === UploadState.COMPLETED) return;
+  if (!summary.items) return;
+  // Only offered into an empty workspace; merging into a populated one is an
+  // explicit import, not an automatic action.
+  if (repository.state.items.length && state.status !== UploadState.FAILED) return;
+
+  const resuming = state.status === UploadState.FAILED || state.status === UploadState.IN_PROGRESS;
   const confirmed = await confirmAction({
-    title: 'رفع بيانات هذا الجهاز؟',
-    message: `يوجد ${formatNumber(localItems.length)} قطعة محفوظة محلياً، والمخزن السحابي فارغ. هل تريد رفعها؟ لن تُحذف النسخة المحلية.`,
+    title: resuming ? 'استئناف رفع بيانات هذا الجهاز؟' : 'رفع بيانات هذا الجهاز؟',
+    message: `${formatNumber(summary.items)} قطعة و${formatNumber(summary.images)} صورة محفوظة على هذا الجهاز. سترفع الصور إلى حسابك، ولن تُحذف النسخة المحلية.`,
     icon: '☁️',
-    confirmLabel: 'رفع البيانات',
+    confirmLabel: resuming ? 'استئناف' : 'رفع البيانات',
   });
   if (!confirmed) return;
 
   try {
-    const [folders, categories, locations] = await Promise.all([
-      local.getAll('folders'), local.getAll('categories'), local.getAll('locations'),
-    ]);
-    await repository.bulkWrite([
-      ...categories.map((r) => ({ type: 'set', collection: 'categories', id: r.id, data: r, merge: false })),
-      ...locations.map((r) => ({ type: 'set', collection: 'locations', id: r.id, data: r, merge: false })),
-      ...folders.map((r) => ({ type: 'set', collection: 'folders', id: r.id, data: r, merge: false })),
-      ...localItems.map((r) => ({ type: 'set', collection: 'items', id: r.id, data: r, merge: false })),
-    ]);
-    toast(`رُفعت ${formatNumber(localItems.length)} قطعة`, '☁');
+    // The boot overlay is gone by now, so progress is surfaced periodically
+    // rather than on every item — a long upload must not look frozen.
+    let lastReport = 0;
+    const result = await uploadDeviceData({
+      onProgress: ({ done, total, message }) => {
+        if (done - lastReport >= 20 || done === total) {
+          lastReport = done;
+          toast(message, '☁');
+        }
+      },
+    });
+    toast(`رُفعت ${formatNumber(result.items)} قطعة و${formatNumber(result.images)} صورة`, '☁');
+    if (result.imageFailures.length) {
+      toast(`${formatNumber(result.imageFailures.length)} صورة لم تُرفع — نسختها المحلية باقية`, '⚠');
+    }
   } catch (error) {
-    toastError(error, 'تعذّر رفع البيانات المحلية');
+    toastError(error, 'تعذّر رفع بيانات الجهاز');
   }
 }
 
