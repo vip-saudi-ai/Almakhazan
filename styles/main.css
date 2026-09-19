@@ -863,3 +863,23 @@ body.gated .app,body.gated .tbar{display:none}
   body.printing-labels .label-place{color:#000}
   @page{margin:10mm}
 }
+
+/* ── the subscription card ── */
+.plan-head{padding:4px 2px 2px}
+.plan-head-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.plan-pill{font-size:11.5px;font-weight:700;color:var(--brand);background:var(--brand-soft);
+  padding:5px 12px;border-radius:var(--rp)}
+.plan-status{font-size:11.5px;font-weight:600;color:var(--text-secondary)}
+.plan-count{display:flex;align-items:baseline;gap:7px;margin-bottom:10px}
+.plan-count-used{font-size:30px;font-weight:800;color:var(--text);letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.plan-count-of{font-size:14px;font-weight:600;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.plan-head-note{font-size:12px;font-weight:600;color:var(--text-secondary);line-height:1.6;margin-top:9px}
+.plan-head-note.warn{color:var(--warning)}
+.plan-head-note.full{color:var(--danger)}
+.plan-meters{display:flex;flex-direction:column;gap:2px;margin-top:14px}
+.plan-meter{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 2px;
+  border-top:1px solid var(--divider)}
+.plan-meter-label{font-size:13px;font-weight:600;color:var(--text-secondary)}
+.plan-meter-value{font-size:13px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.plan-meter-of{color:var(--text-secondary);font-weight:600}
+.plan-meter-included{color:var(--success)}

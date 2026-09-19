@@ -42,19 +42,24 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | # | Item | Status | Note |
 |---|---|---|---|
 | 24 | Usage counters without full-collection reads | ✅ | trigger-maintained; `recalculateUsage` for repair |
-| 25 | Plan/usage screen in Settings | ⬜ | `usageSummary()` exists and is tested; the Settings card is not built |
-| 26 | Upgrade prompt on hitting a limit | 🟡 | every `check*` returns a user-facing message; the prompt UI is not built |
-| 27 | Onboarding flow (signup → verify → workspace → use case) | 🟡 | `createWorkspace` seeds a taxonomy per use case; the first-run screen is not built |
+| 25 | Plan/usage screen in Settings | ✅ | plan, record count, storage, assistant and seats, laid out as the UI reference has it — `tests/browser/quota.test.mjs` Q12–Q14c |
+| 26 | Upgrade prompt on hitting a limit | ✅ | 70 / 90 / 100 warnings, and the ceiling opens the plans sheet with the reason — Q3–Q10 |
+| 27 | Onboarding flow (signup → verify → workspace → use case) | ✅ | welcome, Apple/Google/email, verification, three steps — `tests/browser/gate.test.mjs` G1–G20 |
 | 28 | Invitations | 🟡 | backend complete (hashed single-use token, expiry, seat check). **No email delivery and no UI** |
-| 29 | Barcode / QR scanning | ⬜ | not implemented |
-| 30 | QR labels | ⬜ | not implemented |
+| 29 | Barcode / QR scanning | 🟡 | `BarcodeDetector` where the platform has it, and a clear refusal where it does not — `labels.test.mjs` L9–L10. Not yet exercised on a real camera |
+| 30 | QR labels | ✅ | dependency-free encoder, colour and thermal finishes, print stylesheet — `qr.test.mjs`, `labels.test.mjs`, and a decode round trip via `tools/verify-qr.py` |
 | 31 | Bulk actions | ⬜ | not implemented |
+| 31b | Assistant tab: اسأل نَظْم | ✅ | answered on the device; a test watches the network and fails on any backend call — `assistant.test.mjs` A5–A9 |
+| 31c | Inventory health score | ✅ | deterministic, published weights — `assistant.test.mjs` A1–A4, `assistant.test.mjs` (unit) |
+| 31d | Duplicate detection | ✅ | grouped and explained, never merged — A10–A13 |
+| 31e | Guided cleanup | ✅ | ordered by the points each task adds — A14–A15 |
+| 31f | Smart photo capture and review | ✅ | camera-first, suggestions applied only on a tap — `suggest.test.mjs` |
 | 32 | CSV / XLSX import with column mapping | ⬜ | JSON import is complete and validated; spreadsheet import is not implemented |
 | 33 | Excel export with typed cells | ✅ | dependency-free writer; verified by reading the output back with a real spreadsheet library |
 | 34 | Global search across folders, Arabic-normalised | ✅ | browser suite |
 | 35 | English / i18n | ⬜ | strings are still inline Arabic; no i18n layer |
 | 36 | PWA (manifest, icons, service worker) | 🟡 | all three exist; the service worker caches only the static shell and never authenticated data. Installability not verified on a device |
-| 37 | Landing / marketing page | ⬜ | not implemented |
+| 37 | Landing / marketing page | 🟡 | the public welcome and pricing screens are built and tested; a separate marketing site is not |
 | 38 | Error monitoring | ⬜ | `console.error` and Cloud Logging only; no alerting |
 | 39 | Product analytics | ⬜ | not implemented |
 | 40 | Server-side backups | ⬜ **[YOU]** | commands documented; bucket and schedule not created |
@@ -112,12 +117,24 @@ Consider running the media reconciler on a schedule once real traffic exists.
 
 Multi-tenant isolation, role enforcement, entitlement forgery resistance, media
 ownership under duplication, SKU concurrency, XSS resistance, valuation and
-quantity correctness, and boot resilience — all covered by 89 automated
-assertions that run in about a minute (`npm test`).
+quantity correctness, and boot resilience. On top of those: the public gate and
+onboarding, the commercial surfaces and their limits, photo auto-fill and the
+rule that nothing it suggests is written unasked, the assistant tab and the
+promise that answering a question costs nothing and sends nothing, and the QR
+encoder — verified both against an independent implementation and by decoding
+its output with a third-party decoder.
+
+167 automated checks: 72 unit, 95 browser, plus the rules suite in the
+emulator. `TESTING.md` says what each one proves.
 
 ## What is not
 
-Anything touching money, anything requiring a deployed project, and every P1
-feature marked ⬜ above. The gap between "the security model is proven" and
-"ready to onboard paying customers" is billing, App Check, Storage-rule tests,
-and one real end-to-end run against a live project.
+Anything touching money, anything requiring a deployed project, and every item
+still marked ⬜ above. The gap between "the security model is proven" and
+"ready to onboard paying customers" is four things: a billing provider,
+App Check, Storage-rule tests, and one real end-to-end run against a live
+project.
+
+Separately, and independent of billing: **server-side pagination**. Until it
+lands, the Business plan should not be sold at its full record limit. See
+`COSTS.md`.

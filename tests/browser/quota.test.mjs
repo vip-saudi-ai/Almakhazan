@@ -132,16 +132,24 @@ const banner = (page) => page.evaluate(() => {
   await page.waitForTimeout(500);
   const card = await page.evaluate(() => ({
     text: document.getElementById('plan-panel').innerText,
-    bars: [...document.querySelectorAll('#plan-panel .usage-row')].map(r => r.innerText.replace(/\n/g, ' ')),
-    fills: [...document.querySelectorAll('#plan-panel .usage-fill')].map(f => f.style.width),
-    tones: [...document.querySelectorAll('#plan-panel .usage-fill')].map(f => f.className.replace('usage-fill', '').trim()),
+    pill: document.querySelector('#plan-panel .plan-pill')?.textContent,
+    used: document.querySelector('#plan-panel .plan-count-used')?.textContent,
+    of: document.querySelector('#plan-panel .plan-count-of')?.textContent,
+    meters: [...document.querySelectorAll('#plan-panel .plan-meter')].map(r => r.innerText.replace(/\n/g, ' ')),
+    fill: document.querySelector('#plan-panel .usage-fill')?.style.width,
+    note: document.querySelector('#plan-panel .plan-head-note')?.textContent || '',
   }));
-  check('Q12 card names the plan and the assistant allowance',
-    card.text.includes('خطة مجاني') && card.text.includes('10 إجراءات شهرياً'), card.text.replace(/\n/g, ' / ').slice(0, 160));
-  check('Q13 card shows all four counters', card.bars.length === 4 && card.bars[0].includes('36 من 50'), JSON.stringify(card.bars));
-  check('Q14 the bar reflects real usage', card.fills[0] === '72%', JSON.stringify(card.fills));
-  check('Q14b a one-seat plan is not painted as a problem',
-    card.tones[0] === 'notice' && card.tones[3] === '', JSON.stringify(card.tones));
+  check('Q12 the card names the plan and leads with the record count',
+    card.pill === 'الخطة المجانية' && card.used === '36' && card.of.includes('50'), JSON.stringify(card));
+  check('Q13 the other metered dimensions each get a row',
+    card.meters.length === 3
+    && card.meters[0].includes('التخزين')
+    && card.meters[1].includes('مساعد نَظْم')
+    && card.meters[2].includes('أعضاء الفريق'), JSON.stringify(card.meters));
+  check('Q14 the bar reflects real usage', card.fill === '72%', String(card.fill));
+  check('Q14b the free tier is told how much room is left', card.note.includes('72%'), card.note);
+  check('Q14c a counted assistant shows its number, not "included"',
+    card.meters[1].includes('3') && card.meters[1].includes('10'), card.meters[1]);
 
   await page.click('#plan-panel .btn-p');
   await page.waitForTimeout(400);

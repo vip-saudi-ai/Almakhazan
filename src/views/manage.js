@@ -596,28 +596,6 @@ const STATUS_LABELS = {
   local: 'هذا الجهاز فقط',
 };
 
-function usageBar(row) {
-  const unlimited = row.limit === UNLIMITED;
-  const ratio = unlimited ? 0 : Math.min(1, row.limit > 0 ? row.used / row.limit : 1);
-  // A one-seat plan is always "full" on members; that is the plan, not a
-  // problem, so it is not coloured like one.
-  const fixed = row.key === 'members' && row.limit === 1;
-  const tone = fixed ? '' : ratio >= 1 ? 'full' : ratio >= 0.9 ? 'warn' : ratio >= 0.7 ? 'notice' : '';
-
-  return el('div', { class: 'usage-row' }, [
-    el('div', { class: 'usage-head' }, [
-      el('span', { class: 'usage-label', text: row.label }),
-      el('span', {
-        class: 'usage-value',
-        text: unlimited ? `${row.format(row.used)} · بلا حد` : `${row.format(row.used)} من ${row.format(row.limit)}`,
-      }),
-    ]),
-    el('div', { class: 'usage-track' }, [
-      el('div', { class: `usage-fill ${tone}`.trim(), style: { width: `${Math.round(ratio * 100)}%` } }),
-    ]),
-  ]);
-}
-
 /**
  * Shows the plan the server says is in force, and what is left of it. The
  * numbers come from counters only the backend writes, so this card cannot be
@@ -645,25 +623,69 @@ export function renderPlanPanel() {
   const assistant = assistantLabel();
   const quota = quotaStatus();
   const rows = planUsage();
+  const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+
+  const headline = byKey.items;
+  const ratio = headline && headline.limit !== UNLIMITED && headline.limit > 0
+    ? Math.min(1, headline.used / headline.limit)
+    : 0;
+  const tone = quota?.level === 'full' ? 'full' : quota?.level === 'warn' ? 'warn' : '';
 
   render(panel, [
-    el('div', { class: 'srow', style: { cursor: 'default' } }, [
-      el('div', { class: 'srowiw', style: { background: 'rgba(0,122,255,.15)' }, text: '◆', 'aria-hidden': 'true' }),
-      el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: `خطة ${plan.name.ar}` }),
-        el('div', { class: 'srowd', text: `${STATUS_LABELS[status] || status} · مساعد نَظْم: ${assistant.label}` }),
+    // The headline: which plan, and how much of its main allowance is gone.
+    el('div', { class: 'plan-head' }, [
+      el('div', { class: 'plan-head-top' }, [
+        el('span', { class: 'plan-pill', text: plan.id === 'free' ? 'الخطة المجانية' : `خطة ${plan.name.ar}` }),
+        // The pill already says "free"; repeating it as a status says nothing.
+        status === 'free' ? null : el('span', { class: 'plan-status', text: STATUS_LABELS[status] || status }),
       ]),
-      plan.price?.monthly ? el('span', { class: 'plan-price', text: `${plan.price.monthly} ر.س / شهر` }) : null,
+      headline ? el('div', { class: 'plan-count' }, [
+        el('span', { class: 'plan-count-used', text: formatNumber(headline.used) }),
+        el('span', {
+          class: 'plan-count-of',
+          text: headline.limit === UNLIMITED ? 'قطعة' : `/ ${formatNumber(headline.limit)} قطعة`,
+        }),
+      ]) : null,
+      headline && headline.limit !== UNLIMITED ? el('div', { class: 'usage-track' }, [
+        el('div', { class: `usage-fill ${tone}`.trim(), style: { width: `${Math.round(ratio * 100)}%` } }),
+      ]) : null,
+      quota && quota.message ? el('div', { class: `plan-head-note ${quota.level}`, role: 'status', text: quota.message }) : null,
     ]),
-    quota && quota.level !== 'none' ? el('div', { class: `plan-alert ${quota.level}`, role: 'status', text: quota.message }) : null,
-    el('div', { class: 'usage-list' }, rows.map(usageBar)),
+
+    // Then the dimensions that are not the headline, one row each.
+    el('div', { class: 'plan-meters' }, [
+      meterRow('التخزين', byKey.storage),
+      meterRow('مساعد نَظْم', byKey.ai, assistant.included ? 'مشمول' : null),
+      meterRow('أعضاء الفريق', byKey.members),
+    ].filter(Boolean)),
+
     el('button', {
-      class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '10px' },
+      class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '12px' },
       text: plan.id === 'free' ? 'عرض الباقات' : 'تغيير الخطة',
       onClick: () => openPlansSheet(),
     }),
   ]);
 }
+
+/**
+ * One metered dimension. A plan that includes the assistant says "مشمول"
+ * rather than counting down credits at the customer — the number is still
+ * tracked and enforced server-side, it is just not their problem.
+ */
+function meterRow(label, row, includedLabel = null) {
+  if (!row) return null;
+  const unlimited = row.limit === UNLIMITED;
+  return el('div', { class: 'plan-meter' }, [
+    el('span', { class: 'plan-meter-label', text: label }),
+    el('span', { class: 'plan-meter-value' }, includedLabel
+      ? [el('span', { class: 'plan-meter-included', text: includedLabel })]
+      : [
+        el('span', { text: row.format(row.used) }),
+        el('span', { class: 'plan-meter-of', text: unlimited ? ' · بلا حد' : ` / ${row.format(row.limit)}` }),
+      ]),
+  ]);
+}
+
 
 function renderAiPanel() {
   const panel = $('ai-settings');
