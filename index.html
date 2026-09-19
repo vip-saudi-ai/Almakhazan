@@ -131,11 +131,11 @@
     <div class="active-filters" id="active-filters" role="status" style="display:none"></div>
 
     <div class="vscroll" id="hscroll">
+      <!-- Two figures, not four: statistics guide a decision here, they do not
+           compete with the inventory for attention. -->
       <div class="sgrid" id="statsrow">
-        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">📦</div><div class="snum" id="s-total">0</div><div class="slbl">عدد السجلات</div><div class="ssub" style="color:var(--blue)" id="s-cats">—</div></div>
-        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">🗂</div><div class="snum" id="s-folds">0</div><div class="slbl">المجلدات</div><div class="ssub" style="color:var(--purple)" id="s-foldsub">—</div></div>
-        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">✦</div><div class="snum" id="s-ai">0</div><div class="slbl">مُحلّلة بصرياً</div><div class="ssub" style="color:var(--teal)" id="s-aipct">0%</div></div>
-        <div class="sc gl-s"><div class="sc-bg" aria-hidden="true">💎</div><div class="snum" id="s-price">0</div><div class="slbl">لها تقييم</div><div class="ssub" style="color:var(--orange)" id="s-pricepct">0%</div></div>
+        <div class="sc gl-s"><div class="snum" id="s-total">0</div><div class="slbl">سجل</div><div class="ssub" id="s-cats">—</div></div>
+        <div class="sc gl-s"><div class="snum" id="s-qty">0</div><div class="slbl">إجمالي الكمية</div><div class="ssub" id="s-qtysub">—</div></div>
       </div>
 
       <div id="folds-section">
@@ -239,14 +239,18 @@
   <div class="shscroll">
     <div class="fsec">
       <div class="fstitle">الصور <span class="fstitle-sub" id="img-count">لا توجد صور</span></div>
+      <div class="capture-prompt" id="capture-prompt" style="display:none"></div>
       <div class="img-strip" id="img-strip"></div>
       <div class="img-progress" id="img-progress" style="display:none">
         <div class="img-progress-track"><div class="img-progress-bar" id="img-progress-bar"></div></div>
         <div class="img-progress-label" id="img-progress-label"></div>
       </div>
       <input type="file" id="imgInput" accept="image/*" multiple class="visually-hidden">
+      <!-- capture="environment" opens the camera directly on a phone; on a
+           desktop the browser falls back to the file picker by itself. -->
+      <input type="file" id="camInput" accept="image/*" capture="environment" class="visually-hidden">
       <div class="suggest" id="ai-suggest" style="display:none" role="group" aria-label="اقتراحات مساعد المخزن"></div>
-      <div class="field-hint">كل صيغ الصور مقبولة، وصور الآيفون (HEIC) تُحوَّل تلقائياً. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
+      <div class="field-hint" id="img-hint">كل صيغ الصور مقبولة، وصور الآيفون (HEIC) تُحوَّل تلقائياً. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
     </div>
 
     <div class="desc-toggle" role="group" aria-label="نمط الوصف">

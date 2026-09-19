@@ -65,19 +65,15 @@ function resetPage() {
 function renderStats() {
   const items = repository.liveItems();
   const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
-  const analyzed = items.filter((i) => i.aiData).length;
-  const valued = items.filter((i) => i.valuation).length;
+  const documented = items.filter((i) => i.images?.length).length;
   const categories = new Set(items.map((i) => i.categoryId).filter(Boolean)).size;
-  const folders = repository.state.folders.length;
 
   setText('s-total', formatNumber(items.length));
-  setText('s-cats', `${formatNumber(totalQuantity)} وحدة · ${categories} تصنيف`);
-  setText('s-folds', formatNumber(folders));
-  setText('s-foldsub', `${formatNumber(repository.trashedItems().length)} في المحذوفات`);
-  setText('s-ai', formatNumber(analyzed));
-  setText('s-aipct', items.length ? `${Math.round((analyzed / items.length) * 100)}%` : '0%');
-  setText('s-price', formatNumber(valued));
-  setText('s-pricepct', items.length ? `${Math.round((valued / items.length) * 100)}%` : '0%');
+  setText('s-cats', items.length
+    ? `${Math.round((documented / items.length) * 100)}% موثّق بالصور`
+    : 'ابدأ بأول قطعة');
+  setText('s-qty', formatNumber(totalQuantity));
+  setText('s-qtysub', `${formatNumber(categories)} تصنيف · ${formatNumber(repository.state.folders.length)} مجلد`);
 }
 
 // ── folders ──

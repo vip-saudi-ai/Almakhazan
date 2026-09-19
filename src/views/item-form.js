@@ -1,6 +1,6 @@
 // Add / edit sheet: fields, multi-image management, AI analysis, save.
 
-import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
+import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
 import {
   CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
 } from '../config.js';
@@ -109,7 +109,9 @@ function renderImages() {
         ]),
       ]);
     }),
-    form.images.length < IMAGE_LIMITS.maxPerItem ? el('button', {
+    // While the capture prompt is up it is the only way in; two invitations to
+    // add the same first photo is one too many.
+    form.images.length < IMAGE_LIMITS.maxPerItem && !(form.isNew && !form.images.length) ? el('button', {
       class: 'img-cell img-add', type: 'button', 'aria-label': 'إضافة صورة',
       onClick: () => $('imgInput').click(),
     }, [
@@ -122,6 +124,47 @@ function renderImages() {
   setText('img-count', form.images.length
     ? `${form.images.length} / ${IMAGE_LIMITS.maxPerItem} صورة`
     : 'لا توجد صور');
+
+  renderCapturePrompt();
+}
+
+/**
+ * The signature flow: a new record starts at the camera, not at an empty form.
+ * It disappears the moment there is a photo, so it never gets in the way of
+ * someone who is editing.
+ */
+function renderCapturePrompt() {
+  const prompt = $('capture-prompt');
+  if (!prompt) return;
+
+  if (!form.isNew || form.images.length) {
+    prompt.style.display = 'none';
+    render(prompt, []);
+    return;
+  }
+
+  prompt.style.display = '';
+  render(prompt, [
+    el('button', {
+      class: 'capture-cta', type: 'button',
+      onClick: () => $('camInput').click(),
+    }, [
+      el('span', { class: 'capture-ico', text: '⊡', 'aria-hidden': 'true' }),
+      el('span', { class: 'capture-label', text: 'صوّر القطعة' }),
+      el('span', { class: 'capture-sub', text: `ودع ${ASSISTANT_NAME} يقترح بياناتها` }),
+    ]),
+    el('div', { class: 'capture-alt' }, [
+      el('button', {
+        class: 'capture-link', type: 'button', text: 'اختر من المعرض',
+        onClick: () => $('imgInput').click(),
+      }),
+      el('span', { class: 'capture-sep', text: '·', 'aria-hidden': 'true' }),
+      el('button', {
+        class: 'capture-link', type: 'button', text: 'إدخال يدوي',
+        onClick: () => { $('capture-prompt').style.display = 'none'; $('f-name')?.focus(); },
+      }),
+    ]),
+  ]);
 }
 
 function moveImage(imageId, direction) {
@@ -308,6 +351,35 @@ function suggestionsFrom(aiData) {
   return rows;
 }
 
+/**
+ * What is still missing, asked for rather than invented. The assistant is more
+ * useful admitting it cannot read a reference number than guessing one, so
+ * when the evidence is thin it asks for the photo that would settle it.
+ */
+const EVIDENCE = [
+  { match: /ساع|watch/i, ask: 'هل تستطيع تصوير الرقم المرجعي داخل الغطاء؟ يرفع دقة التقدير كثيراً.' },
+  { match: /لوح|فن|art|paint/i, ask: 'أضف صورة التوقيع وظهر اللوحة — هناك تُقرأ المعلومات المهمة.' },
+  { match: /معد|جهاز|آل|equip|tool/i, ask: 'صوّر لوحة البيانات والرقم التسلسلي إن وُجدا.' },
+  { match: /مجوهر|ذهب|ألماس|jewel/i, ask: 'صوّر الدمغة أو الختم إن وُجد — يحدد العيار والمنشأ.' },
+];
+
+function followUpPrompt() {
+  const ai = form.aiData;
+  if (!ai) return null;
+
+  // Nothing to ask for once the object identifies itself.
+  if (ai.visibleText) return null;
+
+  const category = repository.category($('f-cat').value)?.name || '';
+  const hint = EVIDENCE.find((entry) => entry.match.test(`${category} ${ai.suggestedName || ''}`));
+  const ask = hint?.ask || 'أضف صورة ثانية من زاوية مختلفة لتحسين التوثيق.';
+
+  return el('div', { class: 'suggest-ask', role: 'note' }, [
+    el('span', { class: 'suggest-ask-mark', text: '◷', 'aria-hidden': 'true' }),
+    el('span', { text: ask }),
+  ]);
+}
+
 function renderSuggestions() {
   const box = $('ai-suggest');
   if (!box) return;
@@ -346,6 +418,7 @@ function renderSuggestions() {
       el('span', { class: 'suggest-apply', text: '+', 'aria-hidden': 'true' }),
     ]))),
     el('div', { class: 'suggest-note', text: 'اقتراحات مبنية على الصورة — راجعها، فهي ليست توثيقاً معتمداً.' }),
+    followUpPrompt(),
   ]);
 }
 
@@ -623,6 +696,10 @@ async function handleConflict(error) {
 }
 
 export function bindItemForm() {
+  $('camInput')?.addEventListener('change', (event) => {
+    if (event.target.files?.length) handleFiles(event.target.files);
+    event.target.value = '';
+  });
   $('imgInput')?.addEventListener('change', (event) => {
     if (event.target.files?.length) handleFiles(event.target.files);
   });

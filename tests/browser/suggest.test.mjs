@@ -121,6 +121,10 @@ async function addPhoto(page) {
     JSON.stringify(panel.rows));
   check('S3 the panel says these are estimates', panel.note.includes('ليست توثيقاً معتمداً'), panel.note.slice(0, 60));
 
+  // The reference number was read here, so there is nothing left to ask for.
+  const asked = await page.evaluate(() => document.querySelector('.suggest-ask')?.textContent || '');
+  check('S3b nothing is asked for when the object identified itself', asked === '', asked.slice(0, 60));
+
   const before = await page.evaluate(() => ({
     name: document.getElementById('f-name').value,
     brand: document.getElementById('f-brand').value,
@@ -185,6 +189,40 @@ async function addPhoto(page) {
     Array.isArray(call.categories) && call.categories.includes('الفنون الجميلة') && call.categories.length > 3,
     JSON.stringify(call.categories).slice(0, 100));
   check('S9 no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));
+  await page.close();
+}
+
+// ── when the evidence is thin, it asks instead of inventing ────────────────
+{
+  const thin = { ...ANALYSIS, visibleText: '', suggestedCategory: '', suggestedName: 'ساعة جيب' };
+  const { page } = await formPage({ analysis: thin });
+  await addPhoto(page);
+  const ask = await page.evaluate(() => document.querySelector('.suggest-ask')?.textContent || '');
+  check('S3c it asks for the photo that would settle it',
+    ask.includes('الرقم المرجعي') || ask.includes('زاوية مختلفة'), ask.slice(0, 80));
+  await page.close();
+}
+
+// ── the capture prompt ─────────────────────────────────────────────────────
+{
+  const { page } = await formPage();
+  await page.click('.nacts button[aria-label="إضافة قطعة"]');
+  await page.waitForTimeout(400);
+  const before = await page.evaluate(() => ({
+    shown: document.getElementById('capture-prompt')?.style.display !== 'none',
+    label: document.querySelector('.capture-label')?.textContent,
+    alt: [...document.querySelectorAll('.capture-link')].map(b => b.textContent),
+  }));
+  check('S3d a new record opens at the camera',
+    before.shown && before.label === 'صوّر القطعة' && before.alt.includes('إدخال يدوي'), JSON.stringify(before));
+
+  await page.setInputFiles('#imgInput', {
+    name: 'w.png', mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'),
+  });
+  await page.waitForTimeout(700);
+  const after = await page.evaluate(() => document.getElementById('capture-prompt')?.style.display);
+  check('S3e it steps aside once there is a photo', after === 'none', String(after));
   await page.close();
 }
 
