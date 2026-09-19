@@ -16,6 +16,7 @@ import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
 import { symbolNode } from './mark.js';
 import { goTab } from '../navigation.js';
+import { openScanner } from './scan.js';
 
 export const view = {
   page: 1,
@@ -267,6 +268,30 @@ function renderQuotaBanner() {
       onClick: () => { dismissedQuotaLevel = quota.level; renderQuotaBanner(); },
     }),
   ]);
+}
+
+// ── scanning from the inventory screen ──
+/**
+ * A scanned code is first a question: do I already own this? If a record
+ * carries it, open that record; if none does, offer to create one with the
+ * code already filled in. Never silently create.
+ */
+export async function scanIntoSearch() {
+  await openScanner({
+    title: 'امسح باركود أو رمز QR لقطعة',
+    onCode: ({ value }) => {
+      const match = repository.liveItems().find(
+        (item) => item.barcode === value || item.sku === value || item.id === value,
+      );
+      if (match) { openDetail(match.id); return; }
+
+      $('hsearch').value = value;
+      view.query = value;
+      resetPage();
+      renderHome();
+      toast('لا توجد قطعة بهذا الرمز — ابحث أو أضِف قطعة جديدة', '⌕');
+    },
+  });
 }
 
 // ── an answer handed over by the assistant ──

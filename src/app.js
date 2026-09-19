@@ -16,16 +16,17 @@ import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast,
 import {
   applyFilterControls, bindContextActions, bindLongPress, bindSearch, closeContextMenu,
   enterFolder, exitFolder, focusSearch, openFilterSheet, openSortSheet, renderHome,
-  resetAllFilters, setGridMode, syncFilterControls, view as homeView,
+  resetAllFilters, scanIntoSearch, setGridMode, syncFilterControls, view as homeView,
 } from './views/home.js';
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { bindAssistant, renderAssistant } from './views/assistant.js';
+import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 import { onSubscriptionChange, startPlanWatch } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans', 'labels', 'scan'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -195,6 +196,10 @@ function initializeUI() {
   registerTab('set', renderSettings);
 
   for (const name of SHEETS) bindSheetDismiss(name);
+  // Whatever closes the scanner — the button, the overlay, Escape, the back
+  // gesture — the camera has to go off with it.
+  $('ov-scan')?.addEventListener('click', stopScanner);
+  $('sh-scan')?.querySelector('[data-close]')?.addEventListener('click', stopScanner);
 
   bindSearch();
   bindLongPress();
@@ -245,6 +250,7 @@ function bindToolbar() {
   for (const tab of ['home', 'ov', 'ai', 'set']) {
     $(`t-${tab}`)?.addEventListener('click', () => goTab(tab));
   }
+  $('scan-btn')?.addEventListener('click', () => scanIntoSearch());
   $('tg')?.addEventListener('click', () => setGridMode(true));
   $('tl')?.addEventListener('click', () => setGridMode(false));
   $('filter-btn')?.addEventListener('click', openFilterSheet);

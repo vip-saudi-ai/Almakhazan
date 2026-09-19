@@ -9,6 +9,7 @@ import {
   closeSheet, confirmAction, detailRow, flashSuccess, openSheet, toast, toastError,
 } from '../ui.js';
 import { openItemForm } from './item-form.js';
+import { openLabels } from './labels.js';
 
 function heroNode(item, { big = true } = {}) {
   const image = primaryImage(item);
@@ -127,6 +128,7 @@ export function openDetail(itemId) {
   const editButton = $('detedit');
   const deleteButton = $('detdel');
   const moveButton = $('detmove');
+  const labelButton = $('detlabel');
 
   for (const [button, handler] of [
     [editButton, () => { closeSheet('det'); setTimeout(() => openItemForm({ itemId }), 240); }],
@@ -137,6 +139,11 @@ export function openDetail(itemId) {
     button.onclick = handler;
     button.disabled = !canWrite;
     button.style.display = canWrite ? '' : 'none';
+  }
+
+  // Printing a label changes nothing, so a viewer may do it too.
+  if (labelButton) {
+    labelButton.onclick = () => { closeSheet('det'); setTimeout(() => openLabels([itemId]), 240); };
   }
 
   openSheet('det');

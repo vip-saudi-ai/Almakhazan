@@ -7,6 +7,7 @@ import {
 import { repository, ConflictError } from '../repository.js';
 import { canAddItem, canUseAssistant } from '../subscription.js';
 import { openPlansSheet } from './plans.js';
+import { openScanner } from './scan.js';
 import { bindImageSrc, uploadImage } from '../storage.js';
 import { $, el, render, setText, uid } from '../utils.js';
 import {
@@ -696,6 +697,13 @@ async function handleConflict(error) {
 }
 
 export function bindItemForm() {
+  $('f-barcode-scan')?.addEventListener('click', () => openScanner({
+    title: 'امسح باركود القطعة',
+    onCode: ({ value }) => {
+      $('f-barcode').value = value;
+      toast('تمت قراءة الباركود', '⊡');
+    },
+  }));
   $('camInput')?.addEventListener('change', (event) => {
     if (event.target.files?.length) handleFiles(event.target.files);
     event.target.value = '';

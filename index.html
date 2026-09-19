@@ -107,6 +107,7 @@
         <input id="hsearch" type="search" placeholder="بحث في كل المخزن..." autocomplete="off">
         <button class="sclear" id="sclear" type="button" aria-label="مسح البحث">✕</button>
       </div>
+      <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود">⊡</button>
     </div>
 
     <div class="fsact-row" id="home-actrow">
@@ -272,7 +273,7 @@
       <div class="fstitle">معلومات القطعة</div>
       <div class="frow"><label for="f-name">الاسم</label><input id="f-name" placeholder="اسم القطعة"></div>
       <div class="frow"><label for="f-sku">الرمز SKU</label><input id="f-sku" placeholder="تلقائي"></div>
-      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" inputmode="numeric"></div>
+      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" inputmode="numeric"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود">⊡</button></div>
     </div>
 
     <div class="fsec">
@@ -318,6 +319,7 @@
   <div class="shscroll" id="detbody"></div>
   <div class="shfoot">
     <button class="btn btn-d" id="detdel" type="button" style="flex:1;padding:12px">حذف</button>
+    <button class="btn btn-g" id="detlabel" type="button" style="flex:1;padding:12px">⊡ ملصق</button>
     <button class="btn btn-g" id="detmove" type="button" style="flex:1;padding:12px">🗂 نقل</button>
     <button class="btn btn-p" id="detedit" type="button" style="flex:2;padding:12px">✎ تعديل</button>
   </div>
@@ -471,6 +473,25 @@
   <div class="shhdr"><h2 class="shtitle" id="sort-title">ترتيب حسب</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
   <div class="shscroll" style="padding:0">
     <div class="sgroup" style="margin:0 20px 16px" id="sort-options"></div>
+  </div>
+</div>
+
+<!-- QR LABELS -->
+<div class="ov" id="ov-labels"></div>
+<div class="sh" id="sh-labels" tabindex="-1" style="max-height:88vh" aria-labelledby="labels-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="labels-title">ملصق القطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll"><div id="labels-body"></div></div>
+</div>
+
+<!-- SCANNER -->
+<div class="ov" id="ov-scan"></div>
+<div class="sh" id="sh-scan" tabindex="-1" style="max-height:80vh" aria-labelledby="scan-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="scan-title">مسح الباركود</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll">
+    <div class="scan-frame"><video id="scan-video" class="scan-video" muted playsinline></video><div class="scan-guide" aria-hidden="true"></div></div>
+    <p class="scan-hint" id="scan-hint">وجّه الكاميرا نحو الباركود أو رمز QR</p>
   </div>
 </div>
 
