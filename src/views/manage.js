@@ -1,5 +1,6 @@
 // Categories, folders, locations, Trash, settings, auth panel, import/export.
 
+import { icon } from '../icons.js';
 import {
   APP_VERSION, CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, ROLE_LABELS, SCHEMA_VERSION, UNCATEGORIZED_ID,
 } from '../config.js';
@@ -12,6 +13,7 @@ import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
+import { inventoryCounts } from '../query.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
 import { startSpreadsheetImport } from './sheet-import.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
@@ -37,11 +39,12 @@ let editingCategoryId = null;
 export function renderCategories() {
   const grid = $('catgrid');
   if (!grid) return;
-  const items = repository.liveItems();
+  // One pass over the records, not one pass per category.
+  const counts = inventoryCounts();
 
   render(grid, [
     ...repository.state.categories.map((category) => {
-      const count = items.filter((i) => i.categoryId === category.id).length;
+      const count = counts.categories.get(category.id) || 0;
       return el('div', { class: 'catcell' }, [
         el('button', {
           class: 'catcell-main', type: 'button',
@@ -54,20 +57,20 @@ export function renderCategories() {
         ]),
         repository.canWrite() ? el('div', { class: 'catcell-acts' }, [
           el('button', {
-            class: 'catcell-act', type: 'button', text: '✎', 'aria-label': `تعديل ${category.name}`,
+            class: 'catcell-act', type: 'button', 'aria-label': `تعديل ${category.name}`,
             onClick: () => openCategorySheet(category.id),
-          }),
+          }, [icon('edit', { size: 15 })]),
           el('button', {
-            class: 'catcell-act danger', type: 'button', text: '🗑', 'aria-label': `حذف ${category.name}`,
+            class: 'catcell-act danger', type: 'button', 'aria-label': `حذف ${category.name}`,
             onClick: () => deleteCategoryFlow(category.id),
-          }),
+          }, [icon('trash', { size: 15 })]),
         ]) : null,
       ]);
     }),
     repository.canWrite() ? el('button', {
       class: 'catcell catcell-add', type: 'button', onClick: () => openCategorySheet(),
     }, [
-      el('div', { class: 'catcico', text: '+', 'aria-hidden': 'true' }),
+      el('div', { class: 'catcico' }, [icon('plus', { size: 20 })]),
       el('div', { class: 'catcname', text: 'تصنيف جديد' }),
     ]) : null,
   ]);
@@ -241,7 +244,7 @@ async function saveFolder() {
 async function deleteFolderFlow() {
   const folder = repository.folder(editingFolderId);
   if (!folder) return;
-  const count = repository.liveItems().filter((i) => i.folderId === folder.id).length;
+  const count = inventoryCounts().folders.get(folder.id) || 0;
 
   const confirmed = await confirmAction({
     title: `حذف مجلد "${folder.name}"؟`,
@@ -269,14 +272,20 @@ export function openLocationsSheet() {
   openSheet('loc');
 }
 
+/** "N قطعة", or an honest phrase when N is not knowable from the window. */
+function describeCount() {
+  const { live, complete } = inventoryCounts();
+  return complete ? `${formatNumber(live)} قطعة` : 'كل ما في مخزونك';
+}
+
 function renderLocations() {
   const list = $('loc-list');
   if (!list) return;
-  const items = repository.liveItems();
+  const counts = inventoryCounts();
 
   render(list, [
     ...repository.state.locations.map((location) => {
-      const count = items.filter((i) => i.locationId === location.id).length;
+      const count = counts.locations.get(location.id) || 0;
       return el('div', { class: 'srow' }, [
         el('div', { class: 'srowiw', text: '📍', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
@@ -284,7 +293,7 @@ function renderLocations() {
           el('div', { class: 'srowd', text: `${formatNumber(count)} قطعة` }),
         ]),
         repository.canWrite() ? el('button', {
-          class: 'catcell-act danger', type: 'button', text: '🗑',
+          class: 'catcell-act danger', type: 'button',
           'aria-label': `حذف ${location.name}`,
           onClick: async () => {
             const confirmed = await confirmAction({
@@ -302,7 +311,7 @@ function renderLocations() {
               toastError(error, 'تعذّر حذف الموقع');
             }
           },
-        }) : null,
+        }, [icon('trash', { size: 15 })]) : null,
       ]);
     }),
     !repository.state.locations.length ? el('div', { class: 'srow' }, [
@@ -326,7 +335,17 @@ async function addLocation() {
 }
 
 // ── trash ──
-export function openTrashSheet() {
+export async function openTrashSheet() {
+  // Trash is the one Settings destination that needs records the window does
+  // not hold: a deleted record is old by definition, so it sorts out of the
+  // newest-first window. The load happens here, on the way in, rather than
+  // being charged to everyone who opens Settings.
+  if (!repository.itemsComplete
+      && !(await withFullInventory('جارٍ قراءة المحذوفات…'))) return;
+  openTrashSheetNow();
+}
+
+function openTrashSheetNow() {
   renderTrash();
   openSheet('trash');
 }
@@ -454,7 +473,7 @@ async function runImport(mode) {
   if (mode === 'restore') {
     const confirmed = await confirmAction({
       title: 'استبدال كل البيانات الحالية؟',
-      message: `سيُستبدل المخزون الحالي (${formatNumber(repository.state.items.length)} قطعة) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
+      message: `سيُستبدل المخزون الحالي (${describeCount()}) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
       icon: '⚠️',
       confirmLabel: 'استبدال',
       requirePhrase: 'استبدال',
@@ -727,15 +746,20 @@ function renderDataPanel() {
   const { user, local } = currentSession();
   const cloudSession = Boolean(user) && !local;
 
-  const row = (icon, background, title, subtitle, onClick) => el('button', {
+  // `icon` as a parameter name shadowed the icon() helper this module now
+  // imports, so every call inside this function resolved to a string instead
+  // of the drawing function. Renamed rather than aliased: a shadowed import
+  // fails at the first call that needs the real one, which is how this
+  // surfaced — as "icon is not a function" three sections away.
+  const row = (glyph, background, title, subtitle, onClick) => el('button', {
     class: 'srow srow-btn', type: 'button', onClick,
   }, [
-    el('div', { class: 'srowiw', style: { background }, text: icon, 'aria-hidden': 'true' }),
+    el('div', { class: 'srowiw', style: { background }, text: glyph, 'aria-hidden': 'true' }),
     el('div', { style: { flex: '1' } }, [
       el('div', { class: 'srowl', text: title }),
       subtitle ? el('div', { class: 'srowd', text: subtitle }) : null,
     ]),
-    el('div', { class: 'srowc', text: '›', 'aria-hidden': 'true' }),
+    el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ]);
 
   render(panel, [
@@ -753,7 +777,14 @@ function renderDataPanel() {
     }),
     row('📄', 'rgba(255,149,0,.15)', 'استيراد من Excel أو CSV', 'طابق الأعمدة بنفسك، وشاهد ما سيُكتب قبل كتابته', () => { void startSpreadsheetImport(); }),
     row('📥', 'rgba(255,149,0,.15)', 'استيراد نسخة JSON', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
-    row('🗑', 'rgba(142,142,147,.15)', 'سلة المحذوفات', `${formatNumber(repository.trashedItems().length)} قطعة`, openTrashSheet),
+    // Deleted records sort to the back of the window, so their count is only
+    // knowable once everything is loaded. Settings does not wait for that —
+    // the row says what it is and the sheet counts when it opens.
+    row('🗑', 'rgba(142,142,147,.15)', 'سلة المحذوفات',
+      repository.itemsComplete
+        ? `${formatNumber(inventoryCounts().trashed)} قطعة`
+        : 'القطع المحذوفة، قابلة للاستعادة',
+      openTrashSheet),
     row('📍', 'rgba(175,82,222,.15)', 'المواقع', `${formatNumber(repository.state.locations.length)} موقع`, openLocationsSheet),
   ]);
 
@@ -762,11 +793,16 @@ function renderDataPanel() {
     el('button', {
       class: 'srow srow-btn', type: 'button',
       onClick: async () => {
-        const items = repository.state.items.length;
+        // clearInventory loads everything before it deletes anything, so the
+        // count in the warning is read after that load rather than from the
+        // window that happens to be on screen.
+        const items = repository.itemsComplete ? inventoryCounts().live : null;
         const folders = repository.state.folders.length;
         const confirmed = await confirmAction({
           title: 'حذف كل القطع والمجلدات؟',
-          message: `سيُحذف ${formatNumber(items)} قطعة و${formatNumber(folders)} مجلد نهائياً. التصنيفات والمواقع لن تُحذف. نزّل نسخة احتياطية أولاً.`,
+          message: items == null
+            ? `سيُحذف كل ما في المخزون و${formatNumber(folders)} مجلد نهائياً. التصنيفات والمواقع لن تُحذف. نزّل نسخة احتياطية أولاً.`
+            : `سيُحذف ${formatNumber(items)} قطعة و${formatNumber(folders)} مجلد نهائياً. التصنيفات والمواقع لن تُحذف. نزّل نسخة احتياطية أولاً.`,
           icon: '⚠️',
           confirmLabel: 'حذف الكل',
           requirePhrase: 'حذف الكل',
@@ -782,7 +818,7 @@ function renderDataPanel() {
         }
       },
     }, [
-      el('div', { class: 'srowiw', style: { background: 'rgba(255,59,48,.15)' }, text: '🗑', 'aria-hidden': 'true' }),
+      el('div', { class: 'srowiw', style: { background: 'var(--danger-soft)' }, 'aria-hidden': 'true' }, [icon('trash')]),
       el('div', { style: { flex: '1' } }, [
         el('div', { class: 'srowl', style: { color: 'var(--red)' }, text: 'حذف كل القطع والمجلدات' }),
         el('div', { class: 'srowd', text: 'التصنيفات والمواقع تبقى كما هي' }),

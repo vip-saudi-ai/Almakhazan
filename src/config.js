@@ -30,7 +30,7 @@ export const FUNCTIONS_REGION = 'us-central1';
  * comments were design iterations, not releases, and having two numbers meant
  * neither could be trusted. package.json reads this file's value.
  */
-export const APP_VERSION = '0.9.0-beta';
+export const APP_VERSION = '0.9.1-beta';
 export const SCHEMA_VERSION = 2;
 
 export const PAGE_SIZE = 20;

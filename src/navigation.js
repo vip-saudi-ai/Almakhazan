@@ -14,10 +14,18 @@ export function registerTab(name, render) {
   renderers.set(name, render);
 }
 
-// The home screen can live on a window of the newest records. Every other
-// screen states something about the whole inventory — a total, a score, a
-// list of categories and their counts — so it waits for the whole inventory.
-const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai', 'cats', 'set']);
+// Which screens are a statement about the whole inventory.
+//
+//   ov    a dashboard of totals and proportions
+//   ai    a score and an answer computed from every record
+//   cats  every category with how many records carry it
+//
+// Settings is not one of them, and it used to be. Account, plan, appearance,
+// import/export, workspace, team and preferences say nothing about the
+// records — so a customer with 20,000 of them was made to wait for all of
+// them to open a screen that never mentions them. The one Settings
+// destination that does need them, Trash, loads on its own way in.
+const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai', 'cats']);
 
 export function goTab(name) {
   if (!TABS.includes(name)) return;

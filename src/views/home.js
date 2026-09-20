@@ -4,7 +4,7 @@
 import { icon } from '../icons.js';
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
-import { ensureFor, runQuery, summarize } from '../query.js';
+import { ensureFor, inventoryCounts, runQuery, summarize } from '../query.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
@@ -92,21 +92,40 @@ function resetPage() {
 // about the whole inventory, not about the window the screen happens to hold.
 // So each of them loads the rest first, once, and does nothing if that fails:
 // a filter applied to a fraction answers confidently and wrongly.
+/**
+ * The generation of the narrowing currently in flight.
+ *
+ * Every narrowing takes a ticket. When one finishes it checks whether it is
+ * still the newest; if a later keystroke or tap has come in, it returns
+ * without rendering. Without this, a slow load started at "خا" resolves after
+ * a fast one started at "خاتم" and paints the older results over the newer —
+ * the result flashing the brief asks to remove.
+ */
+let narrowingGeneration = 0;
+
 async function narrowing(apply) {
   // Apply first so the query reflects what was just asked for, then let the
   // query say whether it can be answered from what is loaded.
   const before = currentQuery();
   apply();
   const after = currentQuery();
-  const ok = await ensureFor(after, () => withFullInventory('جارٍ قراءة المخزون كاملاً…'));
-  if (!ok) {
-    // Put the screen back rather than answering a narrowed question from a
-    // fraction of the inventory.
-    Object.assign(view, {
-      query: before.search, folderId: before.folderId, categoryPill: before.categoryId,
-      filters: before.filters, sortMode: before.sort, page: before.page,
-    });
+  const ticket = ++narrowingGeneration;
+
+  // If the data is already in hand this does not yield at all, so typing stays
+  // instant and nothing flashes a loading state for work that takes no time.
+  if (await ensureFor(after, () => withFullInventory('جارٍ قراءة المخزون كاملاً…'))) {
+    if (ticket !== narrowingGeneration) return;   // superseded; the newer one paints
+    renderHome();
+    return;
   }
+
+  if (ticket !== narrowingGeneration) return;
+  // Put the screen back rather than answering a narrowed question from a
+  // fraction of the inventory.
+  Object.assign(view, {
+    query: before.search, folderId: before.folderId, categoryPill: before.categoryId,
+    filters: before.filters, sortMode: before.sort, page: before.page,
+  });
   renderHome();
 }
 
@@ -133,12 +152,10 @@ function renderStats() {
 }
 
 // ── folders ──
-function folderCard(folder) {
+function folderCard(folder, counts) {
   // A count taken from the window would be a fraction presented as a total.
   // Until the inventory is whole, the card carries no number at all.
-  const count = repository.itemsComplete
-    ? repository.liveItems().filter((i) => i.folderId === folder.id).length
-    : null;
+  const count = counts.complete ? (counts.folders.get(folder.id) || 0) : null;
   const color = folder.color || '#007AFF';
   return el('button', {
     class: 'fld-card gl-s',
@@ -174,14 +191,49 @@ function renderFolders() {
     return;
   }
   row.style.display = 'grid';
+  // One pass for every folder's count, rather than one pass per folder.
+  const counts = inventoryCounts();
   render(row, [
-    ...folders.map(folderCard),
+    ...folders.map((folder) => folderCard(folder, counts)),
     el('button', {
       class: 'fld-card fld-add gl-s',
       type: 'button',
       onClick: () => window.dispatchEvent(new CustomEvent('almakhzan:new-folder')),
     }, [icon('plus', { size: 18 }), el('span', { text: 'مجلد جديد' })]),
   ]);
+}
+
+/**
+ * A record with no photograph.
+ *
+ * Two states that look alike and are not: *no image was ever added*, and *an
+ * image exists and failed to load*. The first is a fact about the record and
+ * should look deliberate; the second is a fact about the network and should
+ * look recoverable. Drawing both as the same grey box tells someone their
+ * documentation is missing when it is merely offline.
+ */
+function placeholderNode(category) {
+  return el('div', { class: 'icph' }, [
+    el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
+    el('span', { class: 'icph-lbl', text: 'بدون صورة' }),
+  ]);
+}
+
+/** An image that exists but did not arrive. Offers the retry, quietly. */
+function attachImageFallback(img, image, category, onRetry) {
+  img.addEventListener('error', () => {
+    const host = img.parentElement;
+    if (!host) return;
+    render(host, [
+      el('div', { class: 'icph icph-failed' }, [
+        el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
+        el('button', {
+          class: 'icph-retry', type: 'button', text: 'تعذّر تحميل الصورة · إعادة',
+          onClick: (event) => { event.stopPropagation(); onRetry?.(); },
+        }),
+      ]),
+    ]);
+  }, { once: true });
 }
 
 // ── item cards ──
@@ -204,14 +256,10 @@ function cardNode(item) {
   if (image) {
     const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
     bindImageSrc(img, image, { tier: ImageTier.THUMB });
+    attachImageFallback(img, image, category, () => renderHome());
     imageNode = img;
   } else {
-    // The category's own icon, not a cardboard box: a record with no
-    // photograph still has a kind, and showing the kind is more use than
-    // showing that a photograph is missing.
-    imageNode = el('div', { class: 'icph' }, [
-      el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
-    ]);
+    imageNode = placeholderNode(category);
   }
 
   const selected = view.selection?.has(item.id) === true;
@@ -304,8 +352,12 @@ function rowNode(item) {
 function renderPills(scopeItems) {
   const container = $('hpills');
   if (!container) return;
-  const used = repository.state.categories.filter((c) => scopeItems.some((i) => i.categoryId === c.id));
-  const hasUncategorized = scopeItems.some((i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID);
+  // `categories.filter(c => items.some(...))` walked the scope once per
+  // category. One pass builds the set of categories that are actually present.
+  const present = new Set();
+  for (const item of scopeItems) present.add(item.categoryId || UNCATEGORIZED_ID);
+  const used = repository.state.categories.filter((c) => present.has(c.id));
+  const hasUncategorized = present.has(UNCATEGORIZED_ID);
 
   const pill = (id, label) => el('button', {
     class: `cpill${view.categoryPill === id ? ' on' : ''}`,
@@ -537,7 +589,7 @@ function pickOne(title, options, onPick) {
     onClick: () => { closeSheet('bulk'); setTimeout(() => onPick(option.value), 200); },
   }, [
     el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', text: option.label })]),
-    el('div', { class: 'srowc', text: '›', 'aria-hidden': 'true' }),
+    el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ])));
   openSheet('bulk');
 }
@@ -622,10 +674,10 @@ function renderPagination(totalPages) {
 
   render(container, [
     el('button', {
-      class: 'pbtn', type: 'button', text: '‹', 'aria-label': 'الصفحة السابقة',
+      class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة السابقة',
       disabled: view.page <= 1 || undefined,
       onClick: () => go(view.page - 1),
-    }),
+    }, [icon('forward', { size: 17 })]),
     ...model.map((entry) => (entry.type === 'gap'
       ? el('span', { class: 'pgap', text: '…', 'aria-hidden': 'true' })
       : el('button', {
@@ -637,10 +689,10 @@ function renderPagination(totalPages) {
         onClick: () => go(entry.value),
       }))),
     el('button', {
-      class: 'pbtn', type: 'button', text: '›', 'aria-label': 'الصفحة التالية',
+      class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة التالية',
       disabled: view.page >= totalPages || undefined,
       onClick: () => go(view.page + 1),
-    }),
+    }, [icon('back', { size: 17 })]),
   ]);
 }
 
@@ -890,11 +942,16 @@ export function openSortSheet() {
 }
 
 // ── search ──
+/**
+ * 200ms rather than 140: long enough that a word typed at speed is one query
+ * rather than five, short enough to feel immediate. The Arabic and digit
+ * normalisation happens inside the query, so nothing about typing changes.
+ */
 const runSearch = debounce(() => {
   // An empty box is not a search: it costs nothing and needs nothing.
-  if (!view.query) { resetPage(); renderHome(); return; }
+  if (!view.query) { narrowingGeneration += 1; resetPage(); renderHome(); return; }
   void narrowing(() => resetPage());
-}, 140);
+}, 200);
 
 export function bindSearch() {
   const input = $('hsearch');

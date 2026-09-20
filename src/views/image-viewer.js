@@ -402,6 +402,7 @@ function bindGestures(root) {
         baseTx: st ? st.tx : 0,
         baseTy: st ? st.ty : 0,
         moved: false,
+        pointerType: event.pointerType || 'mouse',
       };
     }
   });
@@ -469,10 +470,10 @@ function bindGestures(root) {
         return;
       }
       update();       // snap back
-      if (!gesture.moved) handleTap(last);
+      if (!gesture.moved) handleTap(last, gesture.pointerType);
       return;
     }
-    if (gesture.kind === 'pan' && !gesture.moved) handleTap(last);
+    if (gesture.kind === 'pan' && !gesture.moved) handleTap(last, gesture.pointerType);
   };
 
   wrap.addEventListener('pointerup', finish);
@@ -487,19 +488,36 @@ function bindGestures(root) {
     zoomAt(event.clientX, event.clientY, factor);
   }, { passive: false });
 
+  // One gesture, one zoom. A mouse double click fires two pointerup pairs
+  // *and* a dblclick, so handling both meant toggleZoomAt ran twice — zoom in,
+  // then straight back out, leaving the scale exactly where it started.
+  //
+  // Each input type now has exactly one pathway: the browser's own dblclick
+  // for a mouse (it respects the reader's OS double-click speed), and the
+  // pointer timing for touch and pen, where no dblclick is dispatched
+  // reliably. Clearing `lastTap` also cancels the two pending single-click
+  // control toggles the two clicks queued on their way here.
   wrap.addEventListener('dblclick', (event) => {
     event.preventDefault();
+    state.lastTap = 0;
+    state.lastTapPoint = null;
     toggleZoomAt(event.clientX, event.clientY);
   });
 }
 
-/** A single tap toggles the controls; two taps toggle the zoom. */
-function handleTap(point) {
+/**
+ * A single tap toggles the controls; two taps toggle the zoom.
+ *
+ * `pointerType` decides whether the second half of that sentence applies
+ * here: for a mouse it does not, because `dblclick` owns it (see
+ * bindGestures). Running both is what made one double click zoom and unzoom.
+ */
+function handleTap(point, pointerType = 'touch') {
   const now = Date.now();
   const near = state.lastTapPoint
     && Math.hypot(point.x - state.lastTapPoint.x, point.y - state.lastTapPoint.y) < DOUBLE_TAP_SLOP;
 
-  if (now - state.lastTap < DOUBLE_TAP_MS && near) {
+  if (pointerType !== 'mouse' && now - state.lastTap < DOUBLE_TAP_MS && near) {
     state.lastTap = 0;
     state.lastTapPoint = null;
     toggleZoomAt(point.x, point.y);

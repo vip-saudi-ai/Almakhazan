@@ -29,7 +29,7 @@ already set in this environment.
 | `query.test.mjs` | a query describes itself well enough for a runner to decide what it needs: which parts an index could serve, which need the records, and free-text search named as the one no index answers |
 | `import.test.mjs` | the mapping guess matches Arabic and English headers with spelling folded and never claims one column twice; an unrecognised header is left unmapped rather than guessed; a nameless row is skipped and reported; a bad quantity, price or condition is reported rather than coerced; an existing taxonomy is reused and a new one is only collected; and the CSV reader handles quotes, semicolons, tabs and a byte order mark |
 
-### Browser — `tests/browser/*.test.mjs`, 303 checks
+### Browser — `tests/browser/*.test.mjs`, 316 checks
 
 | File | Proves |
 |---|---|

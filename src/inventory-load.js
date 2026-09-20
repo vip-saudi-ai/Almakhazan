@@ -9,6 +9,48 @@
 // rest once per session, says so while it is happening, and returns false if
 // it could not — so the caller can refuse instead of answering from a
 // fraction of the data.
+//
+// ── every caller, and why it is still here ────────────────────────────────
+//
+// This list is the audit. A call that cannot justify itself below should be
+// deleted rather than left in, because each one is a customer waiting.
+//
+//   navigation.js      Overview, the assistant and the category screen. Each
+//                      is a statement about the whole inventory — a total, a
+//                      score, every category with its count — so each needs
+//                      every record. Settings is deliberately NOT in this
+//                      set: account, plan, appearance, import/export,
+//                      workspace, team and preferences mention no record.
+//
+//   home.js narrowing  A search, a filter, a sort or a folder, answered by
+//                      the local adapter, which has no index. This is the one
+//                      that a remote adapter removes: it declares
+//                      `needsEverything` false and the load never happens.
+//                      The seam is in query.js; nothing in the UI changes.
+//
+//   home.js scanner    "No record carries this barcode" has to mean the whole
+//                      inventory or it is not an answer.
+//
+//   manage.js trash    A deleted record is old by definition, so it sorts out
+//                      of a newest-first window. Charged to opening Trash,
+//                      not to opening Settings.
+//
+//   manage.js export   An export and a backup are statements about the whole
+//   (Excel, JSON)      inventory. A short file that looks complete is worse
+//                      than a slow one.
+//
+//   sheet-import.js    Matches taxonomy by name against what already exists
+//                      and counts the result against the plan limit.
+//
+//   restore.js         Takes the safety backup. A backup of a window would
+//   (completeItems)    let step three delete records it never backed up.
+//
+//   device-upload.js   "No image still points at the device" must be true of
+//   (completeItems)    every record.
+//
+// What is NOT here any more: opening Settings, and drawing category, folder
+// or location counts — those now come from one pass over whatever is loaded
+// (`inventoryCounts` in query.js) rather than one filter per entry.
 
 import { repository } from './repository.js';
 import { toastError } from './ui.js';

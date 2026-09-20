@@ -362,9 +362,10 @@ body.kb-open .select-bar { bottom: var(--kb, 0px); }
   .drow3, .ov-cond-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 260px)); }
   .imp-stats { grid-template-columns: repeat(auto-fit, minmax(160px, 280px)); }
 
-  /* The search field is a control, not a banner. */
-  .sfrow { max-width: 640px; margin-inline: var(--gutter) auto; }
-  .fsact-row { max-width: 420px; }
+  /* The search field is a control, not a banner. `width` again, for the same
+     reason: an auto margin on a flex item beats `stretch`. */
+  .sfrow { width: 100%; max-width: 640px; margin-inline: var(--gutter) auto; }
+  .fsact-row { width: 100%; max-width: 420px; }
   .fsact-btn { flex: 0 1 200px; }
 }
 
@@ -422,4 +423,109 @@ body.kb-open .select-bar { bottom: var(--kb, 0px); }
    start truncating into each other. */
 @media (max-width: 300px), (orientation: landscape) and (max-height: 430px) {
   .tilbl { display: none; }
+}
+
+/* ── tablet: a composition, not a wide phone ───────────────────────────────
+ * Technically responsive is not the same as designed. Below are the four
+ * things that made 768–1023px read as an enlarged phone: navigation stretched
+ * edge to edge, a section heading pinned to one margin with its action at the
+ * other, an empty-state button as wide as the screen, and controls that grew
+ * simply because there was room.
+ */
+@media (min-width: 768px) {
+  /* A heading and its action belong to each other. `.shdr` is
+     `justify-content: space-between`, which on a phone puts them at either
+     end of 358px — a pair — and on a 1280px screen puts them 1200px apart
+     with nothing in between, which is not a pair. The row now stops at the
+     grid's own measure so the action stays beside what it acts on. */
+  .shdr { max-width: var(--content-max-wide); margin-inline: auto; }
+  /* And past the phone, the action moves next to the title rather than to the
+     far edge: "المجلدات  + جديد" reads as one thing, which is what it is.
+     Anything genuinely secondary (the count, the grid/list toggles) still
+     goes to the end. */
+  .shdr { justify-content: flex-start; gap: 14px; }
+  .shdr .shdr-acts { margin-inline-start: auto; }
+
+  /* Nothing is full width merely because width exists. */
+  .empty { max-width: 420px; margin-inline: auto; }
+  .empty-cta { width: auto; min-width: 220px; max-width: 340px; margin-inline: auto; }
+  .shfoot .btn { flex: 0 1 auto; min-width: 140px; }
+  .shfoot { justify-content: flex-end; }
+
+  /* Folders and categories are navigation, not the subject. They keep a
+     sensible height and let the inventory below them be the main event. */
+  .fld-row { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
+  .catgrid { grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr)); }
+}
+
+
+/* Navigation floats at a deliberate width instead of spanning the iPad. Four
+   items across 1024px is four items with 200px of nothing between them.
+   Bounded to the tablet range on purpose: from 1024px up this element is a
+   vertical rail, and a 600px-wide rail is not a rail. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tbar {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(600px, calc(100% - 2 * var(--gutter)));
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+  body.kb-open .tbar { transform: translateX(-50%) translateY(100%); }
+}
+
+/* ── desktop: one column, two measures ─────────────────────────────────────
+ * The first attempt gave every region its own maximum, and the result was a
+ * ragged edge: a heading stopping at 1180px above a grid running to 1560,
+ * with its own action button 1200px away from it across empty space.
+ *
+ * So: one container width for everything in the scroll region, which is what
+ * makes a column read as a column. Inside it, text-shaped regions take a
+ * reading measure, because a form field 1180px wide is not a form field and a
+ * line of 200 characters is not a line.
+ */
+@media (min-width: 1024px) {
+  :root {
+    --shell-max: 1200px;   /* the column everything aligns to */
+    --prose-max: 740px;    /* forms, settings, onboarding, prose answers */
+  }
+
+  /* Every direct child of the scroll region shares one edge. */
+  .vscroll > * { max-width: var(--shell-max); margin-inline: auto; }
+
+  /* Text- and control-shaped regions take the narrower measure, aligned to
+     the start of the column rather than centred inside it, so the left edge
+     of a form lines up with the left edge of the grid above it. */
+  .fsec, .sgroup, .apibox, .ov-section, .sheet-note, .ask-answer, .imp-table-wrap {
+    max-width: var(--prose-max);
+    margin-inline: 0;
+  }
+
+  /* The toolbar: search, then filter and sort beside it, as one row of
+     controls rather than three stacked banners.
+
+     `width: 100%` is load-bearing. These rows are flex items of `.view`, and
+     an auto inline margin on a flex item overrides `stretch` — the row
+     collapses to the width of its contents and then centres that. Without it
+     the search row measured 274px adrift in the middle of a 1440px screen. */
+  .sfrow, .fsact-row { width: 100%; max-width: var(--shell-max); margin-inline: auto; }
+  .sbar { max-width: 460px; }
+  .fsact-row { justify-content: flex-start; }
+  .fsact-btn { flex: 0 0 auto; min-width: 150px; }
+
+  /* The empty state is a composed block in the column, not a shape floating
+     in a canvas. */
+  .empty {
+    max-width: 440px;
+    margin: clamp(24px, 7vh, 88px) auto;
+    padding: 40px 32px;
+    border-radius: var(--r-lg);
+    background: var(--surface-card);
+    border: 1px solid var(--border-quiet);
+  }
+}
+
+/* Past this width the column may grow; the reading measure never does. */
+@media (min-width: 1700px) {
+  :root { --shell-max: 1500px; }
 }

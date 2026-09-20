@@ -11,6 +11,7 @@
 // before an invitation is created. The screen shows the count next to the
 // limit so the refusal, when it comes, is never a surprise.
 
+import { icon } from '../icons.js';
 import { ROLE_LABELS, ROLES, roleAtLeast } from '../config.js';
 import { currentSession } from '../auth.js';
 import { planUsage } from '../subscription.js';
@@ -315,7 +316,7 @@ export async function openWorkspaceSheet() {
       ]),
       ws.id === workspaceId
         ? el('div', { class: 'srowc', text: '✓', 'aria-hidden': 'true' })
-        : el('div', { class: 'srowc', text: '›', 'aria-hidden': 'true' }),
+        : el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
     ])),
   ]);
 }

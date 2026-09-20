@@ -233,6 +233,38 @@ const repoState = (page) => page.evaluate(async () => {
   await context.close();
 }
 
+// ── Settings does not wait for an inventory it never mentions ─────────────
+{
+  const { page, context, errs } = await open();
+  const before = await repoState(page);
+
+  const opened = await page.evaluate(async () => {
+    const { goTab } = await import('/src/navigation.js');
+    const t0 = performance.now();
+    goTab('set');
+    // No await: if Settings needed the whole inventory it would render empty
+    // now and fill in later. It must be complete on this frame.
+    await new Promise((r) => requestAnimationFrame(r));
+    return {
+      ms: +(performance.now() - t0).toFixed(1),
+      text: document.getElementById('data-panel')?.innerText || '',
+      account: document.getElementById('account-panel')?.innerText || '',
+    };
+  });
+  const after = await repoState(page);
+
+  check('W23 Settings opens without loading the inventory',
+    after.loaded === before.loaded && after.complete === false,
+    JSON.stringify({ before: before.loaded, after: after.loaded }));
+  check('W24 and it is fully drawn on the first frame, not filled in later',
+    opened.text.includes('تصدير') && opened.text.includes('استيراد') && opened.ms < 120,
+    JSON.stringify({ ms: opened.ms, len: opened.text.length }));
+  check('W25 the Trash row states what it is instead of a count it cannot know',
+    /القطع المحذوفة/.test(opened.text), opened.text.split('\n').find(l => /محذوف/.test(l)) || '');
+  check('W26 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);

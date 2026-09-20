@@ -10,6 +10,7 @@
 // The assistant proposes. It never edits a record on its own, and it never
 // merges a duplicate.
 
+import { icon } from '../icons.js';
 import { repository } from '../repository.js';
 import { BRAND } from '../brand.js';
 import { CAPABILITIES, SUGGESTIONS, askInventory } from '../ask.js';
@@ -159,7 +160,7 @@ function resultCard(item) {
       el('div', { class: 'ask-result-meta', text: location }),
     ]),
     item.valuation ? el('div', { class: 'ask-result-val', text: formatValuation(item.valuation, { compact: true }) }) : null,
-    el('span', { class: 'ask-result-go', text: '›', 'aria-hidden': 'true' }),
+    el('span', { class: 'ask-result-go', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ]);
 }
 
@@ -370,15 +371,18 @@ const dismissed = new Set();
 
 // ── quick actions ──────────────────────────────────────────────────────────
 function quickActions() {
-  const action = (icon, label, onClick) => el('button', { class: 'qa', type: 'button', onClick }, [
-    el('span', { class: 'qa-ico', text: icon, 'aria-hidden': 'true' }),
+  // `icon` was the parameter name here, which shadowed the icon() helper this
+  // module now imports. Renamed rather than aliased: a shadowed import is the
+  // kind of thing that works until someone adds a second call.
+  const action = (iconName, label, onClick) => el('button', { class: 'qa', type: 'button', onClick }, [
+    el('span', { class: 'qa-ico' }, [icon(iconName, { size: 20 })]),
     el('span', { class: 'qa-label', text: label }),
   ]);
 
   return el('div', { class: 'qa-row' }, [
-    action('⊡', 'أضف قطعة بالصورة', () => openItemForm({})),
-    action('◈', 'اكتشف التكرارات', () => { state.screen = 'duplicates'; renderAssistant(); }),
-    action('◷', 'القطع بلا صور', () => ACTIONS['review-missing-images']()),
+    action('image', 'أضف قطعة بالصورة', () => openItemForm({})),
+    action('duplicate', 'اكتشف التكرارات', () => { state.screen = 'duplicates'; renderAssistant(); }),
+    action('eye', 'القطع بلا صور', () => ACTIONS['review-missing-images']()),
   ]);
 }
 

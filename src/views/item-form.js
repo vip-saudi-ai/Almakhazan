@@ -109,18 +109,18 @@ function renderImages() {
         isPrimary ? el('span', { class: 'img-primary-tag', text: 'رئيسية' }) : null,
         el('div', { class: 'img-cell-acts' }, [
           !isPrimary ? el('button', {
-            class: 'img-act', type: 'button', text: '★', title: 'اجعلها الصورة الرئيسية',
+            class: 'img-act', type: 'button', title: 'اجعلها الصورة الرئيسية',
             'aria-label': 'اجعلها الصورة الرئيسية',
             onClick: () => { form.primaryImageId = image.id; renderImages(); refreshAiPanel(); },
-          }) : null,
+          }, [icon('star', { size: 14 })]) : null,
           el('button', {
-            class: 'img-act', type: 'button', text: '‹', title: 'نقل لليمين', 'aria-label': 'نقل الصورة لليمين',
+            class: 'img-act', type: 'button', title: 'نقل لليمين', 'aria-label': 'نقل الصورة لليمين',
             onClick: () => moveImage(image.id, -1),
-          }),
+          }, [icon('forward', { size: 14 })]),
           el('button', {
-            class: 'img-act', type: 'button', text: '›', title: 'نقل لليسار', 'aria-label': 'نقل الصورة لليسار',
+            class: 'img-act', type: 'button', title: 'نقل لليسار', 'aria-label': 'نقل الصورة لليسار',
             onClick: () => moveImage(image.id, 1),
-          }),
+          }, [icon('back', { size: 14 })]),
           el('button', {
             class: 'img-act danger', type: 'button', text: '✕', title: 'حذف الصورة', 'aria-label': 'حذف الصورة',
             onClick: () => removeImage(image.id),
@@ -394,7 +394,7 @@ function followUpPrompt() {
   const ask = hint?.ask || 'أضف صورة ثانية من زاوية مختلفة لتحسين التوثيق.';
 
   return el('div', { class: 'suggest-ask', role: 'note' }, [
-    el('span', { class: 'suggest-ask-mark', text: '◷', 'aria-hidden': 'true' }),
+    el('span', { class: 'suggest-ask-mark' }, [icon('clock', { size: 15 })]),
     el('span', { text: ask }),
   ]);
 }

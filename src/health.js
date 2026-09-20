@@ -47,11 +47,20 @@ const LABELS = {
   integrity: 'بياناته مكتملة',
 };
 
+/**
+ * Four bands, four different words.
+ *
+ * 90+ and 75+ both used to open with "ممتاز", so a score of 76 and a score of
+ * 98 were told the same thing — which makes the number decorative. Each band
+ * now names where it actually stands, and only the top one is excellent.
+ *
+ * The thresholds and the weights are untouched; this is wording.
+ */
 function band(score) {
   if (score >= 90) return { key: 'excellent', label: 'ممتاز — مخزونك موثّق بشكل جيد.' };
-  if (score >= 75) return { key: 'good', label: 'ممتاز — بقيت بعض التحسينات.' };
+  if (score >= 75) return { key: 'good', label: 'جيد جداً — بقيت بعض التحسينات.' };
   if (score >= 50) return { key: 'fair', label: 'جيد — هناك ما يستحق التحسين.' };
-  return { key: 'weak', label: 'يحتاج عملاً — ابدأ بالصور والمواقع.' };
+  return { key: 'weak', label: 'يحتاج تحسيناً — ابدأ بالصور والمواقع.' };
 }
 
 /**

@@ -147,8 +147,17 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .icard.pressing{opacity:.7;transform:scale(.97)}
 .icimg{width:100%;aspect-ratio:1;background:var(--thumb-bg);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;overflow:hidden}
 .icimg img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-.icph{display:flex;flex-direction:column;align-items:center;gap:4px}
-.icph span:last-child{font-size:10px;color:var(--text-secondary)}
+/* The intentional "no photograph yet" state: the record's own category icon
+   on a faint tint of the surface, and a quiet label. Calm enough to read as a
+   choice rather than as a broken asset. */
+.icph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  width:100%;height:100%;background:var(--thumb-bg)}
+.icph-lbl{font:var(--type-caption);color:var(--text-tertiary);letter-spacing:.2px}
+/* The other state: an image that exists and did not arrive. */
+.icph-failed .icph-ico{opacity:.45}
+.icph-retry{border:none;background:none;font:var(--type-caption);color:var(--brand);
+  cursor:pointer;padding:6px 8px;border-radius:8px;font-family:var(--font)}
+.icph-retry:active{background:var(--state-pressed)}
 .icbody{padding:9px 11px 11px}
 .icname{font-size:13px;font-weight:600;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .iccat{font-size:11px;color:var(--ts);margin-bottom:5px}
@@ -449,6 +458,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .img-cell{position:relative;width:104px;height:104px;flex-shrink:0;border-radius:var(--r);overflow:hidden;background:var(--glass-secondary);border:1px solid var(--gbs)}
 .img-cell img{width:100%;height:100%;object-fit:cover}
 .img-cell-open{position:absolute;inset:0;width:100%;height:100%}
+.img-cell-open img{width:100%;height:100%;object-fit:cover}
 .img-cell.primary{border:2px solid var(--blue)}
 .img-primary-tag{position:absolute;top:4px;right:4px;background:var(--blue);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px}
 .img-cell-acts{position:absolute;bottom:0;left:0;right:0;display:flex;background:rgba(0,0,0,.45);backdrop-filter:blur(6px)}
@@ -471,7 +481,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .gal-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
 .gal-strip::-webkit-scrollbar{display:none}
 .gal-thumb-wrap{flex-shrink:0}
-.gal-thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--gbs);padding:0;background:none;cursor:zoom-in;display:block}
+.gal-thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--gbs);display:block}
 .gal-thumb.on{border:2px solid var(--blue)}
 .gal-thumb img{width:100%;height:100%;object-fit:cover}
 
@@ -599,8 +609,10 @@ body.gated .app,body.gated .tbar{display:none}
 .gate-btn:active{transform:scale(.985);opacity:.9}
 .gate-btn:disabled{opacity:.55}
 .gate-btn-primary{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(0,122,255,.28)}
-.gate-btn-secondary{background:rgba(255,255,255,.8);color:var(--tp);border:1px solid var(--gb)}
-.gate-btn-provider{background:rgba(255,255,255,.88);color:var(--tp);border:1px solid var(--gb);font-size:15px}
+.gate-btn-secondary{background:var(--surface-raised);color:var(--tp);border:1px solid var(--gb)}
+/* The provider mark keeps its own colours — that identity is the point of
+   the button — but the plate it sits on follows the theme like any other. */
+.gate-btn-provider{background:var(--surface-raised);color:var(--tp);border:1px solid var(--gb);font-size:15px}
 .gate-provider-mark{font-size:17px;line-height:1}
 .gate-provider-google{font-weight:700;color:#4285F4}
 
@@ -613,7 +625,7 @@ body.gated .app,body.gated .tbar{display:none}
 .gate-field{display:flex;flex-direction:column;gap:6px}
 .gate-field-label{font-size:13px;font-weight:600;color:var(--ts)}
 .gate-input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border-quiet);
-  background:rgba(255,255,255,.85);font-family:var(--font);font-size:16px;color:var(--tp);outline:none}
+  background:var(--surface-input);font-family:var(--font);font-size:16px;color:var(--tp);outline:none}
 .gate-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
 
 .gate-link{border:none;background:none;color:var(--blue);font-family:var(--font);font-size:14px;
@@ -631,14 +643,23 @@ body.gated .app,body.gated .tbar{display:none}
 .gate-icon-ok{background:rgba(52,199,89,.14);color:var(--green)}
 
 .gate-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  padding:18px 10px;border-radius:var(--r);border:1px solid var(--gb);background:rgba(255,255,255,.78);
+  padding:18px 10px;border-radius:var(--r);border:1px solid var(--gb);background:var(--surface-card);
   font-family:var(--font);font-size:14px;font-weight:600;color:var(--tp);cursor:pointer;min-height:96px}
-.gate-choice.on{border-color:var(--blue);background:rgba(0,122,255,.08)}
-.gate-choice:active{transform:scale(.97)}
+/* Selection is carried by three things, not one: a thicker border, a tinted
+   plate and a check mark. Colour alone fails for anyone who cannot see the
+   difference between this blue and that grey. */
+.gate-choice.on{border-color:var(--brand);border-width:2px;padding:17px 9px;
+  background:var(--state-selected);color:var(--brand)}
+.gate-choice.on::after{content:"✓";position:absolute;top:8px;inset-inline-end:10px;
+  font-size:13px;font-weight:700;color:var(--brand)}
+.gate-choice{position:relative}
+.gate-choice:hover{border-color:var(--brand-soft);background:var(--state-hover)}
+.gate-choice:active{transform:scale(.97);background:var(--state-pressed)}
+.gate-choice:focus-visible{box-shadow:var(--focus-ring)}
 .gate-choice-icon{font-size:26px}
 
 .gate-plans{display:flex;flex-direction:column;gap:10px}
-.gate-plan{position:relative;background:rgba(255,255,255,.8);border:1px solid var(--gb);
+.gate-plan{position:relative;background:var(--surface-card);border:1px solid var(--gb);
   border-radius:var(--r);padding:16px}
 .gate-plan.featured{border-color:var(--brand);box-shadow:0 4px 18px rgba(37,99,255,.18)}
 .gate-plan-badge{position:absolute;top:-9px;inset-inline-start:16px;background:var(--blue);color:#fff;
@@ -1059,8 +1080,12 @@ body.viewer-open{overflow:hidden}
   padding:10px 12px;z-index:2;transition:opacity var(--motion) var(--ease)}
 .viewer-bar-top{top:var(--sat);
   background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)}
+/* "1 / 7" is numerical notation, not Arabic prose. In an RTL paragraph the
+   slash and the digits are bidi-neutral, so the run reverses and image 1 of 7
+   reads as "7 / 1". The counter is isolated LTR; the interface around it stays
+   RTL. */
 .viewer-count{flex:1;text-align:center;color:rgba(255,255,255,.86);font:var(--type-small);
-  font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
 .viewer-top-end{position:relative;min-width:40px;display:flex;justify-content:flex-end}
 
 .viewer-btn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
@@ -1113,7 +1138,18 @@ body.viewer-open{overflow:hidden}
 .viewer-menu-item.danger{color:var(--danger)}
 
 /* Anything that opens the viewer says so by being a button. */
-.img-open{display:block;width:100%;height:100%;padding:0;border:none;background:none;cursor:zoom-in}
+/* `.img-open` says "this opens the viewer". That is all it says.
+
+   It used to also declare width:100% and height:100%, and because it is a
+   single class declared later in the file it silently beat `.gal-thumb`'s
+   56px — turning every gallery thumbnail into a 304×232 image stacked under
+   the hero. An interaction class must not own layout: the element's own
+   context decides its size, and each context states it below. */
+.img-open{display:block;padding:0;border:none;background:none;cursor:zoom-in;color:inherit}
+.img-open img{display:block}
+/* Contexts that genuinely want the whole box. */
+.dhero > .img-open,.qp-hero > .img-open{width:100%;height:100%}
+.dhero > .img-open img,.qp-hero > .img-open img{width:100%;height:100%;object-fit:cover}
 
 /* ── Ask NAZM: structured answers ── */
 /* A total is a list of totals, one card per currency. The layout makes the
@@ -1195,3 +1231,19 @@ html:not([dir="rtl"]) .lchev{transform:scaleX(-1)}
 .imp-ready{border-inline-start:3px solid var(--success)}
 .imp-warning{border-inline-start:3px solid var(--warning)}
 .imp-error{border-inline-start:3px solid var(--danger)}
+
+/* ── icon containers ──
+   Where an icon replaced a glyph, the box that held the glyph was sized for
+   text. These give the drawn icon the same optical placement. */
+.catcell-act{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;color:var(--ts)}
+.catcell-act.danger{color:var(--danger)}
+.catcico{display:flex;align-items:center;justify-content:center;color:var(--brand)}
+.srowc{display:flex;align-items:center;justify-content:center}
+.pbtn-nav{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px}
+.img-act{display:flex;align-items:center;justify-content:center}
+.ask-result-go{display:flex;align-items:center}
+.qa-ico{display:flex;align-items:center;justify-content:center;color:var(--brand)}
+.suggest-ask-mark{display:inline-flex;align-items:center}
+/* Chevrons point along the reading direction: drawn as "back", mirrored for LTR. */
+html:not([dir="rtl"]) .srowc .nz-icon,
+html:not([dir="rtl"]) .ask-result-go .nz-icon{transform:scaleX(-1)}

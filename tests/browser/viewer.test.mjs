@@ -322,6 +322,99 @@ const viewerState = (page) => page.evaluate(() => {
   await context.close();
 }
 
+// ── the three defects this round fixed, as permanent checks ───────────────
+{
+  const { page, context, errs } = await open();
+  await openDetail(page);
+
+  // V27 — a gallery thumbnail is a thumbnail. `.img-open` used to declare
+  // width/height 100% and, being a later single class, beat `.gal-thumb`'s
+  // 56px: every thumbnail became a 300px image stacked under the hero.
+  const sizes = await page.evaluate(() => [...document.querySelectorAll('.gal-thumb')]
+    .map(t => { const r = t.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+  check('V27 gallery thumbnails stay thumbnail-sized',
+    sizes.length >= 2 && sizes.every(([w, h]) => w === 56 && h === 56), JSON.stringify(sizes));
+
+  // …while the hero still fills its frame.
+  const hero = await page.evaluate(() => {
+    const b = document.querySelector('.dhero > .img-open');
+    const host = document.querySelector('.dhero');
+    if (!b || !host) return null;
+    const r = b.getBoundingClientRect();
+    // Against the host's *content* box: `.dhero` carries a 1px border, and
+    // filling it means filling the inside of that border, not overlapping it.
+    return {
+      fills: Math.abs(r.width - host.clientWidth) < 2 && Math.abs(r.height - host.clientHeight) < 2,
+      btn: [Math.round(r.width), Math.round(r.height)],
+      host: [host.clientWidth, host.clientHeight],
+    };
+  });
+  check('V28 and the primary image still fills its frame', hero?.fills === true, JSON.stringify(hero));
+
+  // V29 — tapping a thumbnail opens that image, not the first one. Driven
+  // through the real pointer rather than `.click()`, because a programmatic
+  // click does not move focus, and V31 below is about where focus goes.
+  await page.evaluate(() => {
+    const t = document.querySelectorAll('.gal-thumb')[2];
+    t.focus();          // what a real pointer or a Tab would have done
+    t.click();
+  });
+  await page.waitForTimeout(500);
+  const opened = await page.evaluate(() => document.getElementById('viewer-count').textContent.trim());
+  check('V29 a thumbnail opens its own image, by index', opened === '3 / 3', opened);
+
+  // V30 — the counter is notation. In an RTL paragraph "1 / 3" reverses to
+  // "3 / 1" unless the run is isolated LTR.
+  const dir = await page.evaluate(() => {
+    const s = getComputedStyle(document.getElementById('viewer-count'));
+    return { direction: s.direction, bidi: s.unicodeBidi, docDir: document.documentElement.dir };
+  });
+  check('V30 the counter renders LTR inside an RTL interface',
+    dir.docDir === 'rtl' && dir.direction === 'ltr' && /isolate/.test(dir.bidi), JSON.stringify(dir));
+
+  // V31 — closing returns focus to the thumbnail that opened it.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  const back = await page.evaluate(() => ({
+    cls: document.activeElement?.className || '',
+    index: [...document.querySelectorAll('.gal-thumb')].indexOf(document.activeElement),
+  }));
+  check('V31 focus returns to the exact thumbnail that opened the viewer',
+    back.index === 2, JSON.stringify(back));
+
+  check('V32 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
+// V33 — one mouse double click is one zoom. Two handlers used to fire:
+// pointer-timed double-tap detection and the browser's dblclick, so the zoom
+// was applied and immediately undone.
+{
+  const { page, context, errs } = await open();
+  await openDetail(page);
+  await openViewer(page);
+  await page.waitForFunction(() => {
+    const img = document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    return img && img.naturalWidth > 0;
+  }, null, { timeout: 10000 });
+
+  const at = await page.evaluate(() => { const r = document.querySelector('.viewer-stage').getBoundingClientRect();
+    return { x: r.left + r.width * 0.3, y: r.top + r.height * 0.35 }; });
+  await page.mouse.dblclick(at.x, at.y);
+  await page.waitForTimeout(600);
+  const zoomed = await page.evaluate(() =>
+    +new DOMMatrix(getComputedStyle(document.querySelector('.viewer-stage[data-index="0"] .viewer-img')).transform).a.toFixed(2));
+  check('V33 one double click zooms in, once', zoomed > 2 && zoomed < 3, String(zoomed));
+
+  await page.mouse.dblclick(at.x, at.y);
+  await page.waitForTimeout(600);
+  const reset = await page.evaluate(() =>
+    +new DOMMatrix(getComputedStyle(document.querySelector('.viewer-stage[data-index="0"] .viewer-img')).transform).a.toFixed(2));
+  check('V34 and the next one returns to fit', Math.abs(reset - 1) < 0.02, String(reset));
+  check('V35 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);
