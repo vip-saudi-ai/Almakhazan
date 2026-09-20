@@ -45,7 +45,8 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | 25 | Plan/usage screen in Settings | ✅ | plan, record count, storage, assistant and seats, laid out as the UI reference has it — `tests/browser/quota.test.mjs` Q12–Q14c |
 | 26 | Upgrade prompt on hitting a limit | ✅ | 70 / 90 / 100 warnings, and the ceiling opens the plans sheet with the reason — Q3–Q10 |
 | 27 | Onboarding flow (signup → verify → workspace → use case) | ✅ | welcome, Apple/Google/email, verification, three steps — `tests/browser/gate.test.mjs` G1–G20 |
-| 28 | Invitations | 🟡 | backend complete (hashed single-use token, expiry, seat check). **No email delivery and no UI** |
+| 28 | Invitations | 🟡 | backend complete (hashed single-use token, expiry, seat check) and the UI is built: members, roles, revoking, and the invite link handed to the admin to send — `team.test.mjs` T1–T21. **Still no email delivery**, which the screen states rather than fakes |
+| 28b | Workspace switching | ✅ | every workspace the account belongs to, with its role; choosing one reopens the session rather than swapping collections under a rendered inventory — `team.test.mjs` T22–T24 |
 | 29 | Barcode / QR scanning | 🟡 | `BarcodeDetector` where the platform has it, and a clear refusal where it does not — `labels.test.mjs` L9–L10. Not yet exercised on a real camera |
 | 30 | QR labels | ✅ | dependency-free encoder, colour and thermal finishes, print stylesheet — `qr.test.mjs`, `labels.test.mjs`, and a decode round trip via `tools/verify-qr.py` |
 | 31 | Bulk actions | ✅ | select, move, edit, export, delete — plan-gated, allow-listed, reversible — `bulk.test.mjs` B1–B13 |

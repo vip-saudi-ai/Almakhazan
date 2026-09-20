@@ -258,6 +258,26 @@ export async function sendPasswordReset(email) {
   }
 }
 
+/**
+ * Re-reads which workspace this user is in and re-emits the session. Called
+ * after the active workspace changes or an invitation is accepted: the whole
+ * app hangs off `onSessionChange`, so this is what actually reopens the
+ * inventory rather than swapping collections under a rendered screen.
+ */
+export async function refreshWorkspace() {
+  const { auth } = firebaseContext();
+  const user = auth?.currentUser;
+  if (!user) return session;
+  try {
+    const membership = await resolveWorkspace(user);
+    emit({ user: toProfile(user), ...membership, ready: true, local: false });
+  } catch (error) {
+    console.error('[auth] workspace refresh failed', error);
+    throw new AppError('تعذّر فتح المساحة', { cause: error });
+  }
+  return session;
+}
+
 export async function signOutUser() {
   const { auth, sdk } = firebaseContext();
   if (!auth) return;

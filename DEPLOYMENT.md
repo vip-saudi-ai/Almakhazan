@@ -153,6 +153,18 @@ client sends tokens locks every customer out.
 Until step 5, App Check is registered but not enforced — treat it as not yet
 providing protection.
 
+## 5b. Invitations and mail
+
+Invitations work without a mail provider. `inviteMember` returns the plain
+token once — only its SHA-256 hash is stored — and the Team screen hands the
+resulting link to the admin who created it, saying plainly that it is single
+use, expires in 7 days, and will not be shown again.
+
+**[YOU]** If you want the link delivered by email instead, send it from
+`functions/src/workspaces.js` at the point marked *"Delivery is left to the
+deployment's mail provider"*, and stop returning `token` to the caller. Do not
+change the screen to claim an email was sent before that code exists.
+
 ## 6. Billing
 
 **[YOU] — this needs a business decision before any code runs.**

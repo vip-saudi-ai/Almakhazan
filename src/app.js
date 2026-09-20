@@ -6,12 +6,13 @@
 
 import { ROLES } from './config.js';
 import { FirebaseStatus, firebaseContext, initializeFirebase, watchConnectivity } from './firebase.js';
-import { currentSession, initializeAuthentication, onSessionChange } from './auth.js';
+import { currentSession, initializeAuthentication, onSessionChange, refreshWorkspace } from './auth.js';
 import { SYNC_LABELS, SyncState, repository } from './repository.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
 import { goTab, registerTab } from './navigation.js';
+import { acceptInvitation, takeInvitationFromUrl } from './team.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
 import {
   applyFilterControls, bindContextActions, bindLongPress, bindSearch, closeContextMenu,
@@ -26,7 +27,7 @@ import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 import { onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans', 'labels', 'scan', 'bulk'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -65,6 +66,14 @@ async function boot() {
     await offerLocalUpload();
   }
 
+  // An invitation carried in the address bar. Taken out of the URL at boot —
+  // before anything can navigate — so a refresh cannot replay it and the token
+  // does not sit in browser history.
+  const invitation = takeInvitationFromUrl();
+  if (invitation) await redeemInvitation(invitation);
+
+  window.addEventListener('almakhzan:workspace-changed', () => { void reopenWorkspace(); });
+
   onSessionChange(async (next) => {
     gateOnSession(next);
     const wanted = next.user ? 'cloud' : 'local';
@@ -89,6 +98,37 @@ async function boot() {
     if (repository.session.mode !== 'cloud') return;
     repository.setSync(status === FirebaseStatus.OFFLINE ? SyncState.OFFLINE : SyncState.SYNCED);
   });
+}
+
+/**
+ * Accepting an invitation. The token is verified by the backend against a
+ * hash; nothing here can grant membership, and a link for someone else's
+ * email is refused there rather than here.
+ */
+async function redeemInvitation({ inviteId, token }) {
+  if (!currentSession().user) {
+    // Signing in first is not optional: the membership is written for a
+    // specific account. Holding the token in memory across a sign-in would
+    // mean guessing which account it was meant for.
+    toast('سجّل الدخول بالبريد المدعوّ ثم افتح الرابط مرة أخرى', '✉️', { assertive: true });
+    return;
+  }
+  try {
+    await acceptInvitation(inviteId, token);
+    await refreshWorkspace();
+    toast('انضممت إلى المساحة', '✓');
+  } catch (error) {
+    toastError(error, 'تعذّر قبول الدعوة');
+  }
+}
+
+/** Reopens after the active workspace changed. */
+async function reopenWorkspace() {
+  try {
+    await refreshWorkspace();
+  } catch (error) {
+    toastError(error, 'تعذّر فتح المساحة');
+  }
 }
 
 /** The gate is for real cloud sign-up only, never for local or demo use. */

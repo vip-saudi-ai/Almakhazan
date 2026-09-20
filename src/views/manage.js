@@ -12,6 +12,7 @@ import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
+import { openTeamSheet, openWorkspaceSheet } from './team.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
 import {
@@ -722,6 +723,9 @@ function renderDataPanel() {
   const panel = $('data-panel');
   if (!panel) return;
 
+  const { user, local } = currentSession();
+  const cloudSession = Boolean(user) && !local;
+
   const row = (icon, background, title, subtitle, onClick) => el('button', {
     class: 'srow srow-btn', type: 'button', onClick,
   }, [
@@ -736,6 +740,10 @@ function renderDataPanel() {
   render(panel, [
     // Categories lost their tab to the assistant; they live here now.
     row('◈', 'rgba(99,102,241,.15)', 'التصنيفات والمواقع', 'تنظيم التصنيفات والمواقع المستخدمة في المخزون', () => goTab('cats')),
+    // Device-only mode has no members and no other workspace to move to, so
+    // these are absent rather than present and refusing.
+    cloudSession ? row('👥', 'rgba(37,99,255,.15)', 'الفريق', 'الأعضاء وأدوارهم، ودعوة من يعمل معك', openTeamSheet) : null,
+    cloudSession ? row('🗄', 'rgba(147,197,253,.25)', 'المساحات', 'تنقّل بين المساحات التي تنتمي إليها', () => { void openWorkspaceSheet(); }) : null,
     row('📊', 'rgba(52,199,89,.15)', 'تصدير Excel', 'جرد كامل بقيم رقمية وتواريخ حقيقية', () => {
       try { exportExcel(); toast('تم التصدير', '📊'); } catch (error) { toastError(error); }
     }),
