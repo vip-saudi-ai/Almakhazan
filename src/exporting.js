@@ -42,6 +42,10 @@ export function saveBackupFile(text, prefix = 'nazm_backup') {
 
 export function exportExcel() {
   const repo = repository;
+  // An export is a statement about the whole inventory. If only a window is
+  // loaded this refuses loudly rather than writing a short file that looks
+  // complete. Callers load first — see `withFullInventory`.
+  repo.assertItemsComplete('التصدير');
   const items = repo.liveItems();
 
   const itemRows = [[
@@ -144,6 +148,7 @@ export function exportExcel() {
 
 export function exportJSON() {
   const repo = repository;
+  repo.assertItemsComplete('النسخة الاحتياطية');
   const payload = {
     schemaVersion: SCHEMA_VERSION,
     appVersion: APP_VERSION,

@@ -936,3 +936,13 @@ body.selecting .tbar{opacity:.35;pointer-events:none}
 .icard.picked,.litem.picked{outline:2px solid var(--brand);outline-offset:-2px}
 .litem{position:relative}
 .litem .pickmark{position:static;margin-inline-end:4px;flex-shrink:0}
+
+/* ── loading the rest of the inventory ── */
+/* The window is what opens the app; this is what it costs to leave it. */
+.loadwrap{position:fixed;inset:0;z-index:960;display:flex;align-items:center;justify-content:center;background:var(--scrim)}
+.loadbox{display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--sheet-surface);border:1px solid var(--border-quiet);border-radius:18px;padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.loadtext{font:var(--type-small);color:var(--ts);font-variant-numeric:tabular-nums}
+.partial{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 16px;margin-top:4px;font:var(--type-small);color:var(--ts)}
+.partial-text{font-variant-numeric:tabular-nums}
+.partial-btn{background:none;border:none;padding:8px 10px;margin:-8px -10px;color:var(--brand);font:inherit;font-weight:600;cursor:pointer;border-radius:8px}
+.partial-btn:active{background:var(--state-pressed)}

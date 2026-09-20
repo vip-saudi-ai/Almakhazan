@@ -50,6 +50,14 @@ export class ConflictError extends AppError {
 
 const COLLECTIONS = ['items', 'folders', 'categories', 'locations'];
 
+// The taxonomies are small by design and stay whole. Records are not: a
+// workspace at the Business limit is 20,000 of them, and loading all of it to
+// draw one screen costs 20,000 reads and a slow first paint. So the live view
+// is bounded to the newest records, and the rest is fetched once, on demand,
+// by whatever needs all of it — see `completeItems`.
+export const ITEM_WINDOW = 200;
+const SCAN_PAGE = 500;
+
 // ── Firestore backend ──────────────────────────────────────────────────────
 class FirestoreBackend {
   constructor(workspaceId) {
@@ -93,6 +101,53 @@ class FirestoreBackend {
       (snapshot) => onData(snapshot.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))),
       (error) => onError(error),
     );
+  }
+
+  /**
+   * A bounded live view: the newest `max` records, kept in sync like any other
+   * listener. `complete` tells the caller whether the window happens to be the
+   * whole collection — when it is, nothing else needs fetching.
+   */
+  watchWindow(name, max, onData, onError) {
+    const q = this.fs.query(this.col(name), this.fs.orderBy('updatedAt', 'desc'), this.fs.limit(max));
+    return this.fs.onSnapshot(
+      q,
+      (snapshot) => {
+        const rows = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data({ serverTimestamps: 'estimate' }),
+        }));
+        onData(rows, {
+          fromCache: snapshot.metadata.fromCache,
+          pending: snapshot.metadata.hasPendingWrites,
+          complete: rows.length < max,
+        });
+      },
+      (error) => onError(error),
+    );
+  }
+
+  /**
+   * Every record, a page at a time. Ordered by document id rather than by
+   * `updatedAt`, because a bulk write gives hundreds of records the same
+   * timestamp and a cursor over a tied field either repeats rows or skips
+   * them. Ids are unique, so the cursor cannot do either.
+   */
+  async scanAll(name, { pageSize = SCAN_PAGE, onPage } = {}) {
+    let cursor = null;
+    for (;;) {
+      const parts = [this.fs.orderBy(this.fs.documentId())];
+      if (cursor) parts.push(this.fs.startAfter(cursor));
+      parts.push(this.fs.limit(pageSize));
+      const snapshot = await this.fs.getDocs(this.fs.query(this.col(name), ...parts));
+      if (snapshot.empty) return;
+      await onPage?.(snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data({ serverTimestamps: 'estimate' }),
+      })));
+      if (snapshot.docs.length < pageSize) return;
+      cursor = snapshot.docs[snapshot.docs.length - 1];
+    }
   }
 
   async create(name, record) {
@@ -187,6 +242,29 @@ class LocalBackend {
     return () => this.watchers.delete('activity');
   }
 
+  watchWindow(name, max, onData, onError) {
+    // The same contract as the cloud backend, so one window exists in the app
+    // rather than two shapes of truth. IndexedDB is cheap to read, but a large
+    // device inventory still has a first paint worth protecting.
+    const deliver = (rows, meta) => {
+      const sorted = [...rows].sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
+      onData(sorted.slice(0, max), { ...meta, complete: sorted.length <= max });
+    };
+    this.watchers.set(name, deliver);
+    local.getAll(name)
+      .then((rows) => deliver(rows, { fromCache: true, pending: false }))
+      .catch(onError);
+    return () => this.watchers.delete(name);
+  }
+
+  async scanAll(name, { pageSize = SCAN_PAGE, onPage } = {}) {
+    const rows = [...(await local.getAll(name))]
+      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    for (let i = 0; i < rows.length; i += pageSize) {
+      await onPage?.(rows.slice(i, i + pageSize));
+    }
+  }
+
   async create(name, record) {
     await local.put(name, { ...record, createdAt: record.createdAt || Date.now(), updatedAt: Date.now(), version: 1 });
     await this._notify(name);
@@ -240,6 +318,18 @@ class Repository {
     this.unsubscribers = [];
     this.backend = null;
     this.ready = false;
+
+    // `state.items` is composed from two sources: the live window, and the
+    // rest of the inventory once something has asked for all of it.
+    // `itemsComplete` is the only honest answer to "is this the whole
+    // inventory?" — every total, search and score is gated on it.
+    this.itemsWindow = [];
+    this.itemsRest = new Map();
+    this.itemsWindowShort = false;
+    this.itemsScanned = false;
+    this.itemsComplete = false;
+    this.itemsTotal = null;
+    this._completing = null;
   }
 
   subscribe(listener) {
@@ -309,23 +399,33 @@ class Repository {
       };
 
       for (const name of COLLECTIONS) {
-        const unsubscribe = this.backend.watch(
-          name,
-          (rows, meta) => {
+        const onRows = (rows, meta) => {
+          if (name === 'items') {
+            this.itemsWindow = this._normalizeRows('items', rows);
+            // A window that came back short *is* the whole collection — but
+            // only for as long as it stays short. It is re-read on every
+            // snapshot, never latched.
+            this.itemsWindowShort = meta.complete === true;
+            if (this.itemsWindowShort) this.itemsRest = new Map();
+            this._composeItems();
+          } else {
             this.state[name] = this._normalizeRows(name, rows);
-            this.ready = true;
-            if (mode === 'local') this.setSync(SyncState.LOCAL);
-            else if (meta.pending) this.setSync(SyncState.SAVING);
-            else if (meta.fromCache && !navigator.onLine) this.setSync(SyncState.OFFLINE);
-            else this.setSync(SyncState.SYNCED);
-            settle(name);
-          },
-          (error) => {
-            console.error(`[repo] listener failed for ${name}`, error);
-            this.setSync(SyncState.ERROR, { error, message: this._listenerMessage(error) });
-            settle(name);
-          },
-        );
+          }
+          this.ready = true;
+          if (mode === 'local') this.setSync(SyncState.LOCAL);
+          else if (meta.pending) this.setSync(SyncState.SAVING);
+          else if (meta.fromCache && !navigator.onLine) this.setSync(SyncState.OFFLINE);
+          else this.setSync(SyncState.SYNCED);
+          settle(name);
+        };
+        const onFailure = (error) => {
+          console.error(`[repo] listener failed for ${name}`, error);
+          this.setSync(SyncState.ERROR, { error, message: this._listenerMessage(error) });
+          settle(name);
+        };
+        const unsubscribe = name === 'items'
+          ? this.backend.watchWindow('items', ITEM_WINDOW, onRows, onFailure)
+          : this.backend.watch(name, onRows, onFailure);
         this.unsubscribers.push(unsubscribe);
       }
 
@@ -375,6 +475,97 @@ class Repository {
     }
     this.unsubscribers = [];
     this.ready = false;
+    // A new workspace starts from nothing loaded — never from the last one's
+    // records, and never from its "this is complete" answer.
+    this.itemsWindow = [];
+    this.itemsRest = new Map();
+    this.itemsWindowShort = false;
+    this.itemsScanned = false;
+    this.itemsComplete = false;
+    this.itemsTotal = null;
+    this._completing = null;
+  }
+
+  // ── how much of the inventory is loaded ──
+
+  /** state.items = the live window, plus whatever the scan found beyond it. */
+  _composeItems() {
+    const live = new Set(this.itemsWindow.map((i) => i.id));
+    const rest = [];
+    for (const [id, row] of this.itemsRest) if (!live.has(id)) rest.push(row);
+    this.state.items = [...this.itemsWindow, ...rest];
+    this._recomputeCompleteness();
+  }
+
+  /**
+   * Two things can prove the app holds the whole inventory: a window that came
+   * back shorter than its limit, or a scan that read every page. Either can go
+   * stale — records added since, from another device, land outside both — so
+   * the server's own count has the last word where there is one. That counter
+   * counts live records, so that is what is compared against it.
+   */
+  _recomputeCompleteness() {
+    let complete = this.itemsWindowShort || this.itemsScanned;
+    if (complete && this.itemsTotal != null) {
+      const loadedLive = this.state.items.reduce((n, i) => n + (i.deletedAt ? 0 : 1), 0);
+      if (loadedLive < this.itemsTotal) {
+        complete = false;
+        this.itemsScanned = false;
+      }
+    }
+    this.itemsComplete = complete;
+  }
+
+  /** How many records the app is holding, against how many exist if known. */
+  loadState() {
+    return {
+      loaded: this.state.items.length,
+      total: this.itemsComplete
+        ? this.state.items.reduce((n, i) => n + (i.deletedAt ? 0 : 1), 0)
+        : this.itemsTotal,
+      complete: this.itemsComplete,
+    };
+  }
+
+  /**
+   * The server-side record count, when the backend maintains one. It lets the
+   * app say "the newest 200 of 6,400" instead of "the newest 200 of ?".
+   */
+  setKnownTotal(total) {
+    if (typeof total !== 'number' || !Number.isFinite(total)) return;
+    this.itemsTotal = total;
+    this._recomputeCompleteness();
+  }
+
+  /**
+   * Load the rest of the inventory. Idempotent, and concurrent callers share
+   * one pass. On failure `itemsComplete` stays false: a partial set is never
+   * presented as a whole one.
+   */
+  async completeItems({ onProgress } = {}) {
+    if (this.itemsComplete) return this.state.items;
+    if (this._completing) return this._completing;
+    this._completing = (async () => {
+      const rest = new Map();
+      let seen = 0;
+      await this.backend.scanAll('items', {
+        onPage: (rows) => {
+          for (const row of rows) rest.set(row.id, normalizeItem(row));
+          seen += rows.length;
+          onProgress?.(seen);
+        },
+      });
+      this.itemsRest = rest;
+      this.itemsScanned = true;
+      this._composeItems();
+      this.emit();
+      return this.state.items;
+    })();
+    try {
+      return await this._completing;
+    } finally {
+      this._completing = null;
+    }
   }
 
   // ── lookups ──
@@ -586,6 +777,10 @@ class Repository {
     this.assertCanAdmin();
     const item = this.item(id);
     await this.backend.purge('items', id);
+    // A purged record is gone from the backend; drop the scanned copy too, or
+    // it lingers in `state.items` until the next reload.
+    this.itemsRest.delete(id);
+    this._composeItems();
     // Releases this item's hold on its images. Any image another item still
     // references keeps a non-zero count and survives.
     if (item) await releaseAll(this.session, item);
@@ -787,9 +982,23 @@ class Repository {
     await this.backend.runBatch(operations);
   }
 
+  /**
+   * Throws unless the whole inventory is loaded. Anything that reads or
+   * removes "everything" is silently wrong on a window, so it says so instead.
+   */
+  assertItemsComplete(what = 'هذه العملية') {
+    if (!this.itemsComplete) {
+      throw new AppError(`${what} تحتاج المخزون كاملاً، ولم يكتمل تحميله`, { code: 'repo/partial' });
+    }
+  }
+
   /** Removes every item and folder. Categories and locations are kept. */
   async clearInventory() {
     this.assertCanAdmin();
+    // Every item — not every loaded item. On a window this would delete the
+    // newest 200 and leave the rest behind, reporting success.
+    await this.completeItems();
+    this.assertItemsComplete('مسح المخزون');
     const operations = [
       ...this.state.items.map((i) => ({ type: 'delete', collection: 'items', id: i.id })),
       ...this.state.folders.map((f) => ({ type: 'delete', collection: 'folders', id: f.id })),

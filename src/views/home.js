@@ -2,6 +2,7 @@
 // filter and sort sheets, and the long-press context menu.
 
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
+import { partialNotice, withFullInventory } from '../inventory-load.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
 import { bindImageSrc } from '../storage.js';
@@ -46,11 +47,13 @@ export function setGridMode(grid) {
 }
 
 export function enterFolder(id) {
-  view.folderId = id;
-  view.page = 1;
-  view.categoryPill = 'all';
-  renderHome();
-  $('hscroll')?.scrollTo(0, 0);
+  void narrowing(() => {
+    view.folderId = id;
+    view.page = 1;
+    view.categoryPill = 'all';
+    renderHome();
+    $('hscroll')?.scrollTo(0, 0);
+  });
 }
 
 export function exitFolder() {
@@ -65,9 +68,29 @@ export function exitFolder() {
 function resetPage() {
   view.page = 1;
 }
+// Narrowing — searching, filtering, sorting, entering a folder — is a question
+// about the whole inventory, not about the window the screen happens to hold.
+// So each of them loads the rest first, once, and does nothing if that fails:
+// a filter applied to a fraction answers confidently and wrongly.
+async function narrowing(apply) {
+  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
+  apply();
+}
 
 // ── stats ──
 function renderStats() {
+  const { complete, total } = repository.loadState();
+  if (!complete) {
+    // The record count is the server's, so it is right. Everything else here
+    // is a proportion of the whole inventory, and the whole inventory is not
+    // loaded — so it is left blank rather than computed from the newest few.
+    setText('s-total', total == null ? '—' : formatNumber(total));
+    setText('s-cats', 'اعرض الكل لحساب النِّسب');
+    setText('s-qty', '—');
+    setText('s-qtysub', `${formatNumber(repository.state.folders.length)} مجلد`);
+    return;
+  }
+
   const items = repository.liveItems();
   const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
   const documented = items.filter((i) => i.images?.length).length;
@@ -83,18 +106,22 @@ function renderStats() {
 
 // ── folders ──
 function folderCard(folder) {
-  const count = repository.liveItems().filter((i) => i.folderId === folder.id).length;
+  // A count taken from the window would be a fraction presented as a total.
+  // Until the inventory is whole, the card carries no number at all.
+  const count = repository.itemsComplete
+    ? repository.liveItems().filter((i) => i.folderId === folder.id).length
+    : null;
   const color = folder.color || '#007AFF';
   return el('button', {
     class: 'fld-card gl-s',
     type: 'button',
-    'aria-label': `${folder.name}، ${count} قطعة`,
+    'aria-label': count == null ? folder.name : `${folder.name}، ${count} قطعة`,
     onClick: () => enterFolder(folder.id),
   }, [
     el('div', { class: 'fld-card-bg', text: folder.icon, 'aria-hidden': 'true' }),
     el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', position: 'relative' } }, [
       el('div', { style: { fontSize: '28px' }, text: folder.icon, 'aria-hidden': 'true' }),
-      el('div', {
+      count == null ? null : el('div', {
         style: { background: `${color}22`, color, fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px' },
         text: `${count} قطعة`,
       }),
@@ -241,7 +268,7 @@ function renderPills(scopeItems) {
     class: `cpill${view.categoryPill === id ? ' on' : ''}`,
     type: 'button',
     'aria-pressed': String(view.categoryPill === id),
-    onClick: () => { view.categoryPill = id; resetPage(); renderHome(); },
+    onClick: () => narrowing(() => { view.categoryPill = id; resetPage(); renderHome(); }),
     text: label,
   });
 
@@ -293,7 +320,10 @@ function renderQuotaBanner() {
 export async function scanIntoSearch() {
   await openScanner({
     title: 'امسح باركود أو رمز QR لقطعة',
-    onCode: ({ value }) => {
+    onCode: async ({ value }) => {
+      // "No item carries this code" has to mean the whole inventory, not the
+      // part of it this screen happens to hold.
+      if (!(await withFullInventory('جارٍ البحث في المخزون…'))) return;
       const match = repository.liveItems().find(
         (item) => item.barcode === value || item.sku === value || item.id === value,
       );
@@ -632,6 +662,7 @@ export function renderHome() {
     setText('hempty-title', searching ? 'لا نتائج للبحث' : filtered ? 'لا نتائج مطابقة' : folder ? `${folder.name} فارغ` : 'لا توجد قطع');
     setText('hempty-sub', searching || filtered ? 'جرّب تعديل البحث أو إلغاء الفلاتر' : 'اضغط + لإضافة قطعة');
     renderPagination(1);
+    renderPartial();
     // Still draw the selection bar: an empty page is exactly when someone
     // needs the way out of selection mode.
     renderSelectionBar([]);
@@ -652,7 +683,16 @@ export function renderHome() {
   }
 
   renderPagination(totalPages);
+  renderPartial();
   renderSelectionBar(pageItems);
+}
+
+/** Says, under the list, that this is a window and not an inventory. */
+function renderPartial() {
+  const node = $('hpartial');
+  if (!node) return;
+  const notice = partialNotice(() => renderHome());
+  render(node, notice ? [notice] : []);
 }
 
 function renderNavBar(folder) {
@@ -729,6 +769,10 @@ export function openFilterSheet() {
 }
 
 export function applyFilterControls() {
+  void narrowing(() => applyFilterControlsNow());
+}
+
+function applyFilterControlsNow() {
   view.filters = {
     condition: $('fp-cond')?.value || '',
     folderId: $('fp-folder')?.value || '',
@@ -769,13 +813,13 @@ export function openSortSheet() {
     class: `sort-opt${view.sortMode === mode ? ' on' : ''}`,
     type: 'button',
     'aria-pressed': String(view.sortMode === mode),
-    onClick: () => {
+    onClick: () => narrowing(() => {
       view.sortMode = mode;
       resetPage();
       setText('sort-label', SORT_MODES[mode]);
       closeSheet('sort');
       renderHome();
-    },
+    }),
   }, [
     el('span', { class: 'sort-opt-lbl', text: label }),
     el('div', { class: 'sort-opt-check', text: '✓', 'aria-hidden': 'true' }),
@@ -785,8 +829,9 @@ export function openSortSheet() {
 
 // ── search ──
 const runSearch = debounce(() => {
-  resetPage();
-  renderHome();
+  // An empty box is not a search: it costs nothing and needs nothing.
+  if (!view.query) { resetPage(); renderHome(); return; }
+  void narrowing(() => { resetPage(); renderHome(); });
 }, 140);
 
 export function bindSearch() {

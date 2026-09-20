@@ -57,6 +57,7 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | 32 | CSV / XLSX import with column mapping | ⬜ | JSON import is complete and validated; spreadsheet import is not implemented |
 | 33 | Excel export with typed cells | ✅ | dependency-free writer; verified by reading the output back with a real spreadsheet library |
 | 34 | Global search across folders, Arabic-normalised | ✅ | browser suite |
+| 34b | Browsing bounded to a window, not the collection | 🟡 | a live window of the newest 200, the rest by cursor pages on demand, and `repo/partial` rather than an answer from a fraction — `window.test.mjs` W1–W22 against the device backend. **The Firestore cursor query itself has not been run against a deployed project** |
 | 35 | English / i18n | ⬜ | strings are still inline Arabic; no i18n layer |
 | 36 | PWA (manifest, icons, service worker) | 🟡 | all three exist; the service worker caches only the static shell and never authenticated data. Installability not verified on a device |
 | 37 | Landing / marketing page | 🟡 | the public welcome and pricing screens are built and tested; a separate marketing site is not |
@@ -78,19 +79,18 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 
 ## Known limits
 
-**Browsing does not paginate server-side yet.** The repository subscribes to
-whole collections with `onSnapshot` and filters in the browser. This is correct
-and cheap into the low thousands of items per workspace, and wrong above that —
-both for cost and for first-paint time. The indexes needed for
-`where`/`orderBy`/`startAfter` pagination are already deployed
-(`firestore.indexes.json`), and `src/search.js` isolates the query logic behind
-one function, so the change is contained. **Do not onboard a customer with tens
-of thousands of items before this is done.**
+**Global text search has no server-side answer.** Firestore has no free-text
+search, so searching loads the inventory once and runs on the device. The app
+is exact about this: the search waits for the load and says so while it
+happens. For a workspace with tens of thousands of records that is one
+expensive read per session in which someone searches. A search index is the
+fix and it is not built. **This, not browsing, is now the reason to think
+twice before onboarding a customer with tens of thousands of items.**
 
-**Global text search cannot move to Firestore queries.** Firestore has no
-free-text search. Today's client-side search is exact about that trade-off: it
-works because the whole collection is already loaded. When pagination lands,
-search needs an index service. Plan for it; do not discover it.
+**Two home-screen aggregates are blank on a large workspace.** "% documented"
+and total quantity are proportions of the whole inventory, and the trigger
+keeps only the record count, so they stay blank until the inventory loads.
+Extending `functions/src/usage.js` to maintain them would close the gap.
 
 **Counters can drift.** Trigger-maintained counters can miss a write if a
 trigger fails. `recalculateUsage` and `reconcileMedia` are the repair path.
@@ -135,6 +135,7 @@ still marked ⬜ above. The gap between "the security model is proven" and
 App Check, Storage-rule tests, and one real end-to-end run against a live
 project.
 
-Separately, and independent of billing: **server-side pagination**. Until it
-lands, the Business plan should not be sold at its full record limit. See
-`COSTS.md`.
+Separately, and independent of billing: **a search index**. Browsing a large
+workspace is now bounded (a 200-record window, `window.test.mjs`), so the
+Business plan is no longer gated on that. Searching one is not bounded — it
+loads the inventory. See `COSTS.md`.

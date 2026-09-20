@@ -194,9 +194,13 @@ export function openMoveSheet(itemId) {
 
   render($('mvlist'), targets.map((target) => {
     const isCurrent = (target.id || null) === (item.folderId || null);
-    const count = target.id
-      ? repository.liveItems().filter((i) => i.folderId === target.id).length
-      : repository.liveItems().filter((i) => !i.folderId).length;
+    // Same rule as the folder cards on the home screen: a count taken from a
+    // window is a fraction wearing a total's clothes, so there is no count
+    // until there is an inventory to count.
+    const count = !repository.itemsComplete ? null
+      : target.id
+        ? repository.liveItems().filter((i) => i.folderId === target.id).length
+        : repository.liveItems().filter((i) => !i.folderId).length;
     const color = target.color || '#007AFF';
 
     return el('button', {
@@ -221,7 +225,7 @@ export function openMoveSheet(itemId) {
       }),
       el('div', { style: { flex: '1' } }, [
         el('div', { class: 'mv-name', text: target.name }),
-        el('div', { class: 'mv-sub', text: `${count} قطعة` }),
+        count == null ? null : el('div', { class: 'mv-sub', text: `${count} قطعة` }),
       ]),
       isCurrent ? el('div', { style: { color: 'var(--blue)', fontSize: '18px', fontWeight: '700' }, text: '✓' }) : null,
     ]);

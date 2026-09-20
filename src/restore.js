@@ -83,6 +83,13 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
   const repo = repository;
   repo.assertCanWrite();
 
+  // ── 0. the whole inventory, before anything else ──
+  // The app browses on a window of the newest records. A safety backup taken
+  // from a window backs up a fraction, and step 3 would then remove records
+  // the backup never held. Load everything, and refuse if that fails.
+  await repo.completeItems();
+  repo.assertItemsComplete('الاستعادة');
+
   // ── 1. safety backup ──
   onProgress({ stage: RestoreStage.BACKUP, done: 0, total: 1 });
   let safety;

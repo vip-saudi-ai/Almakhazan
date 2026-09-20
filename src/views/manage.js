@@ -11,6 +11,7 @@ import {
 import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
+import { withFullInventory } from '../inventory-load.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
 import {
@@ -870,12 +871,16 @@ export function bindManageViews() {
   $('new-folder-btn')?.addEventListener('click', () => openFolderSheet());
   $('new-cat-btn')?.addEventListener('click', () => openCategorySheet());
 
-  $('as-excel')?.addEventListener('click', () => {
+  // This sheet opens from the home screen, which browses a window. An export
+  // is about the whole inventory, so the whole inventory is loaded first.
+  $('as-excel')?.addEventListener('click', async () => {
     closeSheet('as');
+    if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
     try { exportExcel(); toast('تم التصدير', '📊'); } catch (error) { toastError(error); }
   });
-  $('as-json')?.addEventListener('click', () => {
+  $('as-json')?.addEventListener('click', async () => {
     closeSheet('as');
+    if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
     try { exportJSON(); toast('تم إنشاء النسخة', '💾'); } catch (error) { toastError(error); }
   });
   $('as-import')?.addEventListener('click', () => { closeSheet('as'); startImport(); });

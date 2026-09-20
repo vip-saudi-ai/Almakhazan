@@ -24,7 +24,7 @@ import { bindManageViews, openFolderSheet, renderCategories, renderSettings } fr
 import { bindAssistant, renderAssistant } from './views/assistant.js';
 import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
-import { onSubscriptionChange, startPlanWatch } from './subscription.js';
+import { onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
 
 const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans', 'labels', 'scan', 'bulk'];
 
@@ -77,7 +77,13 @@ async function boot() {
   // Plan and usage arrive from the server after boot and change while the app
   // is open (a record added on another device, an upgrade taking effect), so
   // the quota banner and the Settings card follow them.
-  onSubscriptionChange(() => renderAll());
+  onSubscriptionChange(() => {
+    // The server's record count is the only trustworthy total while the app is
+    // browsing a window: it lets the screen say "the newest 200 of 6,400"
+    // instead of counting what it happens to hold.
+    repository.setKnownTotal(subscriptionState().usage?.items);
+    renderAll();
+  });
 
   watchConnectivity((status) => {
     if (repository.session.mode !== 'cloud') return;

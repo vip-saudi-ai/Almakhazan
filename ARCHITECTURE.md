@@ -152,10 +152,30 @@ Subscriptions are meant to be cheap, so the backend is built not to be:
 - AI is metered per workspace per month and rate-limited per user;
 - the demo build performs no cloud reads at all.
 
-The one place this is *not yet* true is browsing: the repository subscribes to
-whole collections with `onSnapshot` and filters client-side. That is fine into
-the low thousands of items and wrong above it. See
-`PRODUCTION-CHECKLIST.md` → “Known limits”.
+Browsing works the same way. The repository does **not** subscribe to the
+whole `items` collection: it holds a live window of the newest
+`ITEM_WINDOW` (200) records, which is what the first screen costs. The rest of
+the inventory is fetched once, by cursor pages ordered by document id, and
+only when something actually needs all of it — a search, a filter, a total, a
+score, an export, a restore.
+
+The rule that keeps this honest is `repository.itemsComplete`. Anything that
+makes a statement about the whole inventory either waits for it
+(`withFullInventory` in `src/inventory-load.js`) or refuses
+(`assertItemsComplete`, which throws `repo/partial`). Nothing computes a
+percentage, a count or a "not found" from a window and presents it as a fact:
+the home screen shows the server's record count and leaves its proportions
+blank until the inventory is whole, and folder cards carry no number at all
+until they can carry the right one.
+
+Completeness is recomputed, never latched. A window that comes back shorter
+than its limit proves it; a full scan proves it; and the server's own record
+counter overrules both, so records added from another device after a scan put
+the app back into a window rather than into a confident lie.
+
+Free-text search still has no server-side answer — Firestore has none — so a
+search loads the inventory and runs locally. That is a deliberate trade, not
+an oversight: see `PRODUCTION-CHECKLIST.md` → “Known limits”.
 
 ## Two builds
 

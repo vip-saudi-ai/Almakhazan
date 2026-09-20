@@ -263,6 +263,10 @@ export async function uploadDeviceData({ onProgress } = {}) {
 
 /** Scans the live workspace for any image still pointing at device storage. */
 export async function findLocalReferences(workspaceId) {
+  // "No image still points at the device" has to be true of every record, not
+  // of the window the screen is showing.
+  await repository.completeItems();
+  repository.assertItemsComplete('التحقق من الصور');
   const offenders = [];
   for (const item of repository.state.items) {
     for (const image of item.images || []) {

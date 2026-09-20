@@ -72,10 +72,20 @@ A record write is one document plus counter updates. A page of inventory is
 one page of documents — **not** the collection. That is the single most
 important cost decision in the product:
 
-| Approach | Reads to browse 20,000 records | Monthly cost of one active Business workspace |
+| Approach | Reads to open a 20,000-record workspace | Monthly cost of one active Business workspace |
 |---|---|---|
-| Realtime listener over the collection | 20,000 per change, per tab | unbounded |
-| Paged queries | ~50 per page viewed | cents |
+| Realtime listener over the collection | 20,000, every session, every tab | unbounded |
+| A window of the newest records | 200, and only more when asked for | cents |
+
+This is what the app does. `ITEM_WINDOW` in `src/repository.js` is 200: opening
+a workspace of any size costs 200 reads. The rest is read once per session, by
+cursor pages, and only when something needs all of it.
+
+What still needs all of it, honestly: a search, a filter, a sort, entering a
+folder, the Overview / assistant / Settings tabs, an export, a backup and a
+restore. Browsing the newest records — which is most of what most sessions do
+— does not. The saving is not "the inventory is never read"; it is "the
+inventory is read when it is used, not to draw a screen".
 
 ### Functions
 
@@ -94,14 +104,23 @@ after that.
 | Display copy for the grid | `src/storage.js` | egress on full-resolution photos |
 | Per-user burst limit | `functions/src/ai.js` | one compromised account spending a month |
 | A QR encoder written out | `src/qr.js` | a dependency, and a build step |
+| A window of the newest records, not the collection | `src/repository.js`, `src/inventory-load.js` | reading 20,000 documents to draw one screen |
 
 ## What is not yet done
 
-**Server-side pagination is not implemented.** The app still loads a
-workspace's records into memory. At the Free and Personal limits that is fine;
-at 20,000 records it is not, on cost or on performance. This is the next piece
-of work, and until it lands the Business plan should not be sold at its full
-record limit. See PRODUCTION-CHECKLIST.md.
+**Free-text search has no server-side answer.** Firestore does not do it, so a
+search loads the inventory and runs on the device. For a 20,000-record
+workspace that is one expensive read of the collection per session in which
+someone searches — bounded and once, but real. A search index (Typesense,
+Algolia, or Firestore-plus-token-array) is the fix, and it is not built. Until
+it is, the honest expectation for a heavy Business workspace is: cheap to
+open, one full read the first time its owner searches.
+
+**Aggregates are not maintained beyond the record count.** The home screen can
+show a true total because a trigger keeps `usage/current.items`. It cannot show
+"% documented" or total quantity the same way, so it leaves them blank until
+the inventory loads. Extending the trigger to keep those two aggregates would
+remove the last reason a browsing session ever needs every record.
 
 ## Numbers to watch
 
