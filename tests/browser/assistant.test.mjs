@@ -101,10 +101,14 @@ await page.press('#ask-input', 'Enter');
 await page.waitForTimeout(400);
 const unknown = await page.evaluate(() => ({
   text: document.querySelector('.ask-text')?.textContent,
-  chips: document.querySelectorAll('.ask-chip').length,
+  // A failed answer offers the kinds of question that *do* work, each with a
+  // worked example — not a bare apology.
+  caps: [...document.querySelectorAll('.ask-cap')].map(n => n.textContent),
 }));
-check('A8 an unparsed question is answered honestly, with examples',
-  unknown.text.includes('لم أفهم') && unknown.chips > 0, JSON.stringify(unknown));
+check('A8 an unparsed question is answered honestly, and says what does work',
+  /لم أفهم/.test(unknown.text) && unknown.caps.length >= 4
+  && unknown.caps.some(c => /أين قطعة/.test(c)),
+  JSON.stringify({ text: unknown.text, caps: unknown.caps.length }));
 
 // ── the inventory never leaves the device to answer ───────────────────────
 const requests = [];

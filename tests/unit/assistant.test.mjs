@@ -171,7 +171,10 @@ test('it totals value and says how much of the inventory the total covers', () =
     item({ valuation: null }),
   ]);
   assert.equal(result.kind, 'sum');
-  assert.equal(result.total, 2000);
+  // A total is a list of totals, one per currency, even when there is one
+  // currency — so no caller can ever read a single number and assume it
+  // covers everything. See tests/unit/money.test.mjs for the mixed case.
+  assert.deepEqual(result.totals.map((t) => [t.currency, t.total]), [['SAR', 2000]]);
   assert.match(result.note, /1/);
 });
 

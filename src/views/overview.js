@@ -3,6 +3,7 @@
 
 import { ACTION_LABELS, CHART_COLORS, CONDITIONS, CONDITION_COLORS, CURRENCY_LABELS } from '../config.js';
 import { repository } from '../repository.js';
+import { totalsByCurrency } from '../money.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatCompact, formatNumber, render, timeAgo } from '../utils.js';
 import { formatValuation, primaryImage, valuationMidpoint } from '../validation.js';
@@ -22,21 +23,8 @@ function kpi(icon, value, label, sub, subColor) {
   ]);
 }
 
-/** Groups valuations by currency; each currency keeps its own total. */
-function valuationTotals(items) {
-  const byCurrency = new Map();
-  for (const item of items) {
-    const mid = valuationMidpoint(item.valuation);
-    if (mid === null) continue;
-    const code = item.valuation.currency;
-    const entry = byCurrency.get(code) || { total: 0, count: 0, max: 0, currency: code };
-    entry.total += mid;
-    entry.count += 1;
-    entry.max = Math.max(entry.max, item.valuation.max);
-    byCurrency.set(code, entry);
-  }
-  return [...byCurrency.values()].sort((a, b) => b.total - a.total);
-}
+/* Grouping lives in src/money.js, so the rule "never add across currencies"
+   has one implementation rather than one per screen. */
 
 function barRow(label, count, max, color) {
   return el('div', { class: 'ov-bar-row' }, [
@@ -72,7 +60,7 @@ export function renderOverview() {
   const analyzed = items.filter((i) => i.aiData).length;
   const valued = items.filter((i) => i.valuation).length;
   const categories = new Set(items.map((i) => i.categoryId).filter(Boolean)).size;
-  const totals = valuationTotals(items);
+  const totals = totalsByCurrency(items);
   const primaryTotal = totals[0];
 
   const blocks = [];
@@ -83,10 +71,16 @@ export function renderOverview() {
       `${repository.state.folders.length} مجلد · ${categories} تصنيف`, 'var(--blue)'),
     kpi('🔢', formatNumber(totalQuantity), 'إجمالي الكميات',
       `متوسط ${(totalQuantity / items.length).toFixed(1)} لكل سجل`, 'var(--purple)'),
+    // One tile cannot hold three currencies, and picking the biggest and
+    // calling it "the total" would be the lie this whole module avoids. The
+    // tile names its own currency and says how many others there are; the
+    // breakdown below is the real answer.
     kpi('💰',
       primaryTotal ? `${formatCompact(primaryTotal.total)} ${CURRENCY_LABELS[primaryTotal.currency]}` : '—',
-      'إجمالي التقييم',
-      `${formatNumber(valued)} سجل مُقيَّم`, 'var(--green)'),
+      totals.length > 1 ? `التقييم بـ${CURRENCY_LABELS[primaryTotal.currency]}` : 'إجمالي التقييم',
+      totals.length > 1
+        ? `و${formatNumber(totals.length - 1)} عملة أخرى — التفصيل أدناه`
+        : `${formatNumber(valued)} سجل مُقيَّم`, 'var(--green)'),
     kpi('✦', formatNumber(analyzed), 'مُحلّلة بصرياً',
       `${Math.round((analyzed / items.length) * 100)}% من السجلات`, 'var(--teal)'),
   ]));

@@ -1054,3 +1054,22 @@ body.viewer-open{overflow:hidden}
 
 /* Anything that opens the viewer says so by being a button. */
 .img-open{display:block;width:100%;height:100%;padding:0;border:none;background:none;cursor:zoom-in}
+
+/* ── Ask NAZM: structured answers ── */
+/* A total is a list of totals, one card per currency. The layout makes the
+   separation visible, so nobody reads two figures as one. */
+.ask-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px;margin:10px 0}
+.ask-total{padding:10px 12px;border-radius:var(--r-sm);background:var(--surface-raised);
+  border:1px solid var(--border-quiet)}
+.ask-total-val{font:var(--type-h3);color:var(--text);font-variant-numeric:tabular-nums}
+.ask-total-sub{font:var(--type-caption);color:var(--ts);margin-top:2px}
+
+/* What the engine can answer, offered when it could not answer this. */
+.ask-caps{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.ask-cap{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;
+  padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border-quiet);
+  background:var(--surface-raised);font-family:var(--font);cursor:pointer;text-align:start;
+  position:relative}
+.ask-cap:active{background:var(--state-pressed)}
+.ask-cap-lbl{font:var(--type-body-strong);color:var(--text)}
+.ask-cap-ex{font:var(--type-small);color:var(--ts)}

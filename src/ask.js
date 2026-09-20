@@ -13,17 +13,36 @@ import { UNCATEGORIZED_ID } from './config.js';
 import { normalizeArabic } from './search.js';
 import { normalizeDigits } from './utils.js';
 import { valuationMidpoint } from './validation.js';
+import { describeTotals, formatAmount, resolveCurrency, totalsByCurrency } from './money.js';
 
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 
 const byId = (list, id) => (id ? list.find((entry) => entry.id === id) : null);
 
+/**
+ * What this engine can actually answer, written as questions a customer would
+ * type. These are the suggestion chips *and* the honest scope of the feature:
+ * it is a rule engine over the customer's own records, not a language model,
+ * and the UI says so by offering these rather than an empty box implying it
+ * will understand anything.
+ */
 export const SUGGESTIONS = [
+  'وين ساعة الجيب؟',
   'وش القطع اللي ما لها صور؟',
+  'وش القطع بدون موقع؟',
   'وش الأشياء اللي قيمتها فوق 10000؟',
-  'وش القطع اللي ما تم تحديثها من سنة؟',
   'كم إجمالي قيمة مخزوني؟',
+  'وش القطع اللي ما تم تحديثها من سنة؟',
   'وش القطع بدون تصنيف؟',
+];
+
+/** The kinds of question the parser understands, for a failed answer. */
+export const CAPABILITIES = [
+  { label: 'أين قطعة معينة؟', example: 'وين ساعة الجيب؟' },
+  { label: 'ما القطع بدون صور؟', example: 'وش القطع اللي ما لها صور؟' },
+  { label: 'اعرض قطع موقع معين', example: 'وش في الخزنة؟' },
+  { label: 'ما القطع عالية القيمة؟', example: 'وش الأشياء اللي قيمتها فوق 10000؟' },
+  { label: 'ما القطع التي تحتاج مراجعة؟', example: 'وش القطع اللي ما تم تحديثها من سنة؟' },
 ];
 
 /** Arabic and Latin digits, with thousands separators and "ألف"/"مليون". */
@@ -66,12 +85,20 @@ const INTENTS = [
   {
     id: 'value-above',
     test: (q) => /(فوق|أكثر من|اكثر من|تتجاوز|>)\s*[\d٠-٩]/.test(q) && /(قيمة|قيمته|سعر|تقييم|تقدير)/.test(q),
-    build: (q) => {
+    build: (q, ctx) => {
       const threshold = readNumber(q.split(/فوق|أكثر من|اكثر من|تتجاوز|>/)[1] || '');
+      // "Worth more than 100,000" is not one question when the inventory
+      // holds several currencies — it is one question per currency, and they
+      // have different answers. Rather than pick one, say so.
+      const currency = resolveCurrency(q, ctx.items);
+      if (!currency.ok) {
+        return { kind: 'currency-choice', title: 'أي عملة؟', threshold, options: currency.options, match: () => false };
+      }
       return {
         kind: 'list',
-        title: `قطع تزيد قيمتها عن ${(threshold ?? 0).toLocaleString('en-US')}`,
-        match: (i) => (valuationMidpoint(i.valuation) ?? 0) > (threshold ?? Infinity),
+        title: `قطع تزيد قيمتها عن ${formatAmount(threshold ?? 0, currency.currency)}`,
+        match: (i) => i.valuation?.currency === currency.currency
+          && (valuationMidpoint(i.valuation) ?? 0) > (threshold ?? Infinity),
       };
     },
   },
@@ -163,12 +190,15 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
         items: found,
       };
     }
+    // A failure is still allowed to be useful: it says what *is* answerable
+    // rather than only that this was not.
     return {
       understood: false,
       kind: 'unknown',
       title: '',
-      answer: 'لم أفهم السؤال بعد. جرّب صيغة أوضح، أو اختر من الأمثلة.',
+      answer: 'لم أفهم هذا السؤال بعد. هذه أنواع الأسئلة التي أفهمها:',
       items: [],
+      capabilities: CAPABILITIES,
       suggestions: SUGGESTIONS,
     };
   }
@@ -178,15 +208,33 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
   const found = items.filter((item) => plan.match(item) && scope.match(item));
   const title = scope.parts.length ? `${plan.title} — ${scope.parts.join(' · ')}` : plan.title;
 
+  // The question was answerable except for one missing fact. Asking for it is
+  // a better answer than picking a currency on the customer's behalf.
+  if (plan.kind === 'currency-choice') {
+    return {
+      understood: true,
+      kind: 'currency-choice',
+      title: plan.title,
+      answer: `مخزونك فيه أكثر من عملة، و${(plan.threshold ?? 0).toLocaleString('en-US')} تختلف قيمتها بينها. أي عملة تقصد؟`,
+      options: plan.options,
+      threshold: plan.threshold,
+      items: [],
+    };
+  }
+
   if (plan.kind === 'sum') {
-    const total = found.reduce((sum, item) => sum + (valuationMidpoint(item.valuation) ?? 0), 0);
-    const priced = found.filter((item) => item.valuation).length;
+    // One total per currency. Adding SAR to USD would produce a number that
+    // looks authoritative and means nothing.
+    const totals = totalsByCurrency(found);
+    const priced = totals.reduce((n, t) => n + t.count, 0);
     return {
       understood: true,
       kind: 'sum',
       title,
-      total,
-      answer: `${Math.round(total).toLocaleString('en-US')} ر.س تقديراً، من ${priced.toLocaleString('en-US')} قطعة مسعّرة.`,
+      totals,
+      answer: totals.length
+        ? `${describeTotals(totals)} تقديراً، من ${priced.toLocaleString('en-US')} قطعة مسعّرة.`
+        : 'لا توجد قطع مسعّرة في هذا النطاق.',
       items: found.filter((item) => item.valuation).slice(0, 12),
       note: found.length > priced ? `${found.length - priced} قطعة بلا تقدير سعري لم تدخل في المجموع.` : null,
     };

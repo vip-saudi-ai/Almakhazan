@@ -12,7 +12,8 @@
 
 import { repository } from '../repository.js';
 import { BRAND } from '../brand.js';
-import { SUGGESTIONS, askInventory } from '../ask.js';
+import { CAPABILITIES, SUGGESTIONS, askInventory } from '../ask.js';
+import { formatAmount } from '../money.js';
 import { cleanupTasks, inventoryHealth } from '../health.js';
 import { $, el, formatNumber, render } from '../utils.js';
 import { emptyState, toast } from '../ui.js';
@@ -60,7 +61,9 @@ function askBlock() {
       class: 'ask-input',
       type: 'search',
       value: state.question,
-      placeholder: 'اسأل عن أي شيء في مخزونك…',
+      // Not "ask anything": the engine answers a known set of questions, and
+      // promising more than that is how a useful feature earns distrust.
+      placeholder: 'اسأل عن مواقع القطع، حالتها، صورها، تصنيفاتها وتقييماتها…',
       'aria-label': `اسأل ${BRAND.name}`,
       enterkeyhint: 'search',
     }),
@@ -86,9 +89,25 @@ function answerBlock(result) {
   if (!result.understood) {
     return el('div', { class: 'ask-answer' }, [
       el('p', { class: 'ask-text', text: result.answer }),
-      el('div', { class: 'ask-chips' }, (result.suggestions || SUGGESTIONS).map((suggestion) => el('button', {
-        class: 'ask-chip', type: 'button', text: suggestion,
-        onClick: () => runQuestion(suggestion),
+      el('div', { class: 'ask-caps' }, (result.capabilities || CAPABILITIES).map((cap) => el('button', {
+        class: 'ask-cap', type: 'button',
+        onClick: () => runQuestion(cap.example),
+      }, [
+        el('span', { class: 'ask-cap-lbl', text: cap.label }),
+        el('span', { class: 'ask-cap-ex', text: cap.example }),
+      ]))),
+    ]);
+  }
+
+  // The inventory holds more than one currency and the question named none.
+  // Each option re-asks the same question with the currency supplied.
+  if (result.kind === 'currency-choice') {
+    return el('div', { class: 'ask-answer' }, [
+      el('div', { class: 'ask-title', text: result.title }),
+      el('p', { class: 'ask-text', text: result.answer }),
+      el('div', { class: 'ask-chips' }, result.options.map((code) => el('button', {
+        class: 'ask-chip', type: 'button', text: code,
+        onClick: () => runQuestion(`${state.question} ${code}`),
       }))),
     ]);
   }
@@ -96,6 +115,14 @@ function answerBlock(result) {
   const shown = result.items.slice(0, 6);
   return el('div', { class: 'ask-answer' }, [
     result.title ? el('div', { class: 'ask-title', text: result.title }) : null,
+    // A total is a list of totals. One per currency, each labelled — never a
+    // single figure standing for several.
+    result.kind === 'sum' && result.totals?.length
+      ? el('div', { class: 'ask-totals' }, result.totals.map((t) => el('div', { class: 'ask-total' }, [
+        el('div', { class: 'ask-total-val', text: formatAmount(t.total, t.currency) }),
+        el('div', { class: 'ask-total-sub', text: `${formatNumber(t.count)} قطعة` }),
+      ])))
+      : null,
     el('p', { class: 'ask-text', text: result.answer }),
     result.note ? el('p', { class: 'ask-note', text: result.note }) : null,
     shown.length ? el('div', { class: 'ask-results' }, shown.map(resultCard)) : null,
