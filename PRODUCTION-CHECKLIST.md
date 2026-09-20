@@ -55,7 +55,7 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | 31d | Duplicate detection | ✅ | grouped and explained, never merged — A10–A13 |
 | 31e | Guided cleanup | ✅ | ordered by the points each task adds — A14–A15 |
 | 31f | Smart photo capture and review | ✅ | camera-first, suggestions applied only on a tap — `suggest.test.mjs` |
-| 32 | CSV / XLSX import with column mapping | ⬜ | JSON import is complete and validated; spreadsheet import is not implemented |
+| 32 | CSV / XLSX import with column mapping | ✅ | dependency-free readers (CSV with delimiter detection; XLSX unzipped with `DecompressionStream`), a mapping screen that guesses then asks, a confirm screen naming every record, every new taxonomy and every unreadable cell by its row in the file, and a plan check before the first write — `import.test.mjs` I1–I32, `import.test.mjs` (unit) |
 | 33 | Excel export with typed cells | ✅ | dependency-free writer; verified by reading the output back with a real spreadsheet library |
 | 34 | Global search across folders, Arabic-normalised | ✅ | browser suite |
 | 34b | Browsing bounded to a window, not the collection | 🟡 | a live window of the newest 200, the rest by cursor pages on demand, and `repo/partial` rather than an answer from a fraction — `window.test.mjs` W1–W22 against the device backend. **The Firestore cursor query itself has not been run against a deployed project** |

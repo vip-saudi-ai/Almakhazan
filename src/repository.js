@@ -976,6 +976,27 @@ class Repository {
     return { trashed: items.length };
   }
 
+  /**
+   * Creates many records in one pass, for an import. Each one still goes
+   * through `normalizeItem`, so a spreadsheet cannot write a shape the app
+   * would not accept from its own form; only the per-record activity log is
+   * traded for one entry naming the count.
+   */
+  async bulkCreateItems(records) {
+    this.assertCanWrite();
+    if (!records.length) return { created: 0 };
+    const items = records.map((record) => normalizeItem(
+      { ...record, createdBy: this.session.userId, updatedBy: this.session.userId },
+      { userId: this.session.userId },
+    ));
+    this.setSync(SyncState.SAVING);
+    await this.backend.runBatch(items.map((item) => ({
+      type: 'set', collection: 'items', id: item.id, data: item, merge: false,
+    })));
+    await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
+    return { created: items.length };
+  }
+
   async bulkWrite(operations) {
     this.assertCanWrite();
     this.setSync(SyncState.SAVING);

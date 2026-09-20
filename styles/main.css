@@ -964,3 +964,13 @@ body.selecting .tbar{opacity:.35;pointer-events:none}
 .inv-fresh{margin-top:14px;padding:14px;border-radius:var(--r);background:var(--glass-elevated);border:1px solid var(--brand)}
 .inv-fresh-hd{font:var(--type-body-strong);color:var(--tp);margin-bottom:4px}
 .inv-link{width:100%;background:none;border:1px solid var(--border-quiet);border-radius:var(--r-sm);padding:10px;font-family:ui-monospace,monospace;font-size:12px;color:var(--tp);margin-bottom:10px}
+
+/* ── spreadsheet import ── */
+/* The file as it is, before anything is read into it. Scrolls sideways rather
+   than wrapping: a squeezed cell looks like a different value. */
+.imp-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-quiet);border-radius:var(--r-sm)}
+.imp-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px}
+.imp-table th,.imp-table td{padding:7px 10px;border-bottom:.5px solid var(--divider);white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.imp-table th{font-weight:700;color:var(--tp);background:var(--glass-elevated);position:sticky;top:0}
+.imp-table td{color:var(--ts)}
+.imp-table tr:last-child td{border-bottom:none}

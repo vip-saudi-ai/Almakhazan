@@ -18,15 +18,16 @@ already set in this environment.
 
 ## What each suite proves
 
-### Unit — `tests/unit/*.test.mjs`, 72 checks
+### Unit — `tests/unit/*.test.mjs`, 97 checks
 
 | File | Proves |
 |---|---|
 | `entitlements.test.mjs` | the launch prices and limits are exactly the approved ones; annual is ten months; every plan records its `priceVersion`; Enterprise says *حدود مخصصة*, never "unlimited"; every gate blocks exactly at its limit; a cancelled subscription drops to free **without deleting anything**; the generated plan copies cannot drift from `shared/plans.json` |
 | `assistant.test.mjs` | the health weights are the published ones and total 1; each signal moves the score by exactly its weight; cleanup tasks are ordered by the points they add; duplicates group by barcode, then SKU, then name within a category, with Arabic spelling folded; a record is reported once; **nothing is merged**; every Ask NAZM intent, including the ones it must refuse to guess at |
 | `qr.test.mjs` | five matrices match segno module for module; the format information matches the published table; mode selection; no case folding; finder, timing and dark modules |
+| `import.test.mjs` | the mapping guess matches Arabic and English headers with spelling folded and never claims one column twice; an unrecognised header is left unmapped rather than guessed; a nameless row is skipped and reported; a bad quantity, price or condition is reported rather than coerced; an existing taxonomy is reused and a new one is only collected; and the CSV reader handles quotes, semicolons, tabs and a byte order mark |
 
-### Browser — `tests/browser/*.test.mjs`, 184 checks
+### Browser — `tests/browser/*.test.mjs`, 216 checks
 
 | File | Proves |
 |---|---|
@@ -40,6 +41,7 @@ already set in this environment.
 | `bulk.test.mjs` | selection is a plan gate that explains itself instead of a dead button; a tap picks instead of opens while selection is on; a move, an edit and an export carry the whole selection; a bulk edit cannot reach a field outside its allow-list; a bulk delete goes to Trash and comes back; an emptied page still offers the way out of selection mode |
 | `window.test.mjs` | the property is not "pagination works" but "nothing states a total it does not have": opening a 600-record workspace loads 200; the screen says so and shows the server's count, not a count of what it holds; proportions and folder counts stay blank rather than wrong; a search finds a record outside the window because it loads the inventory first; an export throws `repo/partial`; "delete everything" deletes everything; a restore's safety backup holds all 600 |
 | `team.test.mjs` | the four places a friendly team screen would lie: it never claims an email was sent (no mail provider exists, so the link is handed over instead); it never offers a control Security Rules refuse — the owner's role, your own role, removing yourself; it never offers a seat the plan does not have; and it never shows an invite link twice, because only its hash was stored. Plus roles, revoking, workspace switching, and device-only mode offering none of it |
+| `import.test.mjs` | one CSV carrying every mess a real export has — a semicolon separator, a blank row, a nameless row, Arabic-Indic digits, a quantity written as a word, a condition that is not one of ours, a quoted comma, two taxonomy names that do not exist — and the property that nothing is invented to make it look clean: every unreadable cell is named with its row number *in the file*, the new categories are declared before they are created, a file larger than the plan is refused before a single write, and a real `.xlsx` (shared strings, dates, gaps, entities) reads back correctly |
 
 ### Rules — `tests/rules/*.test.mjs`, in the emulator
 

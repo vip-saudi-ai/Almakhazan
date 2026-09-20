@@ -27,7 +27,7 @@ import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 import { onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -73,6 +73,10 @@ async function boot() {
   if (invitation) await redeemInvitation(invitation);
 
   window.addEventListener('almakhzan:workspace-changed', () => { void reopenWorkspace(); });
+  // An import writes through the backend, and the listener brings the records
+  // back — but the folders, categories and locations it created belong on
+  // screen immediately.
+  window.addEventListener('almakhzan:data-imported', () => renderAll());
 
   onSessionChange(async (next) => {
     gateOnSession(next);

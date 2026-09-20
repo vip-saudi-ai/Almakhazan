@@ -13,6 +13,7 @@ import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } fro
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
+import { startSpreadsheetImport } from './sheet-import.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
 import {
@@ -750,7 +751,8 @@ function renderDataPanel() {
     row('💾', 'rgba(0,122,255,.15)', 'نسخة احتياطية JSON', 'بيانات فقط — الصور محفوظة في التخزين السحابي', () => {
       try { exportJSON(); toast('تم إنشاء النسخة', '💾'); } catch (error) { toastError(error); }
     }),
-    row('📥', 'rgba(255,149,0,.15)', 'استيراد', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
+    row('📄', 'rgba(255,149,0,.15)', 'استيراد من Excel أو CSV', 'طابق الأعمدة بنفسك، وشاهد ما سيُكتب قبل كتابته', () => { void startSpreadsheetImport(); }),
+    row('📥', 'rgba(255,149,0,.15)', 'استيراد نسخة JSON', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
     row('🗑', 'rgba(142,142,147,.15)', 'سلة المحذوفات', `${formatNumber(repository.trashedItems().length)} قطعة`, openTrashSheet),
     row('📍', 'rgba(175,82,222,.15)', 'المواقع', `${formatNumber(repository.state.locations.length)} موقع`, openLocationsSheet),
   ]);
@@ -891,6 +893,7 @@ export function bindManageViews() {
     if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
     try { exportJSON(); toast('تم إنشاء النسخة', '💾'); } catch (error) { toastError(error); }
   });
+  $('as-sheet')?.addEventListener('click', () => { closeSheet('as'); void startSpreadsheetImport(); });
   $('as-import')?.addEventListener('click', () => { closeSheet('as'); startImport(); });
 
   $('cats-back')?.addEventListener('click', () => goTab('set'));
