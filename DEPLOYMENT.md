@@ -59,12 +59,24 @@ firebase functions:secrets:set BILLING_WEBHOOK_SECRET
 | `BILLING_PROVIDER` | Function env | no | Defaults to `none` |
 | `APP_URL` | Function env | no | Checkout return URL |
 
-Set non-secret parameters at deploy time:
+Non-secret parameters are **not** flags on `firebase deploy`. Functions v2
+reads them from `functions/.env` (`BILLING_PROVIDER` and `APP_URL` are
+`defineString` params in `functions/src/billing.js`; `ANALYSIS_MODEL` is a
+plain `process.env` read in `functions/src/ai.js`). Create the file and deploy
+normally:
 
 ```bash
-firebase deploy --only functions \
-  --set-env-vars BILLING_PROVIDER=none,APP_URL=https://<your-domain>
+cat > functions/.env <<'EOF'
+BILLING_PROVIDER=none
+APP_URL=https://<your-domain>
+ANALYSIS_MODEL=claude-opus-5
+EOF
+
+firebase deploy --only functions
 ```
+
+`functions/.env` holds no secrets — those live in Secret Manager, set above —
+but keep it out of version control anyway.
 
 ## 3. Plans and pricing
 
