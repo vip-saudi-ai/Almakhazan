@@ -379,3 +379,47 @@ body.kb-open .select-bar { bottom: var(--kb, 0px); }
  * control, on every device. A mouse benefits from it too.)
  */
 .tilbl { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── below 320px ───────────────────────────────────────────────────────────
+ * Not a device — a person. Browser zoom at 200% on a 390px phone leaves a
+ * 195px CSS viewport, and text-only zoom does the same to anything sized in
+ * rem. The layout has to survive it, because the alternative is that the
+ * people who most need larger text are the ones who cannot use the app.
+ *
+ * Everything becomes one column, the tab bar keeps its icons and drops its
+ * labels, and rows that were side by side wrap instead of overflowing.
+ */
+@media (max-width: 359px) {
+  .nbar { flex-wrap: wrap; row-gap: 6px; }
+  .nacts { flex-shrink: 0; }
+}
+/* The search field is `flex:1` and the scanner button beside it is not, but a
+   flex item's default minimum size is its content — so at very narrow widths
+   the field refused to shrink and pushed the button off the edge instead.
+   `min-width:0` lets the field give way, which is what it should do: a search
+   box can be narrow, a button that has left the screen cannot be pressed. */
+.sbar { min-width: 0; }
+.sfrow > .ibtn { flex-shrink: 0; }
+
+@media (max-width: 319px) {
+  :root { --gutter: 10px; --tab-h: 62px; }
+  .igrid, .fld-row, .sgrid, .ov-kpi-grid, .imp-stats, .gate-choices, .airow {
+    grid-template-columns: 1fr;
+  }
+  .catgrid { grid-template-columns: repeat(2, 1fr); }
+  /* The icon plus its accessible name still says which tab it is; the visible
+     label is what does not fit. */
+  .tilbl { display: none; }
+  .ntitle { font-size: 22px; }
+  .fsact-row { flex-direction: column; }
+  .fsact-btn { width: 100%; }
+  .shfoot { flex-wrap: wrap; }
+  .shfoot > .btn { flex: 1 1 100%; }
+}
+
+/* The same reasoning at a bigger scale: a tab bar whose labels no longer fit
+   across the width it has. Four labels need roughly 60px each before they
+   start truncating into each other. */
+@media (max-width: 300px), (orientation: landscape) and (max-height: 430px) {
+  .tilbl { display: none; }
+}

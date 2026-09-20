@@ -1,5 +1,6 @@
 // Add / edit sheet: fields, multi-image management, AI analysis, save.
 
+import { icon } from '../icons.js';
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
 import {
   CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
@@ -167,7 +168,7 @@ function renderCapturePrompt() {
       class: 'capture-cta', type: 'button',
       onClick: () => $('camInput').click(),
     }, [
-      el('span', { class: 'capture-ico', text: '⊡', 'aria-hidden': 'true' }),
+      el('span', { class: 'capture-ico' }, [icon('image', { size: 30 })]),
       el('span', { class: 'capture-label', text: 'صوّر القطعة' }),
       el('span', { class: 'capture-sub', text: `ودع ${ASSISTANT_NAME} يقترح بياناتها` }),
     ]),
