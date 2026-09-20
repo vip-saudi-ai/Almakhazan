@@ -11,7 +11,16 @@
 html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--nazm-navy);color:var(--text);-webkit-font-smoothing:antialiased}
 /* BG — isolated layer, never repaints on scroll */
 .bg{position:fixed;inset:0;z-index:var(--z-base);background:var(--app-bg);contain:strict;transform:translateZ(0)}
-.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:ofl linear infinite;opacity:.5;will-change:transform}
+/* The orbs are a blurred gradient that drifts. The blur is applied once to a
+   static layer and only the transform animates, so no frame re-blurs anything
+   — which is why this stays cheap. `will-change` is scoped to the case where
+   something is actually going to change: promoting a layer permanently costs
+   memory on a device that is not animating it. */
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:ofl linear infinite;opacity:.5}
+@media (prefers-reduced-motion:no-preference){.orb{will-change:transform}}
+/* A small screen sees a fraction of a 700px orb. Half the blur radius at that
+   size is visually identical and a quarter of the work. */
+@media (max-width:480px){.orb{filter:blur(56px)}}
 .o1{width:700px;height:700px;background:radial-gradient(circle,var(--orb-1),transparent 70%);top:-200px;right:-200px;animation-duration:32s}
 .o2{width:600px;height:600px;background:radial-gradient(circle,var(--orb-2),transparent 70%);bottom:-150px;left:-150px;animation-duration:40s;animation-delay:-20s}
 @keyframes ofl{0%{transform:translate(0,0)}50%{transform:translate(-18px,12px)}100%{transform:translate(0,0)}}
