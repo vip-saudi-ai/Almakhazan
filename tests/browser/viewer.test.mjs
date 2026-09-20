@@ -1,0 +1,329 @@
+// Browser test for the full-screen image viewer.
+//
+//   npx http-server -p 8123 -c-1 &
+//   node tests/browser/viewer.test.mjs
+//
+// In NAZM an image is the documentation, so the properties under test are the
+// ones that decide whether it can be used as documentation: it opens from
+// everywhere an image appears, it never crops, it zooms toward the thing you
+// pointed at rather than the middle, panning a zoomed image never turns into
+// a page change, and a keyboard can do all of it.
+
+const { chromium } = await import('playwright')
+  .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
+
+const BASE = 'http://127.0.0.1:8123';
+const browser = await chromium.launch();
+const pass = [], fail = [];
+const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
+
+// Images are drawn at a real size rather than pasted in as a tiny fixture.
+// Size is the whole point here: an image smaller than the screen is centred
+// and has nothing to pan to, so it would prove nothing about zoom anchoring —
+// and a tall document is what proves the viewer letterboxes instead of
+// cropping.
+async function open({ count = 3, width = 1400, height = 1800 } = {}) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const errs = [];
+  page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
+  page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
+
+  // Real images, written through the same local store the app reads from, so
+  // the viewer resolves them exactly as it would a photograph.
+  await page.evaluate(async ({ count, width, height }) => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+
+    const draw = async (w, h, hue) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = `hsl(${hue},60%,50%)`;
+      ctx.fillRect(0, 0, w, h);
+      // A mark in one corner: something that only zoom-to-point can reach.
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(8, 8, Math.round(w / 8), Math.round(h / 8));
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      return blob.arrayBuffer();
+    };
+
+    const images = [];
+    for (let i = 0; i < count; i += 1) {
+      const id = 'vi' + i;
+      await local.put('images', {
+        id,
+        original: await draw(width, height, i * 70),
+        thumbnail: await draw(Math.round(width / 4), Math.round(height / 4), i * 70),
+        originalType: 'image/png',
+        thumbnailType: 'image/png',
+      });
+      images.push({ id, mediaId: id, storagePath: 'local:' + id, thumbnailPath: 'local:' + id, url: null, thumbnailUrl: null });
+    }
+    const now = Date.now();
+    await repository.bulkWrite([{
+      type: 'set', collection: 'items', id: 'vitem',
+      data: {
+        id: 'vitem', name: 'ساعة جيب ذهبية', quantity: 1, unit: 'قطعة', categoryId: 'c1',
+        images, primaryImageId: images[0].id, createdAt: now, updatedAt: now, version: 1,
+      },
+    }]);
+  }, { count, width, height });
+  await page.waitForTimeout(400);
+  return { page, context, errs };
+}
+
+const openDetail = async (page) => {
+  await page.evaluate(async () => {
+    const { openDetail } = await import('/src/views/detail.js');
+    openDetail('vitem');
+  });
+  await page.waitForTimeout(400);
+};
+
+const openViewer = async (page) => {
+  await page.click('#detbody .img-open, .qp-hero .img-open, .det-hero .img-open');
+  await page.waitForTimeout(400);
+};
+
+const viewerState = (page) => page.evaluate(() => {
+  const v = document.getElementById('viewer');
+  const img = v?.querySelector('.viewer-stage[data-index="' + (window.__vi ?? 0) + '"] .viewer-img');
+  return {
+    open: !!v && !v.hidden,
+    count: document.getElementById('viewer-count')?.textContent?.trim(),
+    bg: v ? getComputedStyle(v).backgroundColor : null,
+    focus: document.activeElement?.id,
+  };
+});
+
+// ── it opens from the item's own image ─────────────────────────────────────
+{
+  const { page, context, errs } = await open();
+  await openDetail(page);
+
+  const isButton = await page.evaluate(() => {
+    const hero = document.querySelector('#detbody .img-open');
+    return { tag: hero?.tagName, label: hero?.getAttribute('aria-label') };
+  });
+  check('V1 an image is a button, so it announces that it can be opened',
+    isButton.tag === 'BUTTON' && /بملء الشاشة/.test(isButton.label || ''), JSON.stringify(isButton));
+
+  await openViewer(page);
+  const s = await viewerState(page);
+  check('V2 it opens full-screen', s.open === true, JSON.stringify(s));
+  check('V3 the counter says which image of how many', s.count === '1 / 3', String(s.count));
+  check('V4 focus moves to the way out', s.focus === 'viewer-close', String(s.focus));
+  check('V5 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
+// ── it is dark in both themes ──────────────────────────────────────────────
+{
+  for (const scheme of ['light', 'dark']) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
+    const page = await context.newPage();
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
+    const bg = await page.evaluate(async () => {
+      const { openImageViewer } = await import('/src/views/image-viewer.js');
+      openImageViewer({ images: [{ id: 'x', url: 'https://example.invalid/a.png' }], title: 'ساعة' });
+      return getComputedStyle(document.getElementById('viewer')).backgroundColor;
+    });
+    const rgb = (bg.match(/\d+/g) || []).map(Number);
+    const dark = rgb.length >= 3 && rgb[0] + rgb[1] + rgb[2] < 120;
+    check(`V6 the viewer stays dark in ${scheme} mode — inspection wants a neutral ground`, dark, bg);
+    await context.close();
+  }
+}
+
+// ── zoom ───────────────────────────────────────────────────────────────────
+{
+  const { page, context, errs } = await open();
+  await openDetail(page);
+  await openViewer(page);
+
+  await page.waitForFunction(() => {
+    const img = document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    return img && img.naturalWidth > 0;
+  }, null, { timeout: 10000 });
+
+  const fit = await page.evaluate(() => {
+    const img = document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    const style = getComputedStyle(img);
+    return { transform: style.transform, objectFit: style.objectFit };
+  });
+  check('V7 it opens at fit, not pre-zoomed',
+    (fit.transform === 'none' || /matrix\(1, 0, 0, 1,/.test(fit.transform)), fit.transform);
+  check('V8 it contains rather than crops — a panorama letterboxes, it is not cut',
+    fit.objectFit === 'contain', fit.objectFit);
+
+  const shape = await page.evaluate(() => {
+    const img = document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    const stage = document.querySelector('.viewer-stage');
+    const r = img.getBoundingClientRect();
+    const s = stage.getBoundingClientRect();
+    return {
+      natural: img.naturalWidth / img.naturalHeight,
+      drawn: r.width / r.height,
+      insideStage: r.width <= s.width + 1 && r.height <= s.height + 1,
+    };
+  });
+  check('V8b a tall image keeps its proportions and fits inside the frame',
+    Math.abs(shape.natural - shape.drawn) < 0.02 && shape.insideStage, JSON.stringify(shape));
+
+  // Wheel zoom at a point well away from the centre.
+  const box = await page.evaluate(() => {
+    const r = document.querySelector('.viewer-stage').getBoundingClientRect();
+    return { x: r.left + r.width * 0.2, y: r.top + r.height * 0.3, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+  });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.wheel(0, -400);
+  await page.waitForTimeout(250);
+
+  const zoomed = await page.evaluate(() => {
+    const img = document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    const m = new DOMMatrix(getComputedStyle(img).transform);
+    return { scale: m.a, tx: m.e, ty: m.f };
+  });
+  check('V9 the wheel zooms in', zoomed.scale > 1.05, JSON.stringify(zoomed));
+  check('V10 it zooms toward the pointer, not the centre of the image',
+    Math.abs(zoomed.tx) > 1 || Math.abs(zoomed.ty) > 1, JSON.stringify(zoomed));
+
+  // The zoom buttons and the reset.
+  await page.evaluate(() => document.querySelector('[aria-label="ملء الشاشة"]').click());
+  await page.waitForTimeout(200);
+  const reset = await page.evaluate(() => {
+    const m = new DOMMatrix(getComputedStyle(document.querySelector('.viewer-stage[data-index="0"] .viewer-img')).transform);
+    return { scale: m.a, tx: m.e, ty: m.f };
+  });
+  check('V11 reset returns to fit, centred', Math.abs(reset.scale - 1) < 0.01 && reset.tx === 0 && reset.ty === 0, JSON.stringify(reset));
+  check('V12 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
+// ── keyboard ───────────────────────────────────────────────────────────────
+{
+  const { page, context, errs } = await open();
+  await openDetail(page);
+  await openViewer(page);
+
+  // RTL: the right arrow moves toward the previous image, the left toward the
+  // next, because that is the direction the gallery runs.
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(250);
+  let count = await page.evaluate(() => document.getElementById('viewer-count').textContent.trim());
+  check('V13 an arrow key changes image, in the direction the gallery runs', count === '2 / 3', count);
+
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(250);
+  count = await page.evaluate(() => document.getElementById('viewer-count').textContent.trim());
+  check('V14 and back again', count === '1 / 3', count);
+
+  await page.keyboard.press('+');
+  await page.waitForTimeout(200);
+  const kzoom = await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('.viewer-stage[data-index="0"] .viewer-img')).transform).a);
+  check('V15 the keyboard can zoom', kzoom > 1.05, String(kzoom));
+
+  await page.keyboard.press('0');
+  await page.waitForTimeout(200);
+  const kreset = await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('.viewer-stage[data-index="0"] .viewer-img')).transform).a);
+  check('V16 and reset it', Math.abs(kreset - 1) < 0.01, String(kreset));
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const closed = await page.evaluate(() => ({
+    hidden: document.getElementById('viewer').hidden,
+    detailStillOpen: document.getElementById('sh-det').classList.contains('open'),
+    focus: document.activeElement?.className || '',
+  }));
+  check('V17 Escape closes the viewer and not the screen underneath it',
+    closed.hidden === true && closed.detailStillOpen === true, JSON.stringify(closed));
+  check('V18 focus returns to the image that opened it',
+    closed.focus.includes('img-open'), closed.focus);
+  check('V19 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
+// ── navigation controls ────────────────────────────────────────────────────
+{
+  const { page, context } = await open();
+  await openDetail(page);
+  await openViewer(page);
+
+  const edges = await page.evaluate(() => ({
+    prevHidden: document.getElementById('viewer-prev').hidden,
+    nextHidden: document.getElementById('viewer-next').hidden,
+  }));
+  check('V20 there is no arrow pointing at nothing on the first image',
+    edges.prevHidden === true && edges.nextHidden === false, JSON.stringify(edges));
+
+  await page.evaluate(() => document.getElementById('viewer-next').click());
+  await page.evaluate(() => document.getElementById('viewer-next').click());
+  await page.waitForTimeout(300);
+  const last = await page.evaluate(() => ({
+    count: document.getElementById('viewer-count').textContent.trim(),
+    nextHidden: document.getElementById('viewer-next').hidden,
+  }));
+  check('V21 nor on the last', last.count === '3 / 3' && last.nextHidden === true, JSON.stringify(last));
+  await context.close();
+}
+
+// ── a single image needs no counter and no arrows ──────────────────────────
+{
+  const { page, context } = await open({ count: 1 });
+  await openDetail(page);
+  await openViewer(page);
+  const single = await page.evaluate(() => ({
+    count: document.getElementById('viewer-count').textContent.trim(),
+    prevHidden: document.getElementById('viewer-prev').hidden,
+    nextHidden: document.getElementById('viewer-next').hidden,
+  }));
+  check('V22 one image carries no counter and no navigation',
+    single.count === '' && single.prevHidden && single.nextHidden, JSON.stringify(single));
+  await context.close();
+}
+
+// ── unsaved images open too ────────────────────────────────────────────────
+{
+  const { page, context, errs } = await open();
+  const opened = await page.evaluate(async () => {
+    const { openImageViewer, isImageViewerOpen } = await import('/src/views/image-viewer.js');
+    // An image that exists only in the form, not yet on any record.
+    openImageViewer({ images: [{ id: 'draft', url: 'https://example.invalid/draft.png' }], title: 'قطعة جديدة' });
+    return { open: isImageViewerOpen(), alt: document.querySelector('.viewer-img')?.alt };
+  });
+  check('V23 an image that has not been saved yet still opens — that is when you most want to check it',
+    opened.open === true, JSON.stringify(opened));
+  check('V24 the image carries a meaningful accessible name',
+    /قطعة جديدة/.test(opened.alt || '') && /الصورة 1 من 1/.test(opened.alt || ''), String(opened.alt));
+  check('V25 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
+// ── controls can be cleared, but never the way out ─────────────────────────
+{
+  const { page, context } = await open();
+  await openDetail(page);
+  await openViewer(page);
+  const hidden = await page.evaluate(async () => {
+    document.getElementById('viewer').classList.add('controls-hidden');
+    const close = document.getElementById('viewer-close');
+    const count = document.getElementById('viewer-count');
+    return {
+      closeVisible: getComputedStyle(close).opacity !== '0' && close.offsetParent !== null,
+      countFaded: getComputedStyle(count).opacity === '0',
+    };
+  });
+  check('V26 clearing the controls hides the furniture but never the close button',
+    hidden.closeVisible === true && hidden.countFaded === true, JSON.stringify(hidden));
+  await context.close();
+}
+
+await browser.close();
+for (const line of pass) console.log('  ✓ ' + line);
+for (const line of fail) console.log('  ✗ ' + line);
+console.log(`\n${fail.length ? 'FAIL' : 'PASS'} ${pass.length}/${pass.length + fail.length}`);
+process.exit(fail.length ? 1 : 0);

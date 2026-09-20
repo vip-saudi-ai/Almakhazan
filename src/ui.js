@@ -3,6 +3,7 @@
 // Sheets are real dialogs: they announce themselves, trap focus, close on
 // Escape, and hand focus back to whatever opened them.
 
+import { handleViewerKey } from './views/image-viewer.js';
 import { $, appendChildren, el } from './utils.js';
 
 // ── toasts ──
@@ -45,6 +46,13 @@ function trapFocus(event) {
 }
 
 document.addEventListener('keydown', (event) => {
+  // The image viewer sits above every sheet, so it answers first — and when
+  // it answers, nothing else does. Escape must close the viewer, not the
+  // sheet underneath it that is still open.
+  if (handleViewerKey(event)) {
+    event.preventDefault();
+    return;
+  }
   if (event.key === 'Escape' && stack.length) {
     event.preventDefault();
     closeTop();

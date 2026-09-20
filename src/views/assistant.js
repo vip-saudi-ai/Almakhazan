@@ -17,7 +17,7 @@ import { cleanupTasks, inventoryHealth } from '../health.js';
 import { $, el, formatNumber, render } from '../utils.js';
 import { emptyState, toast } from '../ui.js';
 import { formatValuation, primaryImage } from '../validation.js';
-import { bindImageSrc } from '../storage.js';
+import { ImageTier, bindImageSrc } from '../storage.js';
 import { symbolNode } from './mark.js';
 import { openDetail } from './detail.js';
 import { openItemForm } from './item-form.js';
@@ -112,7 +112,7 @@ function resultCard(item) {
   const thumb = el('div', { class: 'ask-thumb' });
   if (image) {
     const img = el('img', { alt: '' });
-    bindImageSrc(img, image, { thumbnail: true });
+    bindImageSrc(img, image, { tier: ImageTier.THUMB });
     thumb.appendChild(img);
   } else {
     thumb.textContent = '📦';

@@ -13,6 +13,7 @@ import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } fr
 import { $, el, formatNumber, render } from './utils.js';
 import { goTab, registerTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
+import { isImageViewerOpen, reflowViewer } from './views/image-viewer.js';
 import { acceptInvitation, takeInvitationFromUrl } from './team.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
 import {
@@ -239,6 +240,12 @@ function initializeUI() {
   // Before anything measures itself: the keyboard has to be known about
   // before the first sheet can open on top of it.
   watchViewport();
+
+  // A rotation changes the box the image is contained in. The zoom is kept —
+  // losing it mid-inspection is worse than a moment's reflow — but a pan that
+  // was inside the frame in portrait can be outside it in landscape.
+  window.addEventListener('orientationchange', () => setTimeout(reflowViewer, 250));
+  window.addEventListener('resize', () => { if (isImageViewerOpen()) reflowViewer(); });
 
   const prefs = local.loadPrefs();
   homeView.grid = prefs.grid ?? true;

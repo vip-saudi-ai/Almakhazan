@@ -47,6 +47,9 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
     export async function deleteImage() {}
     export async function imageSrc() { return ''; }
     export function bindImageSrc(img) { if (img) img.alt = 'صورة'; }
+    // The tier names and the "is there a bigger file" question the viewer asks.
+    export const ImageTier = { THUMB: 'thumb', DISPLAY: 'display', FULL: 'full' };
+    export async function hasDistinctOriginal() { return false; }
   ` }));
 
   await page.route('**/src/ai.js', r => r.fulfill({ contentType: 'text/javascript', body: `

@@ -5,7 +5,7 @@ import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
-import { bindImageSrc } from '../storage.js';
+import { ImageTier, bindImageSrc } from '../storage.js';
 import {
   EMPTY_FILTERS, SORT_MODES, activeFilterCount, clampPage, paginationModel, queryItems,
 } from '../search.js';
@@ -164,7 +164,7 @@ function itemThumb(item, className) {
     return el('div', { class: className, text: category.icon, 'aria-hidden': 'true' });
   }
   const img = el('img', { alt: item.name || 'صورة القطعة', loading: 'lazy', decoding: 'async' });
-  bindImageSrc(img, image, { thumbnail: true });
+  bindImageSrc(img, image, { tier: ImageTier.THUMB });
   return el('div', { class: className }, [img]);
 }
 
@@ -175,7 +175,7 @@ function cardNode(item) {
   let imageNode;
   if (image) {
     const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
-    bindImageSrc(img, image, { thumbnail: true });
+    bindImageSrc(img, image, { tier: ImageTier.THUMB });
     imageNode = img;
   } else {
     imageNode = el('div', { class: 'icph' }, [
@@ -931,7 +931,7 @@ function openContextMenu(itemId) {
   const image = primaryImage(item);
   if (image) {
     const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
-    bindImageSrc(img, image, { thumbnail: true });
+    bindImageSrc(img, image, { tier: ImageTier.THUMB });
     render(thumb, [img]);
   } else {
     render(thumb, [el('span', { text: category.icon, 'aria-hidden': 'true' })]);

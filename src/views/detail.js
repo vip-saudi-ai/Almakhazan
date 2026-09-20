@@ -2,7 +2,8 @@
 
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, isAnalysisStale } from '../ai.js';
 import { repository } from '../repository.js';
-import { bindImageSrc } from '../storage.js';
+import { ImageTier, bindImageSrc } from '../storage.js';
+import { openImageViewer } from './image-viewer.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { formatValuation, primaryImage } from '../validation.js';
 import {
@@ -11,6 +12,16 @@ import {
 import { openItemForm } from './item-form.js';
 import { openLabels } from './labels.js';
 
+/** Opens the viewer on one of an item's images. */
+function inspect(item, imageId) {
+  const images = item.images || [];
+  openImageViewer({
+    images,
+    index: Math.max(0, images.findIndex((i) => i.id === imageId)),
+    title: item.name || '',
+  });
+}
+
 function heroNode(item, { big = true } = {}) {
   const image = primaryImage(item);
   const category = repository.category(item.categoryId);
@@ -18,21 +29,30 @@ function heroNode(item, { big = true } = {}) {
     return el('div', { style: { fontSize: big ? '72px' : '64px' }, text: category.icon, 'aria-hidden': 'true' });
   }
   const img = el('img', { alt: item.name || 'صورة القطعة' });
-  // The detail hero is the one place the full-resolution original is worth loading.
-  bindImageSrc(img, image, { thumbnail: !big });
-  return img;
+  bindImageSrc(img, image, { tier: big ? ImageTier.DISPLAY : ImageTier.THUMB });
+  // A photograph of an object is the documentation of it, so it is always a
+  // way in to looking at it properly — a button, not a picture.
+  return el('button', {
+    class: 'img-open', type: 'button',
+    'aria-label': `عرض صورة ${item.name || 'القطعة'} بملء الشاشة`,
+    onClick: () => inspect(item, image.id),
+  }, [img]);
 }
 
 function galleryStrip(item) {
   if (!item.images?.length || item.images.length < 2) return null;
   return el('div', { class: 'gal-strip', role: 'list', 'aria-label': 'صور إضافية' },
-    item.images.map((image) => {
+    item.images.map((image, index) => {
       const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
-      bindImageSrc(img, image, { thumbnail: true });
-      return el('div', {
-        class: `gal-thumb${image.id === item.primaryImageId ? ' on' : ''}`,
-        role: 'listitem',
-      }, [img]);
+      bindImageSrc(img, image, { tier: ImageTier.THUMB });
+      return el('div', { class: 'gal-thumb-wrap', role: 'listitem' }, [
+        el('button', {
+          class: `gal-thumb img-open${image.id === item.primaryImageId ? ' on' : ''}`,
+          type: 'button',
+          'aria-label': `عرض الصورة ${index + 1} من ${item.images.length}`,
+          onClick: () => inspect(item, image.id),
+        }, [img]),
+      ]);
     }));
 }
 

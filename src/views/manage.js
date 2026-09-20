@@ -21,7 +21,7 @@ import {
 } from '../subscription.js';
 import { UNLIMITED } from '../entitlements.js';
 import { openPlansSheet } from './plans.js';
-import { bindImageSrc } from '../storage.js';
+import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { primaryImage, validateImport } from '../validation.js';
 import {
@@ -346,7 +346,7 @@ function renderTrash() {
     let thumb;
     if (image) {
       const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
-      bindImageSrc(img, image, { thumbnail: true });
+      bindImageSrc(img, image, { tier: ImageTier.THUMB });
       thumb = el('div', { class: 'lthumb' }, [img]);
     } else {
       thumb = el('div', { class: 'lthumb', text: repository.category(item.categoryId).icon, 'aria-hidden': 'true' });

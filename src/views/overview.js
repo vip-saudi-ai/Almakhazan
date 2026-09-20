@@ -3,7 +3,7 @@
 
 import { ACTION_LABELS, CHART_COLORS, CONDITIONS, CONDITION_COLORS, CURRENCY_LABELS } from '../config.js';
 import { repository } from '../repository.js';
-import { bindImageSrc } from '../storage.js';
+import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatCompact, formatNumber, render, timeAgo } from '../utils.js';
 import { formatValuation, primaryImage, valuationMidpoint } from '../validation.js';
 import { emptyState, section } from '../ui.js';
@@ -54,7 +54,7 @@ function itemThumbNode(item) {
     return el('div', { class: 'ov-item-thumb', text: repository.category(item.categoryId).icon, 'aria-hidden': 'true' });
   }
   const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
-  bindImageSrc(img, image, { thumbnail: true });
+  bindImageSrc(img, image, { tier: ImageTier.THUMB });
   return el('div', { class: 'ov-item-thumb' }, [img]);
 }
 

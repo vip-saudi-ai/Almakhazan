@@ -274,8 +274,44 @@ export async function deleteImage(image, ctx) {
 
 const objectUrlCache = new Map();
 
-/** Resolves a displayable URL, preferring the thumbnail for list rendering. */
-export async function imageSrc(image, { thumbnail = true } = {}) {
+/**
+ * The three jobs an image does, and which stored file each one gets.
+ *
+ * Two files are kept per image: a 640px display copy and the original, capped
+ * at 2560px (`IMAGE_LIMITS`). That is two files, not three — and three tiers,
+ * because the middle tier is a decision about the screen rather than a third
+ * upload the customer would pay to store.
+ *
+ *   THUMB    a grid or list cell. Always the 640px copy.
+ *   DISPLAY  an item's own screen. The 640px copy on a phone, where that is
+ *            already more pixels than the box; the original on a wide or
+ *            high-density display, where it would visibly soften.
+ *   FULL     the full-screen viewer. Always the original — the whole point of
+ *            opening it is to read a serial number or look at a scratch.
+ */
+export const ImageTier = { THUMB: 'thumb', DISPLAY: 'display', FULL: 'full' };
+
+/** The widest a 640px copy can be drawn before it starts to soften. */
+const DISPLAY_CEILING = 640;
+
+function wantsOriginal(tier) {
+  if (tier === ImageTier.FULL) return true;
+  if (tier !== ImageTier.DISPLAY) return false;
+  const dpr = window.devicePixelRatio || 1;
+  // The detail image is roughly the viewport width on a phone and a column of
+  // it on a tablet or laptop; either way this is the box it has to fill.
+  const box = Math.min(window.innerWidth, 900) * dpr;
+  return box > DISPLAY_CEILING;
+}
+
+/** Resolves a displayable URL for one tier. */
+export async function imageSrc(image, options = {}) {
+  const { tier } = options;
+  const thumbnail = tier ? !wantsOriginal(tier) : options.thumbnail !== false;
+  return resolveSrc(image, thumbnail);
+}
+
+async function resolveSrc(image, thumbnail) {
   if (!image) return null;
   if (!image.storagePath?.startsWith('local:')) {
     return (thumbnail ? image.thumbnailUrl : image.url) || image.url || image.thumbnailUrl || null;
@@ -308,4 +344,16 @@ export function bindImageSrc(imgElement, image, options) {
   imageSrc(image, options)
     .then((src) => { if (src) imgElement.src = src; })
     .catch((error) => console.error('[image] could not resolve source', error));
+}
+
+/**
+ * Whether a higher tier would actually be a different file. The viewer uses
+ * this to decide between "swap in the original" and "there is nothing better
+ * to wait for", so it never shows a loading state for a load that will not
+ * happen.
+ */
+export async function hasDistinctOriginal(image) {
+  if (!image) return false;
+  const [a, b] = await Promise.all([resolveSrc(image, true), resolveSrc(image, false)]);
+  return Boolean(a && b && a !== b);
 }

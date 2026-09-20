@@ -8,7 +8,8 @@ import { repository, ConflictError } from '../repository.js';
 import { canAddItem, canUseAssistant } from '../subscription.js';
 import { openPlansSheet } from './plans.js';
 import { openScanner } from './scan.js';
-import { bindImageSrc, uploadImage } from '../storage.js';
+import { ImageTier, bindImageSrc, uploadImage } from '../storage.js';
+import { openImageViewer } from './image-viewer.js';
 import { $, el, render, setText, uid } from '../utils.js';
 import {
   formatValuation, normalizeValuation, parseValuationText, validateQuantity,
@@ -83,11 +84,27 @@ function renderImages() {
   render(strip, [
     ...form.images.map((image) => {
       const img = el('img', { alt: image.originalFilename || 'صورة', loading: 'lazy', decoding: 'async' });
-      bindImageSrc(img, image, { thumbnail: true });
+      bindImageSrc(img, image, { tier: ImageTier.THUMB });
       const isPrimary = image.id === form.primaryImageId;
 
       return el('div', { class: `img-cell${isPrimary ? ' primary' : ''}` }, [
-        img,
+        // A photo taken a moment ago and not yet saved is exactly the one you
+        // most want to check before committing to it, so it opens too.
+        el('button', {
+          class: 'img-open img-cell-open', type: 'button',
+          'aria-label': `عرض ${image.originalFilename || 'الصورة'} بملء الشاشة`,
+          onClick: () => openImageViewer({
+            images: form.images,
+            index: form.images.findIndex((i) => i.id === image.id),
+            title: $('f-name')?.value || '',
+            actions: [
+              {
+                label: 'اجعلها الصورة الرئيسية',
+                onSelect: (selected) => { form.primaryImageId = selected.id; renderImages(); refreshAiPanel(); },
+              },
+            ],
+          }),
+        }, [img]),
         isPrimary ? el('span', { class: 'img-primary-tag', text: 'رئيسية' }) : null,
         el('div', { class: 'img-cell-acts' }, [
           !isPrimary ? el('button', {
