@@ -1,6 +1,7 @@
 // Inventory view: stats, folders, category pills, grid/list, pagination,
 // filter and sort sheets, and the long-press context menu.
 
+import { icon } from '../icons.js';
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
 import { ensureFor, runQuery, summarize } from '../query.js';
@@ -179,7 +180,7 @@ function renderFolders() {
       class: 'fld-card fld-add gl-s',
       type: 'button',
       onClick: () => window.dispatchEvent(new CustomEvent('almakhzan:new-folder')),
-    }, [el('span', { text: '+', 'aria-hidden': 'true' }), el('span', { text: 'مجلد جديد' })]),
+    }, [icon('plus', { size: 18 }), el('span', { text: 'مجلد جديد' })]),
   ]);
 }
 
@@ -423,18 +424,18 @@ function renderSelectionBar(visibleItems) {
   const pageIds = visibleItems.map((item) => item.id);
   const allOnPage = pageIds.length > 0 && pageIds.every((id) => view.selection.has(id));
 
-  const action = (label, icon, handler, danger = false) => el('button', {
+  const action = (label, iconName, handler, danger = false) => el('button', {
     class: `selact${danger ? ' danger' : ''}`, type: 'button',
     disabled: count === 0 || undefined,
     onClick: handler,
   }, [
-    el('span', { class: 'selact-ico', text: icon, 'aria-hidden': 'true' }),
+    el('span', { class: 'selact-ico' }, [icon(iconName, { size: 18 })]),
     el('span', { text: label }),
   ]);
 
   render(bar, [
     el('div', { class: 'selbar-top' }, [
-      el('button', { class: 'selbar-close', type: 'button', text: '✕', 'aria-label': 'إنهاء التحديد', onClick: endSelection }),
+      el('button', { class: 'selbar-close', type: 'button', 'aria-label': 'إنهاء التحديد', onClick: endSelection }, [icon('close', { size: 16 })]),
       el('span', { class: 'selbar-count', text: count ? `${formatNumber(count)} محددة` : 'اختر قطعاً' }),
       el('button', {
         class: 'selbar-all', type: 'button',
@@ -449,11 +450,11 @@ function renderSelectionBar(visibleItems) {
       }),
     ]),
     el('div', { class: 'selbar-acts' }, [
-      action('نقل', '🗂', () => bulkMove()),
-      action('تصنيف', '◈', () => bulkField('categoryId', 'التصنيف')),
-      action('موقع', '⌂', () => bulkField('locationId', 'الموقع')),
-      action('تصدير', '📤', () => bulkExport()),
-      action('حذف', '🗑', () => bulkDelete(), true),
+      action('نقل', 'move', () => bulkMove()),
+      action('تصنيف', 'category', () => bulkField('categoryId', 'التصنيف')),
+      action('موقع', 'location', () => bulkField('locationId', 'الموقع')),
+      action('تصدير', 'download', () => bulkExport()),
+      action('حذف', 'trash', () => bulkDelete(), true),
     ]),
   ]);
 }
@@ -709,18 +710,18 @@ function renderNavBar(folder) {
 
   const actions = el('div', { class: 'nacts' }, [
     folder ? el('button', {
-      class: 'ibtn gls', type: 'button', text: '✎', style: { fontSize: '15px' },
+      class: 'ibtn gls', type: 'button',
       'aria-label': 'تعديل المجلد',
       onClick: () => window.dispatchEvent(new CustomEvent('almakhzan:edit-folder', { detail: folder.id })),
-    }) : el('button', {
-      class: 'ibtn gl', type: 'button', text: '↑', 'aria-label': 'تصدير واستيراد',
+    }, [icon('edit')]) : el('button', {
+      class: 'ibtn gl', type: 'button', 'aria-label': 'تصدير واستيراد',
       onClick: () => openSheet('as'),
-    }),
+    }, [icon('upload')]),
     el('button', {
-      class: 'ibtn gl', type: 'button', text: '+', style: { fontSize: '22px', fontWeight: '300' },
+      class: 'ibtn gl ibtn-primary', type: 'button',
       'aria-label': 'إضافة قطعة',
       onClick: () => openItemForm({ folderId: view.folderId }),
-    }),
+    }, [icon('plus', { size: 22 })]),
   ]);
 
   if (folder) {

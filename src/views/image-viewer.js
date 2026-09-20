@@ -19,6 +19,7 @@
 
 import { ImageTier, hasDistinctOriginal, imageSrc } from '../storage.js';
 import { $, el, formatNumber, render } from '../utils.js';
+import { icon } from '../icons.js';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -117,26 +118,26 @@ function ensureRoot() {
     el('div', { class: 'viewer-bar viewer-bar-top', id: 'viewer-top' }, [
       el('button', {
         id: 'viewer-close', class: 'viewer-btn', type: 'button',
-        'aria-label': 'إغلاق عرض الصورة', text: '✕',
+        'aria-label': 'إغلاق عرض الصورة',
         onClick: closeImageViewer,
-      }),
+      }, [icon('close')]),
       el('div', { class: 'viewer-count', id: 'viewer-count', role: 'status', 'aria-live': 'polite' }),
       el('div', { class: 'viewer-top-end', id: 'viewer-actions' }),
     ]),
     el('button', {
       class: 'viewer-nav viewer-prev', id: 'viewer-prev', type: 'button',
-      'aria-label': 'الصورة السابقة', text: '‹', onClick: () => step(-1),
-    }),
+      'aria-label': 'الصورة السابقة', onClick: () => step(-1),
+    }, [icon('back', { size: 26 })]),
     el('button', {
       class: 'viewer-nav viewer-next', id: 'viewer-next', type: 'button',
-      'aria-label': 'الصورة التالية', text: '›', onClick: () => step(1),
-    }),
+      'aria-label': 'الصورة التالية', onClick: () => step(1),
+    }, [icon('forward', { size: 26 })]),
     el('div', { class: 'viewer-zoombar', id: 'viewer-zoom' }, [
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تصغير', text: '−', onClick: () => zoomBy(1 / 1.5) }),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تصغير', onClick: () => zoomBy(1 / 1.5) }, [icon('minus')]),
       // Wrapped, not passed directly: a handler receives the event as its
       // first argument, and resetZoom's first argument is a stage index.
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'ملء الشاشة', text: '⤢', onClick: () => resetZoom() }),
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تكبير', text: '+', onClick: () => zoomBy(1.5) }),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'ملء الشاشة', onClick: () => resetZoom() }, [icon('expand')]),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تكبير', onClick: () => zoomBy(1.5) }, [icon('plus')]),
     ]),
     el('div', { class: 'viewer-loading', id: 'viewer-loading', role: 'status', hidden: true },
       [el('span', { class: 'boot-spin', 'aria-hidden': 'true' }), el('span', { text: 'جارٍ تحميل الصورة الأصلية…' })]),
@@ -274,7 +275,7 @@ function renderActions() {
 
   render(host, [
     el('button', {
-      class: 'viewer-btn', type: 'button', text: '⋯',
+      class: 'viewer-btn', type: 'button',
       'aria-label': 'إجراءات الصورة',
       'aria-expanded': 'false',
       onClick: (event) => {
@@ -292,7 +293,7 @@ function renderActions() {
             },
           }))));
       },
-    }),
+    }, [icon('more')]),
   ]);
 }
 

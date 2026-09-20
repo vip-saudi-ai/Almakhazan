@@ -273,9 +273,10 @@ body.kb-open .select-bar { bottom: var(--kb, 0px); }
     transform: translate(-50%, calc(-50% + 16px));
     opacity: 0;
     pointer-events: none;
-    transition: transform var(--motion) var(--ease), opacity var(--motion) var(--ease);
+    transition: transform var(--motion) var(--ease), opacity var(--motion) var(--ease), visibility 0s var(--motion);
   }
-  .sh.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+  .sh.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto;
+    transition: transform var(--motion) var(--ease), opacity var(--motion) var(--ease), visibility 0s; }
   /* The drag handle means "pull me down". A centred dialog cannot be pulled. */
   .sh .shhnd { display: none; }
   .sh .shhdr { padding-top: 18px; }

@@ -86,14 +86,14 @@
     </div>
   </div>
   <div class="ctx-as-body">
-    <button class="ctx-as-btn" id="ctx-open" type="button"><div class="ctx-as-ico" style="background:rgba(0,122,255,.12)" aria-hidden="true">🔍</div><div class="ctx-as-lbl">فتح</div></button>
-    <button class="ctx-as-btn" id="ctx-preview" type="button"><div class="ctx-as-ico" style="background:rgba(52,199,89,.12)" aria-hidden="true">👁</div><div class="ctx-as-lbl">معاينة سريعة</div></button>
-    <button class="ctx-as-btn" id="ctx-move" type="button"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)" aria-hidden="true">🗂</div><div class="ctx-as-lbl">نقل إلى مجلد</div></button>
-    <button class="ctx-as-btn" id="ctx-edit" type="button"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)" aria-hidden="true">✎</div><div class="ctx-as-lbl">تعديل</div></button>
-    <button class="ctx-as-btn" id="ctx-duplicate" type="button"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)" aria-hidden="true">⧉</div><div class="ctx-as-lbl">نسخ القطعة</div></button>
-    <button class="ctx-as-btn" id="ctx-label" type="button"><div class="ctx-as-ico" style="background:rgba(99,102,241,.12)" aria-hidden="true">⊡</div><div class="ctx-as-lbl">ملصق QR</div></button>
-    <button class="ctx-as-btn" id="ctx-select" type="button"><div class="ctx-as-ico" style="background:rgba(37,99,255,.12)" aria-hidden="true">☑</div><div class="ctx-as-lbl">تحديد عدة قطع</div></button>
-    <button class="ctx-as-btn" id="ctx-delete" type="button"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)" aria-hidden="true">🗑</div><div class="ctx-as-lbl red">حذف</div></button>
+    <button class="ctx-as-btn" id="ctx-open" type="button"><div class="ctx-as-ico" style="background:rgba(0,122,255,.12)" aria-hidden="true" data-icon="search"></div><div class="ctx-as-lbl">فتح</div></button>
+    <button class="ctx-as-btn" id="ctx-preview" type="button"><div class="ctx-as-ico" style="background:rgba(52,199,89,.12)" aria-hidden="true" data-icon="eye"></div><div class="ctx-as-lbl">معاينة سريعة</div></button>
+    <button class="ctx-as-btn" id="ctx-move" type="button"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)" aria-hidden="true" data-icon="move"></div><div class="ctx-as-lbl">نقل إلى مجلد</div></button>
+    <button class="ctx-as-btn" id="ctx-edit" type="button"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)" aria-hidden="true" data-icon="edit"></div><div class="ctx-as-lbl">تعديل</div></button>
+    <button class="ctx-as-btn" id="ctx-duplicate" type="button"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)" aria-hidden="true" data-icon="duplicate"></div><div class="ctx-as-lbl">نسخ القطعة</div></button>
+    <button class="ctx-as-btn" id="ctx-label" type="button"><div class="ctx-as-ico" style="background:rgba(99,102,241,.12)" aria-hidden="true" data-icon="label"></div><div class="ctx-as-lbl">ملصق QR</div></button>
+    <button class="ctx-as-btn" id="ctx-select" type="button"><div class="ctx-as-ico" style="background:rgba(37,99,255,.12)" aria-hidden="true" data-icon="select"></div><div class="ctx-as-lbl">تحديد عدة قطع</div></button>
+    <button class="ctx-as-btn" id="ctx-delete" type="button"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)" aria-hidden="true" data-icon="trash"></div><div class="ctx-as-lbl red">حذف</div></button>
   </div>
   <div class="ctx-as-cancel"><button class="ctx-as-cancel-btn" id="ctx-cancel" type="button">إلغاء</button></div>
 </div>
@@ -110,17 +110,17 @@
         <input id="hsearch" type="search" placeholder="بحث في كل المخزن..." autocomplete="off">
         <button class="sclear" id="sclear" type="button" aria-label="مسح البحث">✕</button>
       </div>
-      <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود">⊡</button>
+      <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود" data-icon="scan"></button>
     </div>
 
     <div class="fsact-row" id="home-actrow">
       <button class="fsact-btn gl-s" id="filter-btn" type="button">
-        <span class="fsact-btn-ico" aria-hidden="true">⚡</span>
+        <span class="fsact-btn-ico" aria-hidden="true" data-icon="filter"></span>
         <span class="fsact-btn-lbl">فلتر</span>
         <span class="fsact-btn-badge" id="filter-badge">0</span>
       </button>
       <button class="fsact-btn gl-s" id="sort-btn" type="button">
-        <span class="fsact-btn-ico" aria-hidden="true">↕</span>
+        <span class="fsact-btn-ico" aria-hidden="true" data-icon="sort"></span>
         <span class="fsact-sort-col">
           <span class="fsact-btn-lbl">ترتيب حسب</span>
           <span class="fsact-sort-val" id="sort-label">الأحدث</span>
@@ -233,10 +233,10 @@
 
 <!-- TAB BAR -->
 <nav class="tbar gl" role="tablist" aria-label="أقسام التطبيق">
-  <button class="ti on" id="t-home" type="button" role="tab" aria-selected="true" aria-controls="v-home"><span class="tico" aria-hidden="true">⊞</span><span class="tilbl">المخزون</span></button>
-  <button class="ti" id="t-ov" type="button" role="tab" aria-selected="false" aria-controls="v-ov"><span class="tico" aria-hidden="true">◉</span><span class="tilbl">نظرة عامة</span></button>
-  <button class="ti" id="t-ai" type="button" role="tab" aria-selected="false" aria-controls="v-ai"><span class="tico" aria-hidden="true">✦</span><span class="tilbl">المساعد</span></button>
-  <button class="ti" id="t-set" type="button" role="tab" aria-selected="false" aria-controls="v-set"><span class="tico" aria-hidden="true">⚙</span><span class="tilbl">الإعدادات</span></button>
+  <button class="ti on" id="t-home" type="button" role="tab" aria-selected="true" aria-controls="v-home"><span class="tico" aria-hidden="true" data-icon="grid"></span><span class="tilbl">المخزون</span></button>
+  <button class="ti" id="t-ov" type="button" role="tab" aria-selected="false" aria-controls="v-ov"><span class="tico" aria-hidden="true" data-icon="overview"></span><span class="tilbl">نظرة عامة</span></button>
+  <button class="ti" id="t-ai" type="button" role="tab" aria-selected="false" aria-controls="v-ai"><span class="tico" aria-hidden="true" data-icon="assistant"></span><span class="tilbl">المساعد</span></button>
+  <button class="ti" id="t-set" type="button" role="tab" aria-selected="false" aria-controls="v-set"><span class="tico" aria-hidden="true" data-icon="settings"></span><span class="tilbl">الإعدادات</span></button>
 </nav>
 
 <!-- ADD / EDIT -->

@@ -13,6 +13,7 @@ import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } fr
 import { $, el, formatNumber, render } from './utils.js';
 import { goTab, registerTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
+import { hydrateIcons } from './icons.js';
 import { isImageViewerOpen, reflowViewer } from './views/image-viewer.js';
 import { acceptInvitation, takeInvitationFromUrl } from './team.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
@@ -240,6 +241,8 @@ function initializeUI() {
   // Before anything measures itself: the keyboard has to be known about
   // before the first sheet can open on top of it.
   watchViewport();
+  // Static markup declares which icon it wants; this draws them all once.
+  hydrateIcons();
 
   // A rotation changes the box the image is contained in. The zoom is kept —
   // losing it mid-inspection is worse than a moment's reflow — but a pan that

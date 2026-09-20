@@ -176,6 +176,21 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .ov.open{opacity:1;pointer-events:all}
 .sh{position:fixed;bottom:0;left:0;right:0;border-radius:20px 20px 0 0;background:var(--sheet-surface);border-top:1px solid var(--border-quiet);box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:var(--z-sheet);transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);max-height:94vh;display:flex;flex-direction:column;padding-bottom:var(--sb)}
 .sh.open{transform:translateY(0)}
+/* A closed sheet is translated off the bottom edge, which hides it from the
+   eye and from nothing else. Its 70-odd controls stayed in the tab order, so
+   a keyboard user walking the home screen walked through every closed sheet
+   in the document; and its upward box-shadow spilled back into the viewport,
+   eighteen of them stacking into a dark band along the bottom.
+
+   `visibility:hidden` takes it out of the tab order, out of hit-testing and
+   out of painting. The zero-length visibility transition is delayed by the
+   slide so the sheet stays visible while it slides away, and switches
+   instantly when it slides back. */
+.sh:not(.open),.asht:not(.open){visibility:hidden}
+.sh{transition:transform .22s cubic-bezier(.4,0,.2,1),visibility 0s .22s}
+.sh.open{transition:transform .22s cubic-bezier(.4,0,.2,1),visibility 0s}
+.asht{transition:transform .22s cubic-bezier(.4,0,.2,1),visibility 0s .22s}
+.asht.open{transition:transform .22s cubic-bezier(.4,0,.2,1),visibility 0s}
 .shhnd{width:36px;height:5px;border-radius:3px;background:var(--text-tertiary);margin:10px auto 0;flex-shrink:0}
 .shhdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;flex-shrink:0}
 .shtitle{font-size:18px;font-weight:700;color:var(--tp)}
@@ -1073,3 +1088,16 @@ body.viewer-open{overflow:hidden}
 .ask-cap:active{background:var(--state-pressed)}
 .ask-cap-lbl{font:var(--type-body-strong);color:var(--text)}
 .ask-cap-ex{font:var(--type-small);color:var(--ts)}
+
+/* ── icon family ──
+   One drawing style. `currentColor` means an icon takes the colour of the
+   control it sits in, so a disabled button's icon dims with it and a danger
+   action's icon turns red without a second rule. */
+.nz-icon{display:block;flex-shrink:0;color:inherit;vertical-align:middle}
+.ibtn .nz-icon,.viewer-btn .nz-icon,.shclose .nz-icon,.selbar-close .nz-icon{margin:auto}
+.ibtn-primary{color:var(--brand)}
+.tico .nz-icon{width:24px;height:24px}
+.selact-ico{display:flex;align-items:center;justify-content:center}
+.ctx-as-ico .nz-icon{margin:auto}
+.fsact-btn-ico{display:flex;align-items:center;justify-content:center}
+.fld-add .nz-icon{display:inline-block}

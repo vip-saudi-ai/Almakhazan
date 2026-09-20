@@ -157,6 +157,39 @@ async function open(colorScheme) {
   await context.close();
 }
 
+// ── a closed sheet is closed to the keyboard too ───────────────────────────
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
+
+  const reach = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')];
+    // offsetParent is null for every position:fixed element, so it cannot
+    // answer this; checkVisibility can.
+    const visible = (n) => n.checkVisibility({ visibilityProperty: true, contentVisibilityAuto: true });
+    return {
+      total: all.length,
+      inClosedSheets: all.filter(n => n.closest('.sh:not(.open), .asht:not(.open)')).length,
+      reachableInClosedSheets: all.filter(n => visible(n) && n.closest('.sh:not(.open), .asht:not(.open)')).length,
+    };
+  });
+  check('X14 nothing inside a closed sheet is in the tab order',
+    reach.inClosedSheets > 0 && reach.reachableInClosedSheets === 0, JSON.stringify(reach));
+
+  // And it comes back when the sheet opens.
+  const opened = await page.evaluate(async () => {
+    const { openSheet } = await import('/src/ui.js');
+    openSheet('filter');
+    await new Promise(r => setTimeout(r, 350));
+    const inside = [...document.querySelectorAll('#sh-filter button, #sh-filter select')];
+    return inside.filter(n => n.checkVisibility({ visibilityProperty: true })).length;
+  });
+  check('X15 and reachable again once it opens', opened > 0, String(opened));
+  await context.close();
+}
+
 await browser.close();
 console.log(`PASS ${pass.length}`);
 pass.forEach(p => console.log('  ✓', p));
