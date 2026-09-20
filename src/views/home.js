@@ -3,11 +3,12 @@
 
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
+import { ensureFor, runQuery, summarize } from '../query.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import {
-  EMPTY_FILTERS, SORT_MODES, activeFilterCount, clampPage, paginationModel, queryItems,
+  EMPTY_FILTERS, SORT_MODES, activeFilterCount, paginationModel,
 } from '../search.js';
 import { $, appendChildren, debounce, el, formatNumber, render, setText } from '../utils.js';
 import { formatValuation, primaryImage } from '../validation.js';
@@ -21,6 +22,12 @@ import { openScanner } from './scan.js';
 import { openLabels } from './labels.js';
 import { exportSelection } from '../exporting.js';
 
+/**
+ * The screen's state *is* a query — scope, search, filters, sort, page. It is
+ * kept in this shape (rather than as a query object) because the controls bind
+ * to individual fields, and turned into one by `currentQuery()` whenever the
+ * list is asked for. Nothing here filters an array of records itself.
+ */
 export const view = {
   page: 1,
   grid: true,
@@ -34,6 +41,20 @@ export const view = {
   /** Null when not selecting; a Set of ids when the customer is choosing. */
   selection: null,
 };
+
+/** This screen's state, as the query the data layer answers. */
+function currentQuery() {
+  return {
+    search: view.query,
+    folderId: view.folderId,
+    categoryId: view.categoryPill,
+    filters: view.filters,
+    sort: view.sortMode,
+    page: view.page,
+    perPage: PAGE_SIZE,
+    ids: view.assistantSet ? view.assistantSet.ids : null,
+  };
+}
 
 let contextItemId = null;
 
@@ -51,9 +72,7 @@ export function enterFolder(id) {
     view.folderId = id;
     view.page = 1;
     view.categoryPill = 'all';
-    renderHome();
-    $('hscroll')?.scrollTo(0, 0);
-  });
+  }).then(() => $('hscroll')?.scrollTo(0, 0));
 }
 
 export function exitFolder() {
@@ -73,35 +92,43 @@ function resetPage() {
 // So each of them loads the rest first, once, and does nothing if that fails:
 // a filter applied to a fraction answers confidently and wrongly.
 async function narrowing(apply) {
-  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
+  // Apply first so the query reflects what was just asked for, then let the
+  // query say whether it can be answered from what is loaded.
+  const before = currentQuery();
   apply();
+  const after = currentQuery();
+  const ok = await ensureFor(after, () => withFullInventory('جارٍ قراءة المخزون كاملاً…'));
+  if (!ok) {
+    // Put the screen back rather than answering a narrowed question from a
+    // fraction of the inventory.
+    Object.assign(view, {
+      query: before.search, folderId: before.folderId, categoryPill: before.categoryId,
+      filters: before.filters, sortMode: before.sort, page: before.page,
+    });
+  }
+  renderHome();
 }
 
 // ── stats ──
+// A summary model, not a walk over every record. Each field is either a real
+// number or null, and null means "not knowable from what is loaded" rather
+// than zero — so a proportion computed from the newest 200 can never be
+// printed as a fact about the inventory.
 function renderStats() {
-  const { complete, total } = repository.loadState();
-  if (!complete) {
-    // The record count is the server's, so it is right. Everything else here
-    // is a proportion of the whole inventory, and the whole inventory is not
-    // loaded — so it is left blank rather than computed from the newest few.
-    setText('s-total', total == null ? '—' : formatNumber(total));
-    setText('s-cats', 'اعرض الكل لحساب النِّسب');
-    setText('s-qty', '—');
-    setText('s-qtysub', `${formatNumber(repository.state.folders.length)} مجلد`);
-    return;
+  const summary = summarize(currentQuery());
+
+  setText('s-total', summary.records == null ? '—' : formatNumber(summary.records));
+  setText('s-qty', summary.quantity == null ? '—' : formatNumber(summary.quantity));
+
+  if (summary.documentedRatio == null) {
+    setText('s-cats', summary.records ? 'اعرض الكل لحساب النِّسب' : 'ابدأ بأول قطعة');
+  } else {
+    setText('s-cats', `${Math.round(summary.documentedRatio * 100)}% موثّق بالصور`);
   }
 
-  const items = repository.liveItems();
-  const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
-  const documented = items.filter((i) => i.images?.length).length;
-  const categories = new Set(items.map((i) => i.categoryId).filter(Boolean)).size;
-
-  setText('s-total', formatNumber(items.length));
-  setText('s-cats', items.length
-    ? `${Math.round((documented / items.length) * 100)}% موثّق بالصور`
-    : 'ابدأ بأول قطعة');
-  setText('s-qty', formatNumber(totalQuantity));
-  setText('s-qtysub', `${formatNumber(categories)} تصنيف · ${formatNumber(repository.state.folders.length)} مجلد`);
+  setText('s-qtysub', summary.categories == null
+    ? `${formatNumber(summary.folders)} مجلد`
+    : `${formatNumber(summary.categories)} تصنيف · ${formatNumber(summary.folders)} مجلد`);
 }
 
 // ── folders ──
@@ -268,7 +295,7 @@ function renderPills(scopeItems) {
     class: `cpill${view.categoryPill === id ? ' on' : ''}`,
     type: 'button',
     'aria-pressed': String(view.categoryPill === id),
-    onClick: () => narrowing(() => { view.categoryPill = id; resetPage(); renderHome(); }),
+    onClick: () => narrowing(() => { view.categoryPill = id; resetPage(); }),
     text: label,
   });
 
@@ -612,36 +639,17 @@ export function renderHome() {
 
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';
 
-  let { results, searching } = queryItems({
-    items: repository.state.items,
-    query: view.query,
-    filters: view.filters,
-    sortMode: view.sortMode,
-    scope: { folderId: view.folderId },
-    categoryPill: view.categoryPill,
-    lookups: repository.lookups(),
-  });
+  // One page of one query. The screen does not filter an array of records; it
+  // asks for what it needs and renders the answer. An assistant hand-over is
+  // the same query with an explicit id set, so it narrows this screen rather
+  // than opening a second one.
+  const result = runQuery(currentQuery());
+  const { rows: pageItems, total, totalPages, searching, scopeItems } = result;
+  view.page = result.page;
 
-  // An answer from the assistant narrows the same screen rather than opening a
-  // second one: the customer stays where their inventory already lives.
-  if (view.assistantSet) {
-    const ids = view.assistantSet.ids;
-    results = repository.liveItems().filter((item) => ids.has(item.id));
-    searching = true;
-  }
-
-  // The pill list reflects what is reachable in the current scope, not the page.
-  const scopeItems = searching
-    ? repository.liveItems()
-    : repository.liveItems().filter((i) => (view.folderId ? i.folderId === view.folderId : !i.folderId));
   renderPills(scopeItems);
   renderFilterBanner(searching);
   renderAssistantBanner();
-
-  const total = results.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  view.page = clampPage(view.page, total, PAGE_SIZE);
-  const pageItems = results.slice((view.page - 1) * PAGE_SIZE, view.page * PAGE_SIZE);
 
   setText('htitle', searching ? `نتائج البحث` : folder ? `${folder.icon} ${folder.name}` : 'القطع');
   setText('hcount', formatNumber(total));
@@ -783,7 +791,6 @@ function applyFilterControlsNow() {
   };
   resetPage();
   syncFilterControls();
-  renderHome();
 }
 
 export function syncFilterControls() {
@@ -818,7 +825,6 @@ export function openSortSheet() {
       resetPage();
       setText('sort-label', SORT_MODES[mode]);
       closeSheet('sort');
-      renderHome();
     }),
   }, [
     el('span', { class: 'sort-opt-lbl', text: label }),
@@ -831,7 +837,7 @@ export function openSortSheet() {
 const runSearch = debounce(() => {
   // An empty box is not a search: it costs nothing and needs nothing.
   if (!view.query) { resetPage(); renderHome(); return; }
-  void narrowing(() => { resetPage(); renderHome(); });
+  void narrowing(() => resetPage());
 }, 140);
 
 export function bindSearch() {
