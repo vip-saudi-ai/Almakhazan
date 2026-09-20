@@ -206,9 +206,11 @@ function cardNode(item) {
     bindImageSrc(img, image, { tier: ImageTier.THUMB });
     imageNode = img;
   } else {
+    // The category's own icon, not a cardboard box: a record with no
+    // photograph still has a kind, and showing the kind is more use than
+    // showing that a photograph is missing.
     imageNode = el('div', { class: 'icph' }, [
-      el('span', { text: category.icon, 'aria-hidden': 'true' }),
-      el('span', { text: 'لا توجد صورة' }),
+      el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
     ]);
   }
 
@@ -228,6 +230,14 @@ function cardNode(item) {
     },
   }, [
     view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
+    // The same actions the long press offers, on a button that can be seen.
+    // A long press is a shortcut for people who know it exists; it is not a
+    // way to find out that "duplicate" or "print a label" exist at all.
+    view.selection ? null : el('button', {
+      class: 'icmore', type: 'button',
+      'aria-label': `إجراءات ${item.name || 'القطعة'}`,
+      onClick: (event) => { event.stopPropagation(); openContextMenu(item.id); },
+    }, [icon('more', { size: 16 })]),
     el('div', { class: 'icimg' }, [
       imageNode,
       item.aiData ? el('div', {
@@ -281,7 +291,12 @@ function rowNode(item) {
       el('div', { class: 'lqty', text: formatNumber(item.quantity) }),
       el('div', { class: 'lunit', text: item.unit || '' }),
     ]),
-    el('div', { class: 'lchev', text: '›', 'aria-hidden': 'true' }),
+    view.selection ? null : el('button', {
+      class: 'lmore', type: 'button',
+      'aria-label': `إجراءات ${item.name || 'القطعة'}`,
+      onClick: (event) => { event.stopPropagation(); openContextMenu(item.id); },
+    }, [icon('more', { size: 16 })]),
+    el('div', { class: 'lchev', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ]);
 }
 
@@ -667,9 +682,11 @@ export function renderHome() {
     list.style.display = 'none';
     render(grid, []);
     render(list, []);
+    // Three different nothings, which want three different sentences and
+    // three different next steps. "The warehouse is empty" was one message
+    // for all of them, and a way out for none.
     const filtered = activeFilterCount(view.filters) > 0 || view.categoryPill !== 'all';
-    setText('hempty-title', searching ? 'لا نتائج للبحث' : filtered ? 'لا نتائج مطابقة' : folder ? `${folder.name} فارغ` : 'لا توجد قطع');
-    setText('hempty-sub', searching || filtered ? 'جرّب تعديل البحث أو إلغاء الفلاتر' : 'اضغط + لإضافة قطعة');
+    renderEmptyState({ searching, filtered, folder });
     renderPagination(1);
     renderPartial();
     // Still draw the selection bar: an empty page is exactly when someone
@@ -694,6 +711,44 @@ export function renderHome() {
   renderPagination(totalPages);
   renderPartial();
   renderSelectionBar(pageItems);
+}
+
+/**
+ * The empty state. Which emptiness it is decides both the sentence and the
+ * action: a search that found nothing wants the search cleared, a filtered
+ * view wants the filters cleared, and a genuinely empty inventory wants a
+ * first photograph — not a cardboard box and an instruction to press a plus
+ * sign the customer has to go and find.
+ */
+function renderEmptyState({ searching, filtered, folder }) {
+  const cta = $('add-first-item');
+  const iconHost = $('hempty-ico');
+
+  if (searching) {
+    setText('hempty-title', 'لم نجد شيئاً بهذا الوصف.');
+    setText('hempty-sub', 'جرّب كلمة أقل تحديداً، أو امسح البحث.');
+    if (iconHost) render(iconHost, [icon('search', { size: 44 })]);
+    if (cta) { cta.textContent = 'مسح البحث'; cta.dataset.emptyAction = 'search'; }
+    return;
+  }
+  if (filtered) {
+    setText('hempty-title', 'لا نتائج مطابقة.');
+    setText('hempty-sub', 'الفلاتر الحالية لا تُبقي أي قطعة.');
+    if (iconHost) render(iconHost, [icon('filter', { size: 44 })]);
+    if (cta) { cta.textContent = 'مسح الفلاتر'; cta.dataset.emptyAction = 'filters'; }
+    return;
+  }
+  if (folder) {
+    setText('hempty-title', `${folder.name} فارغ.`);
+    setText('hempty-sub', 'أضف قطعة هنا، أو انقل قطعاً إليه من المخزون.');
+    if (iconHost) render(iconHost, [icon('folder', { size: 44 })]);
+    if (cta) { cta.textContent = 'إضافة قطعة'; cta.dataset.emptyAction = 'add'; }
+    return;
+  }
+  setText('hempty-title', 'لا توجد قطع بعد.');
+  setText('hempty-sub', 'ابدأ بتصوير أول قطعة، وسيساعدك نَظْم في توثيقها.');
+  if (iconHost) render(iconHost, [icon('image', { size: 44 })]);
+  if (cta) { cta.textContent = 'إضافة أول قطعة'; cta.dataset.emptyAction = 'add'; }
 }
 
 /** Says, under the list, that this is a window and not an inventory. */
@@ -850,14 +905,18 @@ export function bindSearch() {
     clear.className = `sclear${input.value ? ' show' : ''}`;
     runSearch();
   });
-  clear?.addEventListener('click', () => {
-    input.value = '';
-    view.query = '';
-    clear.className = 'sclear';
-    resetPage();
-    renderHome();
-    input.focus();
-  });
+  clear?.addEventListener('click', () => { clearSearch(); input.focus(); });
+}
+
+/** Empties the search box and the query behind it. */
+export function clearSearch() {
+  const input = $('hsearch');
+  if (input) input.value = '';
+  view.query = '';
+  const clear = $('sclear');
+  if (clear) clear.className = 'sclear';
+  resetPage();
+  renderHome();
 }
 
 // ── long press context menu ──

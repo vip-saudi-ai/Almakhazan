@@ -53,7 +53,7 @@
 <div class="tstack" id="tstack" aria-live="polite" aria-atomic="false"></div>
 
 <!-- PUBLIC GATE: welcome, sign-in, verification, first-run setup -->
-<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="مرحباً بك في المخزن">
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="مرحباً بك في نَظْم">
   <div class="gate-scroll"><div class="gate-panel" id="gate-panel"></div></div>
 </div>
 
@@ -106,8 +106,8 @@
     <div class="sfrow" id="home-sfrow">
       <div class="sbar gl" style="flex:1">
         <span class="sico" aria-hidden="true">⌕</span>
-        <label class="visually-hidden" for="hsearch">بحث في المخزن</label>
-        <input id="hsearch" type="search" placeholder="بحث في كل المخزن..." autocomplete="off">
+        <label class="visually-hidden" for="hsearch">بحث في المخزون</label>
+        <input id="hsearch" type="search" placeholder="بحث في المخزون…" autocomplete="off">
         <button class="sclear" id="sclear" type="button" aria-label="مسح البحث">✕</button>
       </div>
       <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود" data-icon="scan"></button>
@@ -165,10 +165,10 @@
       <div class="lgroup" id="hlist" style="display:none"></div>
 
       <div class="empty" id="hempty" style="display:none">
-        <div class="emico" aria-hidden="true">📦</div>
-        <div class="emtitle" id="hempty-title">المخزن فارغ</div>
-        <div class="emsub" id="hempty-sub">اضغط + لإضافة أول قطعة</div>
-        <button class="btn btn-p empty-cta" id="add-first-item" type="button">+ إضافة قطعة</button>
+        <div class="emico" id="hempty-ico" aria-hidden="true"></div>
+        <div class="emtitle" id="hempty-title">لا توجد قطع بعد.</div>
+        <div class="emsub" id="hempty-sub">ابدأ بتصوير أول قطعة، وسيساعدك نَظْم في توثيقها.</div>
+        <button class="btn btn-p empty-cta" id="add-first-item" type="button">إضافة أول قطعة</button>
       </div>
 
       <nav class="pag" id="hpag" aria-label="تنقل بين الصفحات"></nav>
@@ -221,7 +221,7 @@
 
       <div class="sgroup">
         <div class="srow" style="cursor:default">
-          <div><div class="srowl">المخزن</div><div class="srowd" id="app-version">—</div></div>
+          <div><div class="srowl">نَظْم</div><div class="srowd" id="app-version">—</div></div>
         </div>
       </div>
     </div>

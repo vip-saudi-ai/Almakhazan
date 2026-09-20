@@ -21,7 +21,16 @@ export const APP_CHECK_DEBUG_TOKEN = null;
 
 export const FUNCTIONS_REGION = 'us-central1';
 
-export const APP_VERSION = '8.0';
+/**
+ * The one version.
+ *
+ * Semantic, and honest about where the product is: pre-1.0, because billing
+ * has no provider and nothing has run against a deployed project yet. The
+ * "v8" and "v10.x" numbers that appeared in changelog headings and stylesheet
+ * comments were design iterations, not releases, and having two numbers meant
+ * neither could be trusted. package.json reads this file's value.
+ */
+export const APP_VERSION = '0.9.0-beta';
 export const SCHEMA_VERSION = 2;
 
 export const PAGE_SIZE = 20;

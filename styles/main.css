@@ -344,7 +344,17 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .tb{background:rgba(0,122,255,.12);color:var(--blue)}
 /* TOAST */
 .tstack{position:fixed;top:calc(var(--st) + 8px);left:50%;transform:translateX(-50%);z-index:var(--z-boot);display:flex;flex-direction:column;gap:8px;pointer-events:none;align-items:center}
-.toast{background:rgba(28,28,30,.96);color:white;border-radius:var(--rp);padding:10px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);animation:tin .18s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+/* `white-space:nowrap` forced every message onto one line, so a long Arabic
+   error ran off both edges of a 320px screen. A toast wraps, stays inside the
+   viewport, and breaks a long unbroken token rather than overflowing. The pill
+   radius becomes a rounded rectangle once there is more than one line. */
+.toast{background:rgba(28,28,30,.96);color:white;border-radius:var(--r);padding:10px 18px;font-size:13px;
+  font-weight:600;display:flex;align-items:flex-start;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);
+  animation:tin .18s cubic-bezier(.34,1.56,.64,1);
+  max-width:min(440px,calc(100vw - 32px));white-space:normal;overflow-wrap:anywhere;
+  text-wrap:balance;line-height:1.5;pointer-events:auto}
+.toast:only-child{border-radius:var(--rp)}
+.toast:has(> :only-child){border-radius:var(--rp)}
 @keyframes tin{from{opacity:0;transform:translateY(-8px) scale(.9)}}
 /* PAG */
 .pag{display:flex;justify-content:center;gap:8px;padding:8px 0 16px;flex-wrap:wrap}
@@ -353,14 +363,40 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .pbtn:not(.on){background:rgba(255,255,255,.6);color:var(--ts)}
 
 /* ══════════════════════════════════════════════════════════════════
-   v8 — additions. Same glass language, same palette, same radii.
+   Same glass language, same palette, same radii. Version lives in
+   src/config.js and nowhere else — a number in a comment here and a
+   different one in the app was two answers to one question.
    ══════════════════════════════════════════════════════════════════ */
 
 /* a11y */
 .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
 .sh:focus,.asht:focus,.ctx-as:focus{outline:none}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Reduced motion, comprehensively.
+
+   Collapsing durations is not enough on its own: an animation with a
+   near-zero duration and an infinite iteration count still runs, and the
+   decorative pieces — the drifting background orbs, the scale-in on a dialog,
+   the bounce on a delete — are exactly what the setting is asking us to stop.
+
+   A spinner is the one thing that stays: a frozen spinner says "hung", which
+   is worse information than a moving one. It is slowed rather than stopped. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-delay:0ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    transition-delay:0ms!important;
+    scroll-behavior:auto!important;
+  }
+  /* Decoration stops entirely rather than snapping to its end frame. */
+  .orb{animation:none!important;transform:none!important}
+  .toast{animation:none!important}
+  .del-card,.sh,.asht,.viewer-stagewrap{transition:none!important}
+  /* Progress is information, so it keeps moving — just calmly. */
+  .boot-spin{animation:bspin 1.6s linear infinite!important}
+}
 
 /* boot */
 .boot{position:fixed;inset:0;z-index:var(--z-toast);display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#c8d8f0,#d4c8f0 35%,#c8e0f0 65%,#e0c8f0)}
@@ -1101,3 +1137,21 @@ body.viewer-open{overflow:hidden}
 .ctx-as-ico .nz-icon{margin:auto}
 .fsact-btn-ico{display:flex;align-items:center;justify-content:center}
 .fld-add .nz-icon{display:inline-block}
+
+/* ── the overflow action ──
+   Everything the long press offers, on a control that can be seen. A gesture
+   is a shortcut for people who already know it exists; it cannot be how a
+   feature is discovered. */
+.icmore,.lmore{position:absolute;border:none;background:var(--glass-elevated);color:var(--ts);
+  border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:2;box-shadow:var(--glass-shadow-soft)}
+.icmore{top:6px;inset-inline-start:6px}
+.icmore::after,.lmore::after{content:"";position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:var(--touch-target);height:var(--touch-target);border-radius:50%}
+.icmore:active,.lmore:active{background:var(--state-pressed)}
+.lmore{position:static;flex-shrink:0;background:none;box-shadow:none}
+.icph-ico{font-size:34px;line-height:1}
+/* The chevron points along the reading direction: back, mirrored in RTL. */
+.lchev{display:flex;align-items:center;color:var(--tt);flex-shrink:0}
+html[dir="rtl"] .lchev{transform:none}
+html:not([dir="rtl"]) .lchev{transform:scaleX(-1)}

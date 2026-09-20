@@ -264,7 +264,7 @@ function onboardingScreen() {
       el('div', { class: 'gate-head' }, [
         el('h2', { class: 'gate-title', text: 'ماذا تريد أن تسمّي مخزنك؟' }),
       ]),
-      field('gate-workspace', 'اسم المخزن', 'text', NAME_SUGGESTIONS[state.useCase] || 'مقتنياتي', 'off'),
+      field('gate-workspace', 'اسم مساحتك', 'text', NAME_SUGGESTIONS[state.useCase] || 'مقتنياتي', 'off'),
       primary('متابعة', (event) => run(event.currentTarget, 'جارٍ التجهيز…', async () => {
         const name = $('gate-workspace').value.trim() || NAME_SUGGESTIONS[state.useCase] || 'مخزني';
         await createWorkspaceForUser(name, state.useCase);

@@ -20,7 +20,7 @@ import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast,
 import {
   applyFilterControls, bindContextActions, bindLongPress, bindSearch, closeContextMenu,
   enterFolder, exitFolder, focusSearch, openFilterSheet, openSortSheet, renderHome,
-  resetAllFilters, scanIntoSearch, setGridMode, syncFilterControls, view as homeView,
+  clearSearch, resetAllFilters, scanIntoSearch, setGridMode, syncFilterControls, view as homeView,
 } from './views/home.js';
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
@@ -323,7 +323,14 @@ function bindToolbar() {
   $('filter-apply')?.addEventListener('click', () => { applyFilterControls(); });
   $('filter-reset')?.addEventListener('click', resetAllFilters);
   $('new-folder-link')?.addEventListener('click', () => openFolderSheet());
-  $('add-first-item')?.addEventListener('click', () => openItemForm({ folderId: homeView.folderId }));
+  // The empty state's button does whatever that particular emptiness needs:
+  // clear the search, clear the filters, or add the first record.
+  $('add-first-item')?.addEventListener('click', (event) => {
+    const action = event.currentTarget.dataset.emptyAction;
+    if (action === 'search') { clearSearch(); return; }
+    if (action === 'filters') { resetAllFilters(); return; }
+    openItemForm({ folderId: homeView.folderId });
+  });
 
   for (const id of ['fp-cond', 'fp-folder', 'fp-loc', 'fp-ai', 'fp-price']) {
     $(id)?.addEventListener('change', applyFilterControls);

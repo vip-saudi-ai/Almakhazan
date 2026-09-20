@@ -497,7 +497,7 @@ export function renderSettings() {
   renderAiPanel();
   renderDataPanel();
   renderMigrationPanel();
-  setText('app-version', `توثيق وحصر المقتنيات — v${APP_VERSION} · مخطط ${SCHEMA_VERSION}`);
+  setText('app-version', `الجرد الذكي للمقتنيات والأصول — v${APP_VERSION} · مخطط ${SCHEMA_VERSION}`);
 }
 
 function renderAuthPanel() {
