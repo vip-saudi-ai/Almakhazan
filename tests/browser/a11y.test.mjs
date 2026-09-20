@@ -190,6 +190,67 @@ async function open(colorScheme) {
   await context.close();
 }
 
+// ── dark mode, on every screen rather than one ─────────────────────────────
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
+  await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const now = Date.now();
+    await repository.bulkWrite([{ type: 'set', collection: 'items', id: 'dk1', data: {
+      id: 'dk1', name: 'ساعة جيب', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [],
+      condition: 'جيدة', valuation: { min: 1000, max: 2000, currency: 'SAR' },
+      createdAt: now, updatedAt: now, version: 1 } }]);
+  });
+  await page.waitForTimeout(400);
+
+  const screens = [
+    ['home', null],
+    ['overview', `(await import('/src/navigation.js')).goTab('ov')`],
+    ['assistant', `(await import('/src/navigation.js')).goTab('ai')`],
+    ['settings', `(await import('/src/navigation.js')).goTab('set')`],
+    ['filter', `(await import('/src/ui.js')).openSheet('filter')`],
+    ['export sheet', `(await import('/src/ui.js')).openSheet('as')`],
+    ['context menu', `(await import('/src/views/home.js')).openContextMenu('dk1')`],
+    ['item detail', `(await import('/src/views/detail.js')).openDetail('dk1')`],
+    ['item form', `(await import('/src/views/item-form.js')).openItemForm({})`],
+  ];
+
+  const offenders = [];
+  for (const [name, go] of screens) {
+    if (go) await page.evaluate(new Function(`return (async () => { ${go} })()`)).catch(() => {});
+    await page.waitForTimeout(350);
+    const bad = await page.evaluate(() => {
+      const lum = (c) => {
+        const m = (c.match(/[\d.]+/g) || []).map(Number);
+        if (m.length < 3) return null;
+        if (m.length > 3 && m[3] === 0) return null;
+        return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255;
+      };
+      const out = [];
+      for (const n of document.querySelectorAll('body *')) {
+        if (!n.checkVisibility?.({ visibilityProperty: true })) continue;
+        const s = getComputedStyle(n);
+        const bg = lum(s.backgroundColor);
+        const fg = lum(s.color);
+        if (bg == null) continue;
+        // A light plate carrying light text is the dark-mode failure: it is
+        // invisible, and it is always a hard-coded colour that forgot the theme.
+        if (bg > 0.85 && fg != null && fg > 0.6 && (n.textContent || '').trim().length > 1) {
+          out.push(`${n.tagName}.${(n.className || '').toString().split(' ')[0]}`);
+        }
+      }
+      return [...new Set(out)];
+    });
+    if (bad.length) offenders.push(`${name}: ${bad.join(', ')}`);
+  }
+  check('X16 no light-on-light surface survives dark mode on any screen',
+    offenders.length === 0, offenders.join(' | ').slice(0, 300));
+  await context.close();
+}
+
 await browser.close();
 console.log(`PASS ${pass.length}`);
 pass.forEach(p => console.log('  ✓', p));

@@ -984,7 +984,7 @@ export function bindLongPress() {
   });
 }
 
-function openContextMenu(itemId) {
+export function openContextMenu(itemId) {
   const item = repository.item(itemId);
   if (!item) return;
   contextItemId = itemId;
