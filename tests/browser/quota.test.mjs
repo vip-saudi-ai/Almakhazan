@@ -34,6 +34,7 @@ function stub({ used, limit = 50, planId = 'free', status = 'free' }) {
     export function planUsage() { return ${status === 'local'} ? [] : usageSummary({ entitlement, usage }); }
     export function assistantLabel() { return assistantPresentation({ entitlement }); }
     export function canUseAssistant() { return { allowed: false, message: 'غير متاح في الاختبار' }; }
+    export function canUseFeature() { return { allowed: true }; }
   `;
 }
 

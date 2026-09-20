@@ -724,6 +724,63 @@ class Repository {
   }
 
   // ── bulk ──
+  /**
+   * Applies the same patch to several records. Written as one batch per chunk
+   * rather than a loop of updates: a hundred separate writes is a hundred
+   * chances for the connection to drop halfway, and a hundred times the cost.
+   *
+   * Optimistic concurrency does not apply here — the customer is changing one
+   * field across a selection they can see, not resolving an edit conflict.
+   */
+  async bulkUpdate(ids, patch) {
+    this.assertCanWrite();
+    const allowed = new Set(['folderId', 'categoryId', 'locationId', 'condition', 'unit']);
+    for (const key of Object.keys(patch)) {
+      if (!allowed.has(key)) {
+        throw new AppError('حقل غير مسموح بتعديله جماعياً', { code: 'repo/bulk-field' });
+      }
+    }
+
+    const operations = ids
+      .map((id) => this.item(id))
+      .filter(Boolean)
+      .map((item) => ({
+        type: 'set',
+        collection: 'items',
+        id: item.id,
+        merge: true,
+        data: { ...patch, updatedBy: this.session.userId, version: (item.version ?? 1) + 1 },
+      }));
+
+    if (!operations.length) return { updated: 0 };
+    this.setSync(SyncState.SAVING);
+    await this.backend.runBatch(operations);
+    await this.log(ACTIONS.ITEMS_BULK_UPDATED, { count: operations.length, fields: Object.keys(patch) });
+    return { updated: operations.length };
+  }
+
+  /** Moves several records to Trash. Nothing is destroyed; Trash is reversible. */
+  async bulkTrash(ids) {
+    this.assertCanWrite();
+    const items = ids.map((id) => this.item(id)).filter(Boolean);
+    if (!items.length) return { trashed: 0 };
+
+    this.setSync(SyncState.SAVING);
+    await this.backend.runBatch(items.map((item) => ({
+      type: 'set',
+      collection: 'items',
+      id: item.id,
+      merge: true,
+      data: {
+        deletedAt: this.backend.serverTime,
+        deletedBy: this.session.userId,
+        version: (item.version ?? 1) + 1,
+      },
+    })));
+    await this.log(ACTIONS.ITEMS_BULK_DELETED, { count: items.length });
+    return { trashed: items.length };
+  }
+
   async bulkWrite(operations) {
     this.assertCanWrite();
     this.setSync(SyncState.SAVING);

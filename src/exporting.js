@@ -211,6 +211,47 @@ export async function applyMerge(data) {
   return { added: operations.length, skipped };
 }
 
+/**
+ * Exports a chosen subset rather than the whole inventory. Same columns as the
+ * full export, so a selection and a backup open the same way.
+ */
+export function exportSelection(items) {
+  if (!items?.length) throw new AppError('لا توجد قطع مختارة', { code: 'export/empty-selection' });
+  const repo = repository;
+
+  const rows = [[
+    'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
+    'الكمية', 'الوحدة', 'الحالة', 'البراند',
+    'أدنى تقييم', 'أعلى تقييم', 'العملة', 'الوصف', 'آخر تحديث',
+  ]];
+  for (const item of items) {
+    rows.push([
+      item.sku || '',
+      item.barcode || '',
+      item.name || '',
+      repo.category(item.categoryId).name,
+      repo.folder(item.folderId)?.name || '',
+      repo.location(item.locationId)?.name || '',
+      item.quantity,
+      item.unit || '',
+      item.condition || '',
+      item.brand || '',
+      item.valuation?.min ?? null,
+      item.valuation?.max ?? null,
+      item.valuation?.currency || '',
+      item.description || '',
+      toDate(item.updatedAt),
+    ]);
+  }
+
+  try {
+    download(buildWorkbook([{ name: 'المحدد', rows }]), `نظم_محدد_${stamp()}.xlsx`);
+  } catch (error) {
+    console.error('[export] selection export failed', error);
+    throw new AppError('فشل تصدير المحدد', { cause: error });
+  }
+}
+
 /** Summary line used in the import confirmation sheet. */
 export function describeValuation(item) {
   if (!item.valuation) return '—';

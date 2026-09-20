@@ -3,20 +3,22 @@
 
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { repository } from '../repository.js';
-import { quotaStatus } from '../subscription.js';
+import { canUseFeature, quotaStatus } from '../subscription.js';
 import { bindImageSrc } from '../storage.js';
 import {
   EMPTY_FILTERS, SORT_MODES, activeFilterCount, clampPage, paginationModel, queryItems,
 } from '../search.js';
 import { $, appendChildren, debounce, el, formatNumber, render, setText } from '../utils.js';
 import { formatValuation, primaryImage } from '../validation.js';
-import { closeSheet, emptyState, openSheet, optionList, toast } from '../ui.js';
+import { closeSheet, confirmAction, emptyState, openSheet, optionList, toast, toastError } from '../ui.js';
 import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateItemFlow } from './detail.js';
 import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
 import { symbolNode } from './mark.js';
 import { goTab } from '../navigation.js';
 import { openScanner } from './scan.js';
+import { openLabels } from './labels.js';
+import { exportSelection } from '../exporting.js';
 
 export const view = {
   page: 1,
@@ -28,6 +30,8 @@ export const view = {
   folderId: null,
   /** A set of ids handed over by the assistant, with the label that explains it. */
   assistantSet: null,
+  /** Null when not selecting; a Set of ids when the customer is choosing. */
+  selection: null,
 };
 
 let contextItemId = null;
@@ -153,17 +157,22 @@ function cardNode(item) {
     ]);
   }
 
+  const selected = view.selection?.has(item.id) === true;
+  const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
+
   return el('div', {
-    class: 'icard gl-s',
+    class: `icard gl-s${selected ? ' picked' : ''}`,
     dataset: { id: item.id },
-    role: 'button',
+    role: view.selection ? 'checkbox' : 'button',
+    'aria-checked': view.selection ? String(selected) : undefined,
     tabindex: '0',
     'aria-label': `${item.name}، ${category.name}`,
-    onClick: () => openDetail(item.id),
+    onClick: activate,
     onKeydown: (event) => {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetail(item.id); }
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
     },
   }, [
+    view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
     el('div', { class: 'icimg' }, [
       imageNode,
       item.aiData ? el('div', {
@@ -192,17 +201,22 @@ function rowNode(item) {
   const subtitle = [`${category.icon} ${category.name}`, item.sku, folder ? `${folder.icon} ${folder.name}` : null]
     .filter(Boolean).join(' · ');
 
+  const selected = view.selection?.has(item.id) === true;
+  const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
+
   return el('div', {
-    class: 'litem',
+    class: `litem${selected ? ' picked' : ''}`,
     dataset: { id: item.id },
-    role: 'button',
+    role: view.selection ? 'checkbox' : 'button',
+    'aria-checked': view.selection ? String(selected) : undefined,
     tabindex: '0',
     'aria-label': item.name || 'قطعة',
-    onClick: () => openDetail(item.id),
+    onClick: activate,
     onKeydown: (event) => {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetail(item.id); }
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
     },
   }, [
+    view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
     itemThumb(item, 'lthumb'),
     el('div', { class: 'linfo' }, [
       el('div', { class: 'lname', text: item.name || '—' }),
@@ -292,6 +306,167 @@ export async function scanIntoSearch() {
       toast('لا توجد قطعة بهذا الرمز — ابحث أو أضِف قطعة جديدة', '⌕');
     },
   });
+}
+
+// ── selecting several records ─────────────────────────────────────────────
+//
+// Selection is a mode, not a mouse gesture: on a phone there is no modifier
+// key, so tapping a card while selecting toggles it rather than opening it.
+// The mode is always visible — an action bar with the count — because a mode
+// the customer cannot see is a mode they will fight.
+
+export function startSelection(firstId = null) {
+  const gate = canUseFeature('bulkActions');
+  if (!gate.allowed) {
+    openPlansSheet(`${gate.message} الإجراءات الجماعية متاحة من خطة شخصي فصاعداً.`);
+    return;
+  }
+  view.selection = new Set(firstId ? [firstId] : []);
+  renderHome();
+}
+
+export function endSelection() {
+  view.selection = null;
+  renderHome();
+}
+
+export function isSelecting() {
+  return view.selection !== null;
+}
+
+function toggleSelected(id) {
+  if (!view.selection) return;
+  if (view.selection.has(id)) view.selection.delete(id);
+  else view.selection.add(id);
+  renderHome();
+}
+
+/** The records currently selected, in the order the screen shows them. */
+function selectedItems() {
+  if (!view.selection) return [];
+  const ids = view.selection;
+  return repository.liveItems().filter((item) => ids.has(item.id));
+}
+
+function renderSelectionBar(visibleItems) {
+  const bar = $('select-bar');
+  if (!bar) return;
+
+  if (!view.selection) {
+    bar.style.display = 'none';
+    render(bar, []);
+    document.body.classList.remove('selecting');
+    return;
+  }
+
+  document.body.classList.add('selecting');
+  bar.style.display = 'flex';
+
+  const count = view.selection.size;
+  const pageIds = visibleItems.map((item) => item.id);
+  const allOnPage = pageIds.length > 0 && pageIds.every((id) => view.selection.has(id));
+
+  const action = (label, icon, handler, danger = false) => el('button', {
+    class: `selact${danger ? ' danger' : ''}`, type: 'button',
+    disabled: count === 0 || undefined,
+    onClick: handler,
+  }, [
+    el('span', { class: 'selact-ico', text: icon, 'aria-hidden': 'true' }),
+    el('span', { text: label }),
+  ]);
+
+  render(bar, [
+    el('div', { class: 'selbar-top' }, [
+      el('button', { class: 'selbar-close', type: 'button', text: '✕', 'aria-label': 'إنهاء التحديد', onClick: endSelection }),
+      el('span', { class: 'selbar-count', text: count ? `${formatNumber(count)} محددة` : 'اختر قطعاً' }),
+      el('button', {
+        class: 'selbar-all', type: 'button',
+        text: allOnPage ? 'إلغاء تحديد الصفحة' : 'تحديد الصفحة',
+        onClick: () => {
+          for (const id of pageIds) {
+            if (allOnPage) view.selection.delete(id);
+            else view.selection.add(id);
+          }
+          renderHome();
+        },
+      }),
+    ]),
+    el('div', { class: 'selbar-acts' }, [
+      action('نقل', '🗂', () => bulkMove()),
+      action('تصنيف', '◈', () => bulkField('categoryId', 'التصنيف')),
+      action('موقع', '⌂', () => bulkField('locationId', 'الموقع')),
+      action('تصدير', '📤', () => bulkExport()),
+      action('حذف', '🗑', () => bulkDelete(), true),
+    ]),
+  ]);
+}
+
+async function applyToSelection(label, patch) {
+  const items = selectedItems();
+  if (!items.length) return;
+  try {
+    await repository.bulkUpdate(items.map((item) => item.id), patch);
+    toast(`${label} — ${formatNumber(items.length)} قطعة`, '✓');
+    endSelection();
+  } catch (error) {
+    toastError(error, 'تعذّر تنفيذ الإجراء');
+  }
+}
+
+function bulkMove() {
+  const options = [
+    { value: '', label: '📦 المخزون الرئيسي' },
+    ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
+  ];
+  pickOne('نقل إلى مجلد', options, (value) => applyToSelection('نُقلت', { folderId: value || null }));
+}
+
+function bulkField(field, title) {
+  const source = field === 'categoryId' ? repository.state.categories : repository.state.locations;
+  const options = source.map((entry) => ({ value: entry.id, label: `${entry.icon || '⌂'} ${entry.name}` }));
+  if (!options.length) { toast(`لا توجد ${title} بعد`, '⚠'); return; }
+  pickOne(`تغيير ${title}`, options, (value) => applyToSelection('حُدّثت', { [field]: value }));
+}
+
+function bulkExport() {
+  const items = selectedItems();
+  try {
+    exportSelection(items);
+    toast(`صُدِّرت ${formatNumber(items.length)} قطعة`, '📤');
+  } catch (error) {
+    toastError(error, 'تعذّر التصدير');
+  }
+}
+
+async function bulkDelete() {
+  const items = selectedItems();
+  const confirmed = await confirmAction({
+    title: `نقل ${formatNumber(items.length)} قطعة إلى المحذوفات؟`,
+    message: 'يمكنك استرجاعها من المحذوفات — لا شيء يُحذف نهائياً الآن.',
+    icon: '🗑',
+    confirmLabel: 'نقل للمحذوفات',
+  });
+  if (!confirmed) return;
+  try {
+    await repository.bulkTrash(items.map((item) => item.id));
+    toast(`نُقلت ${formatNumber(items.length)} قطعة للمحذوفات`, '✓');
+    endSelection();
+  } catch (error) {
+    toastError(error, 'تعذّر الحذف');
+  }
+}
+
+/** A one-choice sheet, reused by the three field actions. */
+function pickOne(title, options, onPick) {
+  setText('bulk-title', title);
+  render($('bulk-options'), options.map((option) => el('button', {
+    class: 'srow srow-btn', type: 'button',
+    onClick: () => { closeSheet('bulk'); setTimeout(() => onPick(option.value), 200); },
+  }, [
+    el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', text: option.label })]),
+    el('div', { class: 'srowc', text: '›', 'aria-hidden': 'true' }),
+  ])));
+  openSheet('bulk');
 }
 
 // ── an answer handed over by the assistant ──
@@ -457,6 +632,9 @@ export function renderHome() {
     setText('hempty-title', searching ? 'لا نتائج للبحث' : filtered ? 'لا نتائج مطابقة' : folder ? `${folder.name} فارغ` : 'لا توجد قطع');
     setText('hempty-sub', searching || filtered ? 'جرّب تعديل البحث أو إلغاء الفلاتر' : 'اضغط + لإضافة قطعة');
     renderPagination(1);
+    // Still draw the selection bar: an empty page is exactly when someone
+    // needs the way out of selection mode.
+    renderSelectionBar([]);
     return;
   }
 
@@ -474,6 +652,7 @@ export function renderHome() {
   }
 
   renderPagination(totalPages);
+  renderSelectionBar(pageItems);
 }
 
 function renderNavBar(folder) {
@@ -651,7 +830,10 @@ export function bindLongPress() {
       pressActive = true;
       pressElement?.classList.add('pressing');
       navigator.vibrate?.(10);
-      openContextMenu(pressElement.dataset.id);
+      // While selecting, a long press is just another way to pick; the
+      // per-record menu would be the wrong offer.
+      if (view.selection) toggleSelected(pressElement.dataset.id);
+      else openContextMenu(pressElement.dataset.id);
     }, 500);
   }, { passive: true });
 
@@ -735,6 +917,8 @@ export function bindContextActions() {
   $('ctx-move')?.addEventListener('click', run(openMoveSheet));
   $('ctx-edit')?.addEventListener('click', run((id) => openItemForm({ itemId: id })));
   $('ctx-duplicate')?.addEventListener('click', run(duplicateItemFlow));
+  $('ctx-label')?.addEventListener('click', run((id) => openLabels([id])));
+  $('ctx-select')?.addEventListener('click', run((id) => startSelection(id)));
   $('ctx-delete')?.addEventListener('click', run(deleteItemFlow));
   $('ctx-cancel')?.addEventListener('click', closeContextMenu);
   $('ov-ctx')?.addEventListener('click', closeContextMenu);

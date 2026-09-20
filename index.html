@@ -90,6 +90,8 @@
     <button class="ctx-as-btn" id="ctx-move" type="button"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)" aria-hidden="true">🗂</div><div class="ctx-as-lbl">نقل إلى مجلد</div></button>
     <button class="ctx-as-btn" id="ctx-edit" type="button"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)" aria-hidden="true">✎</div><div class="ctx-as-lbl">تعديل</div></button>
     <button class="ctx-as-btn" id="ctx-duplicate" type="button"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)" aria-hidden="true">⧉</div><div class="ctx-as-lbl">نسخ القطعة</div></button>
+    <button class="ctx-as-btn" id="ctx-label" type="button"><div class="ctx-as-ico" style="background:rgba(99,102,241,.12)" aria-hidden="true">⊡</div><div class="ctx-as-lbl">ملصق QR</div></button>
+    <button class="ctx-as-btn" id="ctx-select" type="button"><div class="ctx-as-ico" style="background:rgba(37,99,255,.12)" aria-hidden="true">☑</div><div class="ctx-as-lbl">تحديد عدة قطع</div></button>
     <button class="ctx-as-btn" id="ctx-delete" type="button"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)" aria-hidden="true">🗑</div><div class="ctx-as-lbl red">حذف</div></button>
   </div>
   <div class="ctx-as-cancel"><button class="ctx-as-cancel-btn" id="ctx-cancel" type="button">إلغاء</button></div>
@@ -223,6 +225,9 @@
     </div>
   </section>
 </div>
+
+<!-- SELECTION -->
+<div class="select-bar gl" id="select-bar" role="toolbar" aria-label="إجراءات على المحدد" style="display:none"></div>
 
 <!-- TAB BAR -->
 <nav class="tbar gl" role="tablist" aria-label="أقسام التطبيق">
@@ -475,6 +480,14 @@
   <div class="shscroll" style="padding:0">
     <div class="sgroup" style="margin:0 20px 16px" id="sort-options"></div>
   </div>
+</div>
+
+<!-- BULK CHOICE -->
+<div class="ov" id="ov-bulk"></div>
+<div class="sh" id="sh-bulk" tabindex="-1" style="max-height:70vh" aria-labelledby="bulk-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="bulk-title">اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shscroll"><div class="sgroup" id="bulk-options"></div></div>
 </div>
 
 <!-- QR LABELS -->

@@ -78,6 +78,7 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
     export function planUsage(){ return []; }
     export function assistantLabel(){ return { included: true, label: 'مشمول' }; }
     export function canUseAssistant(){ return ${assistant === 'allowed'} ? { allowed: true } : { allowed: false, message: 'لا رصيد' }; }
+    export function canUseFeature() { return { allowed: true }; }
   ` }));
 
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });

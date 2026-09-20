@@ -48,7 +48,7 @@ Status key — ✅ done and verifiable · 🟡 implemented, not yet proven end t
 | 28 | Invitations | 🟡 | backend complete (hashed single-use token, expiry, seat check). **No email delivery and no UI** |
 | 29 | Barcode / QR scanning | 🟡 | `BarcodeDetector` where the platform has it, and a clear refusal where it does not — `labels.test.mjs` L9–L10. Not yet exercised on a real camera |
 | 30 | QR labels | ✅ | dependency-free encoder, colour and thermal finishes, print stylesheet — `qr.test.mjs`, `labels.test.mjs`, and a decode round trip via `tools/verify-qr.py` |
-| 31 | Bulk actions | ⬜ | not implemented |
+| 31 | Bulk actions | ✅ | select, move, edit, export, delete — plan-gated, allow-listed, reversible — `bulk.test.mjs` B1–B13 |
 | 31b | Assistant tab: اسأل نَظْم | ✅ | answered on the device; a test watches the network and fails on any backend call — `assistant.test.mjs` A5–A9 |
 | 31c | Inventory health score | ✅ | deterministic, published weights — `assistant.test.mjs` A1–A4, `assistant.test.mjs` (unit) |
 | 31d | Duplicate detection | ✅ | grouped and explained, never merged — A10–A13 |

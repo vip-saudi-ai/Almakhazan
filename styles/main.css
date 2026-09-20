@@ -906,3 +906,33 @@ body.gated .app,body.gated .tbar{display:none}
 :focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .btn:focus-visible,.ibtn:focus-visible,.ti:focus-visible,.cpill:focus-visible,
 .gate-btn:focus-visible,.ask-chip:focus-visible,.chipbtn:focus-visible{box-shadow:var(--focus-ring)}
+
+/* ── selecting several records ── */
+.select-bar{position:fixed;left:0;right:0;bottom:calc(var(--tab-h) + var(--sb));z-index:880;
+  display:flex;flex-direction:column;gap:2px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+  border-radius:var(--r-lg) var(--r-lg) 0 0}
+body.selecting .tbar{opacity:.35;pointer-events:none}
+.selbar-top{display:flex;align-items:center;gap:12px}
+.selbar-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--state-pressed);
+  color:var(--text);font-size:14px;cursor:pointer;flex-shrink:0;position:relative}
+.selbar-close::after{content:"";position:absolute;inset:-8px}
+.selbar-count{flex:1;font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.selbar-all{border:none;background:none;color:var(--brand);font-family:var(--font);font-size:12.5px;
+  font-weight:700;cursor:pointer;padding:4px;position:relative}
+.selbar-all::after{content:"";position:absolute;inset:-8px}
+.selbar-acts{display:flex;gap:6px;margin-top:8px}
+.selact{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:none;
+  border-radius:var(--r-sm);background:var(--glass-secondary);font-family:var(--font);font-size:11px;
+  font-weight:600;color:var(--text);cursor:pointer}
+.selact:disabled{opacity:.4;cursor:default}
+.selact:not(:disabled):active{background:var(--state-pressed)}
+.selact-ico{font-size:15px}
+.selact.danger{color:var(--danger)}
+.pickmark{position:absolute;top:8px;inset-inline-start:8px;width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--border-strong);background:var(--glass-modal);display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:transparent;z-index:2}
+.pickmark.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.icard{position:relative}
+.icard.picked,.litem.picked{outline:2px solid var(--brand);outline-offset:-2px}
+.litem{position:relative}
+.litem .pickmark{position:static;margin-inline-end:4px;flex-shrink:0}

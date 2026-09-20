@@ -26,7 +26,7 @@ already set in this environment.
 | `assistant.test.mjs` | the health weights are the published ones and total 1; each signal moves the score by exactly its weight; cleanup tasks are ordered by the points they add; duplicates group by barcode, then SKU, then name within a category, with Arabic spelling folded; a record is reported once; **nothing is merged**; every Ask NAZM intent, including the ones it must refuse to guess at |
 | `qr.test.mjs` | five matrices match segno module for module; the format information matches the published table; mode selection; no case folding; finder, timing and dark modules |
 
-### Browser — `tests/browser/*.test.mjs`, 122 checks
+### Browser — `tests/browser/*.test.mjs`, 135 checks
 
 | File | Proves |
 |---|---|
@@ -37,6 +37,7 @@ already set in this environment.
 | `labels.test.mjs` | the drawn QR is the encoded QR module for module; the quiet zone survives; the thermal finish has no colour left; scanning support is read from the platform, not assumed |
 | `a11y.test.mjs` | every visible control has an accessible name; zoom is not blocked; focus stays visible; small controls carry an extended hit area; dark mode swaps the whole surface set and no light-on-light surface survives it; reduced motion collapses the durations at the token level |
 | `restore.test.mjs` | the property is not "restore works" but "restore cannot lose an inventory": a failed safety backup aborts everything and touches nothing; an interruption partway leaves a superset, never an empty workspace; only the records the backup omits are removed |
+| `bulk.test.mjs` | selection is a plan gate that explains itself instead of a dead button; a tap picks instead of opens while selection is on; a move, an edit and an export carry the whole selection; a bulk edit cannot reach a field outside its allow-list; a bulk delete goes to Trash and comes back; an emptied page still offers the way out of selection mode |
 
 ### Rules — `tests/rules/*.test.mjs`, in the emulator
 

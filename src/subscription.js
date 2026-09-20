@@ -7,8 +7,8 @@
 // the difference between "you have 8 records left" and an unexplained refusal.
 
 import {
-  assistantPresentation, checkCreateItem, checkUseAI, itemQuotaStatus, planById,
-  resolveEntitlement, usageSummary, DEFAULT_PLAN,
+  assistantPresentation, checkCreateItem, checkFeature, checkUseAI, itemQuotaStatus,
+  planById, resolveEntitlement, usageSummary, DEFAULT_PLAN,
 } from './entitlements.js';
 import { firebaseContext } from './firebase.js';
 
@@ -151,6 +151,15 @@ export function canAddItem() {
 export function canUseAssistant() {
   if (!state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد نَظْم يتطلب حساباً' };
   return checkUseAI({ entitlement: state.entitlement, usage: state.usage });
+}
+
+/**
+ * Whether a plan feature is available. In device-only mode everything local is
+ * allowed — there is no plan to gate against and nothing is being sold.
+ */
+export function canUseFeature(feature) {
+  if (!state.entitlement) return { allowed: true };
+  return checkFeature({ entitlement: state.entitlement }, feature);
 }
 
 export function planUsage() {
