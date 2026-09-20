@@ -12,6 +12,7 @@ import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
 import { goTab, registerTab } from './navigation.js';
+import { watchViewport } from './viewport.js';
 import { acceptInvitation, takeInvitationFromUrl } from './team.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
 import {
@@ -235,6 +236,10 @@ async function offerLocalUpload() {
 
 // ── UI wiring ──
 function initializeUI() {
+  // Before anything measures itself: the keyboard has to be known about
+  // before the first sheet can open on top of it.
+  watchViewport();
+
   const prefs = local.loadPrefs();
   homeView.grid = prefs.grid ?? true;
   homeView.sortMode = prefs.sortMode || 'newest';

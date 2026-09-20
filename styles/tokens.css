@@ -85,6 +85,51 @@
   --sheet-surface:    #F2F2F7;
   --scrim:            rgba(11, 31, 75, 0.45);
 
+  /* ── surfaces ──
+     Seven names for the seven jobs a background does. Anything functional
+     uses one of these rather than a literal colour, which is what makes a
+     dark-mode fix a one-line change instead of a hunt. `--surface-viewer` is
+     the exception that proves the rule: image inspection wants a neutral dark
+     ground in *both* themes, so it does not follow the theme. */
+  --surface-base:   var(--nazm-cloud);
+  --surface-raised: rgba(255, 255, 255, 0.86);
+  --surface-input:  rgba(255, 255, 255, 0.70);
+  --surface-sheet:  #F2F2F7;
+  --surface-modal:  rgba(255, 255, 255, 0.96);
+  --surface-action: #F2F2F7;
+  --surface-card:   rgba(255, 255, 255, 0.75);
+  --surface-viewer: #08090C;
+
+  /* ── z-index ──
+     One ladder, named by what sits on the rung. A new overlay picks a name;
+     it never picks a number. */
+  --z-base:       0;
+  --z-content:    1;
+  --z-sticky:     10;
+  --z-nav:        20;
+  --z-dropdown:   30;
+  --z-scrim:      40;
+  --z-sheet:      50;
+  --z-modal:      60;
+  --z-viewer:     70;
+  --z-toast:      80;
+  --z-boot:       90;
+
+  /* ── component tokens ──
+     Sizes that repeat. A magic number here is a magic number in one place. */
+  --control-h:      44px;   /* a control a thumb is meant to hit */
+  --control-h-sm:   36px;   /* a control inside a dense row */
+  --touch-target:   44px;   /* the hit area, which may exceed the visual size */
+  --gutter:         16px;   /* phone */
+  --gutter-md:      24px;   /* tablet */
+  --gutter-lg:      32px;   /* desktop */
+  --content-max:    1180px; /* the widest a reading column ever gets */
+  --content-max-wide: 1560px; /* grids, which may run wider than prose */
+  --modal-w:        560px;
+  --panel-w:        400px;
+  --rail-w:         84px;
+  --card-min:       150px;  /* narrowest an item card may be before wrapping */
+
   /* ── the NAZM glass system ──
      Five tiers, one set of values. Nothing invents its own blur. */
   --glass-blur:        20px;
@@ -171,6 +216,13 @@
     --state-pressed:  rgba(255, 255, 255, 0.09);
     --state-selected: rgba(91, 140, 255, 0.18);
     --track:          rgba(255, 255, 255, 0.14);
+    --surface-base:   #060E22;
+    --surface-raised: rgba(23, 38, 74, 0.86);
+    --surface-input:  rgba(255, 255, 255, 0.06);
+    --surface-sheet:  #0E1A33;
+    --surface-modal:  rgba(16, 27, 55, 0.96);
+    --surface-action: #16233F;
+    --surface-card:   rgba(19, 32, 64, 0.72);
     --sheet-surface:  #0E1A33;
     --scrim:          rgba(0, 0, 0, 0.62);
 

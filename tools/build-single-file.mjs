@@ -128,6 +128,7 @@ const bundle = `${runtime}\n${body}\n__req(${JSON.stringify(entry)});\n})();`;
 let css = [
   readFileSync(join(root, 'styles/tokens.css'), 'utf8'),
   readFileSync(join(root, 'styles/main.css'), 'utf8'),
+  readFileSync(join(root, 'styles/layout.css'), 'utf8'),
 ].join('\n');
 
 // The demo opens from file://, where a relative font URL resolves to nothing.
@@ -151,6 +152,7 @@ const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
 // and would mangle any `$` in the code or CSS being inlined.
 html = html
   .replace('<link rel="stylesheet" href="styles/tokens.css">', '')
+  .replace('<link rel="stylesheet" href="styles/layout.css">', '')
   .replace(/<link rel="preload" href="public\/fonts\/[^"]+"[^>]*>/g, '')
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
   .replace('<script src="src/boot-guard.js"></script>\n', '')
