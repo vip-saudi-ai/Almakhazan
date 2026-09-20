@@ -9,16 +9,41 @@
 import { normalizeArabic } from './search.js';
 import { UNCATEGORIZED_ID } from './config.js';
 
-const REASONS = {
-  barcode: 'نفس الباركود',
-  sku: 'نفس الرمز',
-  name: 'اسم متطابق في نفس التصنيف',
+/**
+ * What each signal is, and how much it is worth claiming.
+ *
+ * The confidence label is tied to the evidence rather than chosen for effect.
+ * A barcode is an identifier a manufacturer assigned to one product, so two
+ * records carrying the same one are a confirmed match. A serial number is
+ * stronger still — it identifies one *object*, not one product line. A name
+ * is a person's description, and two people (or the same person twice) can
+ * describe two different objects identically, so it is a resemblance and is
+ * labelled as one.
+ *
+ * Nothing here says "certain" about a name match, and nothing merges.
+ */
+const SIGNALS = {
+  serial:  { strength: 4, confidence: 'certain', label: 'تطابق مؤكد', reason: 'نفس الرقم التسلسلي' },
+  barcode: { strength: 3, confidence: 'certain', label: 'تطابق مؤكد', reason: 'نفس الباركود' },
+  sku:     { strength: 2, confidence: 'high',    label: 'تشابه مرتفع', reason: 'نفس الرمز' },
+  name:    { strength: 1, confidence: 'likely',  label: 'تشابه محتمل', reason: 'اسم متطابق في نفس التصنيف' },
 };
 
-/** Strength decides which group wins when a record matches on more than one. */
-const STRENGTH = { barcode: 3, sku: 2, name: 1 };
+const KINDS = ['serial', 'barcode', 'sku', 'name'];
+const STRENGTH = Object.fromEntries(Object.entries(SIGNALS).map(([k, v]) => [k, v.strength]));
+
+export { SIGNALS };
+
+/** A serial number, wherever the record happens to carry it. */
+function serialOf(item) {
+  return item.serial || item.serialNumber || item.aiData?.serial || '';
+}
 
 function keyFor(item, kind) {
+  if (kind === 'serial') {
+    const serial = String(serialOf(item)).trim().toLowerCase();
+    return serial.length >= 4 ? `x:${serial}` : null;
+  }
   if (kind === 'barcode') return item.barcode ? `b:${item.barcode.trim().toLowerCase()}` : null;
   if (kind === 'sku') return item.sku ? `s:${item.sku.trim().toLowerCase()}` : null;
   const name = normalizeArabic(item.name || '').replace(/\s+/g, ' ').trim();
@@ -29,12 +54,14 @@ function keyFor(item, kind) {
 
 /**
  * @param {Array} items live records
- * @returns {Array<{key: string, kind: string, reason: string, items: Array}>}
+ * @returns {Array<{key, kind, reason, label, confidence, strength, items}>}
+ *   `confidence` is 'certain' | 'high' | 'likely', and it is a statement about
+ *   the evidence, never about how sure the feature would like to sound.
  */
 export function findDuplicateGroups(items) {
   const buckets = new Map();
 
-  for (const kind of ['barcode', 'sku', 'name']) {
+  for (const kind of KINDS) {
     for (const item of items) {
       const key = keyFor(item, kind);
       if (!key) continue;
@@ -45,7 +72,7 @@ export function findDuplicateGroups(items) {
 
   const groups = [...buckets.values()]
     .filter((group) => group.items.length > 1)
-    .map((group) => ({ ...group, reason: REASONS[group.kind] }));
+    .map((group) => ({ ...group, ...SIGNALS[group.kind] }));
 
   // A record reported twice is noise. Keep it in its strongest group only.
   const claimed = new Map();

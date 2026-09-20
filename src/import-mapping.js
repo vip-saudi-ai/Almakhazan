@@ -31,7 +31,10 @@ export const FIELDS = [
   { key: 'folder', label: 'المجلد', taxonomy: 'folders', aliases: ['المجلد', 'المجموعة', 'folder', 'collection'] },
   { key: 'condition', label: 'الحالة', aliases: ['الحالة', 'حالة القطعة', 'condition', 'state'] },
   { key: 'brand', label: 'البراند', aliases: ['البراند', 'الماركة', 'الشركة', 'brand', 'maker', 'manufacturer'] },
-  { key: 'sku', label: 'الرمز', aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code', 'ref'] },
+  // 'ref' is deliberately absent: it means a serial number to a watch dealer,
+  // a SKU to a retailer and an internal reference to everyone else. It is
+  // asked about (see AMBIGUOUS) rather than guessed.
+  { key: 'sku', label: 'الرمز', aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code'] },
   { key: 'barcode', label: 'الباركود', aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc'] },
   { key: 'description', label: 'الوصف', aliases: ['الوصف', 'ملاحظات', 'ملاحظة', 'تفاصيل', 'description', 'notes', 'note', 'details'] },
   { key: 'valuationMin', label: 'أدنى قيمة', aliases: ['أدنى قيمة', 'السعر', 'القيمة', 'التكلفة', 'price', 'value', 'cost', 'min'] },
@@ -161,9 +164,29 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     records.push(record);
   });
 
+  // Rows are classified rather than sorted into "worked" and "did not".
+  // A single malformed cell is not a reason to reject a row, and it is not a
+  // reason to import it silently either — it is a reason to say which rows
+  // came through clean, which came through with something dropped, and which
+  // could not come through at all.
+  const byLine = new Map();
+  for (const problem of problems) {
+    const entry = byLine.get(problem.line) || { line: problem.line, reasons: [], fatal: false };
+    entry.reasons.push(problem.reason);
+    if (problem.field === 'name') entry.fatal = true;
+    byLine.set(problem.line, entry);
+  }
+
+  const rowStatus = {
+    ready: records.length - [...byLine.values()].filter((e) => !e.fatal).length,
+    warning: [...byLine.values()].filter((e) => !e.fatal),
+    error: [...byLine.values()].filter((e) => e.fatal),
+  };
+
   return {
     records,
     problems,
+    rowStatus,
     newTaxonomy: {
       categories: [...fresh.categories.values()],
       locations: [...fresh.locations.values()],
@@ -171,6 +194,57 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     },
   };
 }
+
+/**
+ * Columns whose header could mean more than one field.
+ *
+ * "Ref" is a serial number to a watch dealer, a SKU to a retailer and an
+ * internal reference to everyone else, and those go to three different places.
+ * Guessing is worse than asking — a serial number silently filed as a SKU is
+ * wrong in a way nobody notices until they need it.
+ *
+ * @returns {Array<{index: number, header: string, options: Array<{key, label}>}>}
+ */
+export function ambiguousColumns(headers, mapping) {
+  const taken = new Set(Object.values(mapping || {}));
+  const out = [];
+  headers.forEach((header, index) => {
+    if (taken.has(index)) return;
+    const normal = normalizeArabic(header);
+    const match = AMBIGUOUS.find((entry) => entry.match.some((alias) => normalizeArabic(alias) === normal));
+    if (match) out.push({ index, header, options: match.options });
+  });
+  return out;
+}
+
+const AMBIGUOUS = [
+  {
+    match: ['ref', 'reference', 'مرجع', 'الرقم المرجعي', 'رقم مرجعي'],
+    options: [
+      { key: 'sku', label: 'الرمز (SKU)' },
+      { key: 'barcode', label: 'الرقم التسلسلي / الباركود' },
+      { key: 'description', label: 'الرقم المرجعي كوصف' },
+      { key: '', label: 'تجاهل العمود' },
+    ],
+  },
+  {
+    match: ['value', 'amount', 'القيمة', 'المبلغ'],
+    options: [
+      { key: 'valuationMin', label: 'أدنى قيمة' },
+      { key: 'valuationMax', label: 'أعلى قيمة' },
+      { key: '', label: 'تجاهل العمود' },
+    ],
+  },
+  {
+    match: ['no', 'number', 'رقم', 'الرقم'],
+    options: [
+      { key: 'sku', label: 'الرمز (SKU)' },
+      { key: 'barcode', label: 'الباركود' },
+      { key: 'quantity', label: 'الكمية' },
+      { key: '', label: 'تجاهل العمود' },
+    ],
+  },
+];
 
 function byName(list) {
   const map = new Map();

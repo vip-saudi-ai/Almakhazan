@@ -1155,3 +1155,34 @@ body.viewer-open{overflow:hidden}
 .lchev{display:flex;align-items:center;color:var(--tt);flex-shrink:0}
 html[dir="rtl"] .lchev{transform:none}
 html:not([dir="rtl"]) .lchev{transform:scaleX(-1)}
+
+/* ── duplicate review ──
+   Side by side is the interface: two cards a scroll apart are two records,
+   two cards next to each other are a question you can answer. They stack only
+   when there genuinely is not room for two. */
+.dup-group{border:1px solid var(--border-quiet);border-radius:var(--r);padding:12px;margin-bottom:12px;
+  background:var(--surface-card)}
+.dup-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.dup-badge{font:var(--type-caption);padding:3px 9px;border-radius:var(--rp);white-space:nowrap}
+/* The badge's colour follows the strength of the evidence, not the drama of
+   the finding. A name match is never dressed as a certainty. */
+.dup-certain{background:var(--danger-soft);color:var(--danger)}
+.dup-high{background:var(--warning-soft);color:var(--warning)}
+.dup-likely{background:var(--state-selected);color:var(--brand)}
+.dup-reason{font:var(--type-small);color:var(--ts)}
+.dup-pair{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:520px){.dup-pair{grid-template-columns:1fr 1fr}}
+.dup-side-lbl{font:var(--type-caption);color:var(--tt);margin-bottom:4px}
+.dup-rest{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.dup-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+
+/* ── import: asking rather than guessing ── */
+.imp-ask{padding:10px 0;border-bottom:.5px solid var(--divider)}
+.imp-ask:last-child{border-bottom:none}
+.imp-ask-q{font:var(--type-body);color:var(--text);margin-bottom:8px}
+.imp-ask-opts{display:flex;flex-wrap:wrap;gap:6px}
+/* Three outcomes, three colours: what lands, what lands with something
+   dropped, and what does not land at all. */
+.imp-ready{border-inline-start:3px solid var(--success)}
+.imp-warning{border-inline-start:3px solid var(--warning)}
+.imp-error{border-inline-start:3px solid var(--danger)}

@@ -303,7 +303,7 @@ function cleanupBlock(health) {
 
 // ── duplicates ─────────────────────────────────────────────────────────────
 function duplicatesScreen(health) {
-  const groups = health.duplicates || [];
+  const groups = (health.duplicates || []).filter((group) => !dismissed.has(group.key));
   return [
     el('div', { class: 'asec-nav' }, [
       el('button', { class: 'nback', type: 'button', text: '‹ المساعد', onClick: () => { state.screen = 'home'; renderAssistant(); } }),
@@ -312,14 +312,61 @@ function duplicatesScreen(health) {
       el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: 'تكرارات محتملة' })]),
       el('p', { class: 'asec-sub', text: 'راجع التشابه بنفسك — لا يُدمج أي سجل تلقائياً.' }),
       groups.length
-        ? el('div', { class: 'dup-list' }, groups.map((group) => el('div', { class: 'dup-group' }, [
-          el('div', { class: 'dup-reason', text: group.reason }),
-          el('div', { class: 'dup-items' }, group.items.map(resultCard)),
-        ])))
-        : emptyState('✓', 'لا توجد تكرارات محتملة.', 'لم نجد سجلين يتطابقان في الباركود أو الرمز أو الاسم.'),
+        ? el('div', { class: 'dup-list' }, groups.map(duplicateGroup))
+        : emptyState('✓', 'لا توجد تكرارات محتملة.', 'لم نجد سجلين يتطابقان في الرقم التسلسلي أو الباركود أو الرمز أو الاسم.'),
     ]),
   ];
 }
+
+/**
+ * One pair of possible duplicates, side by side where there is room to put
+ * them side by side and stacked where there is not — because the comparison
+ * *is* the interface. Two cards a scroll apart are two records; two cards
+ * next to each other are a question you can answer.
+ *
+ * Four actions, and none of them destroys anything: open either one, fold the
+ * quantity of the second into the first, or say they are two different things
+ * and stop being asked. Merging automatically would lose an owner's record of
+ * something they own, which is the one mistake this product cannot make.
+ */
+function duplicateGroup(group) {
+  const [first, second, ...rest] = group.items;
+  return el('div', { class: 'dup-group' }, [
+    el('div', { class: 'dup-head' }, [
+      el('span', { class: `dup-badge dup-${group.confidence}`, text: group.label }),
+      el('span', { class: 'dup-reason', text: group.reason }),
+    ]),
+    el('div', { class: 'dup-pair' }, [
+      duplicateSide(first, 'الأولى'),
+      second ? duplicateSide(second, 'الثانية') : null,
+    ]),
+    rest.length ? el('div', { class: 'dup-rest' }, rest.map(resultCard)) : null,
+    el('div', { class: 'dup-acts' }, [
+      el('button', { class: 'chipbtn', type: 'button', text: 'فتح الأولى', onClick: () => openDetail(first.id) }),
+      second ? el('button', { class: 'chipbtn', type: 'button', text: 'فتح الثانية', onClick: () => openDetail(second.id) }) : null,
+      second ? el('button', {
+        class: 'chipbtn', type: 'button', text: 'زيادة الكمية',
+        title: 'افتح الأولى لتعديل كميتها — لا يُدمج أي سجل تلقائياً',
+        onClick: () => openItemForm({ itemId: first.id }),
+      }) : null,
+      el('button', {
+        class: 'chipbtn', type: 'button', text: 'الإبقاء كقطعتين منفصلتين',
+        onClick: () => { dismissed.add(group.key); renderAssistant(); },
+      }),
+    ]),
+  ]);
+}
+
+function duplicateSide(item, label) {
+  if (!item) return null;
+  return el('div', { class: 'dup-side' }, [
+    el('div', { class: 'dup-side-lbl', text: label }),
+    resultCard(item),
+  ]);
+}
+
+/** Pairs the customer has already said are two different things. */
+const dismissed = new Set();
 
 // ── quick actions ──────────────────────────────────────────────────────────
 function quickActions() {

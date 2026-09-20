@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { FIELDS, attachTaxonomy, guessMapping, planImport } from '../../src/import-mapping.js';
+import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, planImport } from '../../src/import-mapping.js';
 import { parseDelimited } from '../../src/spreadsheet.js';
 
 const EXISTING = {
@@ -187,4 +187,50 @@ test('images are not importable from a spreadsheet', () => {
 test('exactly one field is required, and it is the name', () => {
   const required = FIELDS.filter((f) => f.required).map((f) => f.key);
   assert.deepEqual(required, ['name']);
+});
+
+// ── rows are classified, not merely accepted or rejected ───────────────────
+
+test('a row is ready, needs review, or cannot be imported — and the counts say which', () => {
+  const result = plan([
+    ['ساعة', '2'],           // clean
+    ['لوحة', 'ثلاثة'],        // imports, with the quantity dropped
+    ['', '5'],               // no name: cannot be imported at all
+  ], { name: 0, quantity: 1 });
+
+  assert.equal(result.rowStatus.ready, 1);
+  assert.equal(result.rowStatus.warning.length, 1);
+  assert.equal(result.rowStatus.error.length, 1);
+  // The warning row still becomes a record — one bad cell does not throw away
+  // the other five.
+  assert.deepEqual(result.records.map((r) => r.name), ['ساعة', 'لوحة']);
+});
+
+test('the error rows name their line, so they can be found in the file', () => {
+  const result = plan([['ساعة', '1'], ['', '9']], { name: 0, quantity: 1 });
+  assert.equal(result.rowStatus.error[0].line, 3);
+});
+
+// ── ambiguous columns are asked about, not guessed ─────────────────────────
+
+test('"Ref" is not silently filed as a SKU', () => {
+  const headers = ['الاسم', 'Ref'];
+  const mapping = guessMapping(headers);
+  assert.equal(mapping.sku, undefined, 'the guess leaves it alone');
+
+  const asked = ambiguousColumns(headers, mapping);
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].header, 'Ref');
+  const keys = asked[0].options.map((o) => o.key);
+  assert.ok(keys.includes('sku') && keys.includes('barcode') && keys.includes(''));
+});
+
+test('a column already mapped is not asked about', () => {
+  const headers = ['الاسم', 'Ref'];
+  assert.deepEqual(ambiguousColumns(headers, { name: 0, sku: 1 }), []);
+});
+
+test('an unambiguous header is never turned into a question', () => {
+  const headers = ['الاسم', 'الكمية', 'التصنيف'];
+  assert.deepEqual(ambiguousColumns(headers, guessMapping(headers)), []);
 });

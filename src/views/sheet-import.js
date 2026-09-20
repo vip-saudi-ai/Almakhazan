@@ -14,7 +14,7 @@
 // The planning is `src/import-mapping.js` — pure, and unit-tested — so the
 // preview and the write come from one answer rather than two.
 
-import { FIELDS, attachTaxonomy, guessMapping, planImport } from '../import-mapping.js';
+import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, planImport } from '../import-mapping.js';
 import { MAX_ROWS, readSpreadsheet } from '../spreadsheet.js';
 import { normalizeArabic } from '../search.js';
 import { repository } from '../repository.js';
@@ -123,6 +123,7 @@ function renderMap(body, foot) {
         })),
       ]),
     ])))]),
+    ambiguousBlock(),
     section('أول صفوف الملف', [previewTable()]),
     nameMapped ? null : el('p', { class: 'imp-warn', text: 'الاسم حقل مطلوب — اختر العمود الذي يحمله.' }),
   ]);
@@ -136,6 +137,36 @@ function renderMap(body, foot) {
       onClick: () => { state.step = 'confirm'; renderImport(); },
     }),
   ]);
+}
+
+/**
+ * Columns whose header could mean more than one thing.
+ *
+ * "Ref" is a serial number to a watch dealer, a SKU to a retailer and an
+ * internal reference to everyone else. Those go to three different fields,
+ * and a serial number quietly filed as a SKU is wrong in a way nobody
+ * notices until the day they need it. So the screen asks, once, rather than
+ * guessing — and the deterministic mappings above still run without asking,
+ * because "الاسم" is not ambiguous.
+ */
+function ambiguousBlock() {
+  const columns = ambiguousColumns(state.sheet.headers, state.mapping);
+  if (!columns.length) return null;
+
+  return section('أعمدة تحتاج توضيحاً', columns.map((column) => el('div', { class: 'imp-ask' }, [
+    el('div', { class: 'imp-ask-q' }, [
+      el('b', { text: column.header }),
+      el('span', { text: ' — ماذا يمثل؟' }),
+    ]),
+    el('div', { class: 'imp-ask-opts' }, column.options.map((option) => el('button', {
+      class: 'chipbtn', type: 'button', text: option.label,
+      onClick: () => {
+        if (option.key) state.mapping[option.key] = column.index;
+        state.resolved = { ...(state.resolved || {}), [column.index]: option.key || 'ignored' };
+        renderImport();
+      },
+    }))),
+  ])));
 }
 
 /** The file as it is, not as we hope it is — three rows, unaltered. */
@@ -152,7 +183,9 @@ function previewTable() {
 }
 
 function renderConfirm(body, foot) {
-  const { records, problems, newTaxonomy } = currentPlan();
+  const { records, problems, newTaxonomy, rowStatus } = currentPlan();
+  const mapped = new Set(Object.values(state.mapping));
+  const unknownColumns = state.sheet.headers.filter((_, i) => !mapped.has(i)).length;
   const quota = quotaStatus();
   const room = quota.limit == null ? Infinity : Math.max(0, quota.limit - quota.used);
   const overflow = records.length > room;
@@ -161,10 +194,14 @@ function renderConfirm(body, foot) {
 
   render(body, [
     fileLine(),
+    // Three counts, because a row is one of three things and calling them all
+    // "warnings" hides which ones are actually going to be left behind.
     el('div', { class: 'imp-stats' }, [
-      el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(records.length) }), ' قطعة ستُضاف']),
+      el('div', { class: 'imp-stat imp-ready' }, [el('b', { text: formatNumber(records.length) }), ' قطعة ستُضاف']),
+      el('div', { class: 'imp-stat imp-warning' }, [el('b', { text: formatNumber(rowStatus.warning.length) }), ' صفّاً يحتاج مراجعة']),
+      el('div', { class: 'imp-stat imp-error' }, [el('b', { text: formatNumber(rowStatus.error.length) }), ' صفّاً لن يُستورد']),
       el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(newCount) }), ' تصنيف/موقع/مجلد جديد']),
-      el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(problems.length) }), ' تنبيه']),
+      unknownColumns ? el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(unknownColumns) }), ' عموداً غير مستخدم']) : null,
     ]),
 
     overflow ? el('div', { class: 'imp-warnings' }, [

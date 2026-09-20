@@ -123,11 +123,24 @@ await page.evaluate(() => [...document.querySelectorAll('.qa')].find(b => b.text
 await page.waitForTimeout(400);
 const dup = await page.evaluate(() => ({
   reasons: [...document.querySelectorAll('.dup-reason')].map(n => n.textContent),
-  names: [...document.querySelectorAll('.dup-items .ask-result-name')].map(n => n.textContent),
+  // The pair is laid out side by side, each side labelled, so the comparison
+  // is the interface rather than two cards a scroll apart.
+  names: [...document.querySelectorAll('.dup-pair .ask-result-name')].map(n => n.textContent),
+  sides: [...document.querySelectorAll('.dup-side-lbl')].map(n => n.textContent),
+  badges: [...document.querySelectorAll('.dup-badge')].map(n => n.textContent),
+  actions: [...document.querySelectorAll('.dup-acts button')].map(n => n.textContent),
   note: document.querySelector('.asec-sub')?.textContent || '',
 }));
 check('A10 duplicates are grouped with the reason', dup.reasons.includes('نفس الباركود'), JSON.stringify(dup.reasons));
-check('A11 both sides of the pair are shown', dup.names.filter(n => n === 'ساعة جيب فضية').length === 2, JSON.stringify(dup.names));
+check('A11 both sides of the pair are shown, side by side and labelled',
+  dup.names.filter(n => n === 'ساعة جيب فضية').length === 2
+  && dup.sides.includes('الأولى') && dup.sides.includes('الثانية'),
+  JSON.stringify({ names: dup.names, sides: dup.sides }));
+check('A11b the confidence claimed matches the evidence, and never exceeds it',
+  dup.badges.includes('تطابق مؤكد'), JSON.stringify(dup.badges));
+check('A11c every action is non-destructive, and one of them is "these are two different things"',
+  dup.actions.some(a => /الإبقاء كقطعتين/.test(a)) && !dup.actions.some(a => /دمج|حذف/.test(a)),
+  JSON.stringify(dup.actions));
 check('A12 the screen says nothing is merged automatically', dup.note.includes('لا يُدمج'), dup.note);
 
 const beforeIds = await page.evaluate(async () => {
