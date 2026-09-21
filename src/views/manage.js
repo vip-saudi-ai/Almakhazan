@@ -14,6 +14,7 @@ import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } fro
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
 import { inventoryCounts } from '../query.js';
+import { storageEstimate } from '../local-store.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
 import { startSpreadsheetImport } from './sheet-import.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
@@ -771,6 +772,48 @@ function renderAiPanel() {
   ]);
 }
 
+const MB = 1024 * 1024;
+
+function humanBytes(bytes) {
+  if (bytes >= 1024 * MB) return `${(bytes / 1024 / MB).toFixed(1)} غيغابايت`;
+  if (bytes >= MB) return `${Math.round(bytes / MB)} ميغابايت`;
+  return `${Math.max(1, Math.round(bytes / 1024))} كيلوبايت`;
+}
+
+/**
+ * Fills in the device-storage line once the browser answers.
+ *
+ * Browsers report an approximation, and some report nothing at all — so an
+ * unknown is said as "unknown" rather than drawn as a zero, and the line
+ * still says the one thing that is always true and always worth knowing:
+ * whether these records exist anywhere but here.
+ */
+async function describeDeviceStorage() {
+  const note = $('storage-note');
+  if (!note) return;
+  const cloud = Boolean(currentSession().user) && !currentSession().local;
+  const safety = cloud
+    ? 'نسخة سحابية موجودة أيضاً.'
+    : 'هذه النسخة الوحيدة — نزّل نسخة احتياطية بين حين وآخر.';
+
+  try {
+    const estimate = await storageEstimate();
+    if (!estimate) {
+      note.textContent = `لا يكشف هذا المتصفح عن المساحة المتاحة. ${safety}`;
+      return;
+    }
+    const used = humanBytes(estimate.usage);
+    const free = humanBytes(estimate.remaining);
+    const tight = estimate.ratio > 0.85;
+    note.textContent = tight
+      ? `مستخدم ${used}، والمتبقي ${free} فقط — احذف صوراً أو صدّر نسخة قبل أن تمتلئ. ${safety}`
+      : `مستخدم ${used}، والمتبقي نحو ${free}. ${safety}`;
+  } catch (error) {
+    console.error('[settings] storage estimate failed', error);
+    note.textContent = safety;
+  }
+}
+
 function renderDataPanel() {
   const panel = $('data-panel');
   if (!panel) return;
@@ -818,7 +861,20 @@ function renderDataPanel() {
         : 'القطع المحذوفة، قابلة للاستعادة',
       openTrashSheet),
     row('📍', 'rgba(175,82,222,.15)', 'المواقع', `${formatNumber(repository.state.locations.length)} موقع`, openLocationsSheet),
+    // What this app is using of the device, and whether the browser has agreed
+    // not to evict it. On a device-only inventory that is not a cache
+    // statistic: it is the difference between "your records are here" and
+    // "your records were here until the phone needed room".
+    el('div', { class: 'srow', id: 'storage-row' }, [
+      el('div', { class: 'srowiw', style: { background: 'rgba(142,142,147,.15)' }, text: '💽', 'aria-hidden': 'true' }),
+      el('div', { style: { flex: '1' } }, [
+        el('div', { class: 'srowl', text: 'مساحة الجهاز' }),
+        el('div', { class: 'srowd', id: 'storage-note', text: 'جارٍ القياس…' }),
+      ]),
+    ]),
   ]);
+
+  void describeDeviceStorage();
 
   const danger = $('danger-panel');
   render(danger, [

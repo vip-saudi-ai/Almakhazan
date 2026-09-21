@@ -174,6 +174,17 @@ async function loadApplicationData(firebase, session) {
     startPlanWatch(cloudReady
       ? { mode: 'cloud', workspaceId: session.workspaceId }
       : { mode: 'local', workspaceId: null });
+
+    // Without a cloud copy, what is on this device is the only copy — and a
+    // browser evicts unpersisted storage when the device needs room. Asking is
+    // free; being refused is normal and changes nothing. Asked once there is
+    // something to lose, because a browser weighs the request against whether
+    // the app looks used.
+    if (!cloudReady && repository.state.items.length) {
+      void local.requestPersistence().then((granted) => {
+        if (!granted) console.info('[app] the browser did not grant persistent storage');
+      });
+    }
   } catch (error) {
     console.error('[app] data load failed', error);
     toastError(error, 'تعذّر تحميل البيانات');
