@@ -13,7 +13,7 @@ import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
 import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
-import { inventoryCounts } from '../query.js';
+import { queryInventory } from '../query.js';
 import { storageEstimate } from '../local-store.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
 import { startSpreadsheetImport } from './sheet-import.js';
@@ -64,12 +64,13 @@ let editingCategoryId = null;
 export function renderCategories() {
   const grid = $('catgrid');
   if (!grid) return;
-  // One pass over the records, not one pass per category.
-  const counts = inventoryCounts();
-
+  // Drawn immediately from nothing and corrected a moment later by
+  // `applyExactCounts`, which asks the backend for an index range count per
+  // category. Drawing a number first and correcting it would flash a wrong
+  // one; drawing none and filling it in does not.
   render(grid, [
     ...repository.state.categories.map((category) => {
-      const count = counts.categories.get(category.id) || 0;
+      const count = 0;
       return el('div', { class: 'catcell' }, [
         el('button', {
           class: 'catcell-main', type: 'button',
@@ -300,20 +301,19 @@ export function openLocationsSheet() {
   openSheet('loc');
 }
 
-/** "N قطعة", or an honest phrase when N is not knowable from the window. */
-function describeCount() {
-  const { live, complete } = inventoryCounts();
-  return complete ? `${formatNumber(live)} قطعة` : 'كل ما في مخزونك';
+/** "N قطعة", or an honest phrase when the number is not known. */
+async function describeCount() {
+  const counts = await repository.recordCounts();
+  return counts ? `${formatNumber(counts.live)} قطعة` : 'كل ما في مخزونك';
 }
 
 function renderLocations() {
   const list = $('loc-list');
   if (!list) return;
-  const counts = inventoryCounts();
 
   render(list, [
     ...repository.state.locations.map((location) => {
-      const count = counts.locations.get(location.id) || 0;
+      const count = 0;
       return el('div', { class: 'srow' }, [
         el('div', { class: 'srowiw', text: '📍', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
@@ -368,25 +368,40 @@ async function addLocation() {
 }
 
 // ── trash ──
+/**
+ * The Trash has its own index, so it has its own query.
+ *
+ * A deleted record is old by definition and sorts out of a newest-first
+ * window, so this used to load the entire inventory on the way in. It does not
+ * need to: a trashed record carries a numeric `deletedAt` and a live one
+ * carries null, and IndexedDB leaves null out of an index — so the `deletedAt`
+ * index contains exactly the deleted records and nothing else.
+ */
 export async function openTrashSheet() {
-  // Trash is the one Settings destination that needs records the window does
-  // not hold: a deleted record is old by definition, so it sorts out of the
-  // newest-first window. The load happens here, on the way in, rather than
-  // being charged to everyone who opens Settings.
-  if (!repository.itemsComplete
-      && !(await withFullInventory('جارٍ قراءة المحذوفات…'))) return;
-  openTrashSheetNow();
-}
-
-function openTrashSheetNow() {
-  renderTrash();
   openSheet('trash');
+  await renderTrash();
 }
 
-function renderTrash() {
+async function renderTrash() {
   const list = $('trash-list');
   if (!list) return;
-  const trashed = repository.trashedItems();
+  render(list, [el('div', { class: 'srowd', text: 'جارٍ القراءة…' })]);
+
+  let trashed;
+  try {
+    const result = await queryInventory({ trashed: true, perPage: 200 }, {
+      ensure: () => withFullInventory('جارٍ قراءة المحذوفات…'),
+    });
+    if (!result?.answerable) {
+      render(list, [emptyState('🗑', 'تعذّر قراءة المحذوفات', 'حاول مرة أخرى')]);
+      return;
+    }
+    trashed = result.rows;
+  } catch (error) {
+    console.error('[trash] could not be read', error);
+    render(list, [emptyState('🗑', 'تعذّر قراءة المحذوفات', 'حاول مرة أخرى')]);
+    return;
+  }
 
   if (!trashed.length) {
     render(list, [emptyState('🗑', 'سلة المحذوفات فارغة', 'القطع المحذوفة تظهر هنا ويمكن استعادتها')]);
@@ -416,7 +431,7 @@ function renderTrash() {
           onClick: async () => {
             try {
               await repository.restoreItem(item.id);
-              renderTrash();
+              void renderTrash();
               toast('استُعيدت القطعة', '↩');
             } catch (error) {
               toastError(error, 'تعذّر استعادة القطعة');
@@ -436,7 +451,7 @@ function renderTrash() {
             if (!confirmed) return;
             try {
               await repository.purgeItem(item.id);
-              renderTrash();
+              void renderTrash();
               toast('حُذفت نهائياً', '🗑');
             } catch (error) {
               toastError(error, 'تعذّر الحذف النهائي');
@@ -506,7 +521,7 @@ async function runImport(mode) {
   if (mode === 'restore') {
     const confirmed = await confirmAction({
       title: 'استبدال كل البيانات الحالية؟',
-      message: `سيُستبدل المخزون الحالي (${describeCount()}) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
+      message: `سيُستبدل المخزون الحالي (${await describeCount()}) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
       icon: '⚠️',
       confirmLabel: 'استبدال',
       requirePhrase: 'استبدال',
@@ -826,13 +841,13 @@ function renderDataPanel() {
   // of the drawing function. Renamed rather than aliased: a shadowed import
   // fails at the first call that needs the real one, which is how this
   // surfaced — as "icon is not a function" three sections away.
-  const row = (glyph, background, title, subtitle, onClick) => el('button', {
+  const row = (glyph, background, title, subtitle, onClick, subtitleId) => el('button', {
     class: 'srow srow-btn', type: 'button', onClick,
   }, [
     el('div', { class: 'srowiw', style: { background }, text: glyph, 'aria-hidden': 'true' }),
     el('div', { style: { flex: '1' } }, [
       el('div', { class: 'srowl', text: title }),
-      subtitle ? el('div', { class: 'srowd', text: subtitle }) : null,
+      subtitle ? el('div', { class: 'srowd', id: subtitleId, text: subtitle }) : null,
     ]),
     el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ]);
@@ -852,14 +867,11 @@ function renderDataPanel() {
     }),
     row('📄', 'rgba(255,149,0,.15)', 'استيراد من Excel أو CSV', 'طابق الأعمدة بنفسك، وشاهد ما سيُكتب قبل كتابته', () => { void startSpreadsheetImport(); }),
     row('📥', 'rgba(255,149,0,.15)', 'استيراد نسخة JSON', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
-    // Deleted records sort to the back of the window, so their count is only
-    // knowable once everything is loaded. Settings does not wait for that —
-    // the row says what it is and the sheet counts when it opens.
+    // The count comes from the index that holds exactly the deleted records,
+    // so it is exact and costs nothing — and it fills in a moment after the
+    // row is drawn rather than making Settings wait for it.
     row('🗑', 'rgba(142,142,147,.15)', 'سلة المحذوفات',
-      repository.itemsComplete
-        ? `${formatNumber(inventoryCounts().trashed)} قطعة`
-        : 'القطع المحذوفة، قابلة للاستعادة',
-      openTrashSheet),
+      'القطع المحذوفة، قابلة للاستعادة', openTrashSheet, 'trash-count'),
     row('📍', 'rgba(175,82,222,.15)', 'المواقع', `${formatNumber(repository.state.locations.length)} موقع`, openLocationsSheet),
     // What this app is using of the device, and whether the browser has agreed
     // not to evict it. On a device-only inventory that is not a cache
@@ -875,6 +887,10 @@ function renderDataPanel() {
   ]);
 
   void describeDeviceStorage();
+  void repository.recordCounts().then((counts) => {
+    const node = $('trash-count');
+    if (node && counts) node.textContent = `${formatNumber(counts.trashed)} قطعة`;
+  });
 
   const danger = $('danger-panel');
   render(danger, [
@@ -884,7 +900,7 @@ function renderDataPanel() {
         // clearInventory loads everything before it deletes anything, so the
         // count in the warning is read after that load rather than from the
         // window that happens to be on screen.
-        const items = repository.itemsComplete ? inventoryCounts().live : null;
+        const items = (await repository.recordCounts())?.live ?? null;
         const folders = repository.state.folders.length;
         const confirmed = await confirmAction({
           title: 'حذف كل القطع والمجلدات؟',

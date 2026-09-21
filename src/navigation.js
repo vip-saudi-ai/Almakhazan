@@ -36,14 +36,14 @@ export function renderActiveTab() {
 //
 //   ov    a dashboard of totals and proportions
 //   ai    a score and an answer computed from every record
-//   cats  every category with how many records carry it
 //
-// Settings is not one of them, and it used to be. Account, plan, appearance,
-// import/export, workspace, team and preferences say nothing about the
-// records — so a customer with 20,000 of them was made to wait for all of
-// them to open a screen that never mentions them. The one Settings
-// destination that does need them, Trash, loads on its own way in.
-const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai', 'cats']);
+// Two screens have left this set as the query engine learned to answer their
+// questions by index. Settings never described the records at all, and the
+// Categories screen now gets an exact count per category from an index range
+// rather than by counting an array. Trash has its own index too, and reads it
+// on the way in. What remains are the two screens that genuinely aggregate
+// over every record, and for those the wait is the honest price of the answer.
+const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai']);
 
 export function goTab(name) {
   if (!TABS.includes(name)) return;

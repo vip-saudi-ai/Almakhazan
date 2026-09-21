@@ -4,7 +4,7 @@
 import { icon } from '../icons.js';
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
-import { inventoryCounts, queryInventory, runQuery, summarize } from '../query.js';
+import { findByIdentifier, inventoryCounts, queryInventory } from '../query.js';
 import { currenciesPresent, currencySymbol } from '../money.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
@@ -104,33 +104,66 @@ function resetPage() {
  */
 let narrowingGeneration = 0;
 
-async function narrowing(apply) {
-  // Apply first so the query reflects what was just asked for, then let the
-  // query say whether it can be answered from what is loaded.
-  const before = currentQuery();
-  apply();
-  const after = currentQuery();
-  const ticket = ++narrowingGeneration;
+/** The answer currently on screen, so a repaint need not re-ask for it. */
+let lastResult = null;
 
-  // One call: it loads whatever the query needs and answers it. If the data is
-  // already in hand it does not yield at all, so typing stays instant and
-  // nothing flashes a loading state for work that takes no time.
-  const result = await queryInventory(after, {
-    ensure: () => withFullInventory('جارٍ قراءة المخزون كاملاً…'),
-  });
-  if (ticket !== narrowingGeneration) return;     // superseded; the newer one paints
-  if (result.answerable) {
-    renderHome(result);
+/**
+ * Ask for what the screen should show, and paint it when it arrives.
+ *
+ * One path, always asynchronous, because on a device the answer comes out of
+ * the database rather than out of an array the app was already holding. Every
+ * request takes a ticket; a request that is no longer the newest paints
+ * nothing and, where the engine can, stops working. Without that, a slow
+ * answer to "خا" lands after a fast answer to "خاتم" and paints the older
+ * results over the newer ones.
+ *
+ * @param {object} [options]
+ * @param {Function} [options.apply] state to change before asking
+ * @param {boolean}  [options.revertOnFailure] put the screen back when the
+ *   question could not be answered, rather than showing part of an answer
+ */
+async function requestList({ apply, revertOnFailure = false } = {}) {
+  const before = currentQuery();
+  apply?.();
+  const ticket = ++narrowingGeneration;
+  const signal = { get aborted() { return ticket !== narrowingGeneration; } };
+
+  let result;
+  try {
+    result = await queryInventory(currentQuery(), {
+      ensure: () => withFullInventory('جارٍ قراءة المخزون كاملاً…'),
+      signal,
+    });
+  } catch (error) {
+    if (ticket !== narrowingGeneration) return;
+    console.error('[home] the list could not be read', error);
+    toastError(error, 'تعذّر قراءة المخزون');
     return;
   }
 
-  // Put the screen back rather than answering a narrowed question from a
-  // fraction of the inventory.
-  Object.assign(view, {
-    query: before.search, folderId: before.folderId, categoryPill: before.categoryId,
-    filters: before.filters, sortMode: before.sort, page: before.page,
-  });
-  renderHome();
+  if (!result || ticket !== narrowingGeneration) return;   // superseded
+
+  if (!result.answerable) {
+    if (revertOnFailure) {
+      // Put the screen back rather than answering a narrowed question from a
+      // fraction of the inventory.
+      Object.assign(view, {
+        query: before.search, folderId: before.folderId, categoryPill: before.categoryId,
+        filters: before.filters, sortMode: before.sort, page: before.page,
+      });
+      void requestList();
+    }
+    return;
+  }
+
+  lastResult = result;
+  paintList(result);
+}
+
+/** Narrowing — a search, a filter, a folder — is the same request, reverted
+ *  when it turns out it could not be answered honestly. */
+function narrowing(apply) {
+  return requestList({ apply, revertOnFailure: true });
 }
 
 // ── stats ──
@@ -138,8 +171,8 @@ async function narrowing(apply) {
 // number or null, and null means "not knowable from what is loaded" rather
 // than zero — so a proportion computed from the newest 200 can never be
 // printed as a fact about the inventory.
-function renderStats() {
-  const summary = summarize(currentQuery());
+function renderStats(summary) {
+  if (!summary) return;
 
   setText('s-total', summary.records == null ? '—' : formatNumber(summary.records));
   setText('s-qty', summary.quantity == null ? '—' : formatNumber(summary.quantity));
@@ -156,6 +189,32 @@ function renderStats() {
 }
 
 // ── folders ──
+
+/** The last counts the engine reported, so the rows can be drawn immediately. */
+let folderCounts = { folders: new Map(), categories: new Map(), locations: new Map(), complete: false };
+
+/**
+ * Every category that has any record at all — what the pill row falls back to
+ * outside a folder scope, where "which categories are in view" would cost a
+ * walk of the inventory to draw a row of chips.
+ */
+let pillFallback = new Set();
+
+/**
+ * Re-reads every count the screens show beside a name. On the device engine
+ * these are index range counts — twenty small counts rather than one pass over
+ * the inventory — so this is cheap enough to run whenever the data changes.
+ */
+async function refreshCounts() {
+  try {
+    folderCounts = await inventoryCounts();
+    pillFallback = new Set(folderCounts.categories.keys());
+    renderFolders();
+  } catch (error) {
+    console.error('[home] counts unavailable', error);
+  }
+}
+
 function folderCard(folder, counts) {
   // A count taken from the window would be a fraction presented as a total.
   // Until the inventory is whole, the card carries no number at all.
@@ -195,10 +254,12 @@ function renderFolders() {
     return;
   }
   row.style.display = 'grid';
-  // One pass for every folder's count, rather than one pass per folder.
-  const counts = inventoryCounts();
+  // Drawn at once from whatever counts are in hand, and corrected when the
+  // real ones arrive — an index range count per folder, which is cheap but is
+  // still a round trip. Waiting for it would make the row appear late for no
+  // benefit it does not already give.
   render(row, [
-    ...folders.map((folder) => folderCard(folder, counts)),
+    ...folders.map((folder) => folderCard(folder, folderCounts)),
     el('button', {
       class: 'fld-card fld-add gl-s',
       type: 'button',
@@ -372,13 +433,23 @@ function rowNode(item) {
 }
 
 // ── pills ──
-function renderPills(scopeItems) {
+function renderPills(result) {
   const container = $('hpills');
   if (!container) return;
-  // `categories.filter(c => items.some(...))` walked the scope once per
-  // category. One pass builds the set of categories that are actually present.
-  const present = new Set();
-  for (const item of scopeItems) present.add(item.categoryId || UNCATEGORIZED_ID);
+
+  // Two shapes, one row. An adapter that holds the records hands them over and
+  // the categories are read off them; the device engine counts instead and
+  // hands over the set of category ids present in this scope. Neither one
+  // walks the inventory once per category, which is what this used to do.
+  let present;
+  if (result?.scopeCategories instanceof Set) {
+    present = result.scopeCategories;
+  } else if (result?.scopeItems?.length) {
+    present = new Set(result.scopeItems.map((item) => item.categoryId || UNCATEGORIZED_ID));
+  } else {
+    present = pillFallback;
+  }
+
   const used = repository.state.categories.filter((c) => present.has(c.id));
   const hasUncategorized = present.has(UNCATEGORIZED_ID);
 
@@ -435,16 +506,38 @@ function renderQuotaBanner() {
  * carries it, open that record; if none does, offer to create one with the
  * code already filled in. Never silently create.
  */
+/**
+ * The record carrying this exact code, wherever it is in the inventory.
+ *
+ * The device engine answers from the barcode, SKU and serial indexes. An
+ * adapter that cannot — the cloud one, until a server-side lookup exists —
+ * falls back to loading and searching, which is slower but still correct.
+ */
+async function findMatchingRecord(value) {
+  const byIndex = await findByIdentifier(value);
+  if (byIndex?.length) return byIndex[0];
+
+  const direct = repository.item(value);
+  if (direct && !direct.deletedAt) return direct;
+  if (byIndex) return null;
+
+  if (!(await withFullInventory('جارٍ البحث في المخزون…'))) return null;
+  return repository.liveItems().find(
+    (item) => item.barcode === value || item.sku === value
+      || item.serialNumber === value || item.id === value,
+  ) || null;
+}
+
 export async function scanIntoSearch() {
   await openScanner({
     title: 'امسح باركود أو رمز QR لقطعة',
     onCode: async ({ value }) => {
       // "No item carries this code" has to mean the whole inventory, not the
-      // part of it this screen happens to hold.
-      if (!(await withFullInventory('جارٍ البحث في المخزون…'))) return;
-      const match = repository.liveItems().find(
-        (item) => item.barcode === value || item.sku === value || item.id === value,
-      );
+      // part of it this screen happens to hold — and it is one index lookup,
+      // not a reading of every record. A scanner that made the customer wait
+      // for 20,000 records before telling them whether they own the thing in
+      // their hand was the wrong shape for the job.
+      const match = await findMatchingRecord(value);
       if (match) { openDetail(match.id); return; }
 
       $('hsearch').value = value;
@@ -687,20 +780,53 @@ export function resetAllFilters() {
 }
 
 // ── pagination ──
-function renderPagination(totalPages) {
+/**
+ * Numbered pages while the engine can say how many there are; previous/next
+ * while it cannot.
+ *
+ * A total is cheap when the answer is exactly one index range — a folder, a
+ * category, a location, the Trash. Once something the index cannot see is in
+ * play, counting the answer means walking it, and walking 20,000 records to
+ * print a number is the cost this whole layer exists to avoid. So the pager
+ * says what is true: how far you are, and whether there is more.
+ */
+function renderPagination(result) {
   const container = $('hpag');
   if (!container) return;
-  const model = paginationModel(view.page, totalPages);
+
+  const go = (page) => {
+    view.page = Math.max(1, page);
+    void requestList();
+    $('hscroll')?.scrollTo(0, 0);
+  };
+
+  const back = el('button', {
+    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة السابقة',
+    disabled: view.page <= 1 || undefined,
+    onClick: () => go(view.page - 1),
+  }, [icon('forward', { size: 17 })]);
+
+  const forward = el('button', {
+    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة التالية',
+    disabled: !result.hasMore || undefined,
+    onClick: () => go(view.page + 1),
+  }, [icon('back', { size: 17 })]);
+
+  if (result.totalPages == null) {
+    if (view.page <= 1 && !result.hasMore) { render(container, []); return; }
+    render(container, [
+      back,
+      el('span', { class: 'pgap', text: `صفحة ${formatNumber(view.page)}` }),
+      forward,
+    ]);
+    return;
+  }
+
+  const model = paginationModel(view.page, result.totalPages);
   if (!model.length) { render(container, []); return; }
 
-  const go = (page) => { view.page = page; renderHome(); $('hscroll')?.scrollTo(0, 0); };
-
   render(container, [
-    el('button', {
-      class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة السابقة',
-      disabled: view.page <= 1 || undefined,
-      onClick: () => go(view.page - 1),
-    }, [icon('forward', { size: 17 })]),
+    back,
     ...model.map((entry) => (entry.type === 'gap'
       ? el('span', { class: 'pgap', text: '…', 'aria-hidden': 'true' })
       : el('button', {
@@ -711,55 +837,62 @@ function renderPagination(totalPages) {
         'aria-current': entry.value === view.page ? 'page' : undefined,
         onClick: () => go(entry.value),
       }))),
-    el('button', {
-      class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة التالية',
-      disabled: view.page >= totalPages || undefined,
-      onClick: () => go(view.page + 1),
-    }, [icon('back', { size: 17 })]),
+    forward,
   ]);
 }
 
 // ── main render ──
+
 /**
- * @param {object} [prepared] a result already obtained from `queryInventory`.
- *   Narrowing takes the asynchronous path — it may have to load records first
- *   — and hands the answer here rather than asking a second time. Everything
- *   else (a snapshot arriving, a view toggle) re-runs the query synchronously,
- *   because the data is already in hand.
+ * Draw the screen.
+ *
+ * `renderHome` paints everything that does not depend on the answer and then
+ * asks for the answer; `paintList` paints the answer when it comes. They are
+ * separate because the answer is asynchronous now — it is read from the
+ * database rather than filtered out of an array the app was holding — and the
+ * chrome should not wait on it.
  */
-export function renderHome(prepared) {
+export function renderHome() {
+  renderChrome();
+  // A repaint that is not a new question — a snapshot arriving, a grid/list
+  // toggle — still re-asks, because the records may have changed underneath.
+  void requestList();
+}
+
+function renderChrome() {
   const folder = view.folderId ? repository.folder(view.folderId) : null;
   if (view.folderId && !folder) { view.folderId = null; }
 
-  renderStats();
   renderFolders();
+  void refreshCounts();
   renderQuotaBanner();
-
-  $('statsrow').style.display = view.folderId ? 'none' : 'grid';
-
-  // One page of one query. The screen does not filter an array of records; it
-  // asks for what it needs and renders the answer. An assistant hand-over is
-  // the same query with an explicit id set, so it narrows this screen rather
-  // than opening a second one.
-  const result = prepared || runQuery(currentQuery());
-  const { rows: pageItems, total, totalPages, searching, scopeItems } = result;
-  view.page = result.page;
-  renderSortNotice(result);
-
-  renderPills(scopeItems);
-  renderFilterBanner(searching);
   renderAssistantBanner();
-
-  setText('htitle', searching ? `نتائج البحث` : folder ? `${folder.icon} ${folder.name}` : 'القطع');
-  setText('hcount', formatNumber(total));
-
   renderNavBar(folder);
+  $('statsrow').style.display = view.folderId ? 'none' : 'grid';
+}
+
+function paintList(result) {
+  const folder = view.folderId ? repository.folder(view.folderId) : null;
+  const { rows: pageItems, total, totalPages, searching } = result;
+  view.page = result.page;
+
+  renderStats(result.summary);
+  renderSortNotice(result);
+  renderPills(result);
+  renderFilterBanner(searching);
+
+  setText('htitle', searching ? 'نتائج البحث' : folder ? `${folder.icon} ${folder.name}` : 'القطع');
+  // A total the engine could not count cheaply is not printed as if it had
+  // been. "24+" is what is actually known; a number would be a guess.
+  setText('hcount', total == null
+    ? `${formatNumber(pageItems.length + (view.page - 1) * PAGE_SIZE)}+`
+    : formatNumber(total));
 
   const empty = $('hempty');
   const grid = $('hgrid');
   const list = $('hlist');
 
-  if (!total) {
+  if (!pageItems.length) {
     empty.style.display = 'flex';
     grid.style.display = 'none';
     list.style.display = 'none';
@@ -770,7 +903,7 @@ export function renderHome(prepared) {
     // for all of them, and a way out for none.
     const filtered = activeFilterCount(view.filters) > 0 || view.categoryPill !== 'all';
     renderEmptyState({ searching, filtered, folder });
-    renderPagination(1);
+    renderPagination(result);
     renderPartial();
     // Still draw the selection bar: an empty page is exactly when someone
     // needs the way out of selection mode.
@@ -791,7 +924,7 @@ export function renderHome(prepared) {
     render(grid, []);
   }
 
-  renderPagination(totalPages);
+  renderPagination(result);
   renderPartial();
   renderSelectionBar(pageItems);
 }

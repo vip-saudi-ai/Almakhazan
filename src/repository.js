@@ -238,7 +238,31 @@ class FirestoreBackend {
     return (await this.findItemsByField(field, value)).length;
   }
 
+  /** How many records exist, live and trashed, counted on the server. */
+  async countItems() {
+    if (!this.fs.getCountFromServer) return null;
+    const [all, trashed] = await Promise.all([
+      this.fs.getCountFromServer(this.fs.query(this.col('items'))),
+      this.fs.getCountFromServer(this.fs.query(this.col('items'), this.fs.where('deletedAt', '!=', null))),
+    ]);
+    const total = all.data().count;
+    const gone = trashed.data().count;
+    return { total, live: total - gone, trashed: gone };
+  }
+
+  /**
+   * A batch, with an optional version check.
+   *
+   * A write batch cannot read, so a batch carrying `expectedVersion` runs as a
+   * transaction instead: Firestore re-reads each document inside it and retries
+   * the whole thing if anything moved underneath. That caps the chunk at what
+   * one transaction may touch, which is why the caller chunks rather than
+   * handing over a thousand operations at once.
+   */
   async runBatch(operations) {
+    const guarded = operations.some((op) => op.expectedVersion != null || op.bumpVersion);
+    if (guarded) return this._runGuardedBatch(operations);
+
     // Firestore caps a batch at 500 writes.
     for (let i = 0; i < operations.length; i += 450) {
       const batch = this.fs.writeBatch(this.db);
@@ -251,6 +275,32 @@ class FirestoreBackend {
         }
       }
       await batch.commit();
+    }
+  }
+
+  async _runGuardedBatch(operations) {
+    for (let i = 0; i < operations.length; i += 100) {
+      const chunk = operations.slice(i, i + 100);
+      await this.fs.runTransaction(this.db, async (tx) => {
+        const refs = chunk.map((op) => this.ref(op.collection, op.id));
+        // Every read before any write: a Firestore transaction requires it.
+        const snapshots = await Promise.all(refs.map((ref) => tx.get(ref)));
+        chunk.forEach((op, index) => {
+          const ref = refs[index];
+          const snap = snapshots[index];
+          if (op.type === 'delete') { tx.delete(ref); return; }
+          if (op.expectedVersion != null) {
+            if (!snap.exists()) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+            const current = snap.data();
+            if ((current.version ?? 1) !== op.expectedVersion) {
+              throw new ConflictError({ id: op.id, ...current });
+            }
+          }
+          const data = { ...op.data, updatedAt: this.serverTime };
+          if (op.bumpVersion) data.version = ((snap.exists() ? snap.data().version : 0) ?? 0) + 1;
+          tx.set(ref, data, { merge: op.merge !== false });
+        });
+      });
     }
   }
 }
@@ -289,7 +339,7 @@ class LocalBackend {
       local.count(name),
       local.countByIndex(name, 'deletedAt', IDBKeyRange.lowerBound(0)),
     ]);
-    return { total, live: total - trashed };
+    return { total, live: total - trashed, trashed };
   }
 
   async _notify(name) {
@@ -390,20 +440,54 @@ class LocalBackend {
    * records moved, 100 not, and the folder still there or already gone
    * depending on the order. Here the whole batch rolls back instead.
    */
+  /**
+   * Every operation in one transaction, with the version checked inside it.
+   *
+   * Two properties, and both need the transaction.
+   *
+   * Atomicity: a folder deletion that reassigns 300 records and then removes
+   * the folder must not be able to half-happen. With a loop of independent
+   * writes, a quota failure on record 200 left 200 moved, 100 not, and the
+   * folder either still there or already gone depending on the order.
+   *
+   * Concurrency: an operation may carry `expectedVersion`, and the version it
+   * is compared against is read here, inside the transaction, from the record
+   * as stored. Comparing beforehand — against the copy the screen was holding
+   * — leaves a window in which another tab commits between the check and the
+   * write, and the check then passed against a record that no longer exists as
+   * it was read. The new version is computed from the stored one for the same
+   * reason: a stale screen's idea of "version 5" must not become version 6 on
+   * top of somebody else's version 6.
+   */
   async runBatch(operations) {
     if (!operations.length) return;
     const touched = [...new Set(operations.map((op) => op.collection))];
     await local.transaction(touched, 'readwrite', async (stores) => {
       for (const op of operations) {
         const store = stores[op.collection];
-        if (op.type === 'set') {
-          const existing = op.merge !== false ? await local.request(store.get(op.id)) : null;
-          await local.request(store.put({
-            ...existing, ...op.data, id: op.id, updatedAt: Date.now(),
-          }));
-        } else if (op.type === 'delete') {
+        if (op.type === 'delete') {
           await local.request(store.delete(op.id));
+          continue;
         }
+        if (op.type !== 'set') continue;
+
+        const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion;
+        const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
+
+        if (op.expectedVersion != null) {
+          if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+          if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
+        }
+
+        const record = {
+          ...(op.merge !== false ? existing : null),
+          ...op.data,
+          id: op.id,
+          updatedAt: Date.now(),
+        };
+        // The next version is the stored one plus one, never the caller's.
+        if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
+        await local.request(store.put(record));
       }
     });
     for (const name of touched) await this._notify(name);
@@ -429,6 +513,10 @@ class LocalBackend {
   async countItemsByField(field, value) {
     if (value == null) return 0;
     return local.countByIndex('items', field, value);
+  }
+
+  async countItems() {
+    return this._liveCount('items');
   }
 }
 
@@ -1031,6 +1119,20 @@ class Repository {
     return this.backend.findItemsByField(field, value);
   }
 
+  /**
+   * How many records exist — live, trashed and in total — asked of the
+   * backend rather than counted from what is loaded. Null when the backend
+   * cannot say, which the caller must present as "not known" rather than nought.
+   */
+  async recordCounts() {
+    try {
+      return (await this.backend.countItems?.()) || null;
+    } catch (error) {
+      console.error('[repo] record counts unavailable', error);
+      return null;
+    }
+  }
+
   /** The same set's size, counted without reading the records. */
   async countItemsReferencing(field, value) {
     if (value == null) return 0;
@@ -1048,7 +1150,14 @@ class Repository {
       collection: 'items',
       id: item.id,
       merge: true,
-      data: { ...patch, updatedBy: this.session.userId, version: (item.version ?? 1) + 1 },
+      // The version moves with the record, computed inside the write from the
+      // stored one — an indirect change is still a change, and a device
+      // holding the old copy has to see a conflict rather than overwrite this.
+      // No `expectedVersion`: the customer is removing a folder, not resolving
+      // an edit conflict, and a record edited elsewhere still has to lose its
+      // reference to a folder that is about to stop existing.
+      bumpVersion: true,
+      data: { ...patch, updatedBy: this.session.userId },
     }));
   }
 
@@ -1200,22 +1309,52 @@ class Repository {
       }
     }
 
-    const operations = ids
-      .map((id) => this.item(id))
-      .filter(Boolean)
-      .map((item) => ({
-        type: 'set',
-        collection: 'items',
-        id: item.id,
-        merge: true,
-        data: { ...patch, updatedBy: this.session.userId, version: (item.version ?? 1) + 1 },
-      }));
+    const selected = ids.map((id) => this.item(id)).filter(Boolean);
+    if (!selected.length) return { updated: 0 };
 
-    if (!operations.length) return { updated: 0 };
+    const operations = selected.map((item) => ({
+      type: 'set',
+      collection: 'items',
+      id: item.id,
+      merge: true,
+      // The version the screen was showing when the customer chose this
+      // record. It is checked against the stored one inside the write, so a
+      // record another tab changed in the meantime is a conflict rather than
+      // an overwrite — and the new version is computed there too, from what is
+      // stored, never from the copy this screen is holding.
+      expectedVersion: item.version ?? 1,
+      bumpVersion: true,
+      data: { ...patch, updatedBy: this.session.userId },
+    }));
+
     this.setSync(SyncState.SAVING);
-    await this.backend.runBatch(operations);
+    await this._runVersionedChunks(operations, 'التعديل الجماعي');
     await this.log(ACTIONS.ITEMS_BULK_UPDATED, { count: operations.length, fields: Object.keys(patch) });
     return { updated: operations.length };
+  }
+
+  /**
+   * A bulk write, in chunks, each of which lands completely or not at all.
+   *
+   * Partial completion is not offered. "99 of your 100 records were moved, and
+   * we are not saying which one was not" is a worse answer than "nothing moved,
+   * refresh and try again" — the second one the customer can act on.
+   */
+  async _runVersionedChunks(operations, what) {
+    const CHUNK = 100;
+    try {
+      for (let i = 0; i < operations.length; i += CHUNK) {
+        await this.backend.runBatch(operations.slice(i, i + CHUNK));
+      }
+    } catch (error) {
+      if (error instanceof ConflictError) {
+        throw new AppError(
+          `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. حدّث القائمة وحاول مرة أخرى.`,
+          { code: 'repo/bulk-conflict', cause: error },
+        );
+      }
+      throw error;
+    }
   }
 
   /** Moves several records to Trash. Nothing is destroyed; Trash is reversible. */
@@ -1225,17 +1364,21 @@ class Repository {
     if (!items.length) return { trashed: 0 };
 
     this.setSync(SyncState.SAVING);
-    await this.backend.runBatch(items.map((item) => ({
+    // The same concurrency rule as a bulk edit: moving a record to the Trash
+    // is a change to it, and a record somebody else has just edited is not one
+    // this screen's stale copy gets to overwrite.
+    await this._runVersionedChunks(items.map((item) => ({
       type: 'set',
       collection: 'items',
       id: item.id,
       merge: true,
+      expectedVersion: item.version ?? 1,
+      bumpVersion: true,
       data: {
         deletedAt: this.backend.serverTime,
         deletedBy: this.session.userId,
-        version: (item.version ?? 1) + 1,
       },
-    })));
+    })), 'الحذف الجماعي');
     await this.log(ACTIONS.ITEMS_BULK_DELETED, { count: items.length });
     return { trashed: items.length };
   }

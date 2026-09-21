@@ -8,6 +8,7 @@ import { ROLES } from './config.js';
 import { FirebaseStatus, firebaseContext, initializeFirebase, watchConnectivity } from './firebase.js';
 import { currentSession, initializeAuthentication, onSessionChange, refreshWorkspace } from './auth.js';
 import { SYNC_LABELS, SyncState, repository } from './repository.js';
+import { useQueryAdapter } from './query.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
@@ -168,6 +169,15 @@ async function loadApplicationData(firebase, session) {
     && Boolean(session.user) && Boolean(session.workspaceId);
 
   try {
+    // The query engine follows the backend. On a device the records are in
+    // IndexedDB, so questions are answered by index and cursor; on the cloud
+    // backend they live on a server and this device holds a window of them, so
+    // they are answered from what is held — and a narrowed question says when
+    // it could not be. Same result shape either way; no screen knows which.
+    //
+    // Chosen here rather than inside the repository so the data layer does not
+    // have to import the query layer that imports it.
+    useQueryAdapter(cloudReady ? 'memory' : 'indexeddb');
     await repository.start(cloudReady
       ? { mode: 'cloud', workspaceId: session.workspaceId, userId: session.user.uid, role: session.role }
       : { mode: 'local', workspaceId: 'local', userId: 'local-device', role: ROLES.OWNER });

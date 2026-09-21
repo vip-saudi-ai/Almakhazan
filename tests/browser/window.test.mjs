@@ -108,12 +108,19 @@ const repoState = (page) => page.evaluate(async () => {
     qty: document.getElementById('s-qty')?.textContent,
   }));
   check('W4 the record count is the true one', stats.total === '600', JSON.stringify(stats));
-  check('W5 a proportion of the whole inventory is left blank rather than computed from the window',
-    stats.cats.includes('اعرض الكل') && stats.qty === '—', JSON.stringify(stats));
+  // These used to be blanked, because a proportion taken from the loaded
+  // window would have been a fraction presented as a fact. The device engine
+  // counts from the database instead, so they are shown — and they are right.
+  check('W5 proportions are computed from the records, not from the window',
+    stats.cats.includes('%') && stats.qty === '600', JSON.stringify(stats));
 
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('.fld-card')].some(c => /قطعة/.test(c.textContent)),
+    null, { timeout: 10000 }).catch(() => {});
   const badges = await page.evaluate(() =>
     [...document.querySelectorAll('.fld-card')].map(c => c.textContent).join('|'));
-  check('W6 a folder card carries no count it cannot know', !badges.includes('قطعة'), badges);
+  check('W6 a folder card carries its real count, from an index range',
+    badges.includes('5 قطعة'), badges);
 
   check('W7 no JS errors', errs.length === 0, errs.join(' / '));
   await context.close();
@@ -163,11 +170,15 @@ const repoState = (page) => page.evaluate(async () => {
     count: document.getElementById('hcount')?.textContent,
     first: document.querySelector('#hgrid .icard')?.textContent || '',
   }));
-  check('W14 searching loads the inventory first, so a record outside the window is still found',
+  check('W14 a record outside the window is still found',
     found.count === '1' && found.first.includes('أسطرلاب'), JSON.stringify(found));
 
+  // And it is found without dragging the inventory into memory to do it. The
+  // search reads the database in batches and keeps the matches; what the app
+  // holds afterwards is the window it started with.
   const state = await repoState(page);
-  check('W15 and the inventory is whole from then on', state.complete && state.loaded === COUNT, JSON.stringify(state));
+  check('W15 without the search having materialised the inventory',
+    state.loaded <= 200 && state.complete === false, JSON.stringify(state));
   check('W16 no JS errors', errs.length === 0, errs.join(' / '));
   await context.close();
 }
@@ -259,8 +270,13 @@ const repoState = (page) => page.evaluate(async () => {
   check('W24 and it is fully drawn on the first frame, not filled in later',
     opened.text.includes('تصدير') && opened.text.includes('استيراد') && opened.ms < 120,
     JSON.stringify({ ms: opened.ms, len: opened.text.length }));
-  check('W25 the Trash row states what it is instead of a count it cannot know',
-    /القطع المحذوفة/.test(opened.text), opened.text.split('\n').find(l => /محذوف/.test(l)) || '');
+  // The count comes from the index that holds exactly the deleted records, so
+  // Settings can state it without reading anything else.
+  await page.waitForFunction(() => /قطعة/.test(document.getElementById('trash-count')?.textContent || ''),
+    null, { timeout: 10000 }).catch(() => {});
+  const trashRow = await page.evaluate(() => document.getElementById('trash-count')?.textContent || '');
+  check('W25 the Trash row carries an exact count, read from its own index',
+    /^\d+ قطعة$/.test(trashRow.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))), trashRow);
   check('W26 no JS errors', errs.length === 0, errs.join(' / '));
   await context.close();
 }

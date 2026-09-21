@@ -17,7 +17,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -43,6 +43,12 @@ export const SCHEMA = {
       sku: 'sku',
       barcode: 'barcode',
       serialNumber: 'serialNumber',
+      // An equality filter the customer can apply from the filter sheet, so it
+      // is a base the query engine can start from rather than a predicate it
+      // has to test record by record. Every record has carried a `condition`
+      // since the first schema (possibly the empty string, which is a valid
+      // key), so an existing database backfills this index completely.
+      condition: 'condition',
       deletedAt: 'deletedAt',
     },
   },
@@ -52,7 +58,12 @@ export const SCHEMA = {
   activity: { key: 'id', indexes: { timestamp: 'timestamp' } },
   images: { key: 'id', indexes: {} },
   mediaAssets: { key: 'id', indexes: {} },
-  importJobs: { key: 'id', indexes: { startedAt: 'startedAt' } },
+  importJobs: {
+    key: 'id',
+    // A stopped import is found by what the file *is*, not by what it is
+    // called — see `fileFingerprint` in views/sheet-import.js.
+    indexes: { startedAt: 'startedAt', fileFingerprint: 'fileFingerprint', status: 'status' },
+  },
   meta: { key: 'key', indexes: {} },
 };
 
@@ -226,22 +237,42 @@ export function countByIndex(storeName, indexName, value) {
 /**
  * One page of a store or index, walked with a cursor.
  *
- * `after` is the key the previous page ended on, so paging never re-sorts or
- * re-reads what came before. When paging an index whose keys tie — `updatedAt`
- * after a bulk write gives hundreds of records the same millisecond — pass the
- * primary key too, as `afterPrimary`: the cursor then resumes at the exact
- * record rather than at the first of the tied group, which would otherwise
- * repeat rows or skip them.
+ * `after` / `afterPrimary` are the key and primary key the previous page ended
+ * on, and continuation from them is EXCLUSIVE: the first record of this page is
+ * the one after that record, never that record again.
+ *
+ * This is not what `continue(key)` does. IDB positions the cursor ON the key,
+ * so resuming from the last row of a page returned that row as the first row of
+ * the next page. With a page size of 24 that is one duplicate every screen, and
+ * with `updatedAt` after a bulk write — where hundreds of records share a
+ * millisecond — resuming by key alone did worse: it either replayed the whole
+ * tied group or skipped past it. Hence the primary key in the cursor, and the
+ * explicit step past the boundary below.
+ *
+ * If the boundary record has been deleted since the previous page, the cursor
+ * lands on the record *after* it instead, which is a real record and is kept.
+ *
+ * @returns {{rows, nextKey, nextPrimaryKey, done}}
  */
 export function page(storeName, {
   index: indexName = null, direction = 'next', limit = 200,
-  range = null, after, afterPrimary,
+  range = null, after, afterPrimary, offset = 0,
 } = {}) {
-  return run(storeName, 'readonly', async (store) => {
+  return run(storeName, 'readonly', (store) => {
     const source = indexName ? store.index(indexName) : store;
     const rows = [];
-    const request = source.openCursor(range, direction);
-    let positioned = after === undefined;
+    // An index cursor resumed by key alone cannot be exclusive per-record —
+    // every tied entry shares that key. Narrow the range instead, which is
+    // exactly "keys beyond this one".
+    const effectiveRange = (indexName && after !== undefined && afterPrimary === undefined)
+      ? boundRange(range, after, direction)
+      : range;
+    const seeking = after !== undefined && effectiveRange === range;
+
+    const request = source.openCursor(effectiveRange, direction);
+    let phase = seeking ? 'seek' : 'collect';
+    let skip = Math.max(0, offset);
+
     return new Promise((resolve, reject) => {
       request.onerror = () => reject(storageError(request.error));
       request.onsuccess = () => {
@@ -250,17 +281,33 @@ export function page(storeName, {
           resolve({ rows, nextKey: null, nextPrimaryKey: null, done: true });
           return;
         }
-        if (!positioned) {
-          positioned = true;
-          // `continuePrimaryKey` is the tie-safe resume; it exists only on
-          // index cursors, so a store cursor resumes by key with `>`/`<`.
-          if (indexName && afterPrimary !== undefined) {
-            cursor.continuePrimaryKey(after, afterPrimary);
-            return;
-          }
-          cursor.continue(after);
+
+        if (phase === 'seek') {
+          phase = 'boundary';
+          // `continuePrimaryKey` is the tie-safe seek and exists only on index
+          // cursors; a store cursor's key already is its primary key.
+          if (indexName && afterPrimary !== undefined) cursor.continuePrimaryKey(after, afterPrimary);
+          else cursor.continue(after);
           return;
         }
+
+        if (phase === 'boundary') {
+          phase = 'collect';
+          const onBoundary = indexedDB.cmp(cursor.key, after) === 0
+            && (afterPrimary === undefined || indexedDB.cmp(cursor.primaryKey, afterPrimary) === 0);
+          if (onBoundary) { cursor.continue(); return; }
+        }
+
+        // Jumping to a numbered page. `advance` skips inside the engine without
+        // handing a record over, so page 200 of an indexed list costs a walk of
+        // the index rather than 4,800 deserialised records.
+        if (skip > 0) {
+          const step = skip;
+          skip = 0;
+          cursor.advance(step);
+          return;
+        }
+
         rows.push(cursor.value);
         if (rows.length >= limit) {
           resolve({ rows, nextKey: cursor.key, nextPrimaryKey: cursor.primaryKey, done: false });
@@ -270,6 +317,54 @@ export function page(storeName, {
       };
     });
   });
+}
+
+/** The part of `range` strictly beyond `key`, in the cursor's direction. */
+function boundRange(range, key, direction) {
+  const back = direction === 'prev' || direction === 'prevunique';
+  if (!range) {
+    return back ? IDBKeyRange.upperBound(key, true) : IDBKeyRange.lowerBound(key, true);
+  }
+  return back
+    ? IDBKeyRange.bound(range.lower ?? key, key, range.lowerOpen ?? false, true)
+    : IDBKeyRange.bound(key, range.upper ?? key, true, range.upperOpen ?? false);
+}
+
+/** How many records a range holds, without reading any of them. */
+export function countRange(storeName, indexName, range) {
+  return run(storeName, 'readonly', (store) => {
+    const source = indexName ? store.index(indexName) : store;
+    return req(range ? source.count(range) : source.count());
+  });
+}
+
+/**
+ * Walk a store or index, handing each batch to `onBatch`, and stop as soon as
+ * it says to. This is the primitive behind a search that must not materialise
+ * the inventory: it reads in pages, lets the caller keep only what matches,
+ * and yields between pages so the tab stays answerable.
+ *
+ * @param {(rows: Array) => (boolean|Promise<boolean>)} onBatch return false to stop.
+ */
+export async function walk(storeName, {
+  index: indexName = null, direction = 'next', range = null,
+  batchSize = 400, onBatch,
+} = {}) {
+  let after;
+  let afterPrimary;
+  let scanned = 0;
+  for (;;) {
+    const result = await page(storeName, {
+      index: indexName, direction, range, limit: batchSize, after, afterPrimary,
+    });
+    if (result.rows.length) {
+      scanned += result.rows.length;
+      if ((await onBatch?.(result.rows)) === false) return { scanned, exhausted: false };
+    }
+    if (result.done || result.rows.length < batchSize) return { scanned, exhausted: true };
+    after = result.nextKey;
+    afterPrimary = result.nextPrimaryKey;
+  }
 }
 
 /**
