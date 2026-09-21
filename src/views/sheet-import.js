@@ -20,7 +20,7 @@ import { normalizeArabic } from '../search.js';
 import * as local from '../local-store.js';
 import { repository } from '../repository.js';
 import { canImportRows, importLimit, quotaStatus } from '../subscription.js';
-import { $, el, formatNumber, render, uid } from '../utils.js';
+import { AppError, $, el, formatNumber, render, uid } from '../utils.js';
 import { closeSheet, openSheet, section, toast, toastError } from '../ui.js';
 import { withFullInventory } from '../inventory-load.js';
 
@@ -114,8 +114,24 @@ export async function startSpreadsheetImport() {
  * something it cannot prove it belongs to.
  */
 async function fingerprint(file) {
-  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (!globalThis.crypto?.subtle?.digest) {
+    throw new AppError(
+      'تعذّر التحقق من هوية الملف في هذا المتصفح. أعد المحاولة أو استخدم متصفحاً مدعوماً.',
+      { code: 'sheet/fingerprint-unavailable' },
+    );
+  }
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (error) {
+    // Never a weaker identity. An import that cannot be identified is one that
+    // cannot be safely resumed, and resuming the wrong file writes its numbers
+    // under the other file's record ids.
+    throw new AppError(
+      'تعذّر التحقق من هوية الملف في هذا المتصفح. أعد المحاولة أو استخدم متصفحاً مدعوماً.',
+      { code: 'sheet/fingerprint-unavailable', cause: error },
+    );
+  }
 }
 
 /**
@@ -197,18 +213,16 @@ async function pruneJobHistory() {
 /** Opens the flow for a file that is already in hand. */
 export async function openSpreadsheetImport(file) {
   try {
+    // Identity first, before anything expensive. A file that cannot be
+    // identified cannot be safely resumed, so there is no point parsing it —
+    // and this throws rather than continuing with a weaker identity.
+    const fileFingerprint = await fingerprint(file);
+
     const limit = importLimit();
     const sheet = await readSpreadsheet(file, { rowLimit: limit.effective });
     // The importer matches taxonomy by name and counts against the plan, so
     // it needs the inventory it is adding to, not a window of it.
     if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
-
-    let fileFingerprint = null;
-    try {
-      fileFingerprint = await fingerprint(file);
-    } catch (error) {
-      console.error('[import] could not fingerprint the file', error);
-    }
 
     state.file = file;
     state.sheet = sheet;

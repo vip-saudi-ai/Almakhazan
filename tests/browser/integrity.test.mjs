@@ -138,15 +138,15 @@ const state = (page) => page.evaluate(async () => {
   // A database written by the previous release: every store and index it had,
   // and none of the ones this build added.
   await page.addInitScript(() => {
-    const request = indexedDB.open('almakhzan', 4);
+    const request = indexedDB.open('almakhzan', 5);
     request.onupgradeneeded = () => {
       const db = request.result;
       const tx = request.transaction;
       const spec = {
-        items: ['updatedAt', 'createdAt', 'folderId', 'categoryId', 'locationId', 'sku', 'barcode', 'serialNumber', 'deletedAt'],
+        items: ['updatedAt', 'createdAt', 'folderId', 'categoryId', 'locationId', 'sku', 'barcode', 'serialNumber', 'deletedAt', 'condition'],
         folders: [], categories: [], locations: [],
         activity: ['timestamp'], images: [], mediaAssets: [],
-        importJobs: ['startedAt'], meta: [],
+        importJobs: ['startedAt', 'fileFingerprint', 'status'], meta: [],
       };
       for (const [name, indexes] of Object.entries(spec)) {
         const store = db.objectStoreNames.contains(name)
@@ -183,18 +183,21 @@ const state = (page) => page.evaluate(async () => {
 
     const kept = await local.count('items');
     const one = await local.get('items', 'v4-7');
-    // The index this build added, backfilled from records written before it.
-    const byCondition = await local.getAllByIndex('items', 'condition', 'جيدة');
-    // And the ones on the job store, which gained two.
-    const jobIndexes = await local.transaction('importJobs', 'readonly',
-      (stores) => [...stores.importJobs.indexNames]);
+    // The compound index this build added, backfilled from records written
+    // before it existed — which is what makes a folder's chronological order
+    // correct for a database that predates the index.
+    const itemIndexes = await local.transaction('items', 'readonly',
+      (stores) => [...stores.items.indexNames]);
+    const scoped = await local.getAllByIndex('items', 'folderCreatedAt',
+      IDBKeyRange.bound(['f-old'], ['f-old', []]));
 
     const folder = await queryInventory({ folderId: 'f-old', perPage: 24 });
     return {
       kept,
       name: one?.name || null,
-      byCondition: byCondition.length,
-      jobIndexes: jobIndexes.sort(),
+      hasCompound: ['folderCreatedAt', 'categoryCreatedAt', 'locationCreatedAt']
+        .every((index) => itemIndexes.includes(index)),
+      backfilled: scoped.length,
       folderTotal: folder.total,
       folderBase: folder.plan?.baseIndex ?? null,
     };
@@ -202,12 +205,13 @@ const state = (page) => page.evaluate(async () => {
 
   check('M1 every record written by the previous version survives the upgrade',
     upgraded.kept === 50 && upgraded.name === 'سجل قديم 7', JSON.stringify(upgraded));
-  check('M2 an index this build added is backfilled from the old records',
-    upgraded.byCondition === 25, String(upgraded.byCondition));
-  check('M3 the import-job store gained its new indexes',
-    upgraded.jobIndexes.join() === 'fileFingerprint,startedAt,status', upgraded.jobIndexes.join());
-  check('M4 and the query engine works against the upgraded database',
-    upgraded.folderBase === 'folderId' && upgraded.folderTotal === 12, JSON.stringify(upgraded));
+  check('M2 the compound indexes this build added exist after the upgrade',
+    upgraded.hasCompound === true, String(upgraded.hasCompound));
+  check('M3 and they are backfilled from records written before they existed',
+    upgraded.backfilled === 12, String(upgraded.backfilled));
+  check('M4 the query engine reads the upgraded database through them',
+    upgraded.folderBase === 'folderCreatedAt' && upgraded.folderTotal === 12,
+    JSON.stringify(upgraded));
   check('M5 no JS errors during the upgrade', errs.length === 0, errs[0]);
   await context.close();
 }
@@ -862,6 +866,109 @@ const state = (page) => page.evaluate(async () => {
   check('I73 and the record is neither trashed nor reverted',
     trashed.deletedAt == null && trashed.name === 'حُرّر في مكان آخر', JSON.stringify(trashed));
   check('I74 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── 250 records, one of them stale ─────────────────────────────────────────
+{
+  const { page, context, errs } = await open({ seed: 300, inFolder: 0 });
+
+  const outcome = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+
+    await repository.completeItems();
+    const ids = Array.from({ length: 250 }, (_, i) => 'k' + String(i).padStart(5, '0'));
+
+    // Record 143 is edited elsewhere — written straight to the store, which is
+    // what another tab's write looks like from here.
+    const staleId = ids[142];
+    const stored = await local.get('items', staleId);
+    await local.put('items', { ...stored, name: 'حُرّر في مكان آخر', version: stored.version + 1 });
+
+    let error = null;
+    try {
+      await repository.bulkUpdate(ids, { condition: 'ممتازة' });
+    } catch (e) { error = { code: e.code, message: e.message, applied: e.applied }; }
+    await new Promise((r) => setTimeout(r, 300));
+
+    // Nothing at all should have changed — including the first hundred, which
+    // a chunked implementation would already have committed.
+    let changed = 0;
+    for (const id of ids) {
+      const row = await local.get('items', id);
+      if (row.condition === 'ممتازة') changed += 1;
+    }
+
+    // Now refresh and retry, as the message says to.
+    await repository.completeItems();
+    const fresh = await local.get('items', staleId);
+    await repository.backend.runAtomicBatch([{
+      type: 'set', collection: 'items', id: staleId, merge: true, data: { name: fresh.name },
+    }]);
+    await new Promise((r) => setTimeout(r, 300));
+
+    let retryError = null;
+    try {
+      await repository.bulkUpdate(ids, { condition: 'ممتازة' });
+    } catch (e) { retryError = e.code; }
+    await new Promise((r) => setTimeout(r, 300));
+
+    let after = 0;
+    for (const id of ids) {
+      const row = await local.get('items', id);
+      if (row.condition === 'ممتازة') after += 1;
+    }
+    const untouched = await local.get('items', 'k00260');
+
+    return { error, changed, retryError, after, untouchedCondition: untouched.condition };
+  });
+
+  check('I75 a conflict anywhere in 250 records refuses the whole operation',
+    outcome.error?.code === 'repo/bulk-conflict', JSON.stringify(outcome.error));
+  check('I76 and zero of the 250 are modified — not the first hundred',
+    outcome.changed === 0, `${outcome.changed} of 250 changed`);
+  check('I77 the message says nothing was applied, because nothing was',
+    /لم يتم تطبيق أي تغيير/.test(outcome.error?.message || ''), outcome.error?.message);
+  check('I78 after refreshing, the retry applies all 250',
+    outcome.retryError === null && outcome.after === 250,
+    JSON.stringify({ error: outcome.retryError, after: outcome.after }));
+  check('I79 and touches nothing outside the selection',
+    outcome.untouchedCondition !== 'ممتازة', String(outcome.untouchedCondition));
+  check('I80 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── the same for the Trash ─────────────────────────────────────────────────
+{
+  const { page, context, errs } = await open({ seed: 300, inFolder: 0 });
+
+  const outcome = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+    await repository.completeItems();
+
+    const ids = Array.from({ length: 250 }, (_, i) => 'k' + String(i).padStart(5, '0'));
+    const staleId = ids[142];
+    const stored = await local.get('items', staleId);
+    await local.put('items', { ...stored, name: 'حُرّر في مكان آخر', version: stored.version + 1 });
+
+    let error = null;
+    try { await repository.bulkTrash(ids); } catch (e) { error = e.code; }
+    await new Promise((r) => setTimeout(r, 300));
+
+    let trashed = 0;
+    for (const id of ids) {
+      const row = await local.get('items', id);
+      if (row.deletedAt) trashed += 1;
+    }
+    return { error, trashed };
+  });
+
+  check('I81 a stale record in a 250-record trash refuses the whole operation',
+    outcome.error === 'repo/bulk-conflict', String(outcome.error));
+  check('I82 and none of the 250 are trashed', outcome.trashed === 0, `${outcome.trashed} of 250`);
+  check('I83 no JS errors', errs.length === 0, errs[0]);
   await context.close();
 }
 

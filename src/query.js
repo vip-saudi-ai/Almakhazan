@@ -261,7 +261,9 @@ export async function queryInventory(query, options = {}) {
   // it, before anything is read. This is the scanner's path and the path of
   // anyone who types a serial number: the record is one lookup away whether it
   // is the newest or the ten thousandth.
-  const exact = full.search && !full.ids ? await findByIdentifier(full.search) : null;
+  const exact = full.search && !full.ids && !full.trashed
+    ? await findByIdentifier(full.search, full)
+    : null;
   if (options.signal?.aborted) return null;
   if (exact?.length) {
     return canonical(
@@ -309,13 +311,13 @@ async function ensureFor(query, ensure) {
  * Returns null when the term is not identifier-shaped or nothing carries it,
  * which is the caller's signal to run an ordinary search instead.
  */
-export async function findByIdentifier(term) {
+export async function findByIdentifier(term, query = null) {
   if (adapter.name !== 'indexeddb') {
     // The memory adapter can only look at what it holds, so an exact lookup is
     // no cheaper than a search and is left to the search path.
     return null;
   }
-  return idb.findByIdentifier(term);
+  return idb.findByIdentifier(term, query);
 }
 
 // ── the in-memory implementation ────────────────────────────────────────────

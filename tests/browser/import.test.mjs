@@ -320,6 +320,121 @@ for (const [planId, allowance] of [['free', 200], ['personal', 2000]]) {
   await context.close();
 }
 
+
+// ── the file must be identifiable ─────────────────────────────────────────
+//
+// The fingerprint is what decides whether a picked file is the one a stopped
+// import was writing. There is no weaker fallback for it: name and size are
+// not identity, and resuming the wrong file would write last week's numbers
+// under this week's record ids. So when the digest is unavailable — an
+// insecure origin, a locked-down browser, a hardware failure — the import has
+// to stop before it has written anything, and say so.
+{
+  const { page, context, errs } = await open();
+
+  const before = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    return { items: await local.count('items') };
+  });
+
+  const outcome = await page.evaluate(async () => {
+    const mod = await import('/src/views/sheet-import.js');
+    const original = crypto.subtle.digest;
+    // What a browser that refuses SubtleCrypto actually does.
+    crypto.subtle.digest = () => Promise.reject(new DOMException('denied', 'NotSupportedError'));
+    try {
+      const res = await fetch('/tests/fixtures/inventory.csv');
+      const file = new File([await res.blob()], 'inventory.csv');
+      await mod.openSpreadsheetImport(file);
+    } finally {
+      crypto.subtle.digest = original;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const local = await import('/src/local-store.js');
+    const sheet = document.getElementById('simport');
+    return {
+      opened: Boolean(sheet && sheet.classList.contains('open')),
+      toast: (document.querySelector('.toast') || {}).innerText || '',
+      jobs: await local.count('importJobs'),
+      items: await local.count('items'),
+    };
+  });
+
+  check('F1 an unidentifiable file does not open the import flow',
+    outcome.opened === false, String(outcome.opened));
+  check('F2 it says so in Arabic instead of failing silently',
+    /هوية الملف/.test(outcome.toast), JSON.stringify(outcome.toast));
+  check('F3 no import job was recorded', outcome.jobs === 0, String(outcome.jobs));
+  check('F4 and no records were written',
+    outcome.items === before.items, JSON.stringify({ before: before.items, after: outcome.items }));
+  // The refusal itself is reported to the console by the error toast, which is
+  // the intended behaviour here; anything else is not.
+  const unexpected = errs.filter((line) => !/هوية الملف/.test(line));
+  check('F5 the refusal is the only thing logged', unexpected.length === 0, unexpected[0]);
+  await context.close();
+}
+
+// ── a large xlsx is read without the tab dying ────────────────────────────
+//
+// §77. The numbers printed here are what this machine measured in this run of
+// headless Chromium; they are not a promise about a phone. What is being
+// asserted is only the shape: that every row arrives, that the columns are
+// intact at both ends, and that the time does not explode as the file grows.
+{
+  const { page, context, errs } = await open({ limit: 60000 });
+
+  const sizes = [5000, 10000, 20000, 50000];
+  const results = [];
+  for (const rows of sizes) {
+    const measured = await page.evaluate(async (count) => {
+      const { makeXlsx } = await import('/tests/browser/make-xlsx.mjs');
+      const { readSpreadsheet } = await import('/src/spreadsheet.js');
+      const file = await makeXlsx(count);
+
+      const heapBefore = performance.memory ? performance.memory.usedJSHeapSize : null;
+      const t0 = performance.now();
+      const sheet = await readSpreadsheet(file, { rowLimit: 60000 });
+      const ms = Math.round(performance.now() - t0);
+      const heapAfter = performance.memory ? performance.memory.usedJSHeapSize : null;
+
+      return {
+        bytes: file.size,
+        ms,
+        rows: sheet.rows.length,
+        truncated: sheet.truncated,
+        headers: sheet.headers.length,
+        first: sheet.rows[0],
+        last: sheet.rows[sheet.rows.length - 1],
+        heapMB: heapBefore == null ? null : Math.round((heapAfter - heapBefore) / 1048576),
+      };
+    }, rows);
+    results.push({ rows, ...measured });
+
+    check(`X-${rows} every row arrives`,
+      measured.rows === rows && measured.truncated === false,
+      JSON.stringify({ rows: measured.rows, truncated: measured.truncated }));
+    check(`X-${rows} the columns are intact at both ends`,
+      measured.headers === 5
+      && measured.first[0] === 'قطعة رقم 0'
+      && measured.last[0] === `قطعة رقم ${rows - 1}`
+      && measured.last[3] === `INV-${String(rows - 1).padStart(6, '0')}`,
+      JSON.stringify({ first: measured.first, last: measured.last }));
+    check(`X-${rows} and the tab survives reading it`,
+      measured.ms < 30000,
+      `${measured.ms}ms · ${Math.round(measured.bytes / 1024)}KB compressed · heap +${measured.heapMB}MB`);
+  }
+
+  // Four times the rows must not cost anything like sixteen times the time.
+  const small = results[0];
+  const large = results[results.length - 1];
+  const growth = large.ms / Math.max(1, small.ms);
+  check('X-scaling the cost grows with the file, not with its square',
+    growth < (large.rows / small.rows) * 2.5,
+    `${small.rows}→${small.ms}ms, ${large.rows}→${large.ms}ms (×${growth.toFixed(1)} for ×${large.rows / small.rows} rows)`);
+  check('X no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);

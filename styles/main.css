@@ -1280,3 +1280,8 @@ html:not([dir="rtl"]) .ask-result-go .nz-icon{transform:scaleX(-1)}
    visible; the button stays above them for hit-testing on its own layer. */
 .icard > .icimg,.icard > .icbody,.litem > .lthumb,.litem > .linfo,.litem > .lchev{position:relative}
 .icmore,.lmore{position:relative;z-index:2}
+
+
+/* While a bulk write is committing, the action bar stops taking taps. The
+   lock is in the handler — this is the part the customer can see. */
+body.bulk-busy .selbar-acts{opacity:.5;pointer-events:none}

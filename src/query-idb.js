@@ -93,72 +93,84 @@ export function plan(query) {
   const browsingFolder = browsing ? query.folderId : null;
   const scopeRoot = browsing && !query.folderId;
 
+  // Chronological orders come out of an index. Anything else is decided by
+  // comparing records, which no index here can do.
+  const chronological = query.sort === 'newest' || query.sort === 'oldest';
+  const direction = query.sort === 'oldest' ? 'next' : 'prev';
+
+  // The narrowest equality this query asks for, in order of selectivity. Only
+  // one can be the base; the rest become tests applied to what it returns.
+  const candidates = [
+    ['folderId', filters.folderId === '__root__' ? null : filters.folderId, 'filters.folderId'],
+    ['folderId', browsingFolder, 'scope.folderId'],
+    ['locationId', filters.locationId, 'filters.locationId'],
+    ['categoryId', filters.categoryId, 'filters.categoryId'],
+    ['categoryId', query.categoryId !== 'all' ? query.categoryId : null, 'pill.categoryId'],
+    ['condition', filters.condition, 'filters.condition'],
+  ];
+  const scope = candidates.find(([, value]) => value != null && value !== '') || null;
+
   let baseIndex = null;
   let baseValue;
+  let baseKind = 'only';
+  let sortStrategy = 'memory';
 
-  const claim = (index, value, name) => {
-    if (baseIndex || value == null || value === '') return false;
-    baseIndex = index;
-    baseValue = value;
-    indexedPredicates.push(name);
-    return true;
-  };
-
-  // Trash is its own scope and its own index: a trashed record carries a
-  // numeric `deletedAt` and a live one carries null, and IndexedDB leaves null
-  // out of an index — so the index *is* the trash.
   if (query.trashed) {
+    // The Trash is its own scope and its own index: a trashed record carries a
+    // numeric `deletedAt` and a live one carries null, and IndexedDB leaves
+    // null out of an index — so the index *is* the trash. It is also already
+    // in the order the screen means by "newest": most recently deleted first.
     baseIndex = 'deletedAt';
     baseValue = undefined;
     indexedPredicates.push('trashed');
+    if (chronological) {
+      sortStrategy = 'index';
+      indexedPredicates.push(`sort:${query.sort}:deletedAt`);
+    }
+  } else if (scope && chronological && SCOPE_TIME_INDEX[scope[0]]) {
+    // Scope and order in one index, so the cursor produces the answer in the
+    // order that was asked for — globally, not within a page.
+    baseIndex = SCOPE_TIME_INDEX[scope[0]];
+    baseValue = scope[1];
+    baseKind = 'prefix';
+    sortStrategy = 'index';
+    indexedPredicates.push(scope[2], `sort:${query.sort}`);
+  } else if (scope && !chronological) {
+    // Name or value order has no index at all, so the base is chosen purely
+    // for selectivity and the order is decided over what it returns.
+    baseIndex = scope[0];
+    baseValue = scope[1];
+    indexedPredicates.push(scope[2]);
+  } else if (chronological) {
+    // Either no scope, or a scope with no compound index behind it (today,
+    // `condition`). The order is what must be right, so the time index is the
+    // base and the scope becomes a test — correct, and bounded by how common
+    // the scope's value is.
+    baseIndex = 'createdAt';
+    baseValue = undefined;
+    sortStrategy = 'index';
+    indexedPredicates.push(`sort:${query.sort}`);
   }
 
-  claim('folderId', filters.folderId === '__root__' ? null : filters.folderId, 'filters.folderId');
-  claim('folderId', browsingFolder, 'scope.folderId');
-  claim('locationId', filters.locationId, 'filters.locationId');
-  claim('categoryId', filters.categoryId, 'filters.categoryId');
-  claim('categoryId', query.categoryId !== 'all' ? query.categoryId : null, 'pill.categoryId');
-  claim('condition', filters.condition, 'filters.condition');
-
   // Whatever the base did not claim is tested per record.
-  if (filters.folderId === '__root__' && baseIndex !== 'folderId') residualPredicates.push('rootOnly');
-  if (scopeRoot) residualPredicates.push('rootOnly');
+  const claimed = new Set(indexedPredicates);
+  if (filters.folderId === '__root__') residualPredicates.push('rootOnly');
+  else if (scopeRoot) residualPredicates.push('rootOnly');
   for (const [key, value] of Object.entries(filters)) {
     if (!value) continue;
-    if (indexedPredicates.includes(`filters.${key}`)) continue;
+    if (claimed.has(`filters.${key}`)) continue;
     if (key === 'folderId' && value === '__root__') continue;
     residualPredicates.push(`filters.${key}`);
   }
-  if (query.categoryId && query.categoryId !== 'all' && !indexedPredicates.includes('pill.categoryId')) {
+  if (query.categoryId && query.categoryId !== 'all' && !claimed.has('pill.categoryId')) {
     residualPredicates.push('pill.categoryId');
   }
-  if (browsingFolder && baseIndex !== 'folderId') residualPredicates.push('scope.folderId');
+  if (browsingFolder && !claimed.has('scope.folderId')) residualPredicates.push('scope.folderId');
   if (searching) residualPredicates.push('search');
   // Trash and browsing are opposites: everywhere but Trash, deleted records
   // are excluded, and `deletedAt` being absent from its index is what makes
   // that a cheap test rather than another index.
   if (!query.trashed) residualPredicates.push('live');
-
-  // Sorting. `updatedAt` and `createdAt` are indexed, so those two orders come
-  // out of the cursor already sorted. Name and value are not: they are sorted
-  // in memory over whatever the base index returned, which is why a value sort
-  // over an un-narrowed inventory is the one query here that reads all of it.
-  const sortIndex = { newest: 'createdAt', oldest: 'createdAt' }[query.sort] || null;
-  let sortStrategy = 'memory';
-  let direction = 'next';
-  if (sortIndex && !baseIndex) {
-    baseIndex = sortIndex;
-    baseValue = undefined;
-    direction = query.sort === 'newest' ? 'prev' : 'next';
-    sortStrategy = 'index';
-    indexedPredicates.push(`sort:${query.sort}`);
-  } else if (sortIndex && baseIndex) {
-    // An equality index orders by its own key; within one folder every key is
-    // identical, so the order inside it is by primary key. Ids are generated
-    // with a time prefix, so that is close to creation order but not promised
-    // to be it — the page is re-sorted in memory, which is cheap over a page.
-    sortStrategy = 'page';
-  }
 
   const requiresScan = !baseIndex;
   // An offset is only meaningful when every record the cursor passes belongs
@@ -177,7 +189,8 @@ export function plan(query) {
   return {
     baseIndex,
     baseValue,
-    direction,
+    baseKind,
+    direction: sortStrategy === 'index' ? direction : 'next',
     indexedPredicates,
     residualPredicates,
     requiresScan,
@@ -188,11 +201,78 @@ export function plan(query) {
   };
 }
 
+/** The scopes that carry their own chronological index. */
+const SCOPE_TIME_INDEX = {
+  folderId: 'folderCreatedAt',
+  categoryId: 'categoryCreatedAt',
+  locationId: 'locationCreatedAt',
+};
+
+/** And back: which record field a base index is an equality on. */
+const SCOPE_FIELD = {
+  folderCreatedAt: 'folderId',
+  categoryCreatedAt: 'categoryId',
+  locationCreatedAt: 'locationId',
+};
+
+/**
+ * The key a record has in an index — the value a cursor would be positioned
+ * on. A compound index's key is the array of its components, which is what a
+ * cursor resumed from this record has to be given.
+ */
+function indexKeyOf(item, indexName) {
+  const scopeField = SCOPE_FIELD[indexName];
+  if (scopeField) return [item[scopeField], item.createdAt];
+  return item[indexName];
+}
+
 // ── predicates ─────────────────────────────────────────────────────────────
 
-/** The key range a plan's base index is read through. */
+/**
+ * The key range a plan's base index is read through.
+ *
+ * A compound `[scope, createdAt]` index is read as a prefix: every key that
+ * starts with the scope value, whatever time follows it. `[value]` sorts
+ * before `[value, anything]`, and an array sorts after any number, so
+ * `[value, []]` is above every `[value, someTime]` — which is how a prefix
+ * range is spelled in IndexedDB.
+ */
 function rangeFor(queryPlan) {
-  return queryPlan.baseValue === undefined ? null : IDBKeyRange.only(queryPlan.baseValue);
+  if (queryPlan.baseValue === undefined) return null;
+  if (queryPlan.baseKind === 'prefix') {
+    return IDBKeyRange.bound([queryPlan.baseValue], [queryPlan.baseValue, []]);
+  }
+  return IDBKeyRange.only(queryPlan.baseValue);
+}
+
+/**
+ * The predicate an exact-identifier result has to survive.
+ *
+ * The fast path is an optimisation, and an optimisation that changes the
+ * answer is a bug wearing a performance badge. Scanning a SKU while a location
+ * filter is on must not produce a record from the other warehouse.
+ *
+ * So the same predicate is built, from the same plan, minus the two things the
+ * lookup has already decided: the identifier itself (the index matched it) and
+ * the browsing scope (a search deliberately reaches across folders — a record
+ * filed away must be findable from the root, which is the established
+ * behaviour and is not changed here). Every *explicit* restriction stays:
+ * location, category, condition, the analysis and valuation filters, currency,
+ * and the category pill.
+ */
+export function exactPredicate(query) {
+  const full = { ...query, search: '' };
+  const queryPlan = plan(full);
+  // The base index took one of the restrictions; put it back as a test, since
+  // here there is no cursor to have applied it.
+  const residual = [...queryPlan.residualPredicates];
+  for (const claimed of queryPlan.indexedPredicates) {
+    if (claimed.startsWith('filters.') || claimed === 'pill.categoryId') residual.push(claimed);
+  }
+  // The browsing scope is not an explicit restriction, and a search is meant
+  // to cross it.
+  const explicit = residual.filter((name) => name !== 'scope.folderId' && name !== 'rootOnly');
+  return predicateFor(full, { ...queryPlan, residualPredicates: explicit });
 }
 
 /** One function that answers "does this record belong in this result?". */
@@ -291,7 +371,11 @@ async function byOffset(query, queryPlan, perPage) {
   });
 
   return {
-    rows: present(queryPlan.sortStrategy === 'page' ? sortItems(rows, query.sort) : rows),
+    // No re-sorting here, ever. This branch runs only when the base index
+    // already produced the requested order — that is what `paginationStrategy:
+    // 'offset'` means. Sorting a page would be sorting 24 records out of 740
+    // and calling the result "the newest": internally ordered, globally wrong.
+    rows: present(rows),
     total,
     page: pageNumber,
     totalPages,
@@ -378,7 +462,9 @@ async function cheapTotal(query, queryPlan) {
 async function countTrashedIn(queryPlan, rootOnly) {
   const trashed = await local.countRange('items', 'deletedAt', null);
   if (trashed === 0) return 0;
-  const field = queryPlan.baseValue === undefined ? null : queryPlan.baseIndex;
+  const field = queryPlan.baseValue === undefined
+    ? null
+    : (SCOPE_FIELD[queryPlan.baseIndex] || queryPlan.baseIndex);
   if (!field && !rootOnly) return trashed;
 
   let inScope = 0;
@@ -487,7 +573,7 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
   // which is exactly what the index key and the primary key are.
   const last = window[window.length - 1];
   const cursor = last && queryPlan.baseIndex && !needsMemorySort
-    ? { key: last[queryPlan.baseIndex], primaryKey: last.id }
+    ? { key: indexKeyOf(last, queryPlan.baseIndex), primaryKey: last.id }
     : null;
 
   return {
@@ -560,13 +646,21 @@ const IDENTIFIER_SHAPE = /^[0-9A-Za-z][0-9A-Za-z._/-]{3,}$/;
  * @returns {Promise<Array|null>} null when the term is not identifier-shaped or
  *   nothing carries it, so the caller falls back to ordinary text search.
  */
-export async function findByIdentifier(term) {
+export async function findByIdentifier(term, query = null) {
   const value = String(term || '').trim();
   if (!IDENTIFIER_SHAPE.test(value)) return null;
 
+  // The restrictions the customer has explicitly set. Built from the same plan
+  // the ordinary path would use, so the two cannot drift apart — see
+  // `exactPredicate`.
+  const survives = query ? exactPredicate(query) : null;
+
   for (const index of ['barcode', 'sku', 'serialNumber']) {
     const rows = await local.getAllByIndex('items', index, value);
-    const live = rows.filter((row) => !row.deletedAt);
+    // A deleted record is never an exact match outside the Trash: the customer
+    // threw it away, and handing it back because its barcode still exists is
+    // the opposite of what they asked for.
+    const live = rows.filter((row) => !row.deletedAt && (!survives || survives(row)));
     if (live.length) return present(live);
   }
   return null;

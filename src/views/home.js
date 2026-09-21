@@ -647,16 +647,43 @@ function renderSelectionBar(visibleItems) {
   ]);
 }
 
-async function applyToSelection(label, patch) {
-  const items = selectedItems();
-  if (!items.length) return;
+/**
+ * True while a bulk write is in flight.
+ *
+ * A double tap on "move" is two taps, and the second one arrives while the
+ * first is still writing — two identical operations against the same records,
+ * the second of which finds the versions already moved and fails. A disabled
+ * button is not enough: the tap can land before the render that disables it.
+ */
+let bulkInFlight = false;
+
+async function withBulkLock(run) {
+  if (bulkInFlight) return;
+  bulkInFlight = true;
+  document.body.classList.add('bulk-busy');
   try {
-    await repository.bulkUpdate(items.map((item) => item.id), patch);
-    toast(`${label} — ${formatNumber(items.length)} قطعة`, '✓');
-    endSelection();
-  } catch (error) {
-    toastError(error, 'تعذّر تنفيذ الإجراء');
+    await run();
+  } finally {
+    bulkInFlight = false;
+    document.body.classList.remove('bulk-busy');
   }
+}
+
+function applyToSelection(label, patch) {
+  return withBulkLock(async () => {
+    const items = selectedItems();
+    if (!items.length) return;
+    try {
+      // The count comes back from the write, not from the selection: on a
+      // backend that can only commit in chunks, a conflict part way leaves
+      // fewer records changed than were asked for, and the message says so.
+      const { updated } = await repository.bulkUpdate(items.map((item) => item.id), patch);
+      toast(`${label} — ${formatNumber(updated)} قطعة`, '✓');
+      endSelection();
+    } catch (error) {
+      toastError(error, 'تعذّر تنفيذ الإجراء');
+    }
+  });
 }
 
 function bulkMove() {
@@ -693,13 +720,15 @@ async function bulkDelete() {
     confirmLabel: 'نقل للمحذوفات',
   });
   if (!confirmed) return;
-  try {
-    await repository.bulkTrash(items.map((item) => item.id));
-    toast(`نُقلت ${formatNumber(items.length)} قطعة للمحذوفات`, '✓');
-    endSelection();
-  } catch (error) {
-    toastError(error, 'تعذّر الحذف');
-  }
+  await withBulkLock(async () => {
+    try {
+      const { trashed } = await repository.bulkTrash(items.map((item) => item.id));
+      toast(`نُقلت ${formatNumber(trashed)} قطعة للمحذوفات`, '✓');
+      endSelection();
+    } catch (error) {
+      toastError(error, 'تعذّر الحذف');
+    }
+  });
 }
 
 /** A one-choice sheet, reused by the three field actions. */

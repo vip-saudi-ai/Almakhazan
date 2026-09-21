@@ -17,7 +17,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -49,6 +49,22 @@ export const SCHEMA = {
       // since the first schema (possibly the empty string, which is a valid
       // key), so an existing database backfills this index completely.
       condition: 'condition',
+      // ── scope + time ──
+      //
+      // These exist because an equality index does not order by anything the
+      // customer asked for. `folderId` orders by folder and then by record id,
+      // so reading the first 24 entries of a 740-record folder and sorting
+      // *those* by date produced a page that was internally ordered and
+      // globally wrong: the actual newest record could be the 700th entry and
+      // never reach the page at all.
+      //
+      // A compound key puts the date inside the index, so the cursor hands
+      // records over in the order the screen asked for and the first page is
+      // the first page. The primary key still breaks ties between records
+      // created in the same millisecond.
+      folderCreatedAt: ['folderId', 'createdAt'],
+      categoryCreatedAt: ['categoryId', 'createdAt'],
+      locationCreatedAt: ['locationId', 'createdAt'],
       deletedAt: 'deletedAt',
     },
   },

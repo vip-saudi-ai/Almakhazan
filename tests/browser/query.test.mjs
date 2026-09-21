@@ -122,8 +122,10 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
 // ── a folder ───────────────────────────────────────────────────────────────
 {
   const folder = await ask({ folderId: '$folder', page: 1, perPage: 24 });
-  check('Q6 a folder scope starts from the folderId index',
-    folder.baseIndex === 'folderId', JSON.stringify(folder));
+  // The compound index, not the plain equality one: the order the screen asked
+  // for has to come out of the cursor, not out of a sort over one page.
+  check('Q6 a folder scope starts from the folder-and-time index',
+    folder.baseIndex === 'folderCreatedAt', JSON.stringify(folder));
   check('Q7 its total is the folder, exactly', folder.total === IN_FOLDER, String(folder.total));
   check('Q8 and reaching the first page reads the folder, not the inventory',
     folder.examined <= IN_FOLDER, `examined ${folder.examined} of ${COUNT}`);
@@ -140,8 +142,8 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
 // ── a category ─────────────────────────────────────────────────────────────
 {
   const category = await ask({ categoryId: '$category', page: 1, perPage: 24 });
-  check('Q12 a category starts from the categoryId index',
-    category.baseIndex === 'categoryId', JSON.stringify(category));
+  check('Q12 a category starts from the category-and-time index',
+    category.baseIndex === 'categoryCreatedAt', JSON.stringify(category));
   check('Q13 its total is the category, exactly', category.total === IN_CATEGORY, String(category.total));
   check('Q14 and it reads the category, not the inventory',
     category.examined <= IN_CATEGORY, `examined ${category.examined}`);
@@ -150,8 +152,8 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
 // ── a location ─────────────────────────────────────────────────────────────
 {
   const location = await ask({ filters: { locationId: '$location' }, page: 1, perPage: 24 });
-  check('Q15 a location filter starts from the locationId index',
-    location.baseIndex === 'locationId', JSON.stringify(location));
+  check('Q15 a location filter starts from the location-and-time index',
+    location.baseIndex === 'locationCreatedAt', JSON.stringify(location));
   check('Q16 its total is the location, exactly', location.total === IN_LOCATION, String(location.total));
   check('Q17 and it reads the location, not the inventory',
     location.examined <= IN_LOCATION, `examined ${location.examined}`);
@@ -285,6 +287,125 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
   check('Q29 and backwards is forwards, reversed', paging.reversed === true, String(paging.reversed));
 }
 
+// ── scoped chronological order is global, not page-local ───────────────────
+//
+// The failure this replaces: an equality index orders by its own key and then
+// by primary key, so reading the first 24 entries of a 740-record folder and
+// sorting those by date produced a page that was internally ordered and
+// globally wrong. The actual newest record could be the 700th entry in the
+// index and never reach the first page at all.
+{
+  const scoped = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const { queryInventory } = await import('/src/query.js');
+
+    // Three sets of 500, one per scope, with ids deliberately in the opposite
+    // order to their timestamps and many timestamps repeated so ties have to
+    // be broken by something.
+    //
+    // The category and location sets are left unfiled, because browsing at the
+    // root shows unfiled records — a category pill or a location filter
+    // narrows that scope rather than replacing it.
+    const folderId = 'sort-folder';
+    const categoryId = 'sort-category';
+    const locationId = 'sort-location';
+
+    const build = (prefix, over) => Array.from({ length: 500 }, (_, i) => ({
+      // id ascending, createdAt descending: primary-key order is the exact
+      // reverse of chronological order.
+      id: prefix + String(i).padStart(4, '0'),
+      name: `مرتَّب ${i}`, quantity: 1, unit: 'قطعة',
+      categoryId: 'c1', folderId: null, locationId: null,
+      condition: '', images: [], deletedAt: null,
+      // Repeated on purpose: 100 distinct values across 500 records.
+      createdAt: 1600000000000 + (500 - i) * 1000 - (i % 5),
+      updatedAt: 1600000000000, version: 1,
+      ...over,
+    }));
+
+    const rows = build('srt', { folderId });
+    const catRows = build('sct', { categoryId });
+    const locRows = build('slc', { locationId });
+    for (const set of [rows, catRows, locRows]) {
+      for (let i = 0; i < set.length; i += 250) await local.putMany('items', set.slice(i, i + 250));
+    }
+
+    const byDate = (a, b) => b.createdAt - a.createdAt || String(a.id).localeCompare(String(b.id));
+    const expectedNewest = [...rows].sort(byDate).map((r) => r.id);
+    const expectedOldest = [...expectedNewest].reverse();
+
+    const collect = async (query) => {
+      const ids = [];
+      const plans = new Set();
+      let cursor = null;
+      for (let n = 1; n <= 40; n += 1) {
+        const result = await queryInventory({ ...query, page: n, perPage: 24 }, cursor ? { cursor } : {});
+        plans.add(result.plan?.baseIndex + ':' + result.plan?.sortStrategy);
+        ids.push(...result.rows.map((r) => r.id));
+        cursor = result.nextCursor;
+        if (!cursor || !result.hasMore) break;
+      }
+      return { ids, plans: [...plans] };
+    };
+
+    const folderNewest = await collect({ folderId, sort: 'newest' });
+    const folderOldest = await collect({ folderId, sort: 'oldest' });
+    const categoryNewest = await collect({ categoryId, sort: 'newest' });
+    const locationNewest = await collect({ filters: { locationId }, sort: 'newest' });
+    const expectedCategory = [...catRows].sort(byDate).map((r) => r.id);
+    const expectedLocation = [...locRows].sort(byDate).map((r) => r.id);
+
+    const ordered = (ids, expected) => ids.join() === expected.slice(0, ids.length).join();
+
+    return {
+      total: rows.length,
+      firstExpected: expectedNewest[0],
+      // The newest record by date, and where it sits in primary-key order.
+      newestIsLastById: expectedNewest[0] === 'srt0000',
+      folderNewest: {
+        n: folderNewest.ids.length,
+        unique: new Set(folderNewest.ids).size,
+        ordered: ordered(folderNewest.ids, expectedNewest),
+        first: folderNewest.ids[0],
+        plans: folderNewest.plans,
+      },
+      folderOldest: {
+        n: folderOldest.ids.length,
+        unique: new Set(folderOldest.ids).size,
+        ordered: ordered(folderOldest.ids, expectedOldest),
+        first: folderOldest.ids[0],
+      },
+      categoryOrdered: ordered(categoryNewest.ids, expectedCategory),
+      categoryN: categoryNewest.ids.length,
+      categoryPlans: categoryNewest.plans,
+      locationOrdered: ordered(locationNewest.ids, expectedLocation),
+      locationN: locationNewest.ids.length,
+      locationPlans: locationNewest.plans,
+    };
+  });
+
+  check('Q35 the folder is read through the scope-and-time index',
+    scoped.folderNewest.plans.join() === 'folderCreatedAt:index', scoped.folderNewest.plans.join());
+  check('Q36 every record in the folder comes back, once',
+    scoped.folderNewest.n === 500 && scoped.folderNewest.unique === 500,
+    JSON.stringify({ n: scoped.folderNewest.n, unique: scoped.folderNewest.unique }));
+  check('Q37 folder + newest is in date order across every page, not within pages',
+    scoped.folderNewest.ordered === true, `first was ${scoped.folderNewest.first}`);
+  check('Q38 and the newest record is first even though it is last by id',
+    scoped.folderNewest.first === scoped.firstExpected, scoped.folderNewest.first);
+  check('Q39 folder + oldest is the same order reversed',
+    scoped.folderOldest.ordered === true && scoped.folderOldest.n === 500,
+    JSON.stringify(scoped.folderOldest));
+  check('Q40 a category is read through its own scope-and-time index, in date order',
+    scoped.categoryPlans.join() === 'categoryCreatedAt:index'
+      && scoped.categoryOrdered && scoped.categoryN === 500,
+    JSON.stringify({ plans: scoped.categoryPlans, ordered: scoped.categoryOrdered, n: scoped.categoryN }));
+  check('Q41 a location too',
+    scoped.locationPlans.join() === 'locationCreatedAt:index'
+      && scoped.locationOrdered && scoped.locationN === 500,
+    JSON.stringify({ plans: scoped.locationPlans, ordered: scoped.locationOrdered, n: scoped.locationN }));
+}
+
 // ── paging a walked answer by cursor ───────────────────────────────────────
 {
   const walked = await page.evaluate(async () => {
@@ -325,6 +446,102 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
   check('Q34 a cursor from another question is refused, not spent',
     walked.foreignRows === 1 && /^q0/.test(walked.foreignFirst || ''),
     JSON.stringify({ n: walked.foreignRows, first: walked.foreignFirst }));
+}
+
+// ── the exact lookup is an optimisation, not a different question ──────────
+//
+// A fast path that returns a record the ordinary path would have excluded is
+// not faster, it is wrong. Scanning a SKU while a location filter is on must
+// not hand back the item from the other warehouse.
+{
+  const semantics = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const { queryInventory } = await import('/src/query.js');
+    const { repository } = await import('/src/repository.js');
+
+    const riyadh = await repository.saveLocation({ name: 'الرياض' });
+    const jeddah = await repository.saveLocation({ name: 'جدة' });
+    const watches = await repository.saveCategory({ name: 'ساعات دقيقة', icon: '⌚' });
+    const now = Date.now();
+
+    const base = {
+      quantity: 1, unit: 'قطعة', images: [], deletedAt: null,
+      createdAt: now, updatedAt: now, version: 1, folderId: null,
+    };
+    await local.putMany('items', [
+      {
+        ...base, id: 'exA', name: 'ساعة الرياض', categoryId: watches.id,
+        locationId: riyadh.id, condition: 'ممتازة',
+        sku: 'ABC-123', barcode: '9990001', serialNumber: 'SNX-0001',
+      },
+      {
+        ...base, id: 'exB', name: 'ساعة جدة', categoryId: 'c1',
+        locationId: jeddah.id, condition: 'جيدة',
+        sku: 'XYZ-789', barcode: '9990002', serialNumber: 'SNX-0002',
+      },
+      {
+        ...base, id: 'exC', name: 'ساعة محذوفة', categoryId: 'c1',
+        locationId: jeddah.id, condition: '',
+        sku: 'DEL-555', barcode: '9990003', serialNumber: 'SNX-0003',
+        deletedAt: now,
+      },
+    ]);
+
+    const ask = (query) => queryInventory(query);
+    const ids = (r) => r.rows.map((x) => x.id);
+    const empty = { condition: '', folderId: '', locationId: '', categoryId: '', ai: '', valuation: '', currency: '' };
+
+    // The same logical question asked both ways: once by identifier (fast
+    // path) and once by a term no index can answer (ordinary path).
+    const both = async (term, filters) => {
+      const fast = await ask({ search: term, filters: { ...empty, ...filters } });
+      const slow = await ask({ search: 'ساعة', filters: { ...empty, ...filters } });
+      return { fast: ids(fast), slowIncludes: ids(slow) };
+    };
+
+    return {
+      // SKU with a location filter that excludes it.
+      skuBlocked: ids(await ask({ search: 'XYZ-789', filters: { ...empty, locationId: riyadh.id } })),
+      skuAllowed: ids(await ask({ search: 'XYZ-789', filters: { ...empty } })),
+      skuMatchingFilter: ids(await ask({ search: 'ABC-123', filters: { ...empty, locationId: riyadh.id } })),
+      // Barcode with a category filter.
+      barcodeBlocked: ids(await ask({ search: '9990002', filters: { ...empty, categoryId: watches.id } })),
+      barcodeAllowed: ids(await ask({ search: '9990002', filters: { ...empty } })),
+      // Serial with a condition filter.
+      serialBlocked: ids(await ask({ search: 'SNX-0002', filters: { ...empty, condition: 'ممتازة' } })),
+      serialAllowed: ids(await ask({ search: 'SNX-0002', filters: { ...empty } })),
+      // The category pill is a restriction too.
+      pillBlocked: ids(await ask({ search: 'XYZ-789', categoryId: watches.id })),
+      // A deleted record is never an exact match outside the Trash.
+      trashed: ids(await ask({ search: 'DEL-555', filters: { ...empty } })),
+      // A search still reaches across folder navigation, which is the
+      // established behaviour and is deliberately unchanged.
+      acrossFolders: ids(await ask({ search: 'ABC-123', folderId: 'some-other-folder' })),
+      agree: await both('ABC-123', { locationId: riyadh.id }),
+    };
+  });
+
+  check('Q42 an exact SKU is not returned when a location filter excludes it',
+    semantics.skuBlocked.length === 0, JSON.stringify(semantics.skuBlocked));
+  check('Q43 and is returned the moment the filter is lifted',
+    semantics.skuAllowed.join() === 'exB', JSON.stringify(semantics.skuAllowed));
+  check('Q44 a SKU that does match the filter still comes back',
+    semantics.skuMatchingFilter.join() === 'exA', JSON.stringify(semantics.skuMatchingFilter));
+  check('Q45 a barcode respects a category filter',
+    semantics.barcodeBlocked.length === 0 && semantics.barcodeAllowed.join() === 'exB',
+    JSON.stringify(semantics));
+  check('Q46 a serial number respects a condition filter',
+    semantics.serialBlocked.length === 0 && semantics.serialAllowed.join() === 'exB',
+    JSON.stringify(semantics));
+  check('Q47 the category pill restricts the exact lookup too',
+    semantics.pillBlocked.length === 0, JSON.stringify(semantics.pillBlocked));
+  check('Q48 a trashed record is never an exact match outside the Trash',
+    semantics.trashed.length === 0, JSON.stringify(semantics.trashed));
+  check('Q49 but a search still crosses folder navigation, as it always has',
+    semantics.acrossFolders.join() === 'exA', JSON.stringify(semantics.acrossFolders));
+  check('Q50 the fast path and the ordinary path agree on the same question',
+    semantics.agree.fast.every((id) => semantics.agree.slowIncludes.includes(id)),
+    JSON.stringify(semantics.agree));
 }
 
 check('Q30 no JS errors', errs.length === 0, errs.slice(0, 2).join(' / '));

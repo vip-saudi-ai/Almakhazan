@@ -240,9 +240,27 @@ async function readEntry(bytes, view, entry) {
 // Folding it into one pattern lets a greedy attribute run swallow the ` /` of
 // `<t />` and then match the *next* element's closing tag — which silently
 // moves one cell's value into another cell's column.
-const TAG = (xml, tag) => [...xml.matchAll(
-  new RegExp(`<${tag}\\b[^>]*?/>|<${tag}\\b[^>]*?>([\\s\\S]*?)</${tag}>`, 'g'),
-)];
+const tagPattern = (tag) => new RegExp(
+  `<${tag}\\b[^>]*?/>|<${tag}\\b[^>]*?>([\\s\\S]*?)</${tag}>`, 'g',
+);
+
+/**
+ * Every matching element, lazily.
+ *
+ * This is the one to use for anything that can be long — worksheet rows, cells,
+ * shared strings. `matchAll` returns an iterator; spreading it into an array
+ * is what turned a worksheet with 200,000 `<row>` elements into 200,000 match
+ * objects in memory *before* the row limit could stop anything. A limit that
+ * only applies after everything has been materialised is not a limit.
+ */
+const iterateTags = (xml, tag) => xml.matchAll(tagPattern(tag));
+
+/**
+ * The same, as an array — for the small fixed documents where the count is
+ * bounded by the format rather than by the customer's data: a workbook's sheet
+ * list, a styles table, one cell's runs of text.
+ */
+const TAG = (xml, tag) => [...iterateTags(xml, tag)];
 
 function unescapeXml(value) {
   return value
@@ -254,11 +272,36 @@ function unescapeXml(value) {
     .replace(/&amp;/g, '&');
 }
 
-/** `<si>` may hold one `<t>` or many, when Excel split a run mid-string. */
+/**
+ * The shared-string table, read one entry at a time.
+ *
+ * `<si>` may hold one `<t>` or many, when Excel split a run mid-string — so
+ * each entry is joined from its runs, which are bounded per entry.
+ *
+ * Honest limitation: the table itself is not streamed. The whole
+ * `sharedStrings.xml` is decompressed to a string first (bounded by
+ * MAX_INFLATED_BYTES and the inflation ratio), and the array built here holds
+ * one string per distinct cell value in the workbook. That is the remaining
+ * memory cost of reading XLSX in a browser without a streaming XML parser, and
+ * it is proportional to the number of *distinct* values rather than to the
+ * number of rows. Iterating rather than spreading is what keeps the match
+ * objects from being a second copy on top of it.
+ */
 function sharedStrings(xml) {
   if (!xml) return [];
-  return TAG(xml, 'si').map(([block]) =>
-    TAG(block, 't').map(([, inner]) => unescapeXml(inner || '')).join(''));
+  const out = [];
+  for (const [block] of iterateTags(xml, 'si')) {
+    let text = '';
+    for (const [, inner] of iterateTags(block, 't')) text += unescapeXml(inner || '');
+    if (text.length > MAX_CELL_CHARS) {
+      throw new AppError(
+        'خلية في الملف أطول مما يمكن استيراده',
+        { code: 'sheet/cell-too-long' },
+      );
+    }
+    out.push(text);
+  }
+  return out;
 }
 
 // Built-in numeric formats that mean "date". Anything custom is detected by
@@ -318,7 +361,10 @@ function sheetRows(xml, strings, dates, { rowLimit = Infinity } = {}) {
   const stopAfter = Number.isFinite(rowLimit) ? rowLimit + 1 : Infinity;
   let previous = 0;
   let truncated = false;
-  for (const [rowXml] of TAG(xml, 'row')) {
+  // Lazily: the loop below breaks at the row limit, and with an array that
+  // break would come after every row in the worksheet had already been
+  // matched and kept.
+  for (const [rowXml] of iterateTags(xml, 'row')) {
     const declared = Number((rowXml.match(/<row\b[^>]*\br="(\d+)"/) || [])[1]);
     const line = Number.isFinite(declared) && declared > 0 ? declared : previous + 1;
     previous = line;
@@ -391,28 +437,41 @@ function firstSheetPath(workbookXml, relsXml, entries) {
   return sheets[0] || null;
 }
 
+/**
+ * Reads the first worksheet of an XLSX file.
+ *
+ * The reads are deliberately sequential rather than parallel. Each part of the
+ * archive inflates to a string that can be tens of megabytes on a large
+ * workbook, and reading them together would hold every one of those strings
+ * alive at the same time. Instead each source XML is scoped to the smallest
+ * block that needs it and converted into the structure the row reader wants —
+ * a sheet path, a sheet name, a string table, a set of date styles — so the
+ * XML behind it is unreachable before the next one is inflated. The worksheet,
+ * the largest of them, is read last and never bound to a name of its own, so
+ * it is collectable as soon as `sheetRows` returns.
+ */
 async function readXlsx(buffer, { rowLimit = Infinity } = {}) {
   const bytes = new Uint8Array(buffer);
   const { entries, view } = zipEntries(bytes);
   const read = async (name) => (entries.has(name) ? readEntry(bytes, view, entries.get(name)) : null);
 
-  const [workbookXml, relsXml] = await Promise.all([
-    read('xl/workbook.xml'),
-    read('xl/_rels/workbook.xml.rels'),
-  ]);
-  const path = firstSheetPath(workbookXml, relsXml, entries);
+  let path = null;
+  let sheetName = 'ورقة 1';
+  {
+    const workbookXml = await read('xl/workbook.xml');
+    const relsXml = await read('xl/_rels/workbook.xml.rels');
+    path = firstSheetPath(workbookXml, relsXml, entries);
+    if (workbookXml) {
+      sheetName = unescapeXml((workbookXml.match(/<sheet\b[^>]*name="([^"]*)"/) || [])[1] || 'ورقة 1');
+    }
+  }
   if (!path) throw new AppError('لا توجد ورقة بيانات في الملف', { code: 'sheet/no-sheet' });
 
-  const [sheetXml, stringsXml, stylesXml] = await Promise.all([
-    read(path), read('xl/sharedStrings.xml'), read('xl/styles.xml'),
-  ]);
+  const strings = sharedStrings(await read('xl/sharedStrings.xml'));
+  const dates = dateStyles(await read('xl/styles.xml'));
 
-  const name = workbookXml
-    ? unescapeXml((workbookXml.match(/<sheet\b[^>]*name="([^"]*)"/) || [])[1] || 'ورقة 1')
-    : 'ورقة 1';
-
-  const rows = sheetRows(sheetXml || '', sharedStrings(stringsXml), dateStyles(stylesXml), { rowLimit });
-  return { rows, sheetName: name, truncated: Boolean(rows.truncated) };
+  const rows = sheetRows((await read(path)) || '', strings, dates, { rowLimit });
+  return { rows, sheetName, truncated: Boolean(rows.truncated) };
 }
 
 // ── the one entry point ────────────────────────────────────────────────────

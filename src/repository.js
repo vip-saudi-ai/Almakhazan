@@ -58,6 +58,18 @@ const COLLECTIONS = ['items', 'folders', 'categories', 'locations'];
 // by whatever needs all of it — see `completeItems`.
 export const ITEM_WINDOW = 200;
 
+/**
+ * The largest selection the device backend will treat as one transaction.
+ *
+ * Above it the operation is chunked and says so. An IndexedDB transaction has
+ * no documented operation cap, but one holding tens of thousands of requests
+ * open across a slow device is a promise this code cannot keep — and a
+ * guarantee that only holds on a fast phone is not a guarantee.
+ */
+const ATOMIC_BULK_MAX = 1000;
+/** How many operations one chunk carries when the whole set cannot be atomic. */
+const BULK_CHUNK = 100;
+
 const DAY = 24 * 60 * 60 * 1000;
 /** When the activity log was last trimmed, so it is trimmed about once a day. */
 const ACTIVITY_PRUNE_KEY = 'activity.lastPrunedAt';
@@ -511,6 +523,63 @@ class LocalBackend {
       }
     });
     for (const name of touched) await this._notify(name);
+  }
+
+  /**
+   * Every operation in one transaction, validated before anything is written.
+   *
+   * Two phases, and the order is the point. Phase one reads every selected
+   * record and checks every expected version. Phase two writes. Interleaving
+   * them — read one, write one, read the next — means a conflict discovered on
+   * record 143 arrives after records 1 to 142 have already been changed, and
+   * the transaction's rollback is then the only thing standing between the
+   * customer and a half-applied edit. It works, but it makes the guarantee
+   * depend on the abort path rather than on the shape of the code.
+   *
+   * On any conflict the transaction aborts and nothing in it lands.
+   */
+  async runAtomicBatch(operations) {
+    if (!operations.length) return { applied: 0 };
+    const touched = [...new Set(operations.map((op) => op.collection))];
+
+    await local.transaction(touched, 'readwrite', async (stores) => {
+      // Phase one: read and validate. No writes yet.
+      const current = [];
+      for (const op of operations) {
+        const store = stores[op.collection];
+        const needsCurrent = op.type === 'set'
+          && (op.merge !== false || op.expectedVersion != null || op.bumpVersion);
+        const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
+
+        if (op.expectedVersion != null) {
+          if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+          if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
+        }
+        current.push(existing);
+      }
+
+      // Phase two: write. Every check has passed.
+      for (const [index, op] of operations.entries()) {
+        const store = stores[op.collection];
+        if (op.type === 'delete') {
+          await local.request(store.delete(op.id));
+          continue;
+        }
+        if (op.type !== 'set') continue;
+        const existing = current[index];
+        const record = {
+          ...(op.merge !== false ? existing : null),
+          ...op.data,
+          id: op.id,
+          updatedAt: Date.now(),
+        };
+        if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
+        await local.request(store.put(record));
+      }
+    });
+
+    for (const name of touched) await this._notify(name);
+    return { applied: operations.length };
   }
 
   /**
@@ -1255,7 +1324,7 @@ class Repository {
     this.assertCanWrite();
     const folder = this.folder(id);
     const affected = await this.itemsReferencing('folderId', id);
-    await this.backend.runBatch([
+    await this._runRelational([
       ...this._clearReferenceOps(affected, { folderId: null }),
       { type: 'delete', collection: 'folders', id },
     ]);
@@ -1302,7 +1371,7 @@ class Repository {
       throw new AppError('اختر التصنيف البديل', { code: 'repo/needs-target' });
     }
     const newCategory = strategy === 'reassign' ? targetId : UNCATEGORIZED_ID;
-    await this.backend.runBatch([
+    await this._runRelational([
       ...this._clearReferenceOps(affected, { categoryId: newCategory }),
       { type: 'delete', collection: 'categories', id },
     ]);
@@ -1331,7 +1400,7 @@ class Repository {
     this.assertCanWrite();
     const location = this.state.locations.find((l) => l.id === id);
     const affected = await this.itemsReferencing('locationId', id);
-    await this.backend.runBatch([
+    await this._runRelational([
       ...this._clearReferenceOps(affected, { locationId: null }),
       { type: 'delete', collection: 'locations', id },
     ]);
@@ -1379,29 +1448,91 @@ class Repository {
     }));
 
     this.setSync(SyncState.SAVING);
-    await this._runVersionedChunks(operations, 'التعديل الجماعي');
-    await this.log(ACTIONS.ITEMS_BULK_UPDATED, { count: operations.length, fields: Object.keys(patch) });
-    return { updated: operations.length };
+    const { applied, atomic } = await this._runBulk(operations, 'التعديل الجماعي');
+    // The log records what happened, not what was asked for. "250 updated"
+    // against 100 actual changes is a record that lies to whoever reads it next.
+    await this.log(ACTIONS.ITEMS_BULK_UPDATED, {
+      requested: operations.length, count: applied, atomic, fields: Object.keys(patch),
+    });
+    return { updated: applied, atomic };
   }
 
   /**
-   * A bulk write, in chunks, each of which lands completely or not at all.
+   * A bulk write, as atomic as the backend can actually make it.
    *
-   * Partial completion is not offered. "99 of your 100 records were moved, and
-   * we are not saying which one was not" is a worse answer than "nothing moved,
-   * refresh and try again" — the second one the customer can act on.
+   * Two models, and the difference is stated rather than glossed:
+   *
+   *   ALL OR NOTHING — one transaction over the whole selection. A conflict on
+   *   any record leaves every record untouched. This is what the device
+   *   backend does for an ordinary selection, and it is what lets the message
+   *   say "nothing was applied" and mean it.
+   *
+   *   CHUNK BY CHUNK — each chunk lands or rolls back on its own, and a
+   *   conflict in the fourth chunk leaves the first three committed. The cloud
+   *   backend works this way because a Firestore transaction has a size limit,
+   *   and a selection larger than `ATOMIC_BULK_MAX` works this way on the
+   *   device too, because one transaction holding forty thousand requests open
+   *   is not a guarantee, it is a gamble.
+   *
+   * The caller is told which one happened, because the sentence the customer
+   * reads depends on it.
+   *
+   * @returns {Promise<{applied: number, atomic: boolean}>}
    */
-  async _runVersionedChunks(operations, what) {
-    const CHUNK = 100;
-    try {
-      for (let i = 0; i < operations.length; i += CHUNK) {
-        await this.backend.runBatch(operations.slice(i, i + CHUNK));
+  /**
+   * A relational rewrite — clearing every reference to a taxonomy row, then
+   * removing the row.
+   *
+   * No expected versions: the customer is deleting a folder, not resolving an
+   * edit conflict, and a record edited elsewhere still has to stop pointing at
+   * something that is about to stop existing. What matters here is that the
+   * reference clearing and the deletion cannot come apart, which is why it is
+   * one transaction on the device.
+   */
+  async _runRelational(operations) {
+    if (this.backend.runAtomicBatch && operations.length <= ATOMIC_BULK_MAX) {
+      await this.backend.runAtomicBatch(operations);
+      return;
+    }
+    await this.backend.runBatch(operations);
+  }
+
+  async _runBulk(operations, what) {
+    const atomic = Boolean(this.backend.runAtomicBatch) && operations.length <= ATOMIC_BULK_MAX;
+
+    if (atomic) {
+      try {
+        await this.backend.runAtomicBatch(operations);
+        return { applied: operations.length, atomic: true };
+      } catch (error) {
+        if (error instanceof ConflictError) {
+          throw new AppError(
+            `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
+            { code: 'repo/bulk-conflict', cause: error, applied: 0 },
+          );
+        }
+        throw error;
       }
+    }
+
+    let applied = 0;
+    try {
+      for (let i = 0; i < operations.length; i += BULK_CHUNK) {
+        const chunk = operations.slice(i, i + BULK_CHUNK);
+        await this.backend.runBatch(chunk);
+        applied += chunk.length;
+      }
+      return { applied, atomic: false };
     } catch (error) {
       if (error instanceof ConflictError) {
+        // Never "nothing was applied" here: the chunks before this one are
+        // committed, and telling the customer otherwise sends them looking for
+        // a change that already happened.
         throw new AppError(
-          `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. حدّث القائمة وحاول مرة أخرى.`,
-          { code: 'repo/bulk-conflict', cause: error },
+          applied
+            ? `تعذّر إكمال ${what}: طُبّق التغيير على ${applied.toLocaleString('en-US')} قطعة ثم تغيّرت قطعة أخرى منذ فتح القائمة. حدّث القائمة وأكمل الباقي.`
+            : `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
+          { code: 'repo/bulk-conflict', cause: error, applied },
         );
       }
       throw error;
@@ -1418,7 +1549,7 @@ class Repository {
     // The same concurrency rule as a bulk edit: moving a record to the Trash
     // is a change to it, and a record somebody else has just edited is not one
     // this screen's stale copy gets to overwrite.
-    await this._runVersionedChunks(items.map((item) => ({
+    const { applied, atomic } = await this._runBulk(items.map((item) => ({
       type: 'set',
       collection: 'items',
       id: item.id,
@@ -1430,8 +1561,8 @@ class Repository {
         deletedBy: this.session.userId,
       },
     })), 'الحذف الجماعي');
-    await this.log(ACTIONS.ITEMS_BULK_DELETED, { count: items.length });
-    return { trashed: items.length };
+    await this.log(ACTIONS.ITEMS_BULK_DELETED, { requested: items.length, count: applied, atomic });
+    return { trashed: applied, atomic };
   }
 
   /**

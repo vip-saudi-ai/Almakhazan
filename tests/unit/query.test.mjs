@@ -19,32 +19,80 @@ test('the default browse starts from the createdAt index, newest first', () => {
   assert.equal(p.requiresScan, false);
 });
 
-test('a folder scope starts from the folderId index, not from the sort', () => {
-  // Selectivity decides: a folder narrows to its own records, where the sort
-  // index narrows to nothing at all.
-  const p = plan({ ...emptyQuery(), folderId: 'f1' });
-  assert.equal(p.baseIndex, 'folderId');
+test('a folder scope with a date sort uses the folder-and-date index', () => {
+  // One index has to answer both the scope and the order. An equality index
+  // orders by its own key and then by record id, so reading its first 24
+  // entries and sorting *those* by date gives a page that is internally
+  // ordered and globally wrong — the real newest record can be the 700th
+  // entry and never reach the page.
+  const p = plan({ ...emptyQuery(), folderId: 'f1', sort: 'newest' });
+  assert.equal(p.baseIndex, 'folderCreatedAt');
   assert.equal(p.baseValue, 'f1');
+  assert.equal(p.baseKind, 'prefix');
+  assert.equal(p.direction, 'prev');
+  assert.equal(p.sortStrategy, 'index');
   assert.ok(p.indexedPredicates.includes('scope.folderId'));
   assert.equal(p.residualPredicates.includes('scope.folderId'), false);
 });
 
-test('a category pill starts from the categoryId index', () => {
+test('oldest is the same index, walked the other way', () => {
+  const p = plan({ ...emptyQuery(), folderId: 'f1', sort: 'oldest' });
+  assert.equal(p.baseIndex, 'folderCreatedAt');
+  assert.equal(p.direction, 'next');
+  assert.equal(p.sortStrategy, 'index');
+});
+
+test('an order no index can produce uses the plain equality index instead', () => {
+  // Name order is decided by comparing records, so the base is chosen purely
+  // for selectivity and the ordering happens over what it returns.
+  const p = plan({ ...emptyQuery(), folderId: 'f1', sort: 'name-az' });
+  assert.equal(p.baseIndex, 'folderId');
+  assert.equal(p.sortStrategy, 'memory');
+});
+
+test('nothing sorts only the current page', () => {
+  // The strategy that did is gone. A plan either gets its order from the
+  // cursor or collects every match and orders them; there is no third option
+  // where 24 records out of 740 are sorted and called "the newest".
+  for (const sort of ['newest', 'oldest', 'name-az', 'name-za', 'value-high', 'value-low']) {
+    for (const scope of [{}, { folderId: 'f1' }, { categoryId: 'c1' }]) {
+      const p = plan({ ...emptyQuery(), ...scope, sort });
+      assert.ok(['index', 'memory'].includes(p.sortStrategy), `${sort} ${JSON.stringify(scope)}`);
+    }
+  }
+});
+
+test('a category pill starts from the category-and-date index', () => {
   const p = plan({ ...emptyQuery(), categoryId: 'c9' });
-  assert.equal(p.baseIndex, 'categoryId');
+  assert.equal(p.baseIndex, 'categoryCreatedAt');
   assert.equal(p.baseValue, 'c9');
+  assert.equal(p.sortStrategy, 'index');
 });
 
-test('a location filter starts from the locationId index', () => {
+test('a location filter starts from the location-and-date index', () => {
   const p = plan({ ...emptyQuery(), filters: { ...emptyQuery().filters, locationId: 'l3' } });
-  assert.equal(p.baseIndex, 'locationId');
+  assert.equal(p.baseIndex, 'locationCreatedAt');
   assert.equal(p.baseValue, 'l3');
+  assert.equal(p.sortStrategy, 'index');
 });
 
-test('a condition filter starts from the condition index', () => {
+test('a condition has no date index, so the date index wins and it becomes a test', () => {
+  // Correctness over selectivity: there is no [condition, createdAt] index, so
+  // using the condition index would mean sorting a page again. The order comes
+  // from the date index and the condition is checked per record.
   const p = plan({ ...emptyQuery(), filters: { ...emptyQuery().filters, condition: 'ممتازة' } });
-  assert.equal(p.baseIndex, 'condition');
-  assert.equal(p.baseValue, 'ممتازة');
+  assert.equal(p.baseIndex, 'createdAt');
+  assert.equal(p.sortStrategy, 'index');
+  assert.ok(p.residualPredicates.includes('filters.condition'));
+});
+
+test('but with a folder it rides the folder-and-date index as a test', () => {
+  const p = plan({
+    ...emptyQuery(), folderId: 'f1',
+    filters: { ...emptyQuery().filters, condition: 'ممتازة' },
+  });
+  assert.equal(p.baseIndex, 'folderCreatedAt');
+  assert.ok(p.residualPredicates.includes('filters.condition'));
 });
 
 test('the Trash is the deletedAt index, which holds exactly the deleted records', () => {
@@ -62,16 +110,7 @@ test('everywhere but the Trash, deleted records are excluded', () => {
 
 // ── what the index cannot decide ───────────────────────────────────────────
 
-test('a folder plus a condition uses the folder index and tests the condition', () => {
-  // Only one of them can be the base. The narrower one is, and the other
-  // becomes a test applied to the folder's records rather than to all of them.
-  const p = plan({
-    ...emptyQuery(), folderId: 'f1',
-    filters: { ...emptyQuery().filters, condition: 'ممتازة' },
-  });
-  assert.equal(p.baseIndex, 'folderId');
-  assert.ok(p.residualPredicates.includes('filters.condition'));
-});
+
 
 test('free-text search is named as the part no index can answer', () => {
   const p = plan({ ...emptyQuery(), search: 'خاتم' });
