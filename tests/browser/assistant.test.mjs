@@ -26,18 +26,20 @@ await page.evaluate(async () => {
   const now = Date.now();
   const year = 400 * 24 * 3600 * 1000;
   const rows = [
-    ['ساعة جيب فضية', true,  true,  now,        'BC-1'],
-    ['ساعة جيب فضية', true,  true,  now,        'BC-1'],
-    ['لوحة زيتية',    false, false, now,        ''],
-    ['خاتم ذهب',      false, true,  now,        ''],
-    ['سيف عثماني',    true,  false, now - year, ''],
-    ['عدسة Leica',    false, false, now - year, ''],
+    // A pair sharing only a barcode: the same product, possibly two of them.
+    ['ساعة جيب فضية', true,  true,  now,        'BC-1', ''],
+    ['ساعة جيب فضية', true,  true,  now,        'BC-1', ''],
+    ['لوحة زيتية',    false, false, now,        '',     ''],
+    ['خاتم ذهب',      false, true,  now,        '',     ''],
+    // A pair sharing a serial number: one object, recorded twice.
+    ['سيف عثماني',    true,  false, now - year, '',     'SN-55120'],
+    ['سيف عثماني آخر', false, false, now - year, '',    'SN-55120'],
   ];
-  await repository.bulkWrite(rows.map(([name, img, loc, updated, barcode], i) => ({
+  await repository.bulkWrite(rows.map(([name, img, loc, updated, barcode, serialNumber], i) => ({
     type: 'set', collection: 'items', id: 'a' + i,
     data: {
       id: 'a' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'c1',
-      locationId: loc ? 'l1' : null, condition: 'جيدة', barcode,
+      locationId: loc ? 'l1' : null, condition: 'جيدة', barcode, serialNumber,
       valuation: { min: 5000 * (i + 1), max: 7000 * (i + 1), currency: 'SAR', source: 'manual', valuationType: 'estimate' },
       images: img ? [{ id: 'm' + i, storagePath: 'local:x', url: '' }] : [],
       createdAt: now - i * 1000, updatedAt: updated, version: 1,
@@ -131,13 +133,22 @@ const dup = await page.evaluate(() => ({
   actions: [...document.querySelectorAll('.dup-acts button')].map(n => n.textContent),
   note: document.querySelector('.asec-sub')?.textContent || '',
 }));
-check('A10 duplicates are grouped with the reason', dup.reasons.includes('نفس الباركود'), JSON.stringify(dup.reasons));
+check('A10 duplicates are grouped with the reason',
+  dup.reasons.some(r => r.includes('نفس الباركود')) && dup.reasons.some(r => r.includes('الرقم التسلسلي')),
+  JSON.stringify(dup.reasons));
 check('A11 both sides of the pair are shown, side by side and labelled',
   dup.names.filter(n => n === 'ساعة جيب فضية').length === 2
   && dup.sides.includes('الأولى') && dup.sides.includes('الثانية'),
   JSON.stringify({ names: dup.names, sides: dup.sides }));
-check('A11b the confidence claimed matches the evidence, and never exceeds it',
+// A barcode identifies a product, not an object: two records carrying one may
+// be two things the owner really owns. A serial number identifies the object.
+// The screen has to tell those apart, or it invites an owner to fold one
+// possession into another and lose it.
+check('A11b a shared serial number is claimed as a confirmed match',
   dup.badges.includes('تطابق مؤكد'), JSON.stringify(dup.badges));
+check('A11b2 a shared barcode is claimed as the same product, not the same object',
+  dup.badges.includes('نفس المنتج') && dup.reasons.some(r => /نسختين/.test(r)),
+  JSON.stringify({ badges: dup.badges, reasons: dup.reasons }));
 check('A11c every action is non-destructive, and one of them is "these are two different things"',
   dup.actions.some(a => /الإبقاء كقطعتين/.test(a)) && !dup.actions.some(a => /دمج|حذف/.test(a)),
   JSON.stringify(dup.actions));

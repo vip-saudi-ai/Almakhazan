@@ -178,6 +178,23 @@ export function detailRow(label, value) {
   ]);
 }
 
+/**
+ * A detail row holding a machine identifier — a serial, a model, a reference.
+ *
+ * These are printed on the object and have to read back exactly as they are
+ * printed. In an Arabic (right-to-left) paragraph the bidirectional algorithm
+ * reorders a mixed string like "A-1234/B" on screen, so the value is isolated
+ * and given its own left-to-right direction. Nothing about the stored text
+ * changes; only how it is laid out.
+ */
+export function identifierRow(label, value) {
+  if (value == null || value === '' || value === '—') return null;
+  return el('div', { class: 'dfrow' }, [
+    el('div', { class: 'dflbl', text: label }),
+    el('div', { class: 'dfval dfval-id', dir: 'ltr', text: value }),
+  ]);
+}
+
 export function section(titleText, children, extra = {}) {
   return el('div', { class: 'ov-section', ...extra }, [
     titleText ? el('div', { class: 'ov-sec-title', text: titleText }) : null,

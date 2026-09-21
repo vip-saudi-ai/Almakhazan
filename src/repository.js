@@ -807,14 +807,29 @@ class Repository {
     return highest + 1;
   }
 
+  /**
+   * Is this identifier already on another record? Asked of the index, not of
+   * the loaded window.
+   *
+   * Scanning `state.items` made uniqueness a property of what happened to be on
+   * screen: a workspace of 3,000 records would accept a barcode that a record
+   * outside the newest 200 already carried, and the customer found out when two
+   * different things scanned to the same item. Both checks now see every
+   * record. A trashed record does not block the identifier — the customer
+   * deleted it on purpose — so only live records count as a conflict.
+   */
+  async identifierConflict(field, value, exceptId) {
+    if (!value) return null;
+    const rows = await this.backend.findItemsByField(field, value);
+    return rows.find((row) => row.id !== exceptId && !row.deletedAt) || null;
+  }
+
   skuConflict(sku, exceptId) {
-    if (!sku) return null;
-    return this.state.items.find((i) => i.sku === sku && i.id !== exceptId && !i.deletedAt) || null;
+    return this.identifierConflict('sku', sku, exceptId);
   }
 
   barcodeConflict(barcode, exceptId) {
-    if (!barcode) return null;
-    return this.state.items.find((i) => i.barcode === barcode && i.id !== exceptId && !i.deletedAt) || null;
+    return this.identifierConflict('barcode', barcode, exceptId);
   }
 
   // ── activity ──

@@ -592,6 +592,9 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   $('f-barcode').value = item?.barcode || '';
   $('f-qty').value = item ? String(item.quantity) : '';
   $('f-brand').value = item?.brand || '';
+  $('f-serial').value = item?.serialNumber || '';
+  $('f-model').value = item?.modelNumber || '';
+  $('f-ref').value = item?.referenceNumber || '';
   $('f-desc').value = item?.description || '';
   $('f-valuation').value = item?.valuation
     ? (item.valuation.min === item.valuation.max ? String(item.valuation.min) : `${item.valuation.min}-${item.valuation.max}`)
@@ -619,7 +622,7 @@ async function saveItem() {
   const sku = $('f-sku').value.trim();
   const barcode = $('f-barcode').value.trim();
 
-  const skuClash = repository.skuConflict(sku, form.isNew ? null : form.itemId);
+  const skuClash = await repository.skuConflict(sku, form.isNew ? null : form.itemId);
   if (skuClash) {
     const proceed = await confirmAction({
       title: 'الرمز مستخدم مسبقاً',
@@ -632,7 +635,7 @@ async function saveItem() {
     return saveItem();
   }
 
-  const barcodeClash = barcode ? repository.barcodeConflict(barcode, form.isNew ? null : form.itemId) : null;
+  const barcodeClash = barcode ? await repository.barcodeConflict(barcode, form.isNew ? null : form.itemId) : null;
   if (barcodeClash) {
     const proceed = await confirmAction({
       title: 'الباركود مكرّر',
@@ -662,6 +665,9 @@ async function saveItem() {
     unit,
     condition: $('f-cond').value,
     brand: $('f-brand').value.trim(),
+    serialNumber: $('f-serial').value.trim(),
+    modelNumber: $('f-model').value.trim(),
+    referenceNumber: $('f-ref').value.trim(),
     valuation: readValuation(),
     description: $('f-desc').value.trim(),
     images: form.images,

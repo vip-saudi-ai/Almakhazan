@@ -97,6 +97,12 @@ export const TEXT_LIMITS = {
   name: 200,
   sku: 64,
   barcode: 64,
+  // The identifiers printed on the object itself. A serial number names one
+  // object; a model number names the product line; a reference number is
+  // whatever the owner's own system, an insurer or an auction house calls it.
+  serialNumber: 80,
+  modelNumber: 80,
+  referenceNumber: 80,
   brand: 120,
   description: 4000,
   folderName: 120,

@@ -51,6 +51,7 @@ export function exportExcel() {
   const itemRows = [[
     'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
     'الكمية', 'الوحدة', 'الحالة', 'البراند',
+    'الرقم التسلسلي', 'رقم الموديل', 'الرقم المرجعي',
     'أدنى تقييم', 'أعلى تقييم', 'العملة', 'مصدر التقييم',
     'تقييم محلي (نَظْم)', 'تقييم عالمي (نَظْم)',
     'أدنى تقدير (نَظْم)', 'أعلى تقدير (نَظْم)',
@@ -70,6 +71,9 @@ export function exportExcel() {
       item.unit || '',
       item.condition || '',
       item.brand || '',
+      item.serialNumber || '',
+      item.modelNumber || '',
+      item.referenceNumber || '',
       item.valuation?.min ?? null,
       item.valuation?.max ?? null,
       item.valuation?.currency || '',
@@ -227,6 +231,7 @@ export function exportSelection(items) {
   const rows = [[
     'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
     'الكمية', 'الوحدة', 'الحالة', 'البراند',
+    'الرقم التسلسلي', 'رقم الموديل', 'الرقم المرجعي',
     'أدنى تقييم', 'أعلى تقييم', 'العملة', 'الوصف', 'آخر تحديث',
   ]];
   for (const item of items) {
@@ -241,6 +246,9 @@ export function exportSelection(items) {
       item.unit || '',
       item.condition || '',
       item.brand || '',
+      item.serialNumber || '',
+      item.modelNumber || '',
+      item.referenceNumber || '',
       item.valuation?.min ?? null,
       item.valuation?.max ?? null,
       item.valuation?.currency || '',

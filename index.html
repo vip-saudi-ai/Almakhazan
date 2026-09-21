@@ -280,7 +280,11 @@
       <div class="fstitle">معلومات القطعة</div>
       <div class="frow"><label for="f-name">الاسم</label><input id="f-name" placeholder="اسم القطعة"></div>
       <div class="frow"><label for="f-sku">الرمز SKU</label><input id="f-sku" placeholder="تلقائي"></div>
-      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" inputmode="numeric"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود">⊡</button></div>
+      <!-- Not inputmode="numeric": a barcode is a string. Code 128 and QR carry
+           letters and punctuation, and a numeric keypad made those unenterable
+           on a phone. `autocapitalize`/`autocorrect` are off for the same
+           reason a serial number is: the device must not improve it. -->
+      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود">⊡</button></div>
     </div>
 
     <div class="fsec">
@@ -300,6 +304,12 @@
       <div class="field-hint" id="f-qty-hint"></div>
       <div class="frow"><label for="f-cond">الحالة</label><select id="f-cond"></select></div>
       <div class="frow"><label for="f-brand">البراند</label><input id="f-brand" placeholder="اسم البراند / الصانع"></div>
+      <!-- The numbers stamped on the object. These are what an insurer, a
+           police report or an auction catalogue asks for, and they are kept
+           exactly as typed — "0042" is not 42. -->
+      <div class="frow"><label for="f-serial">الرقم التسلسلي</label><input id="f-serial" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="frow"><label for="f-model">رقم الموديل</label><input id="f-model" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="frow"><label for="f-ref">الرقم المرجعي</label><input id="f-ref" placeholder="مرجعك الخاص، أو رقم البوليصة" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
       <div class="frow">
         <label for="f-valuation">التقييم</label>
         <input id="f-valuation" inputmode="decimal" placeholder="5000 أو 5000-8000">

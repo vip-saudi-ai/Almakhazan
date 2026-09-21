@@ -7,7 +7,7 @@ import { openImageViewer } from './image-viewer.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { formatValuation, primaryImage } from '../validation.js';
 import {
-  closeSheet, confirmAction, detailRow, flashSuccess, openSheet, toast, toastError,
+  closeSheet, confirmAction, detailRow, flashSuccess, identifierRow, openSheet, toast, toastError,
 } from '../ui.js';
 import { openItemForm } from './item-form.js';
 import { openLabels } from './labels.js';
@@ -129,6 +129,13 @@ export function openDetail(itemId) {
         detailRow('الرمز', item.sku),
         detailRow('الباركود', item.barcode),
         detailRow('البراند', item.brand),
+        // The identifiers an insurer, a police report or an auction house asks
+        // for. They are shown left-to-right and isolated, because an Arabic
+        // paragraph direction otherwise reorders a mixed letter-and-digit
+        // serial on screen into something that is not what is on the object.
+        identifierRow('الرقم التسلسلي', item.serialNumber),
+        identifierRow('رقم الموديل', item.modelNumber),
+        identifierRow('الرقم المرجعي', item.referenceNumber),
         item.valuation ? detailRow('التقييم', formatValuation(item.valuation)) : null,
         item.valuation ? detailRow('مصدر التقييم', item.valuation.source === 'ai' ? `تقدير من ${ASSISTANT_NAME}` : 'يدوي') : null,
       ]),
@@ -190,6 +197,7 @@ export function openQuickPreview(itemId) {
         detailRow('البراند', item.brand),
         detailRow('الرمز', item.sku),
         detailRow('الباركود', item.barcode),
+        identifierRow('الرقم التسلسلي', item.serialNumber),
       ]),
       item.description ? el('div', { class: 'desc-block desc-block-sm', text: item.description }) : null,
     ]),

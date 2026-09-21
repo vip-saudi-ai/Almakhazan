@@ -335,6 +335,9 @@ function duplicateGroup(group) {
   return el('div', { class: 'dup-group' }, [
     el('div', { class: 'dup-head' }, [
       el('span', { class: `dup-badge dup-${group.confidence}`, text: group.label }),
+      // Every signal that linked these records, not just the strongest. "Same
+      // barcode" alone reads as certainty; "same barcode, and the same name"
+      // is the evidence, and it is what lets the owner decide.
       el('span', { class: 'dup-reason', text: group.reason }),
     ]),
     el('div', { class: 'dup-pair' }, [

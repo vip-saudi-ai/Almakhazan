@@ -31,11 +31,15 @@ export const FIELDS = [
   { key: 'folder', label: 'المجلد', taxonomy: 'folders', aliases: ['المجلد', 'المجموعة', 'folder', 'collection'] },
   { key: 'condition', label: 'الحالة', aliases: ['الحالة', 'حالة القطعة', 'condition', 'state'] },
   { key: 'brand', label: 'البراند', aliases: ['البراند', 'الماركة', 'الشركة', 'brand', 'maker', 'manufacturer'] },
-  // 'ref' is deliberately absent: it means a serial number to a watch dealer,
-  // a SKU to a retailer and an internal reference to everyone else. It is
-  // asked about (see AMBIGUOUS) rather than guessed.
+  // A bare 'ref' is deliberately absent from every alias list below: it means a
+  // serial number to a watch dealer, a SKU to a retailer and an internal
+  // reference to everyone else. It is asked about (see AMBIGUOUS), never
+  // guessed. The unambiguous spellings are claimed here.
   { key: 'sku', label: 'الرمز', aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code'] },
-  { key: 'barcode', label: 'الباركود', aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc'] },
+  { key: 'barcode', label: 'الباركود', aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc', 'gtin'] },
+  { key: 'serialNumber', label: 'الرقم التسلسلي', aliases: ['الرقم التسلسلي', 'رقم تسلسلي', 'التسلسلي', 'serial', 'serial no', 'serial number', 's/n', 'sn'] },
+  { key: 'modelNumber', label: 'رقم الموديل', aliases: ['رقم الموديل', 'الموديل', 'موديل', 'الطراز', 'model', 'model no', 'model number'] },
+  { key: 'referenceNumber', label: 'الرقم المرجعي', aliases: ['الرقم المرجعي', 'رقم مرجعي', 'رقم البوليصة', 'reference number', 'ref no'] },
   { key: 'description', label: 'الوصف', aliases: ['الوصف', 'ملاحظات', 'ملاحظة', 'تفاصيل', 'description', 'notes', 'note', 'details'] },
   { key: 'valuationMin', label: 'أدنى قيمة', aliases: ['أدنى قيمة', 'السعر', 'القيمة', 'التكلفة', 'price', 'value', 'cost', 'min'] },
   { key: 'valuationMax', label: 'أعلى قيمة', aliases: ['أعلى قيمة', 'أعلى سعر', 'max', 'max price'] },
@@ -124,7 +128,8 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
       else problems.push({ line, field: 'condition', reason: `حالة غير معروفة: «${rawCondition}»`, value: rawCondition });
     }
 
-    for (const key of ['brand', 'sku', 'barcode', 'description']) {
+    for (const key of ['brand', 'sku', 'barcode', 'description',
+      'serialNumber', 'modelNumber', 'referenceNumber']) {
       const value = cell(row, mapping[key]);
       if (value) record[key] = value;
     }
@@ -219,11 +224,12 @@ export function ambiguousColumns(headers, mapping) {
 
 const AMBIGUOUS = [
   {
-    match: ['ref', 'reference', 'مرجع', 'الرقم المرجعي', 'رقم مرجعي'],
+    match: ['ref', 'reference', 'مرجع'],
     options: [
+      { key: 'referenceNumber', label: 'الرقم المرجعي' },
       { key: 'sku', label: 'الرمز (SKU)' },
-      { key: 'barcode', label: 'الرقم التسلسلي / الباركود' },
-      { key: 'description', label: 'الرقم المرجعي كوصف' },
+      { key: 'serialNumber', label: 'الرقم التسلسلي' },
+      { key: 'barcode', label: 'الباركود' },
       { key: '', label: 'تجاهل العمود' },
     ],
   },
@@ -240,6 +246,7 @@ const AMBIGUOUS = [
     options: [
       { key: 'sku', label: 'الرمز (SKU)' },
       { key: 'barcode', label: 'الباركود' },
+      { key: 'serialNumber', label: 'الرقم التسلسلي' },
       { key: 'quantity', label: 'الكمية' },
       { key: '', label: 'تجاهل العمود' },
     ],

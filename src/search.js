@@ -41,6 +41,9 @@ export function buildHaystack(item, lookups) {
 
   const text = normalizeArabic([
     item.name, item.sku, item.barcode, item.brand, item.description,
+    // The numbers stamped on the object are often the only thing an owner
+    // remembers when they go looking for it.
+    item.serialNumber, item.modelNumber, item.referenceNumber,
     category?.name, folder?.name, location?.name,
     item.condition, item.aiData?.description,
   ].filter(Boolean).join(' '));

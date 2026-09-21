@@ -276,6 +276,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .dfrow:last-child{border-bottom:none}
 .dflbl{font-size:14px;color:var(--ts)}
 .dfval{font-size:14px;font-weight:600;color:var(--tp);text-align:left}
+/* A machine identifier reads back exactly as it is printed on the object:
+   isolated from the surrounding right-to-left paragraph, and in a font where
+   0/O and 1/l are not the same shape. */
+.dfval-id{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;unicode-bidi:isolate;word-break:break-all}
 /* CAT GRID */
 .catcell{border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:var(--glass-elevated);border:1px solid var(--border)}
 .catcell:active{opacity:.7}

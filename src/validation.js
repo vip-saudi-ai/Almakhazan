@@ -244,6 +244,12 @@ export function normalizeItem(raw, options = {}) {
     name: cleanText(src.name, TEXT_LIMITS.name),
     sku: cleanText(src.sku, TEXT_LIMITS.sku),
     barcode: cleanText(src.barcode, TEXT_LIMITS.barcode),
+    // Kept as typed. A serial number is a string even when it looks like a
+    // number: "0042" and "42" are different objects, and coercing either way
+    // has made a record unfindable by the only identifier stamped on it.
+    serialNumber: cleanText(src.serialNumber ?? src.serial ?? src.aiData?.serial, TEXT_LIMITS.serialNumber),
+    modelNumber: cleanText(src.modelNumber ?? src.model, TEXT_LIMITS.modelNumber),
+    referenceNumber: cleanText(src.referenceNumber ?? src.reference ?? src.ref, TEXT_LIMITS.referenceNumber),
     categoryId: cleanText(src.categoryId ?? src.cat, 128) || UNCATEGORIZED_ID,
     folderId: cleanText(src.folderId, 128) || null,
     locationId: cleanText(src.locationId ?? src.loc, 128) || null,

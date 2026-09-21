@@ -17,7 +17,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -42,6 +42,7 @@ export const SCHEMA = {
       locationId: 'locationId',
       sku: 'sku',
       barcode: 'barcode',
+      serialNumber: 'serialNumber',
       deletedAt: 'deletedAt',
     },
   },

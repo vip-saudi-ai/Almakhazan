@@ -103,14 +103,66 @@ test('two identical records in a healthy inventory still surface as duplicates',
 // ── duplicates ──
 
 test('records sharing a barcode are grouped, and the reason is named', () => {
+  // Distinct names, so the barcode is the only thing that could connect them.
   const groups = findDuplicateGroups([
-    item({ id: 'a', barcode: 'BC-1' }),
-    item({ id: 'b', barcode: 'BC-1' }),
-    item({ id: 'c', barcode: 'BC-2' }),
+    item({ id: 'a', name: 'مصباح نحاسي', barcode: 'BC-1' }),
+    item({ id: 'b', name: 'مصباح نحاسي قديم', barcode: 'BC-1' }),
+    item({ id: 'c', name: 'كرسي خشبي', barcode: 'BC-2' }),
   ]);
   assert.equal(groups.length, 1);
-  assert.equal(groups[0].reason, 'نفس الباركود');
+  assert.match(groups[0].reason, /نفس الباركود/);
   assert.deepEqual(groups[0].items.map((i) => i.id), ['a', 'b']);
+});
+
+test('a shared barcode is the same product, not confirmed the same object', () => {
+  // A GTIN is printed on every unit the manufacturer made. Two records
+  // carrying one may be two things the owner genuinely owns, and calling that
+  // a confirmed duplicate invites them to fold one possession into another.
+  const [group] = findDuplicateGroups([
+    item({ id: 'a', barcode: 'BC-1' }),
+    item({ id: 'b', barcode: 'BC-1' }),
+  ]);
+  assert.equal(group.confidence, 'high');
+  assert.notEqual(group.confidence, 'certain');
+
+  // A serial number names one object, so it still is.
+  const [serial] = findDuplicateGroups([
+    item({ id: 'a', serialNumber: 'SN-99881' }),
+    item({ id: 'b', serialNumber: 'SN-99881' }),
+  ]);
+  assert.equal(serial.confidence, 'certain');
+});
+
+test('records linked through a third record stay in one group', () => {
+  // A and B share a barcode; B and C share a serial. All three are one
+  // question, and the owner has to see them together to answer it.
+  const groups = findDuplicateGroups([
+    item({ id: 'a', name: 'عدسة', barcode: 'BC-7' }),
+    item({ id: 'b', name: 'عدسة ثانية', barcode: 'BC-7', serialNumber: 'SN-4321' }),
+    item({ id: 'c', name: 'عدسة ثالثة', serialNumber: 'SN-4321' }),
+  ]);
+  assert.equal(groups.length, 1, JSON.stringify(groups.map((g) => g.items.map((i) => i.id))));
+  assert.deepEqual(groups[0].items.map((i) => i.id), ['a', 'b', 'c']);
+});
+
+test('no record is dropped because a stronger group claimed its partner', () => {
+  const items = [
+    item({ id: 'a', name: 'ساعة', barcode: 'BC-5' }),
+    item({ id: 'b', name: 'ساعة', barcode: 'BC-5', serialNumber: 'SN-0001' }),
+    item({ id: 'c', name: 'ساعة أخرى', serialNumber: 'SN-0001' }),
+  ];
+  const reported = new Set(findDuplicateGroups(items).flatMap((g) => g.items.map((i) => i.id)));
+  assert.deepEqual([...reported].sort(), ['a', 'b', 'c']);
+});
+
+test('a group names every signal that formed it, strongest first', () => {
+  const [group] = findDuplicateGroups([
+    item({ id: 'a', name: 'خاتم ذهب', serialNumber: 'SN-7777' }),
+    item({ id: 'b', name: 'خاتم ذهب', serialNumber: 'SN-7777' }),
+  ]);
+  assert.deepEqual(group.evidence.map((e) => e.kind), ['serial', 'name']);
+  assert.match(group.reason, /الرقم التسلسلي/);
+  assert.match(group.reason, /اسم متطابق/);
 });
 
 test('the same name in the same category is a candidate; in another category it is not', () => {
@@ -127,7 +179,7 @@ test('the same name in the same category is a candidate; in another category it 
   assert.equal(different.length, 0);
 });
 
-test('a record is reported once, in its strongest group', () => {
+test('a record is reported once, and the group is named by its strongest signal', () => {
   const groups = findDuplicateGroups([
     item({ id: 'a', name: 'خاتم', barcode: 'BC-9' }),
     item({ id: 'b', name: 'خاتم', barcode: 'BC-9' }),
@@ -135,6 +187,10 @@ test('a record is reported once, in its strongest group', () => {
   ]);
   const seen = groups.flatMap((g) => g.items.map((i) => i.id));
   assert.equal(new Set(seen).size, seen.length, JSON.stringify(seen));
+  // All three share a name, so all three are one question — and the group is
+  // described by the barcode, which is the strongest thing linking any of them.
+  assert.equal(groups.length, 1);
+  assert.deepEqual(groups[0].items.map((i) => i.id), ['a', 'b', 'c']);
   assert.equal(groups[0].kind, 'barcode');
 });
 
