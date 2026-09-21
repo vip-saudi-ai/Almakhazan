@@ -17,28 +17,13 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
-const PLAN_STUB = `
-  import { PLAN_CONFIG } from '/src/plans.generated.js';
-  import { checkCreateItem, itemQuotaStatus, usageSummary, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-  const plan = { ...PLAN_CONFIG.plans['business'], id: 'business' };
-  const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-  const usage = { items: 0, storageBytes: 0, members: 1, aiCreditsUsed: 0 };
-  export function startPlanWatch(){} export function stopPlanWatch(){}
-  export function onSubscriptionChange(listener){ listener({ entitlement, usage, ready: true }); return () => {}; }
-  export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-  export function currentPlan(){ return plan; }
-  export function planStatus(){ return 'active'; }
-  export function quotaStatus(){ return itemQuotaStatus({ entitlement, usage }); }
-  export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-  export function planUsage(){ return usageSummary({ entitlement, usage }); }
-  export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-  export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-  export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-`;
+const PLAN_STUB = planStub({ planId: 'business' });
 
 const SIZES = [50, 1000, 5000, 20000];
 const results = [];
@@ -96,7 +81,7 @@ for (const size of SIZES) {
 
   const measured = await page.evaluate(async () => {
     const { repository } = await import('/src/repository.js');
-    const { runQuery } = await import('/src/query.js');
+    const { queryInventory } = await import('/src/query.js');
     const local = await import('/src/local-store.js');
     const home = await import('/src/views/home.js');
 
@@ -111,7 +96,9 @@ for (const size of SIZES) {
       return times.sort((a, b) => a - b)[Math.floor(runs / 2)];
     };
 
-    const query = await time(() => runQuery({ page: 1, perPage: 24 }));
+    // One page of the default browse, through the same entry point every
+    // screen uses.
+    const query = await time(() => queryInventory({ page: 1, perPage: 24 }));
     const render = await time(() => home.renderHome());
     const bySku = await median((i) => local.firstByIndex('items', 'sku', `INV-2026-${String(i * 7).padStart(6, '0')}`));
     const bySerial = await median((i) => local.firstByIndex('items', 'serialNumber', `SN-${String(i * 7).padStart(7, '0')}`));

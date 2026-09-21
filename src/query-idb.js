@@ -22,7 +22,16 @@ import { repository } from './repository.js';
 import { matchesQuery, parseQuery, sortItems, sortByValuation } from './search.js';
 import { normalizeItem } from './validation.js';
 
-/** How many records one cursor batch hands over while scanning. */
+/**
+ * The largest batch a scan reads at once.
+ *
+ * A scan starts much smaller than this and grows. Filling a 24-row page out of
+ * an inventory where almost everything matches needs about 24 records, and
+ * reading 400 to find them is sixteen times the deserialisation for the same
+ * answer — which showed up as a 30ms first page at 20,000 records where the
+ * work itself was a millisecond. The batch grows when the predicate turns out
+ * to be selective, so a rare match still gets read in useful chunks.
+ */
 const SCAN_BATCH = 400;
 /** After this many records examined without filling a page, yield to the tab. */
 const YIELD_EVERY = 1200;
@@ -290,6 +299,8 @@ async function byOffset(query, queryPlan, perPage) {
     cursor: done ? null : { key: nextKey, primaryKey: nextPrimaryKey },
     plan: queryPlan,
     exhausted: true,
+    // An offset page reads exactly the page: `advance` skips inside the engine.
+    examined: rows.length,
   };
 }
 
@@ -315,41 +326,74 @@ async function cheapTotal(query, queryPlan) {
   residual.delete('live');
   const rootOnly = residual.delete('rootOnly');
   if (residual.size) return null;
-  if (queryPlan.sortStrategy === 'memory') {
-    // The order needs every match in hand anyway, so the walk counts them.
-    return null;
-  }
+  // Ordering by name or value needs every match in hand anyway, so the walk
+  // that produces the page counts them and this is not needed.
+  if (queryPlan.sortStrategy === 'memory') return null;
 
   const scopeIndex = queryPlan.baseValue === undefined ? null : queryPlan.baseIndex;
   const scopeRange = rangeFor(queryPlan);
-  const field = scopeIndex;
+  const scopeSize = await local.countRange('items', scopeIndex, scopeRange);
 
-  let total = await local.countRange('items', scopeIndex, scopeRange);
-  if (rootOnly) {
-    // Filed records are exactly the folderId index; the rest are at the root.
-    total -= await local.countRange('items', 'folderId', null);
-  }
-
-  // Subtract the deleted records that fall in this scope, read from the index
-  // that holds only deleted records.
-  const trashed = await local.countRange('items', 'deletedAt', null);
-  if (trashed > 0) {
-    let inScope = 0;
+  if (scopeIndex) {
+    // A bounded scope — one folder, one category, one location, one condition.
+    // Counting what is deleted or unfiled *within* it cannot be done by
+    // subtracting whole-index sizes: the `folderId` index counts every filed
+    // record in the workspace, not the filed ones inside this category, and
+    // subtracting it produced a negative that clamped to nought.
+    //
+    // So the scope is walked, and only while walking it is cheaper than the
+    // thing this module exists to avoid.
+    if (!rootOnly) {
+      const trashed = await countTrashedIn(queryPlan, false);
+      return Math.max(0, scopeSize - trashed);
+    }
+    if (scopeSize > COUNTABLE_SCAN) return null;
+    let n = 0;
     await local.walk('items', {
-      index: 'deletedAt', batchSize: SCAN_BATCH,
+      index: scopeIndex, range: scopeRange, batchSize: SCAN_BATCH,
       onBatch: (batch) => {
-        for (const item of batch) {
-          if (rootOnly && item.folderId) continue;
-          if (field && item[field] !== queryPlan.baseValue) continue;
-          inScope += 1;
-        }
+        for (const item of batch) if (!item.deletedAt && !item.folderId) n += 1;
         return true;
       },
     });
-    total -= inScope;
+    return n;
   }
 
+  // The whole store. Here the complements really are whole indexes: filed
+  // records are exactly the `folderId` index, deleted records are exactly the
+  // `deletedAt` index, so both are subtractions and neither is a walk.
+  let total = scopeSize;
+  if (rootOnly) total -= await local.countRange('items', 'folderId', null);
+  total -= await countTrashedIn(queryPlan, rootOnly);
   return Math.max(0, total);
+}
+
+/**
+ * How many deleted records fall inside a scope.
+ *
+ * Read from the index that holds only deleted records, so the walk is bounded
+ * by the Trash — the small pile a customer clears out — rather than by the
+ * inventory.
+ */
+async function countTrashedIn(queryPlan, rootOnly) {
+  const trashed = await local.countRange('items', 'deletedAt', null);
+  if (trashed === 0) return 0;
+  const field = queryPlan.baseValue === undefined ? null : queryPlan.baseIndex;
+  if (!field && !rootOnly) return trashed;
+
+  let inScope = 0;
+  await local.walk('items', {
+    index: 'deletedAt', batchSize: SCAN_BATCH,
+    onBatch: (batch) => {
+      for (const item of batch) {
+        if (rootOnly && item.folderId) continue;
+        if (field && item[field] !== queryPlan.baseValue) continue;
+        inScope += 1;
+      }
+      return true;
+    },
+  });
+  return inScope;
 }
 
 /**
@@ -371,12 +415,15 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
   let matched = 0;
   let examined = 0;
   let exhausted = true;
+  // Enough for the page if most records match, and growing when they do not.
+  let batchSize = needsMemorySort ? SCAN_BATCH : Math.min(SCAN_BATCH, Math.max(64, wantedThrough + 8));
+  let sinceYield = 0;
 
   await local.walk('items', {
     index: queryPlan.baseIndex,
     range: rangeFor(queryPlan),
     direction: queryPlan.direction,
-    batchSize: SCAN_BATCH,
+    batchSize: () => batchSize,
     onBatch: async (batch) => {
       if (context.signal?.aborted) { exhausted = false; return false; }
       for (const item of batch) {
@@ -389,9 +436,13 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
         if (needsMemorySort || matched <= wantedThrough) kept.push(item);
       }
       if (!needsMemorySort && matched > wantedThrough) { exhausted = false; return false; }
+      // Few matches in that batch means the predicate is selective, so read
+      // more per turn rather than paying transaction overhead per handful.
+      batchSize = Math.min(SCAN_BATCH, batchSize * 4);
       // A long walk gives the tab a turn: a search over an inventory must not
       // be a frozen keyboard.
-      if (examined % YIELD_EVERY < SCAN_BATCH) await yieldToTab();
+      sinceYield += batch.length;
+      if (sinceYield >= YIELD_EVERY) { sinceYield = 0; await yieldToTab(); }
       return true;
     },
   });
@@ -541,11 +592,13 @@ export async function summarize(query) {
   const scopeIndex = query.folderId ? 'folderId' : null;
   const scopeRange = query.folderId ? IDBKeyRange.only(query.folderId) : null;
 
-  const [inScope, trashed] = await Promise.all([
-    local.countRange('items', scopeIndex, scopeRange),
+  // Two counts, not three: the un-scoped count *is* the store count.
+  const [storeTotal, trashed] = await Promise.all([
+    local.countRange('items', null, null),
     local.countRange('items', 'deletedAt', null),
   ]);
-  const liveTotal = Math.max(0, await local.count('items') - trashed);
+  const inScope = scopeIndex ? await local.countRange('items', scopeIndex, scopeRange) : storeTotal;
+  const liveTotal = Math.max(0, storeTotal - trashed);
 
   const base = {
     complete: true,

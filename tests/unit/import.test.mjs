@@ -266,11 +266,26 @@ test('an unreadable upper bound is reported, not dropped in silence', () => {
   assert.ok(problems.some((p) => p.field === 'valuationMax'), JSON.stringify(problems));
 });
 
-test('bounds the wrong way round are reported, and then put the right way round', () => {
-  const { records, problems } = plan([['ساعة', '8000', '5000']], { name: 0, valuationMin: 1, valuationMax: 2 });
+test('bounds the wrong way round hold the row back rather than being swapped', () => {
+  // 8,000 to 5,000 could be columns mapped backwards, a typo, or the truth
+  // badly entered. Swapping them picks one of those readings and writes it
+  // down as a fact about what the customer owns.
+  const { records, problems, rowStatus } = plan(
+    [['ساعة', '8000', '5000']], { name: 0, valuationMin: 1, valuationMax: 2 },
+  );
   assert.ok(problems.some((p) => p.field === 'valuationMax' && /أقل من/.test(p.reason)), JSON.stringify(problems));
-  assert.equal(records[0].valuation.min, 5000);
-  assert.equal(records[0].valuation.max, 8000);
+  assert.equal(records.length, 0);
+  assert.equal(rowStatus.error.length, 1);
+});
+
+test('an unreadable upper bound does not become a flat lower one', () => {
+  // "5,000 to unreadable" silently became a flat 5,000 — a narrower claim
+  // about the object's worth than the file made, presented as the file's own.
+  const { records, problems } = plan(
+    [['ساعة', '5000', 'كثير']], { name: 0, valuationMin: 1, valuationMax: 2 },
+  );
+  assert.equal(records.length, 0);
+  assert.ok(problems.some((p) => p.field === 'valuationMax'), JSON.stringify(problems));
 });
 
 // ── currencies ─────────────────────────────────────────────────────────────
@@ -281,10 +296,115 @@ test('a currency the file names is kept, whether or not the picker offers it', (
   assert.equal(problems.filter((p) => p.field === 'currency').length, 0);
 });
 
-test('a currency column holding something that is not a currency is reported', () => {
-  // Silently becoming SAR turns one unreadable cell into a confident wrong
-  // number on every row of the file.
-  const { records, problems } = plan([['ساعة', '5000', 'قطعة']], { name: 0, valuationMin: 1, currency: 2 });
-  assert.ok(problems.some((p) => p.field === 'currency'), JSON.stringify(problems));
+test('a currency that is not a currency holds the row back — it never becomes SAR', () => {
+  // Falling back turns one unreadable cell into a confidently wrong number on
+  // every row of the file. 10,000 AEDXX is not 10,000 ر.س.
+  const { records, problems } = plan(
+    [['ساعة', '10000', 'AEDXX']], { name: 0, valuationMin: 1, currency: 2 },
+  );
+  assert.ok(problems.some((p) => p.field === 'currency' && /AEDXX/.test(p.reason)), JSON.stringify(problems));
+  assert.equal(records.length, 0);
+});
+
+test('an empty currency cell is not a claim, so the default applies', () => {
+  // The distinction the rule turns on: nothing said versus something said that
+  // cannot be read.
+  const { records, problems } = plan([['ساعة', '5000', '']], { name: 0, valuationMin: 1, currency: 2 });
+  assert.equal(records.length, 1);
   assert.equal(records[0].valuation.currency, 'SAR');
+  assert.equal(problems.filter((p) => p.field === 'currency').length, 0);
+});
+
+test('a row whose money is unreadable is not imported with the money left out', () => {
+  // The alternative is a record that quietly says it is worth nothing.
+  const { records } = plan(
+    [['ساعة جيب', '5000', 'AEDXX'], ['خاتم', '900', 'AED']],
+    { name: 0, valuationMin: 1, currency: 2 },
+  );
+  assert.deepEqual(records.map((r) => r.name), ['خاتم']);
+  assert.equal(records[0].valuation.currency, 'AED');
+});
+
+// ── the plan allowance and the technical ceiling are two different limits ───
+
+test('every plan can actually process what it was sold', async () => {
+  const { PLANS, importRowLimit } = await import('../../src/entitlements.js');
+  const { MAX_ROWS } = await import('../../src/spreadsheet.js');
+
+  // The parser used to stop at 5,000, which made Pro's 10,000 and Business's
+  // 50,000 promises the product could not keep.
+  const expected = { free: 200, personal: 2000, pro: 10000, business: 50000 };
+  for (const [planId, rows] of Object.entries(expected)) {
+    const entitlement = { plan: PLANS[planId], planId };
+    const limit = importRowLimit({ entitlement }, MAX_ROWS);
+    assert.equal(limit.plan, rows, planId);
+    assert.equal(limit.effective, rows, `${planId} effective`);
+    assert.ok(MAX_ROWS >= rows, `the parser must reach ${planId}'s allowance`);
+  }
+});
+
+test('an unlimited plan still meets a per-file ceiling, and it is named as one', async () => {
+  const { PLANS, importRowLimit } = await import('../../src/entitlements.js');
+  const { MAX_ROWS } = await import('../../src/spreadsheet.js');
+  const limit = importRowLimit({ entitlement: { plan: PLANS.enterprise, planId: 'enterprise' } }, MAX_ROWS);
+  assert.equal(limit.unlimitedPlan, true);
+  assert.equal(limit.effective, MAX_ROWS);
+  // Which matters for the message: this is not something a bigger plan fixes.
+  assert.equal(limit.boundBy, 'file');
+});
+
+test('a file at the limit is accepted and a file past it is not', async () => {
+  const { PLANS, checkImportRows } = await import('../../src/entitlements.js');
+  const { MAX_ROWS } = await import('../../src/spreadsheet.js');
+  const personal = { entitlement: { plan: PLANS.personal, planId: 'personal', name: PLANS.personal.name } };
+
+  assert.equal(checkImportRows(personal, 2000, MAX_ROWS).allowed, true);
+  const refused = checkImportRows(personal, 2001, MAX_ROWS);
+  assert.equal(refused.allowed, false);
+  assert.equal(refused.reason, 'limit/import-rows');
+});
+
+test('the message says which limit was met — the plan, or the file', async () => {
+  const { PLANS, checkImportRows } = await import('../../src/entitlements.js');
+  const { MAX_ROWS } = await import('../../src/spreadsheet.js');
+
+  const onPlan = checkImportRows({ entitlement: { plan: PLANS.free, planId: 'free' } }, 201, MAX_ROWS);
+  assert.match(onPlan.message, /خطة/);
+
+  // Enterprise has no plan limit, so the only thing it can meet is the file
+  // ceiling — and telling that customer to upgrade would be nonsense.
+  const onFile = checkImportRows(
+    { entitlement: { plan: PLANS.enterprise, planId: 'enterprise' } }, MAX_ROWS + 1, MAX_ROWS,
+  );
+  assert.equal(onFile.reason, 'limit/import-file');
+  assert.match(onFile.message, /ملفات إضافية/);
+});
+
+// ── the parser stops reading rather than reading and slicing ───────────────
+
+test('a CSV stops at the row limit instead of parsing the whole file', async () => {
+  const { parseDelimited } = await import('../../src/spreadsheet.js');
+  const text = Array.from({ length: 5000 }, (_, i) => `row${i},1`).join('\n');
+  const rows = parseDelimited(text, null, { rowLimit: 10 });
+  // Ten, plus the one extra that is how truncation is detected.
+  assert.equal(rows.length, 11);
+  assert.equal(rows.truncated, true);
+  assert.deepEqual(rows[0], ['row0', '1']);
+});
+
+test('a CSV inside the limit reports that it was read whole', async () => {
+  const { parseDelimited } = await import('../../src/spreadsheet.js');
+  const rows = parseDelimited('a,1\nb,2\n', null, { rowLimit: 10 });
+  assert.equal(rows.length, 2);
+  assert.equal(rows.truncated, false);
+});
+
+test('a pathological file is refused rather than turned into a giant string', async () => {
+  const { parseDelimited, MAX_COLUMNS, MAX_CELL_CHARS } = await import('../../src/spreadsheet.js');
+
+  const wide = Array.from({ length: MAX_COLUMNS + 5 }, (_, i) => `c${i}`).join(',');
+  assert.throws(() => parseDelimited(wide), /عموداً/);
+
+  const huge = `"${'x'.repeat(MAX_CELL_CHARS + 100)}"`;
+  assert.throws(() => parseDelimited(huge), /خلية/);
 });

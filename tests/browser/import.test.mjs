@@ -16,30 +16,12 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
-function planStub(limit) {
-  return `
-    import { PLAN_CONFIG } from '/src/plans.generated.js';
-    import { checkCreateItem, usageSummary, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-    const plan = { ...PLAN_CONFIG.plans['pro'], id: 'pro' };
-    const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-    const usage = { items: 0, storageBytes: 0, members: 1, aiCreditsUsed: 0 };
-    export function startPlanWatch(){} export function stopPlanWatch(){}
-    export function onSubscriptionChange(listener){ listener({ entitlement, usage, ready: true }); return () => {}; }
-    export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-    export function currentPlan(){ return plan; }
-    export function planStatus(){ return 'active'; }
-    export function quotaStatus(){ return { level: 'none', message: null, used: 0, limit: ${limit}, ratio: 0 }; }
-    export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-    export function planUsage(){ return usageSummary({ entitlement, usage }); }
-    export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-    export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-    export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-  `;
-}
 
 async function open({ limit = 5000 } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -47,7 +29,7 @@ async function open({ limit = 5000 } = {}) {
   const errs = [];
   page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
-  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: planStub(limit) }));
+  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: planStub({ planId: 'pro', quotaLimit: limit }) }));
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
   return { page, context, errs };

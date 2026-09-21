@@ -17,28 +17,13 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
-const PLAN_STUB = `
-  import { PLAN_CONFIG } from '/src/plans.generated.js';
-  import { checkCreateItem, itemQuotaStatus, usageSummary, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-  const plan = { ...PLAN_CONFIG.plans['business'], id: 'business' };
-  const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-  const usage = { items: 0, storageBytes: 0, members: 1, aiCreditsUsed: 0 };
-  export function startPlanWatch(){} export function stopPlanWatch(){}
-  export function onSubscriptionChange(listener){ listener({ entitlement, usage, ready: true }); return () => {}; }
-  export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-  export function currentPlan(){ return plan; }
-  export function planStatus(){ return 'active'; }
-  export function quotaStatus(){ return itemQuotaStatus({ entitlement, usage }); }
-  export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-  export function planUsage(){ return usageSummary({ entitlement, usage }); }
-  export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-  export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-  export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-`;
+const PLAN_STUB = planStub({ planId: 'business' });
 
 async function open({ seed = 0, inFolder = 0, legacyDatabase = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -450,44 +435,113 @@ const state = (page) => page.evaluate(async () => {
   await context.close();
 }
 
-// ── an import that the tab forgot is still remembered ──────────────────────
+// ── an import is identified by what the file is ────────────────────────────
 {
   const { page, context, errs } = await open();
 
-  const remembered = await page.evaluate(async () => {
-    const local = await import('/src/local-store.js');
+  const identity = await page.evaluate(async () => {
     const view = await import('/src/views/sheet-import.js');
+    const wait = () => new Promise((r) => setTimeout(r, 500));
 
-    const csv = ['الاسم,الكمية', ...Array.from({ length: 6 }, (_, i) => `قطعة ${i},1`)].join('\n');
-    const file = () => new File([csv], 'stock.csv', { type: 'text/csv' });
+    // Two different files with the same name and the same byte count —
+    // same character counts, every character in the same byte class. Name and
+    // size were the old identity, and they would have matched each other here
+    // — writing one file's numbers under the other file's record ids.
+    const a = 'الاسم,الرقم\nساعة,1111\nخاتم,2222\n';
+    const b = 'الاسم,الرقم\nمصبح,3333\nكرسي,4444\n';
+    const fileA = () => new File([a], 'inventory.csv', { type: 'text/csv' });
+    const fileB = () => new File([b], 'inventory.csv', { type: 'text/csv' });
+    const sameSize = fileA().size === fileB().size;
 
-    await view.openSpreadsheetImport(file());
-    await new Promise((r) => setTimeout(r, 400));
+    await view.openSpreadsheetImport(fileA());
+    await wait();
+    // The customer says the ambiguous column is a serial number, then the
+    // import stops half way.
+    view.__setMappingForTest({ name: 0, serialNumber: 1 }, { 1: 'serialNumber' });
+    await view.__stopJobForTest(1);
+    const stoppedId = view.__jobForTest()?.id || null;
 
-    // The job as it would be left by a tab discarded mid-write.
-    await local.put('importJobs', {
-      id: 'stopped-job', startedAt: Date.now(), fileName: 'stock.csv',
-      fileSize: file().size, total: 6, written: 3, status: 'stopped',
-    });
+    // The same file again: the job is found, and the mapping is the mapping.
+    await view.openSpreadsheetImport(fileA());
+    await wait();
+    const resumed = view.__jobForTest();
+    const resumedMapping = view.__mappingForTest();
 
-    // The customer opens the app again and picks the same file.
-    await view.openSpreadsheetImport(file());
-    await new Promise((r) => setTimeout(r, 400));
-    const resumed = view.__jobForTest?.() || null;
+    // The other file: same name, same size, different content.
+    await view.openSpreadsheetImport(fileB());
+    await wait();
+    const other = view.__jobForTest();
 
-    // A different file is a different import.
-    await view.openSpreadsheetImport(new File([csv], 'other.csv', { type: 'text/csv' }));
-    await new Promise((r) => setTimeout(r, 400));
-    const fresh = view.__jobForTest?.() || null;
-
-    return { resumedId: resumed?.id || null, resumedWritten: resumed?.written ?? null, fresh };
+    return {
+      sameSize,
+      stoppedId,
+      resumedId: resumed?.id || null,
+      resumedWritten: resumed?.written ?? null,
+      resumedMapping,
+      otherJob: other?.id || null,
+    };
   });
 
-  check('I42 picking the same file again continues the import that stopped',
-    remembered.resumedId === 'stopped-job' && remembered.resumedWritten === 3,
-    JSON.stringify(remembered));
-  check('I43 and a different file starts a new one', remembered.fresh === null, JSON.stringify(remembered.fresh));
-  check('I44 no JS errors', errs.length === 0, errs[0]);
+  check('I42 the two files really are the same name and the same size',
+    identity.sameSize === true, String(identity.sameSize));
+  check('I43 the same file continues the import that stopped',
+    identity.resumedId === identity.stoppedId && identity.resumedWritten === 1,
+    JSON.stringify(identity));
+  check('I44 with the mapping the customer chose, not a fresh guess at it',
+    identity.resumedMapping?.serialNumber === 1, JSON.stringify(identity.resumedMapping));
+  check('I45 a different file with the same name and size starts a new import',
+    identity.otherJob === null, String(identity.otherJob));
+  check('I46 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── a resumed import starts where it stopped ───────────────────────────────
+{
+  const { page, context, errs } = await open();
+
+  const resumed = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const { planImport, attachTaxonomy, importItemId } = await import('/src/import-mapping.js');
+    const local = await import('/src/local-store.js');
+
+    const ROWS = 1000;
+    const CHUNK = 200;
+    const rows = Array.from({ length: ROWS }, (_, i) => [`قطعة ${i}`, '1']);
+    const { records } = planImport({
+      rows, lines: rows.map((_, i) => i + 2), mapping: { name: 0, quantity: 1 },
+      existing: { categories: [], locations: [], folders: [] },
+    });
+    const jobId = 'resume-job';
+    const resolvedRecords = attachTaxonomy(records, { categories: {}, locations: {}, folders: {} })
+      .map((r) => ({ ...r, id: importItemId(jobId, r.sourceLine) }));
+
+    // The first attempt writes 400 and stops.
+    let written = 0;
+    for (let i = 0; i < 400; i += CHUNK) {
+      await repository.bulkCreateItems(resolvedRecords.slice(i, i + CHUNK));
+      written = i + CHUNK;
+    }
+    await new Promise((r) => setTimeout(r, 300));
+    const afterStop = await local.count('items');
+
+    // The resume, with the loop the screen runs: it begins at `written`.
+    const touched = [];
+    for (let i = Math.max(0, written); i < resolvedRecords.length; i += CHUNK) {
+      const slice = resolvedRecords.slice(i, i + CHUNK);
+      touched.push(i);
+      await repository.bulkCreateItems(slice);
+    }
+    await new Promise((r) => setTimeout(r, 300));
+
+    return { afterStop, firstChunkIndex: touched[0], chunks: touched.length, total: await local.count('items') };
+  });
+
+  check('I50 the stopped attempt left exactly what it wrote', resumed.afterStop === 400, String(resumed.afterStop));
+  check('I51 the resume begins at the row it stopped on, not at the first',
+    resumed.firstChunkIndex === 400, String(resumed.firstChunkIndex));
+  check('I52 and writes only the chunks that were left', resumed.chunks === 3, String(resumed.chunks));
+  check('I53 ending with the file written once', resumed.total === 1000, String(resumed.total));
+  check('I54 no JS errors', errs.length === 0, errs[0]);
   await context.close();
 }
 
@@ -506,9 +560,132 @@ const state = (page) => page.evaluate(async () => {
     return { code, headers: table.headers, rows: table.rows.length, limit: sheet.MAX_FILE_BYTES };
   });
 
-  check('I39 an oversized file is refused before it is read', limits.code === 'sheet/too-large', String(limits.code));
-  check('I40 and an ordinary one still opens', limits.rows === 1 && limits.headers.length === 2, JSON.stringify(limits));
-  check('I41 no JS errors', errs.length === 0, errs[0]);
+  check('I47 an oversized file is refused before it is read', limits.code === 'sheet/too-large', String(limits.code));
+  check('I48 and an ordinary one still opens', limits.rows === 1 && limits.headers.length === 2, JSON.stringify(limits));
+  check('I49 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── the activity log does not grow forever ─────────────────────────────────
+{
+  const { page, context, errs } = await open();
+
+  const retention = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+    const DAY = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Three ages: today, inside a 30-day window, and well outside it.
+    const rows = [];
+    for (let i = 0; i < 20; i += 1) rows.push({ id: 'fresh' + i, action: 'ITEM_UPDATED', itemId: 'x', timestamp: now - i * 1000 });
+    for (let i = 0; i < 20; i += 1) rows.push({ id: 'recent' + i, action: 'ITEM_UPDATED', itemId: 'x', timestamp: now - (5 * DAY) - i });
+    for (let i = 0; i < 60; i += 1) rows.push({ id: 'old' + i, action: 'ITEM_UPDATED', itemId: 'x', timestamp: now - (200 * DAY) - i });
+    await local.putMany('activity', rows);
+    const before = await local.count('activity');
+
+    await local.setMeta('activity.lastPrunedAt', 0);
+    const result = await repository.enforceActivityRetention(30, { now });
+    const after = await local.count('activity');
+    const survivors = await local.getAll('activity');
+
+    // And it does not run again straight away.
+    const second = await repository.enforceActivityRetention(30, { now });
+
+    return {
+      before, after, pruned: result.pruned, secondSkipped: second.skipped,
+      oldestKept: Math.min(...survivors.map((r) => r.timestamp)),
+      cutoff: result.cutoff,
+      structured: survivors.every((r) => r.action && r.itemId && r.timestamp),
+    };
+  });
+
+  check('I55 only the entries older than the cutoff are removed',
+    retention.before === 100 && retention.after === 40 && retention.pruned === 60,
+    JSON.stringify(retention));
+  check('I56 and nothing inside the retention window is touched',
+    retention.oldestKept >= retention.cutoff, JSON.stringify(retention));
+  check('I57 the entries that remain are still structured events, not text',
+    retention.structured === true, String(retention.structured));
+  check('I58 pruning does not run again on the next start of the same day',
+    retention.secondSkipped === 'recent', String(retention.secondSkipped));
+  check('I59 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── the integrity checker finds what it is for ─────────────────────────────
+{
+  const { page, context, errs } = await open();
+
+  const report = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const { checkIntegrity } = await import('/src/integrity.js');
+    const now = Date.now();
+    const base = {
+      quantity: 1, unit: 'قطعة', categoryId: 'c1', folderId: null, locationId: null,
+      images: [], deletedAt: null, createdAt: now, updatedAt: now, version: 1,
+    };
+
+    await local.putMany('items', [
+      { ...base, id: 'ok-1', name: 'سليم', sku: 'INV-1' },
+      // One of each thing the checker is supposed to notice.
+      { ...base, id: 'bad-folder', name: 'مجلد مفقود', folderId: 'gone' },
+      { ...base, id: 'bad-location', name: 'موقع مفقود', locationId: 'gone' },
+      { ...base, id: 'bad-category', name: 'تصنيف مفقود', categoryId: 'gone' },
+      { ...base, id: 'bad-primary', name: 'صورة رئيسية',
+        images: [{ id: 'img-a', mediaId: 'img-a' }], primaryImageId: 'img-z' },
+      { ...base, id: 'bad-version', name: 'إصدار', version: 0 },
+      { ...base, id: 'bad-qty', name: 'كمية', quantity: -3 },
+      { ...base, id: 'bad-money', name: 'مال',
+        valuation: { min: 9000, max: 5000, currency: 'SAR', source: 'manual' } },
+      { ...base, id: 'bad-currency', name: 'عملة',
+        valuation: { min: 100, max: 100, currency: 'AEDXX', source: 'manual' } },
+      { ...base, id: 'bad-deleted', name: 'محذوف', deletedAt: 'أمس' },
+      { ...base, id: 'dup-a', name: 'مكرر أ', sku: 'INV-SAME', serialNumber: 'SN-SAME' },
+      { ...base, id: 'dup-b', name: 'مكرر ب', sku: 'INV-SAME', serialNumber: 'SN-SAME' },
+    ]);
+    await local.put('mediaAssets', { id: 'orphan-1', refCount: -1 });
+
+    const result = await checkIntegrity();
+    return {
+      kinds: [...new Set(result.findings.map((f) => f.kind))].sort(),
+      ok: result.ok,
+      items: result.checked.items,
+    };
+  });
+
+  const expected = [
+    'bad-currency', 'bad-deleted-at', 'bad-quantity', 'bad-version',
+    'dangling-category', 'dangling-folder', 'dangling-location',
+    'duplicate-serial', 'duplicate-sku', 'inverted-valuation',
+    'negative-refcount', 'primary-image-missing',
+  ];
+  const missing = expected.filter((kind) => !report.kinds.includes(kind));
+
+  check('I60 every kind of damage the checker is for is reported',
+    missing.length === 0, `missing: ${missing.join(', ')}`);
+  check('I61 and the workspace is reported as not ok', report.ok === false, String(report.ok));
+  check('I62 having read every record', report.items === 12, String(report.items));
+  check('I63 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── a clean workspace reports clean ────────────────────────────────────────
+{
+  const { page, context, errs } = await open({ seed: 300, inFolder: 40 });
+
+  const clean = await page.evaluate(async () => {
+    const { checkIntegrity } = await import('/src/integrity.js');
+    const result = await checkIntegrity();
+    return { ok: result.ok, findings: result.findings.slice(0, 5), items: result.checked.items };
+  });
+
+  // The seeded workspace is written the way the app writes: if the checker
+  // complains about it, either the checker or the app is wrong, and that is
+  // worth knowing before either one is trusted.
+  check('I64 a workspace the app itself wrote passes the check',
+    clean.ok === true && clean.items === 300, JSON.stringify(clean));
+  check('I65 no JS errors', errs.length === 0, errs[0]);
   await context.close();
 }
 

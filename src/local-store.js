@@ -155,6 +155,7 @@ const req = request;
  */
 export function transaction(storeNames, mode, work) {
   const names = Array.isArray(storeNames) ? storeNames : [storeNames];
+  if (mode === 'readwrite') for (const name of names) storeCounts.delete(name);
   return open().then((db) => new Promise((resolve, reject) => {
     const tx = db.transaction(names, mode);
     const stores = {};
@@ -205,8 +206,25 @@ export function getMany(storeName, ids) {
   });
 }
 
-export function count(storeName) {
-  return run(storeName, 'readonly', (store) => req(store.count()));
+/**
+ * How many records a store holds.
+ *
+ * Cached, because it is not the O(1) lookup it reads as: counting a store with
+ * no key range walks it, and at 20,000 records that was 15ms — charged to
+ * every query, to produce a number that only changes when a record is written.
+ * Any write to the store drops the cached value (see `transaction`).
+ *
+ * The cache is per tab. Another tab adding a record leaves this one's total
+ * stale until its own next write or reload, which is a few records' drift in a
+ * displayed total rather than a wrong answer to a query.
+ */
+const storeCounts = new Map();
+
+export async function count(storeName) {
+  if (storeCounts.has(storeName)) return storeCounts.get(storeName);
+  const total = await run(storeName, 'readonly', (store) => req(store.count()));
+  storeCounts.set(storeName, total);
+  return total;
 }
 
 /** Records whose indexed property equals `value`. The answer costs the size of
@@ -332,6 +350,9 @@ function boundRange(range, key, direction) {
 
 /** How many records a range holds, without reading any of them. */
 export function countRange(storeName, indexName, range) {
+  // An unbounded count of the store itself is the cached one — the same
+  // question `count()` answers, and the expensive one.
+  if (!indexName && !range) return count(storeName);
   return run(storeName, 'readonly', (store) => {
     const source = indexName ? store.index(indexName) : store;
     return req(range ? source.count(range) : source.count());
@@ -345,6 +366,9 @@ export function countRange(storeName, indexName, range) {
  * and yields between pages so the tab stays answerable.
  *
  * @param {(rows: Array) => (boolean|Promise<boolean>)} onBatch return false to stop.
+ * @param {number|Function} [batchSize] a function is asked before each batch,
+ *   so a caller can start small and grow once it learns how selective its
+ *   predicate is.
  */
 export async function walk(storeName, {
   index: indexName = null, direction = 'next', range = null,
@@ -354,14 +378,15 @@ export async function walk(storeName, {
   let afterPrimary;
   let scanned = 0;
   for (;;) {
+    const limit = typeof batchSize === 'function' ? batchSize() : batchSize;
     const result = await page(storeName, {
-      index: indexName, direction, range, limit: batchSize, after, afterPrimary,
+      index: indexName, direction, range, limit, after, afterPrimary,
     });
     if (result.rows.length) {
       scanned += result.rows.length;
       if ((await onBatch?.(result.rows)) === false) return { scanned, exhausted: false };
     }
-    if (result.done || result.rows.length < batchSize) return { scanned, exhausted: true };
+    if (result.done || result.rows.length < limit) return { scanned, exhausted: true };
     after = result.nextKey;
     afterPrimary = result.nextPrimaryKey;
   }
@@ -415,6 +440,34 @@ export function removeMany(storeName, ids) {
 }
 
 export const batchDelete = removeMany;
+
+/**
+ * Delete everything in one index range, without reading any of it.
+ *
+ * A cursor over the index deletes in place: the records never leave the
+ * database, so pruning a year of activity costs the entries removed rather
+ * than the entries kept. Reading them all in to filter them is the shape this
+ * exists to avoid.
+ *
+ * @returns {Promise<number>} how many were removed.
+ */
+export function deleteRange(storeName, indexName, range) {
+  return run(storeName, 'readwrite', (store) => new Promise((resolve, reject) => {
+    const source = indexName ? store.index(indexName) : store;
+    // A key cursor hands over keys, not records: the values are never
+    // deserialised on their way to being thrown away.
+    const request = source.openKeyCursor(range);
+    let removed = 0;
+    request.onerror = () => reject(storageError(request.error));
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) { resolve(removed); return; }
+      store.delete(cursor.primaryKey);
+      removed += 1;
+      cursor.continue();
+    };
+  }));
+}
 
 export function clearStore(storeName) {
   return run(storeName, 'readwrite', (store) => req(store.clear()));

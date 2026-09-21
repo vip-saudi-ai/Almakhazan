@@ -14,7 +14,22 @@
 
 import { AppError } from './utils.js';
 
-export const MAX_ROWS = 5000;
+/**
+ * The most rows one import may process in a browser, whatever the plan says.
+ *
+ * This is a technical ceiling, not a commercial one, and the two were tangled:
+ * the plans promise Pro 10,000 rows and Business 50,000, while the parser
+ * stopped everything at 5,000 — so two paid tiers could not deliver what they
+ * were sold. The ceiling now clears the largest plan allowance, and the
+ * effective limit for any given import is the smaller of the two, named
+ * separately so the customer is told which one they met.
+ */
+export const MAX_ROWS = 50000;
+
+/** Wider than any real inventory sheet; narrower than a runaway file. */
+export const MAX_COLUMNS = 512;
+/** A cell longer than this is not a value, it is a pasted document. */
+export const MAX_CELL_CHARS = 32768;
 
 /**
  * What a spreadsheet is allowed to cost this tab.
@@ -52,17 +67,48 @@ function detectDelimiter(text) {
 }
 
 /** A full CSV reader: quoted fields, escaped quotes, newlines inside quotes. */
-export function parseDelimited(text, delimiter = null) {
+/**
+ * @param {string} text
+ * @param {string|null} [delimiter]
+ * @param {{rowLimit?: number}} [options] stop once this many rows are complete.
+ *   One extra is read past the limit, which is how truncation is detected
+ *   without reading the rest of the file.
+ * @returns {Array<Array<string>> & {truncated?: boolean}}
+ */
+export function parseDelimited(text, delimiter = null, { rowLimit = Infinity } = {}) {
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text; // BOM
   const sep = delimiter || detectDelimiter(body);
+  // One past the limit: enough to know there is more, not enough to pay for it.
+  const stopAfter = Number.isFinite(rowLimit) ? rowLimit + 1 : Infinity;
 
   const rows = [];
   let row = [];
   let field = '';
   let quoted = false;
+  let truncated = false;
+
+  const finishRow = () => {
+    row.push(field);
+    if (row.length > MAX_COLUMNS) {
+      throw new AppError(
+        `يحتوي الملف على أكثر من ${MAX_COLUMNS} عموداً — تحقّق من الفواصل في الملف`,
+        { code: 'sheet/too-many-columns' },
+      );
+    }
+    rows.push(row);
+    row = [];
+    field = '';
+  };
 
   for (let i = 0; i < body.length; i += 1) {
     const ch = body[i];
+
+    if (field.length > MAX_CELL_CHARS) {
+      throw new AppError(
+        'خلية في الملف أطول مما يمكن استيراده — تحقّق من علامات الاقتباس في الملف',
+        { code: 'sheet/cell-too-long' },
+      );
+    }
 
     if (quoted) {
       if (ch === '"') {
@@ -74,13 +120,30 @@ export function parseDelimited(text, delimiter = null) {
     }
 
     if (ch === '"' && field === '') { quoted = true; continue; }
-    if (ch === sep) { row.push(field); field = ''; continue; }
+    if (ch === sep) {
+      row.push(field);
+      field = '';
+      if (row.length > MAX_COLUMNS) {
+        throw new AppError(
+          `يحتوي الملف على أكثر من ${MAX_COLUMNS} عموداً — تحقّق من الفواصل في الملف`,
+          { code: 'sheet/too-many-columns' },
+        );
+      }
+      continue;
+    }
     if (ch === '\r') continue;
-    if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; continue; }
+    if (ch === '\n') {
+      finishRow();
+      // The rest of the file is not read. A 200,000-row export used to be
+      // parsed in full and then sliced, which is the same work as importing it.
+      if (rows.length >= stopAfter) { truncated = true; break; }
+      continue;
+    }
     field += ch;
   }
-  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  if (!truncated && (field !== '' || row.length)) finishRow();
 
+  Object.defineProperty(rows, 'truncated', { value: truncated, enumerable: false });
   return rows;
 }
 
@@ -244,9 +307,17 @@ const columnIndex = (ref) => {
  * one they will scroll to — and blank rows in between would otherwise shift
  * every number after them.
  */
-function sheetRows(xml, strings, dates) {
+/**
+ * @param {{rowLimit?: number}} [options] stop once this many rows are built.
+ *   One extra is built past the limit so truncation can be reported; the rest
+ *   of the worksheet is never walked. A 200,000-row sheet used to be built in
+ *   full and then sliced, which costs the same as importing all of it.
+ */
+function sheetRows(xml, strings, dates, { rowLimit = Infinity } = {}) {
   const rows = [];
+  const stopAfter = Number.isFinite(rowLimit) ? rowLimit + 1 : Infinity;
   let previous = 0;
+  let truncated = false;
   for (const [rowXml] of TAG(xml, 'row')) {
     const declared = Number((rowXml.match(/<row\b[^>]*\br="(\d+)"/) || [])[1]);
     const line = Number.isFinite(declared) && declared > 0 ? declared : previous + 1;
@@ -287,8 +358,16 @@ function sheetRows(xml, strings, dates) {
       while (cells.length < at) cells.push('');
       cells[at] = value;
     }
+    if (cells.length > MAX_COLUMNS) {
+      throw new AppError(
+        `تحتوي ورقة العمل على أكثر من ${MAX_COLUMNS} عموداً`,
+        { code: 'sheet/too-many-columns' },
+      );
+    }
     rows.push({ cells, line });
+    if (rows.length >= stopAfter) { truncated = true; break; }
   }
+  rows.truncated = truncated;
   return rows;
 }
 
@@ -312,7 +391,7 @@ function firstSheetPath(workbookXml, relsXml, entries) {
   return sheets[0] || null;
 }
 
-async function readXlsx(buffer) {
+async function readXlsx(buffer, { rowLimit = Infinity } = {}) {
   const bytes = new Uint8Array(buffer);
   const { entries, view } = zipEntries(bytes);
   const read = async (name) => (entries.has(name) ? readEntry(bytes, view, entries.get(name)) : null);
@@ -332,7 +411,8 @@ async function readXlsx(buffer) {
     ? unescapeXml((workbookXml.match(/<sheet\b[^>]*name="([^"]*)"/) || [])[1] || 'ورقة 1')
     : 'ورقة 1';
 
-  return { rows: sheetRows(sheetXml || '', sharedStrings(stringsXml), dateStyles(stylesXml)), sheetName: name };
+  const rows = sheetRows(sheetXml || '', sharedStrings(stringsXml), dateStyles(stylesXml), { rowLimit });
+  return { rows, sheetName: name, truncated: Boolean(rows.truncated) };
 }
 
 // ── the one entry point ────────────────────────────────────────────────────
@@ -345,8 +425,23 @@ async function readXlsx(buffer) {
  *   `lines[i]` is the row number `rows[i]` had in the file, so a warning can
  *   name a row the customer can actually scroll to.
  */
-export async function readSpreadsheet(file) {
+/**
+ * @param {File} file
+ * @param {{rowLimit?: number}} [options] the most rows this import may take —
+ *   the smaller of what the plan allows and what a browser can safely process.
+ *   Reading stops there rather than reading everything and slicing.
+ * @returns {Promise<{headers, rows, lines, sheetName, truncated, totalRows,
+ *                    appliedLimit, totalKnown}>}
+ *   `totalRows` is exact only when the file was read to its end — which is
+ *   what `totalKnown` says. Stopping early is the point of the limit, and a
+ *   total invented from a partial read would be worse than no total.
+ */
+export async function readSpreadsheet(file, { rowLimit = MAX_ROWS } = {}) {
   const name = (file?.name || '').toLowerCase();
+  const appliedLimit = Math.max(1, Math.min(rowLimit || MAX_ROWS, MAX_ROWS));
+  // One more than the limit, because the header row is one of the rows read
+  // and truncation has to be detectable.
+  const readLimit = appliedLimit + 1;
   let table;
 
   // Before anything is read. A file this size is a database export or a
@@ -361,12 +456,16 @@ export async function readSpreadsheet(file) {
   }
 
   if (name.endsWith('.xlsx') || name.endsWith('.xlsm')) {
-    table = await readXlsx(await file.arrayBuffer());
+    table = await readXlsx(await file.arrayBuffer(), { rowLimit: readLimit });
   } else if (name.endsWith('.csv') || name.endsWith('.tsv') || name.endsWith('.txt')) {
-    table = {
-      rows: parseDelimited(await file.text()).map((cells, index) => ({ cells, line: index + 1 })),
-      sheetName: file.name,
-    };
+    {
+      const parsed = parseDelimited(await file.text(), null, { rowLimit: readLimit });
+      table = {
+        rows: parsed.map((cells, index) => ({ cells, line: index + 1 })),
+        sheetName: file.name,
+        truncated: Boolean(parsed.truncated),
+      };
+    }
   } else if (name.endsWith('.xls')) {
     throw new AppError(
       'صيغة .xls القديمة غير مدعومة — احفظ الملف بصيغة .xlsx أو .csv',
@@ -385,14 +484,22 @@ export async function readSpreadsheet(file) {
   });
 
   const body = nonEmpty.slice(1);
+  const kept = body.slice(0, appliedLimit);
+  // Either the read stopped early, or it finished and there were more rows
+  // than the limit allows. Both are truncation; only the second one knows how
+  // many rows the file actually holds.
+  const stoppedEarly = Boolean(table.truncated);
+  const truncated = stoppedEarly || body.length > appliedLimit;
 
   return {
     headers,
-    rows: body.slice(0, MAX_ROWS).map((row) => headers.map((_, i) => String(row.cells[i] ?? '').trim())),
-    lines: body.slice(0, MAX_ROWS).map((row) => row.line),
+    rows: kept.map((row) => headers.map((_, i) => String(row.cells[i] ?? '').trim())),
+    lines: kept.map((row) => row.line),
     sheetName: table.sheetName,
-    truncated: body.length > MAX_ROWS,
+    truncated,
     totalRows: body.length,
+    totalKnown: !stoppedEarly,
+    appliedLimit,
   };
 }
 

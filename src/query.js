@@ -92,6 +92,7 @@ export const plan = idb.plan;
  *   valueCurrencies     the currencies a value sort had to group by
  *   groupedByCurrency   whether it grouped
  *   queryKey            identity of the question this answers
+ *   plan / examined     which index answered it and how many records it read
  */
 function canonical(result, { query, queryKey, answerable, complete, summary }) {
   const total = result.total ?? null;
@@ -117,7 +118,11 @@ function canonical(result, { query, queryKey, answerable, complete, summary }) {
     valueCurrencies: result.valueCurrencies || [],
     groupedByCurrency: Boolean(result.groupedByCurrency),
     queryKey,
+    // How the answer was reached. Not for the interface — for the tests that
+    // assert a folder query reads the folder rather than the inventory, and
+    // for anyone debugging why a screen is slow.
     plan: result.plan || null,
+    examined: result.examined ?? null,
   };
 }
 

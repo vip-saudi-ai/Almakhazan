@@ -11,6 +11,8 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
@@ -72,19 +74,16 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
     export const AI_SUBTITLE = 'تقدير أولي';
   ` }));
 
-  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: `
-    export function startPlanWatch(){} export function stopPlanWatch(){}
-    export function onSubscriptionChange(){ return () => {}; }
-    export function subscriptionState(){ return { ready: true }; }
-    export function currentPlan(){ return { id: 'pro', name: { ar: 'احترافي' }, price: { monthly: 59 }, limits: {}, assistant: { label: { ar: 'مشمول' } } }; }
-    export function planStatus(){ return 'active'; }
-    export function quotaStatus(){ return null; }
-    export function canAddItem(){ return { allowed: true }; }
-    export function planUsage(){ return []; }
-    export function assistantLabel(){ return { included: true, label: 'مشمول' }; }
-    export function canUseAssistant(){ return ${assistant === 'allowed'} ? { allowed: true } : { allowed: false, message: 'لا رصيد' }; }
-    export function canUseFeature() { return { allowed: true }; }
-  ` }));
+  await page.route('**/src/subscription.js', r => r.fulfill({
+    contentType: 'text/javascript',
+    body: planStub({
+      planId: 'pro',
+      omit: ['canUseAssistant'],
+      extra: `export function canUseAssistant(){ return ${assistant === 'allowed'}
+        ? { allowed: true }
+        : { allowed: false, message: 'لا رصيد' }; }`,
+    }),
+  }));
 
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });

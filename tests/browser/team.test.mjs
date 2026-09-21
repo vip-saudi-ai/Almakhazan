@@ -16,6 +16,8 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
@@ -65,25 +67,13 @@ function teamStub({ members, invitations = [], inviteFails = null, workspaces })
   `;
 }
 
-function planStub(seatLimit, used) {
-  return `
-    import { PLAN_CONFIG } from '/src/plans.generated.js';
-    import { checkCreateItem, itemQuotaStatus, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-    const plan = { ...PLAN_CONFIG.plans['pro'], id: 'pro' };
-    const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-    const usage = { items: 4, storageBytes: 0, members: ${used}, aiCreditsUsed: 0 };
-    export function startPlanWatch(){} export function stopPlanWatch(){}
-    export function onSubscriptionChange(listener){ listener({ entitlement, usage, ready: true }); return () => {}; }
-    export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-    export function currentPlan(){ return plan; }
-    export function planStatus(){ return 'active'; }
-    export function quotaStatus(){ return itemQuotaStatus({ entitlement, usage }); }
-    export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-    export function planUsage(){ return [{ key: 'members', label: 'الأعضاء', used: ${used}, limit: ${seatLimit} }]; }
-    export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-    export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-    export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-  `;
+function seatStub(seatLimit, used) {
+  return planStub({
+    planId: 'pro',
+    usage: { items: 4, members: used },
+    omit: ['planUsage'],
+    extra: `export function planUsage(){ return [{ key: 'members', label: 'الأعضاء', used: ${used}, limit: ${seatLimit} }]; }`,
+  });
 }
 
 const MEMBERS = [
@@ -102,7 +92,7 @@ async function open({ role = 'admin', seatLimit = 3, used = 3, members = MEMBERS
 
   await page.route('**/src/auth.js', r => r.fulfill({ contentType: 'text/javascript', body: authStub(role) }));
   await page.route('**/src/team.js', r => r.fulfill({ contentType: 'text/javascript', body: teamStub({ members, invitations, inviteFails, workspaces }) }));
-  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: planStub(seatLimit, used) }));
+  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: seatStub(seatLimit, used) }));
 
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });

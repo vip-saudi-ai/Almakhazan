@@ -148,43 +148,62 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
       if (value) record[key] = value;
     }
 
-    const min = parseNumber(cell(row, mapping.valuationMin));
-    const max = parseNumber(cell(row, mapping.valuationMax));
+    // ── money ──
+    //
+    // A valuation is financial data, and the rule for financial data is that
+    // it is imported as given or not imported at all. Nothing here repairs a
+    // number, swaps a pair of them, or decides what an unrecognised currency
+    // probably meant. Every one of those is a guess about money, and a guess
+    // about money is wrong in a way nobody notices until it matters.
     const rawMin = cell(row, mapping.valuationMin);
     const rawMax = cell(row, mapping.valuationMax);
+    const rawCurrency = cell(row, mapping.currency);
+    const min = parseNumber(rawMin);
+    const max = parseNumber(rawMax);
+    let valuationFault = null;
+
     if (rawMin && min == null) {
-      problems.push({ line, field: 'valuationMin', reason: `قيمة غير مفهومة: «${rawMin}»`, value: rawMin });
-    }
-    // The upper bound was read and then never looked at: an unreadable one was
-    // dropped without a word, and a row where the columns had been filled in
-    // the wrong order (8,000 then 5,000) was silently swapped rather than
-    // questioned. Both are worth one line on the preview.
-    if (rawMax && max == null) {
-      problems.push({ line, field: 'valuationMax', reason: `قيمة غير مفهومة: «${rawMax}»`, value: rawMax });
-    }
-    if (min != null && max != null && max < min) {
-      problems.push({
-        line, field: 'valuationMax',
-        reason: `أعلى قيمة (${max}) أقل من أدنى قيمة (${min}) — سيُعكس الترتيب`,
+      valuationFault = { field: 'valuationMin', reason: `قيمة غير مفهومة: «${rawMin}»`, value: rawMin };
+    } else if (rawMax && max == null) {
+      // Read independently. An unreadable upper bound used to be dropped, and
+      // "5,000 to unreadable" became a flat 5,000 — a narrower claim about the
+      // object's worth than the file made, presented as the file's own.
+      valuationFault = { field: 'valuationMax', reason: `قيمة غير مفهومة: «${rawMax}»`, value: rawMax };
+    } else if (min != null && max != null && max < min) {
+      // Could be columns mapped the wrong way round, could be a typo, could be
+      // the truth badly entered. Swapping them picks one of those readings and
+      // writes it down as fact.
+      valuationFault = {
+        field: 'valuationMax',
+        reason: `أعلى قيمة (${max}) أقل من أدنى قيمة (${min}) — صحّح الملف أو المطابقة`,
         value: rawMax,
-      });
+      };
+    } else if (rawCurrency && !isCurrencyCode(rawCurrency)) {
+      // An explicit currency that is not a currency. Falling back to the
+      // workspace default would turn one unreadable cell into a confidently
+      // wrong number on every row of the file.
+      valuationFault = {
+        field: 'currency',
+        reason: `عملة غير معروفة: «${rawCurrency}»`,
+        value: rawCurrency,
+      };
     }
+
+    if (valuationFault) {
+      // A row whose money cannot be read is not imported with the money left
+      // out — that would be a record quietly worth nothing. It is held back
+      // until the file is corrected.
+      problems.push({ line, fatal: true, ...valuationFault });
+      return;
+    }
+
     if (min != null || max != null) {
-      const rawCurrency = cell(row, mapping.currency);
-      // A currency column holding something that is not a currency used to
-      // fall back to SAR without a word, which turns an unreadable cell into a
-      // confident wrong number on every row of the file.
-      if (rawCurrency && !isCurrencyCode(rawCurrency)) {
-        problems.push({
-          line, field: 'currency',
-          reason: `عملة غير معروفة: «${rawCurrency}» — سيُستخدم ${currency}`,
-          value: rawCurrency,
-        });
-      }
       record.valuation = {
-        min: Math.min(min ?? max, max ?? min),
-        max: Math.max(min ?? max, max ?? min),
-        currency: normalizeCurrencyCode(rawCurrency, currency),
+        min: min ?? max,
+        max: max ?? min,
+        // An empty cell is not a claim, so the workspace default applies. A
+        // filled one is a claim, and by now it is known to be a real code.
+        currency: rawCurrency ? normalizeCurrencyCode(rawCurrency, currency) : currency,
         source: 'import',
       };
     }
@@ -221,7 +240,11 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
   for (const problem of problems) {
     const entry = byLine.get(problem.line) || { line: problem.line, reasons: [], fatal: false };
     entry.reasons.push(problem.reason);
-    if (problem.field === 'name') entry.fatal = true;
+    // A row is held back when it has no name, and when its money could not be
+    // read. Those are the two things that cannot be imported "partly": a
+    // nameless record is not a record, and a record whose valuation was
+    // dropped is one that quietly says it is worth nothing.
+    if (problem.field === 'name' || problem.fatal) entry.fatal = true;
     byLine.set(problem.line, entry);
   }
 

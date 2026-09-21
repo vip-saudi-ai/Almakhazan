@@ -218,6 +218,49 @@ export function checkImagesPerItem({ entitlement }, currentCount) {
   });
 }
 
+/**
+ * How many rows one import may bring in.
+ *
+ * Two limits, kept apart on purpose. The plan's allowance is a commercial
+ * promise; the technical ceiling is what a browser can process in one pass.
+ * Conflating them is how the plans came to promise Business 50,000 rows while
+ * the parser stopped at 5,000 — a limit the customer met without ever being
+ * told which of the two they had met.
+ *
+ * @returns {{plan: number, technical: number, effective: number,
+ *            unlimitedPlan: boolean, boundBy: 'plan'|'file'}}
+ */
+export function importRowLimit({ entitlement }, technical) {
+  const planLimit = entitlement.plan.limits.importRows ?? UNLIMITED;
+  const unlimitedPlan = planLimit === UNLIMITED;
+  const effective = unlimitedPlan ? technical : Math.min(planLimit, technical);
+  return {
+    plan: planLimit,
+    technical,
+    effective,
+    unlimitedPlan,
+    boundBy: unlimitedPlan || technical < planLimit ? 'file' : 'plan',
+  };
+}
+
+/**
+ * Whether this many rows may be written. Checked again before the commit, not
+ * only when the file is opened: the screen is a courtesy, the check is the rule.
+ */
+export function checkImportRows({ entitlement }, rows, technical) {
+  const limit = importRowLimit({ entitlement }, technical);
+  if (rows <= limit.effective) return ALLOWED;
+  return decision(false, {
+    reason: limit.boundBy === 'plan' ? 'limit/import-rows' : 'limit/import-file',
+    message: limit.boundBy === 'plan'
+      ? `خطة ${entitlement.plan.name.ar} تسمح باستيراد ${limit.plan.toLocaleString('en-US')} صفّاً في الملف الواحد.`
+      : `يمكن استيراد حتى ${limit.technical.toLocaleString('en-US')} صفّاً في الملف الواحد. يمكنك استيراد ملفات إضافية.`,
+    used: rows,
+    limit: limit.effective,
+    planId: entitlement.planId,
+  });
+}
+
 export function checkInviteMember({ entitlement, usage }) {
   const frozen = checkFrozen({ entitlement });
   if (!frozen.allowed) return frozen;

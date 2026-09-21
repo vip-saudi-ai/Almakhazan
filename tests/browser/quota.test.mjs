@@ -12,30 +12,29 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
 function stub({ used, limit = 50, planId = 'free', status = 'free' }) {
-  return `
-    import { PLAN_CONFIG } from '/src/plans.generated.js';
-    import { checkCreateItem, itemQuotaStatus, usageSummary, assistantPresentation } from '/src/entitlements.js';
-    const plan = { ...PLAN_CONFIG.plans['${planId}'], id: '${planId}' };
-    const entitlement = { plan, planId: '${planId}', status: '${status}', readOnly: false };
-    const usage = { items: ${used}, storageBytes: 1024 * 1024 * 120, members: 1, aiCreditsUsed: 3 };
-    export function startPlanWatch() {}
-    export function stopPlanWatch() {}
-    export function onSubscriptionChange(fn) { return () => {}; }
-    export function subscriptionState() { return { entitlement, usage, ready: true }; }
-    export function currentPlan() { return plan; }
-    export function planStatus() { return '${status}'; }
-    export function quotaStatus() { return ${status === 'local'} ? null : itemQuotaStatus({ entitlement, usage }); }
-    export function canAddItem() { return ${status === 'local'} ? { allowed: true } : checkCreateItem({ entitlement, usage }); }
-    export function planUsage() { return ${status === 'local'} ? [] : usageSummary({ entitlement, usage }); }
-    export function assistantLabel() { return assistantPresentation({ entitlement }); }
-    export function canUseAssistant() { return { allowed: false, message: 'غير متاح في الاختبار' }; }
-    export function canUseFeature() { return { allowed: true }; }
-  `;
+  // The shared stub, with the two behaviours this suite varies: a device-only
+  // session has no plan to gate against, and a frozen one refuses writes.
+  return planStub({
+    planId,
+    usage: { items: used, storageBytes: 1024 * 1024 * 120, aiCreditsUsed: 3 },
+    omit: ['planStatus', 'canUseAssistant', ...(status === 'local' ? ['quotaStatus', 'canAddItem', 'planUsage'] : [])],
+    extra: `
+      export function planStatus() { return '${status}'; }
+      ${status === 'local' ? `
+        export function quotaStatus() { return null; }
+        export function canAddItem() { return { allowed: true }; }
+        export function planUsage() { return []; }
+      ` : ''}
+      export function canUseAssistant() { return { allowed: false, message: 'غير متاح في الاختبار' }; }
+    `,
+  });
 }
 
 async function appWith(options) {

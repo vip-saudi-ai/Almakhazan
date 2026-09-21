@@ -7,9 +7,11 @@
 // the difference between "you have 8 records left" and an unexplained refusal.
 
 import {
-  assistantPresentation, checkCreateItem, checkFeature, checkUseAI, itemQuotaStatus,
-  planById, resolveEntitlement, usageSummary, DEFAULT_PLAN,
+  assistantPresentation, checkCreateItem, checkFeature, checkImportRows, checkUseAI,
+  importRowLimit, itemQuotaStatus, planById, resolveEntitlement, usageSummary,
+  DEFAULT_PLAN, UNLIMITED,
 } from './entitlements.js';
+import { MAX_ROWS } from './spreadsheet.js';
 import { firebaseContext } from './firebase.js';
 
 const state = {
@@ -160,6 +162,46 @@ export function canUseAssistant() {
 export function canUseFeature(feature) {
   if (!state.entitlement) return { allowed: true };
   return checkFeature({ entitlement: state.entitlement }, feature);
+}
+
+/**
+ * How many rows the next import may take, and which limit decides.
+ *
+ * In device-only mode there is no plan to gate against, so only the technical
+ * per-file ceiling applies — and it is described as what it is, a limit of the
+ * file rather than of the plan.
+ */
+export function importLimit() {
+  if (!state.entitlement) {
+    return {
+      plan: UNLIMITED, technical: MAX_ROWS, effective: MAX_ROWS,
+      unlimitedPlan: true, boundBy: 'file',
+    };
+  }
+  return importRowLimit({ entitlement: state.entitlement }, MAX_ROWS);
+}
+
+/** Whether this many rows may be written. Asked again before the commit. */
+export function canImportRows(rows) {
+  if (!state.entitlement) {
+    return rows <= MAX_ROWS
+      ? { allowed: true }
+      : {
+        allowed: false,
+        message: `يمكن استيراد حتى ${MAX_ROWS.toLocaleString('en-US')} صفّاً في الملف الواحد. يمكنك استيراد ملفات إضافية.`,
+      };
+  }
+  return checkImportRows({ entitlement: state.entitlement }, rows, MAX_ROWS);
+}
+
+/**
+ * How long this plan keeps activity. Zero or less means "for as long as the
+ * workspace exists", which is what an unlimited plan promises.
+ */
+export function activityRetentionDays() {
+  const plan = state.entitlement?.plan || planById(DEFAULT_PLAN);
+  const days = plan?.limits?.activityRetentionDays;
+  return days === UNLIMITED ? 0 : (days ?? 0);
 }
 
 export function planUsage() {

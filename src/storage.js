@@ -48,11 +48,34 @@ function probeSize(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   return new Promise((resolve) => {
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, img });
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
     img.onerror = () => resolve(null);
     img.src = url;
-  }).finally(() => URL.revokeObjectURL(url));
+  }).finally(() => {
+    URL.revokeObjectURL(url);
+    // The element is only ever asked for two numbers. Clearing its source
+    // lets the browser drop whatever it decoded to answer, instead of holding
+    // a full-size bitmap alive behind a reference nobody needs any more.
+    img.onload = null;
+    img.onerror = null;
+    img.removeAttribute('src');
+  });
 }
+
+/**
+ * The largest picture the fallback path may decode.
+ *
+ * `createImageBitmap` can downscale while decoding, so the main path's peak
+ * cost is bounded by what we ask for. The `<img>` fallback — for a browser
+ * without it, or one where it failed — cannot: it decodes at native size,
+ * four bytes a pixel. A 100-megapixel scan is 400MB of bitmap, and the tab
+ * does not survive being asked for it.
+ *
+ * So the fallback declines, and says what to do instead. Declining is a worse
+ * answer than resizing; it is a much better answer than the tab disappearing
+ * with the customer's half-finished record in it.
+ */
+const FALLBACK_MAX_PIXELS = 40 * 1000 * 1000;
 
 /**
  * Decodes the file, downscaling *during* the decode when the picture is larger
@@ -80,6 +103,14 @@ async function loadBitmap(file, maxEdge = IMAGE_LIMITS.maxOriginalEdge) {
       console.error('[image] createImageBitmap failed, falling back to <img>', error);
     }
   }
+  const probe = await probeSize(file);
+  if (probe && probe.width * probe.height > FALLBACK_MAX_PIXELS) {
+    throw new AppError(
+      'أبعاد الصورة كبيرة جداً لهذا الجهاز. اختر نسخة أصغر أو التقط صورة بدقة أقل.',
+      { code: 'image/too-large' },
+    );
+  }
+
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();

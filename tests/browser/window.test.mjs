@@ -12,31 +12,14 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
 // A paid plan, so nothing here is refused for the wrong reason.
-const PLAN_STUB = `
-  import { PLAN_CONFIG } from '/src/plans.generated.js';
-  import { checkCreateItem, itemQuotaStatus, usageSummary, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-  const plan = { ...PLAN_CONFIG.plans['business'], id: 'business' };
-  const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-  const usage = { items: 600, storageBytes: 0, members: 1, aiCreditsUsed: 0 };
-  export function startPlanWatch(){} export function stopPlanWatch(){}
-  // The real module hands a new listener the current state immediately, which
-  // is how the app learns the server's record count. The stub must too.
-  export function onSubscriptionChange(listener){ listener({ entitlement, usage, ready: true }); return () => {}; }
-  export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-  export function currentPlan(){ return plan; }
-  export function planStatus(){ return 'active'; }
-  export function quotaStatus(){ return itemQuotaStatus({ entitlement, usage }); }
-  export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-  export function planUsage(){ return usageSummary({ entitlement, usage }); }
-  export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-  export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-  export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-`;
+const PLAN_STUB = planStub({ planId: 'business', usage: { items: 600 } });
 
 const COUNT = 600;
 

@@ -29,7 +29,7 @@ import { bindManageViews, openFolderSheet, renderCategories, renderSettings } fr
 import { bindAssistant, renderAssistant } from './views/assistant.js';
 import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
-import { onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
+import { activityRetentionDays, onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
 
 const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
 
@@ -190,6 +190,11 @@ async function loadApplicationData(firebase, session) {
     // free; being refused is normal and changes nothing. Asked once there is
     // something to lose, because a browser weighs the request against whether
     // the app looks used.
+    // Housekeeping, once the data is up: the activity log grows with every
+    // edit, and the plan says how long an entry is kept. Trimmed through the
+    // timestamp index so the entries being kept are never read.
+    void repository.enforceActivityRetention(activityRetentionDays());
+
     if (!cloudReady && repository.state.items.length) {
       void local.requestPersistence().then((granted) => {
         if (!granted) console.info('[app] the browser did not grant persistent storage');

@@ -7,30 +7,15 @@ const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
+import { planStub } from './plan-stub.mjs';
+
 const browser = await chromium.launch();
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
 // The plan decides whether bulk actions exist at all, so the stub drives it.
-function planStub(feature) {
-  return `
-    import { PLAN_CONFIG } from '/src/plans.generated.js';
-    import { checkCreateItem, itemQuotaStatus, usageSummary, assistantPresentation, checkUseAI, checkFeature } from '/src/entitlements.js';
-    const plan = { ...PLAN_CONFIG.plans['${feature ? 'pro' : 'free'}'], id: '${feature ? 'pro' : 'free'}' };
-    const entitlement = { plan, planId: plan.id, status: 'active', readOnly: false };
-    const usage = { items: 4, storageBytes: 0, members: 1, aiCreditsUsed: 0 };
-    export function startPlanWatch(){} export function stopPlanWatch(){}
-    export function onSubscriptionChange(){ return () => {}; }
-    export function subscriptionState(){ return { entitlement, usage, ready: true }; }
-    export function currentPlan(){ return plan; }
-    export function planStatus(){ return 'active'; }
-    export function quotaStatus(){ return itemQuotaStatus({ entitlement, usage }); }
-    export function canAddItem(){ return checkCreateItem({ entitlement, usage }); }
-    export function planUsage(){ return usageSummary({ entitlement, usage }); }
-    export function assistantLabel(){ return assistantPresentation({ entitlement }); }
-    export function canUseAssistant(){ return checkUseAI({ entitlement, usage }); }
-    export function canUseFeature(name){ return checkFeature({ entitlement }, name); }
-  `;
+function stub(feature) {
+  return planStub({ planId: feature ? 'pro' : 'free', usage: { items: 4 } });
 }
 
 async function open({ bulk = true } = {}) {
@@ -39,7 +24,7 @@ async function open({ bulk = true } = {}) {
   const errs = [];
   page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
-  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: planStub(bulk) }));
+  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: stub(bulk) }));
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
   await page.evaluate(async () => {

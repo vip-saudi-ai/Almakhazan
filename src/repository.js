@@ -57,6 +57,10 @@ const COLLECTIONS = ['items', 'folders', 'categories', 'locations'];
 // is bounded to the newest records, and the rest is fetched once, on demand,
 // by whatever needs all of it — see `completeItems`.
 export const ITEM_WINDOW = 200;
+
+const DAY = 24 * 60 * 60 * 1000;
+/** When the activity log was last trimmed, so it is trimmed about once a day. */
+const ACTIVITY_PRUNE_KEY = 'activity.lastPrunedAt';
 const SCAN_PAGE = 500;
 
 // ── Firestore backend ──────────────────────────────────────────────────────
@@ -431,6 +435,22 @@ class LocalBackend {
   async appendLog(entry) {
     await local.put('activity', { id: uid('log'), ...entry, timestamp: Date.now() });
     await this._notify('activity');
+  }
+
+  /**
+   * Remove activity older than the retention the plan grants.
+   *
+   * Deleted through the timestamp index, in place: the entries being removed
+   * are the only ones touched, and the ones being kept are never read. The log
+   * grows with every edit, so this is the difference between a device store
+   * that settles and one that only ever gets larger.
+   *
+   * What retention affects is how long an event is kept, never what an event
+   * is — the entries themselves stay structured.
+   */
+  async pruneActivity(cutoff) {
+    if (!Number.isFinite(cutoff)) return 0;
+    return local.deleteRange('activity', 'timestamp', IDBKeyRange.upperBound(cutoff, true));
   }
 
   /**
@@ -1117,6 +1137,37 @@ class Repository {
   async itemsReferencing(field, value) {
     if (value == null) return [];
     return this.backend.findItemsByField(field, value);
+  }
+
+  /**
+   * Clear out activity the plan no longer promises to keep.
+   *
+   * Not on every write: an edit should not pay for a cleanup, and the log does
+   * not become a problem in the seconds between two of them. Once a day, at
+   * startup, is enough — and the last run is recorded so a customer who opens
+   * the app ten times a day pays for it once.
+   *
+   * @param {number} retentionDays from the plan; a non-positive value means
+   *   "keep everything", which is what an unlimited plan says.
+   */
+  async enforceActivityRetention(retentionDays, { now = Date.now(), minimumInterval = DAY } = {}) {
+    if (!this.backend?.pruneActivity) return { pruned: 0, skipped: 'unsupported' };
+    if (!(retentionDays > 0)) return { pruned: 0, skipped: 'unlimited' };
+
+    try {
+      const last = await local.getMeta(ACTIVITY_PRUNE_KEY, 0);
+      if (now - last < minimumInterval) return { pruned: 0, skipped: 'recent' };
+
+      const cutoff = now - retentionDays * DAY;
+      const pruned = await this.backend.pruneActivity(cutoff);
+      await local.setMeta(ACTIVITY_PRUNE_KEY, now);
+      if (pruned) await this.backend._notify?.('activity');
+      return { pruned, cutoff };
+    } catch (error) {
+      // Housekeeping. A failure here must not stop the app from opening.
+      console.error('[repo] activity retention could not run', error);
+      return { pruned: 0, error };
+    }
   }
 
   /**
