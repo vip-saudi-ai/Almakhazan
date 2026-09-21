@@ -66,6 +66,10 @@ export function parseQuery(query) {
 
 export const EMPTY_FILTERS = Object.freeze({
   condition: '', folderId: '', locationId: '', categoryId: '', ai: '', valuation: '',
+  // Narrowing to one currency is the honest way to get a list whose values can
+  // be compared and added. Without it, "sort by value" over a mixed inventory
+  // can only ever be grouped — see `sortByValuation`.
+  currency: '',
 });
 
 export function activeFilterCount(filters) {
@@ -86,6 +90,9 @@ export function applyFilters(items, filters) {
   if (filters.ai === 'no') out = out.filter((i) => !i.aiData);
   if (filters.valuation === 'yes') out = out.filter((i) => i.valuation);
   if (filters.valuation === 'no') out = out.filter((i) => !i.valuation);
+  // An exact code match. Nothing here converts between currencies, because
+  // there is no rate to convert with: an AED record is not "roughly" a SAR one.
+  if (filters.currency) out = out.filter((i) => i.valuation?.currency === filters.currency);
   return out;
 }
 
@@ -101,27 +108,65 @@ export const SORT_MODES = {
 const collator = new Intl.Collator('ar', { numeric: true, sensitivity: 'base' });
 
 /**
+ * Ordering by value, when the records are not all in one currency.
+ *
+ * 100 USD is not less than 200 SAR. It is not more, either — without an
+ * exchange rate the comparison has no answer, and the old sort answered it
+ * anyway by comparing the bare numbers, so a list "by value, highest first"
+ * put a 500 SAR plate above a 400 USD watch and read as if that were a fact.
+ *
+ * So the records are ordered *within* each currency, and the currencies are
+ * laid out in blocks. The block order is presentational — most priced records
+ * first, then the code, for stability — and the screen says so. Unpriced
+ * records come last, as they always did.
+ *
+ * @returns {{rows: Array, currencies: string[], mixed: boolean}}
+ */
+export function sortByValuation(items, direction) {
+  const priced = [];
+  const unpriced = [];
+  for (const item of items) {
+    (valuationMidpoint(item.valuation) === null ? unpriced : priced).push(item);
+  }
+
+  const blocks = new Map();
+  for (const item of priced) {
+    const code = item.valuation.currency || '';
+    if (!blocks.has(code)) blocks.set(code, []);
+    blocks.get(code).push(item);
+  }
+
+  const order = [...blocks.keys()]
+    .sort((a, b) => blocks.get(b).length - blocks.get(a).length || a.localeCompare(b));
+
+  const rows = [];
+  for (const code of order) {
+    rows.push(...blocks.get(code).sort((a, b) => direction * (
+      valuationMidpoint(b.valuation) - valuationMidpoint(a.valuation)
+    )));
+  }
+  rows.push(...unpriced.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)));
+
+  return { rows, currencies: order, mixed: order.length > 1 };
+}
+
+/**
  * A valuation range is reduced to its midpoint for ordering, so a 5k–8k item
  * sorts between a flat 6k and a flat 7k rather than by an arbitrary bound.
  * Items without a valuation always sort after valued ones, in both directions.
+ *
+ * Across currencies, see `sortByValuation`: the comparison is made inside each
+ * currency and never between them.
  */
 export function sortItems(items, mode) {
   const sorted = [...items];
-  const byValue = (dir) => (a, b) => {
-    const va = valuationMidpoint(a.valuation);
-    const vb = valuationMidpoint(b.valuation);
-    if (va === null && vb === null) return toMillis(b.createdAt) - toMillis(a.createdAt);
-    if (va === null) return 1;
-    if (vb === null) return -1;
-    return dir * (vb - va);
-  };
 
   switch (mode) {
     case 'oldest': return sorted.sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt));
     case 'name-az': return sorted.sort((a, b) => collator.compare(a.name || '', b.name || ''));
     case 'name-za': return sorted.sort((a, b) => collator.compare(b.name || '', a.name || ''));
-    case 'value-high': return sorted.sort(byValue(1));
-    case 'value-low': return sorted.sort(byValue(-1));
+    case 'value-high': return sortByValuation(sorted, 1).rows;
+    case 'value-low': return sortByValuation(sorted, -1).rows;
     case 'newest':
     default: return sorted.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
   }
@@ -160,7 +205,14 @@ export function queryItems({ items, query, filters, sortMode, scope, categoryPil
     ? filtered.filter((i) => matchesQuery(i, terms, lookups))
     : filtered;
 
-  return { results: sortItems(matched, sortMode), searching };
+  const valueSort = sortMode === 'value-high' || sortMode === 'value-low';
+  if (valueSort) {
+    const { rows, currencies, mixed } = sortByValuation(matched, sortMode === 'value-high' ? 1 : -1);
+    // The screen needs to know when "by value" is really "by value, within
+    // each currency" — otherwise the order looks like a claim it is not.
+    return { results: rows, searching, valueCurrencies: currencies, groupedByCurrency: mixed };
+  }
+  return { results: sortItems(matched, sortMode), searching, valueCurrencies: [], groupedByCurrency: false };
 }
 
 /** Clamps a page index so a stale page never produces a false empty state. */

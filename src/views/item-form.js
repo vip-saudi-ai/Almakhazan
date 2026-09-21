@@ -3,8 +3,9 @@
 import { icon } from '../icons.js';
 import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
 import {
-  CONDITIONS, CURRENCIES, CURRENCY_LABELS, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
+  CONDITIONS, CURRENCIES, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
 } from '../config.js';
+import { currencySymbol } from '../money.js';
 import { repository, ConflictError } from '../repository.js';
 import { canAddItem, canUseAssistant } from '../subscription.js';
 import { openPlansSheet } from './plans.js';
@@ -52,9 +53,14 @@ function fillSelects(item) {
     ...CONDITIONS.map((c) => ({ value: c, label: c })),
   ], item?.condition || '');
 
-  optionList($('f-currency'), CURRENCIES.map((code) => ({
-    value: code, label: `${CURRENCY_LABELS[code]} ${code}`,
-  })), item?.valuation?.currency || 'SAR');
+  // The picker offers the common currencies, plus whatever this record is
+  // already in. An item imported at 10,000 AED must not silently become
+  // 10,000 SAR the first time someone opens it to fix a typo in its name.
+  const own = item?.valuation?.currency;
+  const offered = own && !CURRENCIES.includes(own) ? [own, ...CURRENCIES] : CURRENCIES;
+  optionList($('f-currency'), offered.map((code) => ({
+    value: code, label: `${currencySymbol(code)} ${code}`,
+  })), own || 'SAR');
 
   const unitSelect = $('f-unit');
   unitSelect.replaceChildren();

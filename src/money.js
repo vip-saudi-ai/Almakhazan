@@ -16,10 +16,25 @@
 
 import { valuationMidpoint } from './validation.js';
 
-const SYMBOLS = { SAR: 'ر.س', USD: '$', EUR: '€', GBP: '£' };
+import { CURRENCY_LABELS } from './config.js';
 
+/**
+ * How to write one currency.
+ *
+ * A curated label where the local convention differs from the code — SAR is
+ * written ر.س — and otherwise the ISO code itself. Deliberately NOT the
+ * platform's symbol: `Intl` renders both JPY and CNY as ¥ in most locales, and
+ * an inventory holding both would show two different currencies under one
+ * mark. An unfamiliar three-letter code is worse typography and better
+ * information, and this module trades the first for the second every time.
+ *
+ * A record valued in AED is shown as AED. The alternative, back when the app
+ * knew four currencies, was to call it SAR — not an unfamiliar symbol but a
+ * wrong number.
+ */
 export function currencySymbol(code) {
-  return SYMBOLS[code] || code;
+  if (!code) return '';
+  return CURRENCY_LABELS[code] || code;
 }
 
 export function formatAmount(amount, currency, { compact = false } = {}) {

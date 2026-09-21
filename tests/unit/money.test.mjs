@@ -5,6 +5,8 @@ import {
   currenciesPresent, currencyInText, describeTotals, formatAmount,
   resolveCurrency, totalsByCurrency,
 } from '../../src/money.js';
+import { EMPTY_FILTERS, applyFilters, sortByValuation } from '../../src/search.js';
+import { normalizeValuation } from '../../src/validation.js';
 import { askInventory } from '../../src/ask.js';
 
 const priced = (name, min, max, currency) => ({
@@ -132,4 +134,82 @@ test('an unanswerable question says what it can answer', () => {
   assert.equal(result.understood, false);
   assert.ok(result.capabilities.length >= 4);
   assert.ok(result.capabilities.every((c) => c.label && c.example));
+});
+
+// ── currencies the app does not have in its picker ─────────────────────────
+
+test('a valuation in any ISO currency keeps that currency', () => {
+  // The picker offers four. The standard has about a hundred and eighty, and a
+  // spreadsheet imported from Dubai is priced in one of the other ones.
+  for (const code of ['AED', 'CHF', 'JPY', 'KWD', 'TRY']) {
+    const v = normalizeValuation({ min: 10000, max: 10000, currency: code });
+    assert.equal(v.currency, code, code);
+  }
+});
+
+test('a currency that is not a currency falls back rather than being stored', () => {
+  assert.equal(normalizeValuation({ min: 1, max: 1, currency: 'PCS' }).currency, 'SAR');
+  assert.equal(normalizeValuation({ min: 1, max: 1, currency: '' }).currency, 'SAR');
+  assert.equal(normalizeValuation({ min: 1, max: 1 }).currency, 'SAR');
+});
+
+test('a lowercase code is the same currency', () => {
+  assert.equal(normalizeValuation({ min: 1, max: 1, currency: 'aed' }).currency, 'AED');
+});
+
+// ── sorting by value, across currencies ────────────────────────────────────
+
+const valued = (id, amount, currency) => ({
+  id, name: id, createdAt: 1, valuation: { min: amount, max: amount, currency },
+});
+
+test('within one currency, sorting by value is ordinary sorting', () => {
+  const { rows, mixed } = sortByValuation([
+    valued('a', 100, 'SAR'), valued('c', 300, 'SAR'), valued('b', 200, 'SAR'),
+  ], 1);
+  assert.equal(mixed, false);
+  assert.deepEqual(rows.map((r) => r.id), ['c', 'b', 'a']);
+});
+
+test('across currencies, nothing is ordered against something it cannot be compared to', () => {
+  // 400 USD and 500 SAR have no order without an exchange rate. The old sort
+  // compared the bare numbers and put the plate above the watch as if it knew.
+  const { rows, mixed, currencies } = sortByValuation([
+    valued('plate', 500, 'SAR'),
+    valued('watch', 400, 'USD'),
+    valued('ring', 900, 'SAR'),
+    valued('lens', 800, 'USD'),
+  ], 1);
+
+  assert.equal(mixed, true);
+  assert.deepEqual(currencies.length, 2);
+
+  // Each currency is internally ordered…
+  const bySar = rows.filter((r) => r.valuation.currency === 'SAR').map((r) => r.id);
+  const byUsd = rows.filter((r) => r.valuation.currency === 'USD').map((r) => r.id);
+  assert.deepEqual(bySar, ['ring', 'plate']);
+  assert.deepEqual(byUsd, ['lens', 'watch']);
+
+  // …and the currencies do not interleave, which is what would read as a
+  // ranking across them.
+  const codes = rows.map((r) => r.valuation.currency);
+  assert.deepEqual(codes, [...codes].sort((a, b) => codes.indexOf(a) - codes.indexOf(b)));
+  assert.equal(new Set(codes).size, 2);
+  assert.equal(codes[0], codes[1]);
+});
+
+test('unpriced records sort last, in both directions', () => {
+  const none = { id: 'none', name: 'none', createdAt: 1 };
+  for (const dir of [1, -1]) {
+    const { rows } = sortByValuation([none, valued('a', 5, 'SAR'), valued('b', 9, 'SAR')], dir);
+    assert.equal(rows[rows.length - 1].id, 'none', `direction ${dir}`);
+  }
+});
+
+test('a currency filter narrows without converting anything', () => {
+  const items = [valued('a', 500, 'SAR'), valued('b', 400, 'USD'), valued('c', 100, 'SAR')];
+  const only = applyFilters(items, { ...EMPTY_FILTERS, currency: 'USD' });
+  assert.deepEqual(only.map((i) => i.id), ['b']);
+  assert.equal(only[0].valuation.currency, 'USD');
+  assert.equal(only[0].valuation.min, 400);
 });

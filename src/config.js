@@ -59,8 +59,60 @@ export const CONDITION_COLORS = {
   'للإتلاف': '#AF52DE',
 };
 
+/**
+ * The currencies offered in the picker — the common ones for this market.
+ *
+ * This is a convenience list, NOT the set of currencies the app accepts. A
+ * record may legitimately be valued in any ISO 4217 currency: a spreadsheet
+ * imported from Dubai prices things in AED, an auction invoice from Geneva in
+ * CHF. Any valid code is stored and shown as itself.
+ */
 export const CURRENCIES = ['SAR', 'USD', 'EUR', 'GBP'];
+
+/** Where the local convention differs from what Intl would print. */
 export const CURRENCY_LABELS = { SAR: 'ر.س', USD: '$', EUR: '€', GBP: '£' };
+
+/**
+ * ISO 4217, active codes plus the withdrawn ones still found in real records.
+ *
+ * `Intl.NumberFormat` is not the validator it looks like: it accepts any
+ * well-formed three-letter code and prints it back, so "ZZZ" and "PCS" — a
+ * unit column mapped to the currency field by mistake — would both pass. A
+ * real list is what turns that into a problem the import can report.
+ *
+ * The withdrawn codes are deliberate: an inventory records what something was
+ * bought for, and a 2010 purchase in HRK or SLL did happen. Rejecting the code
+ * would not undo the purchase, it would only lose the record of it.
+ */
+const ISO_4217 = new Set(`
+AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BRL
+BSD BTN BWP BYN BZD CAD CDF CHF CLP CNY COP CRC CUP CVE CZK DJF DKK DOP DZD EGP
+ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR
+IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL
+LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MYR MZN NAD NGN NIO NOK NPR
+NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD
+SHP SLE SOS SRD SSP STN SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX
+USD UYU UZS VED VES VND VUV WST XAF XAG XAU XCD XCG XDR XOF XPF XPT XXX YER ZAR
+ZMW ZWG
+BYR HRK LTL LVL MRO SLL STD VEF ZMK ZWL
+`.trim().split(/\s+/));
+
+/** Is this a currency, by the standard rather than by the picker? */
+export function isCurrencyCode(code) {
+  return ISO_4217.has(String(code || '').trim().toUpperCase());
+}
+
+/**
+ * The canonical code, or the fallback when there isn't one.
+ *
+ * Anything else is data loss with a straight face: a valuation of 10,000 AED
+ * relabelled SAR because AED was not in a four-entry list is not a display
+ * problem, it is the record now saying something the owner never said.
+ */
+export function normalizeCurrencyCode(code, fallback = 'SAR') {
+  const upper = String(code || '').trim().toUpperCase();
+  return isCurrencyCode(upper) ? upper : fallback;
+}
 
 export const VALUATION_SOURCES = { MANUAL: 'manual', AI: 'ai', APPRAISAL: 'appraisal' };
 export const VALUATION_TYPES = { ESTIMATE: 'estimate', PURCHASE: 'purchase', INSURANCE: 'insurance' };

@@ -168,6 +168,8 @@ export async function queryInventory(query, { ensure } = {}) {
     totalPages: page.totalPages,
     searching: page.searching,
     scopeItems: page.scopeItems,
+    valueCurrencies: page.valueCurrencies || [],
+    groupedByCurrency: Boolean(page.groupedByCurrency),
   };
 }
 
@@ -203,7 +205,7 @@ export function runQuery(query) {
 
 /** The local implementation. One day this is the `else` branch of a fetch. */
 function runLocal(query) {
-  let { results, searching } = queryItems({
+  let { results, searching, valueCurrencies, groupedByCurrency } = queryItems({
     items: repository.state.items,
     query: query.search,
     filters: query.filters,
@@ -231,6 +233,10 @@ function runLocal(query) {
     totalPages,
     searching,
     scopeItems: scopeFor(query, searching),
+    // "Sorted by value" across several currencies is really "sorted by value
+    // within each currency". The result says which, so the screen can too.
+    valueCurrencies: valueCurrencies || [],
+    groupedByCurrency: Boolean(groupedByCurrency),
   };
 }
 

@@ -1251,3 +1251,10 @@ html:not([dir="rtl"]) .lchev{transform:scaleX(-1)}
 /* Chevrons point along the reading direction: drawn as "back", mirrored for LTR. */
 html:not([dir="rtl"]) .srowc .nz-icon,
 html:not([dir="rtl"]) .ask-result-go .nz-icon{transform:scaleX(-1)}
+
+
+/* Why a value-sorted list is in blocks: the currencies cannot be compared. */
+.sortnote{display:flex;gap:8px;align-items:flex-start;margin:10px 0 2px;padding:9px 12px;
+  background:var(--surface-sunken);border:1px solid var(--border-quiet);border-radius:var(--r-sm);
+  font:var(--type-small);color:var(--ts);line-height:1.5}
+.sortnote-ico{flex-shrink:0;font-size:13px;color:var(--brand)}

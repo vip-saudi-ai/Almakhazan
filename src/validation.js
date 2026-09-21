@@ -2,8 +2,8 @@
 // an import file, or the AI passes through here before it is stored or rendered.
 
 import {
-  CONDITIONS, CURRENCIES, INTEGER_UNITS, SCHEMA_VERSION, TEXT_LIMITS,
-  UNCATEGORIZED_ID, VALUATION_SOURCES, VALUATION_TYPES,
+  CONDITIONS, CURRENCY_LABELS, INTEGER_UNITS, SCHEMA_VERSION, TEXT_LIMITS,
+  UNCATEGORIZED_ID, VALUATION_SOURCES, VALUATION_TYPES, normalizeCurrencyCode,
 } from './config.js';
 import { normalizeDigits, parseNumber, toMillis, uid } from './utils.js';
 
@@ -98,7 +98,11 @@ export function normalizeValuation(value) {
 
   const lo = min ?? max;
   const hi = max ?? min;
-  const currency = CURRENCIES.includes(value.currency) ? value.currency : 'SAR';
+  // Any ISO 4217 code is kept as itself. This used to force anything outside a
+  // four-entry list to SAR, so an imported spreadsheet valuing something at
+  // 10,000 AED came out saying 10,000 ر.س — not a display quirk but the record
+  // stating a number the owner never gave it.
+  const currency = normalizeCurrencyCode(value.currency, 'SAR');
   const source = Object.values(VALUATION_SOURCES).includes(value.source)
     ? value.source : VALUATION_SOURCES.MANUAL;
   const valuationType = Object.values(VALUATION_TYPES).includes(value.valuationType)
@@ -127,7 +131,7 @@ export function formatValuation(valuation, { compact = false } = {}) {
   const fmt = (n) => (compact && n >= 1000
     ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
     : new Intl.NumberFormat('en-US').format(n));
-  const symbol = { SAR: 'ر.س', USD: '$', EUR: '€', GBP: '£' }[valuation.currency] || valuation.currency;
+  const symbol = CURRENCY_LABELS[valuation.currency] || valuation.currency;
   const body = valuation.min === valuation.max
     ? fmt(valuation.min)
     : `${fmt(valuation.min)} – ${fmt(valuation.max)}`;

@@ -5,6 +5,7 @@ import { icon } from '../icons.js';
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
 import { ensureFor, inventoryCounts, runQuery, summarize } from '../query.js';
+import { currenciesPresent, currencySymbol } from '../money.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
@@ -714,6 +715,7 @@ export function renderHome() {
   const result = runQuery(currentQuery());
   const { rows: pageItems, total, totalPages, searching, scopeItems } = result;
   view.page = result.page;
+  renderSortNotice(result);
 
   renderPills(scopeItems);
   renderFilterBanner(searching);
@@ -804,6 +806,31 @@ function renderEmptyState({ searching, filtered, folder }) {
 }
 
 /** Says, under the list, that this is a window and not an inventory. */
+/**
+ * Says so when "by value" is really "by value, within each currency".
+ *
+ * Without an exchange rate — and NAZM has none, and no opinion about what one
+ * should be — 400 USD and 500 SAR cannot be put in order. The list groups them
+ * instead, and this is the line that stops the grouping from reading as a
+ * ranking the app is not entitled to make.
+ */
+function renderSortNotice(result) {
+  const node = $('hsortnote');
+  if (!node) return;
+  if (!result.groupedByCurrency) {
+    node.style.display = 'none';
+    render(node, []);
+    return;
+  }
+  node.style.display = '';
+  render(node, [el('div', { class: 'sortnote' }, [
+    el('span', { class: 'sortnote-ico', text: '⇅', 'aria-hidden': 'true' }),
+    el('span', {
+      text: `التقييمات هنا بعملات مختلفة (${result.valueCurrencies.join(' · ')}) — الترتيب داخل كل عملة على حدة، لأن العملات لا تُقارن بدون سعر صرف.`,
+    }),
+  ])]);
+}
+
 function renderPartial() {
   const node = $('hpartial');
   if (!node) return;
@@ -881,6 +908,19 @@ export function openFilterSheet() {
     { value: 'no', label: 'بدون تقييم' },
   ], view.filters.valuation);
 
+  // Offered only when there is more than one currency to choose between: on a
+  // single-currency inventory — most of them — the control is a question with
+  // one answer, and the row is simply not drawn.
+  const present = currenciesPresent(repository.liveItems());
+  const currencyRow = $('fp-currency-row');
+  if (currencyRow) currencyRow.style.display = present.length > 1 ? '' : 'none';
+  if (present.length > 1) {
+    optionList($('fp-currency'), [
+      { value: '', label: 'كل العملات' },
+      ...present.map((code) => ({ value: code, label: `${currencySymbol(code)} ${code}` })),
+    ], view.filters.currency);
+  }
+
   openSheet('filter');
 }
 
@@ -896,6 +936,7 @@ function applyFilterControlsNow() {
     categoryId: '',
     ai: $('fp-ai')?.value || '',
     valuation: $('fp-price')?.value || '',
+    currency: $('fp-currency')?.value || '',
   };
   resetPage();
   syncFilterControls();
@@ -914,6 +955,7 @@ export function syncFilterControls() {
     'fp-loc': view.filters.locationId,
     'fp-ai': view.filters.ai,
     'fp-price': view.filters.valuation,
+    'fp-currency': view.filters.currency,
   };
   for (const [id, value] of Object.entries(fields)) {
     const node = $(id);
