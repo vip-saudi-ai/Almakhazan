@@ -285,6 +285,48 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
   check('Q29 and backwards is forwards, reversed', paging.reversed === true, String(paging.reversed));
 }
 
+// ── paging a walked answer by cursor ───────────────────────────────────────
+{
+  const walked = await page.evaluate(async () => {
+    const { queryInventory } = await import('/src/query.js');
+    const q = { search: 'قطعة', perPage: 24 };   // matches almost everything
+
+    const seen = [];
+    const costs = [];
+    let cursor = null;
+    let result = null;
+    for (let n = 1; n <= 8; n += 1) {
+      const t0 = performance.now();
+      result = await queryInventory({ ...q, page: n }, cursor ? { cursor } : {});
+      costs.push(Math.round(result.examined ?? -1));
+      seen.push(...result.rows.map((r) => r.id));
+      cursor = result.nextCursor;
+      if (!cursor) break;
+    }
+
+    // A token from this question, spent on a different one.
+    const foreign = await queryInventory({ search: 'أسطرلاب', perPage: 24 }, { cursor });
+    return {
+      rows: seen.length,
+      unique: new Set(seen).size,
+      costs,
+      foreignRows: foreign.rows.length,
+      foreignFirst: foreign.rows[0]?.id ?? null,
+    };
+  });
+
+  check('Q31 eight cursor pages return eight pages of records',
+    walked.rows === 192, String(walked.rows));
+  check('Q32 with none of them repeated', walked.unique === 192,
+    `${walked.unique} unique of ${walked.rows}`);
+  check('Q33 and each page costs a page, not the distance to it',
+    walked.costs.slice(1).every((n) => n <= walked.costs[0] * 2 + 64),
+    JSON.stringify(walked.costs));
+  check('Q34 a cursor from another question is refused, not spent',
+    walked.foreignRows === 1 && /^q0/.test(walked.foreignFirst || ''),
+    JSON.stringify({ n: walked.foreignRows, first: walked.foreignFirst }));
+}
+
 check('Q30 no JS errors', errs.length === 0, errs.slice(0, 2).join(' / '));
 await context.close();
 

@@ -407,8 +407,12 @@ async function countTrashedIn(queryPlan, rootOnly) {
  * it is not a filter over everything that then takes a slice.
  */
 async function byScan(query, queryPlan, predicate, perPage, context) {
+  // A cursor means "carry on from here", so the walk starts there and this is
+  // the next page rather than the nth. Without one the walk starts at the
+  // beginning and skips forward, which is what a jump to a numbered page is.
+  const resuming = Boolean(query.cursor) && !needsFullOrder(queryPlan);
   const pageNumber = Math.max(1, query.page || 1);
-  const wantedThrough = pageNumber * perPage;
+  const wantedThrough = resuming ? perPage : pageNumber * perPage;
   const needsMemorySort = queryPlan.sortStrategy === 'memory';
 
   const kept = [];
@@ -423,6 +427,8 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
     index: queryPlan.baseIndex,
     range: rangeFor(queryPlan),
     direction: queryPlan.direction,
+    after: resuming ? query.cursor.key : undefined,
+    afterPrimary: resuming ? query.cursor.primaryKey : undefined,
     batchSize: () => batchSize,
     onBatch: async (batch) => {
       if (context.signal?.aborted) { exhausted = false; return false; }
@@ -469,9 +475,20 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
   // happen to have been examined.
   const total = exhausted ? matched : await cheapTotal(query, queryPlan);
   const totalPages = total == null ? null : Math.max(1, Math.ceil(total / perPage));
-  const page = totalPages ? Math.min(pageNumber, totalPages) : pageNumber;
-  const start = (page - 1) * perPage;
-  const rows = present(ordered.slice(start, start + perPage));
+  const page = resuming
+    ? pageNumber
+    : (totalPages ? Math.min(pageNumber, totalPages) : pageNumber);
+  const start = resuming ? 0 : (page - 1) * perPage;
+  const window = ordered.slice(start, start + perPage);
+  const rows = present(window);
+
+  // Where this page ended, so the next one can start after it rather than
+  // walking from the beginning again. Taken from the last row's own fields,
+  // which is exactly what the index key and the primary key are.
+  const last = window[window.length - 1];
+  const cursor = last && queryPlan.baseIndex && !needsMemorySort
+    ? { key: last[queryPlan.baseIndex], primaryKey: last.id }
+    : null;
 
   return {
     rows,
@@ -479,13 +496,22 @@ async function byScan(query, queryPlan, predicate, perPage, context) {
     page,
     totalPages,
     searching: queryPlan.searching,
-    hasMore: total == null ? matched > page * perPage : page < totalPages,
+    hasMore: total == null
+      ? (resuming ? !exhausted || matched > window.length : matched > page * perPage)
+      : page < totalPages,
+    cursor,
     plan: queryPlan,
     exhausted,
     examined,
     valueCurrencies,
     groupedByCurrency,
   };
+}
+
+/** Orders that cannot be produced by walking an index, so a cursor into that
+ *  index would not describe a position in the answer. */
+function needsFullOrder(queryPlan) {
+  return queryPlan.sortStrategy === 'memory';
 }
 
 /**

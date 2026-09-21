@@ -369,13 +369,15 @@ export function countRange(storeName, indexName, range) {
  * @param {number|Function} [batchSize] a function is asked before each batch,
  *   so a caller can start small and grow once it learns how selective its
  *   predicate is.
+ * @param {*} [after] / @param {*} [afterPrimary] resume from a position rather
+ *   than from the start — the same exclusive boundary `page` uses.
  */
 export async function walk(storeName, {
   index: indexName = null, direction = 'next', range = null,
-  batchSize = 400, onBatch,
+  batchSize = 400, onBatch, after: startKey, afterPrimary: startPrimary,
 } = {}) {
-  let after;
-  let afterPrimary;
+  let after = startKey;
+  let afterPrimary = startPrimary;
   let scanned = 0;
   for (;;) {
     const limit = typeof batchSize === 'function' ? batchSize() : batchSize;

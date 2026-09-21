@@ -122,7 +122,7 @@ let lastResult = null;
  * @param {boolean}  [options.revertOnFailure] put the screen back when the
  *   question could not be answered, rather than showing part of an answer
  */
-async function requestList({ apply, revertOnFailure = false } = {}) {
+async function requestList({ apply, revertOnFailure = false, cursor = null } = {}) {
   const before = currentQuery();
   apply?.();
   const ticket = ++narrowingGeneration;
@@ -133,6 +133,11 @@ async function requestList({ apply, revertOnFailure = false } = {}) {
     result = await queryInventory(currentQuery(), {
       ensure: () => withFullInventory('جارٍ قراءة المخزون كاملاً…'),
       signal,
+      // Carrying on from where the last page ended, when there is one. Asking
+      // for "page 40" of a walked answer means walking to it; asking for "what
+      // follows this" means reading a page. The token is refused if it belongs
+      // to a different question, so a stale one cannot resume the wrong answer.
+      cursor,
     });
   } catch (error) {
     if (ticket !== narrowingGeneration) return;
@@ -794,9 +799,9 @@ function renderPagination(result) {
   const container = $('hpag');
   if (!container) return;
 
-  const go = (page) => {
+  const go = (page, cursor = null) => {
     view.page = Math.max(1, page);
-    void requestList();
+    void requestList({ cursor });
     $('hscroll')?.scrollTo(0, 0);
   };
 
@@ -809,7 +814,7 @@ function renderPagination(result) {
   const forward = el('button', {
     class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة التالية',
     disabled: !result.hasMore || undefined,
-    onClick: () => go(view.page + 1),
+    onClick: () => go(view.page + 1, result.nextCursor),
   }, [icon('back', { size: 17 })]);
 
   if (result.totalPages == null) {

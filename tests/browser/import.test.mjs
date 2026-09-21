@@ -221,6 +221,105 @@ const foot = (page) => page.evaluate(() => document.getElementById('simport-foot
   await context.close();
 }
 
+// ── the plan allowance is enforced, not merely displayed ───────────────────
+for (const [planId, allowance] of [['free', 200], ['personal', 2000]]) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const errs = [];
+  page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
+  page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
+  await page.route('**/src/subscription.js', r => r.fulfill({
+    contentType: 'text/javascript', body: planStub({ planId }),
+  }));
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 20000 });
+
+  const outcome = await page.evaluate(async ({ allowance }) => {
+    const { readSpreadsheet } = await import('/src/spreadsheet.js');
+    const { canImportRows, importLimit } = await import('/src/subscription.js');
+
+    const make = (rows) => new File(
+      ['الاسم,الكمية\n' + Array.from({ length: rows }, (_, i) => `قطعة ${i},1`).join('\n') + '\n'],
+      'big.csv', { type: 'text/csv' },
+    );
+
+    const limit = importLimit();
+    const atLimit = await readSpreadsheet(make(allowance), { rowLimit: limit.effective });
+    const over = await readSpreadsheet(make(allowance + 1), { rowLimit: limit.effective });
+
+    return {
+      limit: limit.effective,
+      boundBy: limit.boundBy,
+      atLimitRows: atLimit.rows.length,
+      atLimitTruncated: atLimit.truncated,
+      overRows: over.rows.length,
+      overTruncated: over.truncated,
+      // And the rule, independent of what the reader did.
+      allowedAtLimit: canImportRows(allowance).allowed,
+      allowedOver: canImportRows(allowance + 1).allowed,
+      message: canImportRows(allowance + 1).message || '',
+    };
+  }, { allowance });
+
+  check(`L-${planId} the allowance is the plan's`, outcome.limit === allowance && outcome.boundBy === 'plan',
+    JSON.stringify(outcome));
+  check(`L-${planId} a file exactly at the limit is read whole`,
+    outcome.atLimitRows === allowance && outcome.atLimitTruncated === false, JSON.stringify(outcome));
+  check(`L-${planId} a file one row over stops at the limit and says so`,
+    outcome.overRows === allowance && outcome.overTruncated === true, JSON.stringify(outcome));
+  check(`L-${planId} the rule allows the limit and refuses one more`,
+    outcome.allowedAtLimit === true && outcome.allowedOver === false, JSON.stringify(outcome));
+  check(`L-${planId} and the refusal names the plan`, /خطة/.test(outcome.message), outcome.message);
+  check(`L-${planId} no JS errors`, errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── Business can process what Business was sold ────────────────────────────
+{
+  const { page, context, errs } = await open();
+
+  const big = await page.evaluate(async () => {
+    const { readSpreadsheet, MAX_ROWS } = await import('/src/spreadsheet.js');
+    const { importRowLimit } = await import('/src/entitlements.js');
+    const { PLAN_CONFIG } = await import('/src/plans.generated.js');
+
+    const entitlement = { plan: PLAN_CONFIG.plans.business, planId: 'business' };
+    const limit = importRowLimit({ entitlement }, MAX_ROWS);
+
+    // A realistic 50,000-row export: five columns, Arabic names, no images.
+    const header = 'الاسم,الكمية,التصنيف,الرمز,السعر\n';
+    const lines = new Array(50000);
+    for (let i = 0; i < 50000; i += 1) lines[i] = `قطعة ${i},1,ساعات,INV-${i},${1000 + i}`;
+    const file = new File([header + lines.join('\n') + '\n'], 'business.csv', { type: 'text/csv' });
+
+    const t0 = performance.now();
+    const sheet = await readSpreadsheet(file, { rowLimit: limit.effective });
+    const ms = Math.round(performance.now() - t0);
+
+    return {
+      limit: limit.effective,
+      rows: sheet.rows.length,
+      truncated: sheet.truncated,
+      headers: sheet.headers.length,
+      firstRow: sheet.rows[0],
+      lastRow: sheet.rows[sheet.rows.length - 1],
+      ms,
+      bytes: file.size,
+    };
+  });
+
+  check('L-business the allowance really is 50,000', big.limit === 50000, String(big.limit));
+  check('L-business all 50,000 rows are read', big.rows === 50000 && big.truncated === false,
+    JSON.stringify({ rows: big.rows, truncated: big.truncated }));
+  check('L-business with the columns intact at both ends',
+    big.headers === 5 && big.firstRow[0] === 'قطعة 0' && big.lastRow[0] === 'قطعة 49999',
+    JSON.stringify({ first: big.firstRow, last: big.lastRow }));
+  check('L-business and the tab survives reading it',
+    big.ms < 20000, `${big.ms}ms for ${Math.round(big.bytes / 1024)}KB`);
+  check('L-business no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);

@@ -126,6 +126,92 @@ const state = (page) => page.evaluate(async () => {
   await context.close();
 }
 
+// ── upgrading from the version this build replaces ─────────────────────────
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const errs = [];
+  page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
+  page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
+  await page.route('**/src/subscription.js', r => r.fulfill({ contentType: 'text/javascript', body: PLAN_STUB }));
+
+  // A database written by the previous release: every store and index it had,
+  // and none of the ones this build added.
+  await page.addInitScript(() => {
+    const request = indexedDB.open('almakhzan', 4);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      const tx = request.transaction;
+      const spec = {
+        items: ['updatedAt', 'createdAt', 'folderId', 'categoryId', 'locationId', 'sku', 'barcode', 'serialNumber', 'deletedAt'],
+        folders: [], categories: [], locations: [],
+        activity: ['timestamp'], images: [], mediaAssets: [],
+        importJobs: ['startedAt'], meta: [],
+      };
+      for (const [name, indexes] of Object.entries(spec)) {
+        const store = db.objectStoreNames.contains(name)
+          ? tx.objectStore(name)
+          : db.createObjectStore(name, { keyPath: name === 'meta' ? 'key' : 'id' });
+        for (const index of indexes) if (!store.indexNames.contains(index)) store.createIndex(index, index);
+      }
+    };
+    request.onsuccess = () => {
+      const db = request.result;
+      const tx = db.transaction(['items', 'folders'], 'readwrite');
+      tx.objectStore('folders').put({ id: 'f-old', name: 'مجلد قديم', icon: '🗂', color: '#007AFF' });
+      for (let i = 0; i < 50; i += 1) {
+        tx.objectStore('items').put({
+          id: 'v4-' + i, name: `سجل قديم ${i}`, quantity: 1, unit: 'قطعة',
+          categoryId: 'c1', folderId: i < 12 ? 'f-old' : null, locationId: null,
+          sku: `INV-2025-${String(i).padStart(6, '0')}`, barcode: String(600000 + i),
+          serialNumber: `SN-OLD-${i}`, condition: i % 2 ? 'جيدة' : '',
+          images: [], createdAt: 1700000000000 + i, updatedAt: 1700000000000 + i,
+          version: 1, deletedAt: null,
+        });
+      }
+      tx.oncomplete = () => db.close();
+    };
+  });
+
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 25000 });
+  await page.waitForTimeout(600);
+
+  const upgraded = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const { queryInventory } = await import('/src/query.js');
+
+    const kept = await local.count('items');
+    const one = await local.get('items', 'v4-7');
+    // The index this build added, backfilled from records written before it.
+    const byCondition = await local.getAllByIndex('items', 'condition', 'جيدة');
+    // And the ones on the job store, which gained two.
+    const jobIndexes = await local.transaction('importJobs', 'readonly',
+      (stores) => [...stores.importJobs.indexNames]);
+
+    const folder = await queryInventory({ folderId: 'f-old', perPage: 24 });
+    return {
+      kept,
+      name: one?.name || null,
+      byCondition: byCondition.length,
+      jobIndexes: jobIndexes.sort(),
+      folderTotal: folder.total,
+      folderBase: folder.plan?.baseIndex ?? null,
+    };
+  });
+
+  check('M1 every record written by the previous version survives the upgrade',
+    upgraded.kept === 50 && upgraded.name === 'سجل قديم 7', JSON.stringify(upgraded));
+  check('M2 an index this build added is backfilled from the old records',
+    upgraded.byCondition === 25, String(upgraded.byCondition));
+  check('M3 the import-job store gained its new indexes',
+    upgraded.jobIndexes.join() === 'fileFingerprint,startedAt,status', upgraded.jobIndexes.join());
+  check('M4 and the query engine works against the upgraded database',
+    upgraded.folderBase === 'folderId' && upgraded.folderTotal === 12, JSON.stringify(upgraded));
+  check('M5 no JS errors during the upgrade', errs.length === 0, errs[0]);
+  await context.close();
+}
+
 // ── a relational delete on a partial inventory ─────────────────────────────
 {
   const { page, context, errs } = await open({ seed: 600, inFolder: 300 });
@@ -686,6 +772,96 @@ const state = (page) => page.evaluate(async () => {
   check('I64 a workspace the app itself wrote passes the check',
     clean.ok === true && clean.items === 300, JSON.stringify(clean));
   check('I65 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── a stale screen does not overwrite a newer edit ─────────────────────────
+{
+  const { page, context, errs } = await open({ seed: 40, inFolder: 0 });
+
+  const conflict = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+
+    const id = 'k00000';
+    const before = await local.get('items', id);
+
+    // This screen is holding version 1 — the copy the customer selected from.
+    const stale = repository.item(id);
+
+    // Another tab edits the same record. Written straight to the store,
+    // because that is what another tab's write looks like from here: the
+    // device backend has no cross-tab notification, so this tab's copy stays
+    // at version 1 while the stored record moves to 2. That gap is the hazard.
+    await local.put('items', { ...before, name: 'اسم من تبويب آخر', version: before.version + 1 });
+    const afterOther = await local.get('items', id);
+
+    // The stale screen now includes it in a bulk move.
+    let error = null;
+    try {
+      await repository.bulkUpdate([id, 'k00001', 'k00002'], { condition: 'ممتازة' });
+    } catch (e) { error = { code: e.code, message: e.message }; }
+    await new Promise((r) => setTimeout(r, 200));
+
+    const afterBulk = await local.get('items', id);
+    const neighbour = await local.get('items', 'k00001');
+
+    return {
+      startedAt: before.version,
+      staleVersion: stale.version,
+      otherTabVersion: afterOther.version,
+      otherTabName: afterOther.name,
+      error,
+      finalVersion: afterBulk.version,
+      finalName: afterBulk.name,
+      finalCondition: afterBulk.condition,
+      neighbourCondition: neighbour.condition,
+    };
+  });
+
+  check('I66 the other tab\'s edit landed', conflict.otherTabVersion === conflict.startedAt + 1
+    && conflict.otherTabName === 'اسم من تبويب آخر', JSON.stringify(conflict));
+  check('I67 the bulk write refuses rather than overwriting it',
+    conflict.error?.code === 'repo/bulk-conflict', JSON.stringify(conflict.error));
+  check('I68 and says what to do about it',
+    /حدّث القائمة/.test(conflict.error?.message || ''), conflict.error?.message);
+  check('I69 the newer edit survives untouched',
+    conflict.finalName === 'اسم من تبويب آخر' && conflict.finalVersion === conflict.otherTabVersion,
+    JSON.stringify(conflict));
+  check('I70 and the chunk rolled back rather than half-applying',
+    conflict.finalCondition !== 'ممتازة' && conflict.neighbourCondition !== 'ممتازة',
+    JSON.stringify({ a: conflict.finalCondition, b: conflict.neighbourCondition }));
+  check('I71 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
+// ── the same protection on the Trash ───────────────────────────────────────
+{
+  const { page, context, errs } = await open({ seed: 40, inFolder: 0 });
+
+  const trashed = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+    const id = 'k00000';
+    const stale = repository.item(id);
+
+    // Another tab's write, as above: straight to the store, leaving this tab
+    // holding the older copy.
+    const stored = await local.get('items', id);
+    await local.put('items', { ...stored, name: 'حُرّر في مكان آخر', version: stored.version + 1 });
+
+    let error = null;
+    try { await repository.bulkTrash([id]); } catch (e) { error = e.code; }
+    await new Promise((r) => setTimeout(r, 200));
+    const after = await local.get('items', id);
+    return { staleVersion: stale.version, error, deletedAt: after.deletedAt, name: after.name };
+  });
+
+  check('I72 trashing a record somebody else just edited is refused',
+    trashed.error === 'repo/bulk-conflict', String(trashed.error));
+  check('I73 and the record is neither trashed nor reverted',
+    trashed.deletedAt == null && trashed.name === 'حُرّر في مكان آخر', JSON.stringify(trashed));
+  check('I74 no JS errors', errs.length === 0, errs[0]);
   await context.close();
 }
 
