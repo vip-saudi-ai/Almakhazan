@@ -454,6 +454,7 @@ class Repository {
     this.itemsScanned = false;
     this.itemsComplete = false;
     this.itemsTotal = null;
+    this.itemsTotalFromBackend = false;
     this._completing = null;
     this._taxonomyCounts = null;
     // Those object URLs point at the previous workspace's blobs. Keeping them
@@ -539,8 +540,14 @@ class Repository {
             if (this.itemsWindowShort) this.itemsRest = new Map();
             // A device-only backend can count its own records exactly, which
             // is the same fact the cloud's usage counter supplies. Taking it
-            // here means "the newest 200 of 6,400" is true on both backends.
-            if (typeof meta.liveTotal === 'number') this.itemsTotal = meta.liveTotal;
+            // here means "the newest 200 of 6,400" is true on both backends —
+            // and it is marked as coming from the backend, so the plan's usage
+            // counter (which counts cloud records, and is nought on a device)
+            // cannot overwrite a number the store just counted.
+            if (typeof meta.liveTotal === 'number') {
+              this.itemsTotal = meta.liveTotal;
+              this.itemsTotalFromBackend = true;
+            }
             this._composeItems();
           } else {
             this.state[name] = this._normalizeRows(name, rows);
@@ -617,6 +624,7 @@ class Repository {
     this.itemsScanned = false;
     this.itemsComplete = false;
     this.itemsTotal = null;
+    this.itemsTotalFromBackend = false;
     this._completing = null;
     this._taxonomyCounts = null;
     // Those object URLs point at the previous workspace's blobs. Keeping them
@@ -673,6 +681,11 @@ class Repository {
    */
   setKnownTotal(total) {
     if (typeof total !== 'number' || !Number.isFinite(total)) return;
+    // The backend's own count wins where there is one. On a device-only
+    // session the plan's usage counter describes a cloud workspace that does
+    // not exist, and it reads nought — which turned an exact "the newest 200
+    // of 20,000" into "the newest 200 of 0".
+    if (this.itemsTotalFromBackend) return;
     this.itemsTotal = total;
     this._recomputeCompleteness();
   }
