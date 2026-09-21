@@ -50,6 +50,8 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
     // The tier names and the "is there a bigger file" question the viewer asks.
     export const ImageTier = { THUMB: 'thumb', DISPLAY: 'display', FULL: 'full' };
     export async function hasDistinctOriginal() { return false; }
+    // The repository releases cached object URLs when a workspace resets.
+    export function releaseObjectUrls() {}
   ` }));
 
   await page.route('**/src/ai.js', r => r.fulfill({ contentType: 'text/javascript', body: `

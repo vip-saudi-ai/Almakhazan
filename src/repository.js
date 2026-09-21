@@ -15,6 +15,7 @@ import { ACTIONS, DEFAULT_CATEGORIES, DEFAULT_LOCATIONS, ROLES, UNCATEGORIZED_ID
 import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
 import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
+import { releaseObjectUrls } from './storage.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
@@ -190,6 +191,53 @@ class FirestoreBackend {
     await this.fs.setDoc(ref, { ...entry, timestamp: this.serverTime });
   }
 
+  /**
+   * Records referencing one taxonomy row. A `where` query is answered by the
+   * index on the server, so the result costs the number of matches rather than
+   * the size of the collection, and — the point of it — it is complete whether
+   * or not this device has loaded the whole inventory.
+   */
+  async findItemsByField(field, value) {
+    if (value == null) return [];
+    const rows = [];
+    let cursor = null;
+    for (;;) {
+      const parts = [this.fs.where(field, '==', value), this.fs.orderBy(this.fs.documentId())];
+      if (cursor) parts.push(this.fs.startAfter(cursor));
+      parts.push(this.fs.limit(SCAN_PAGE));
+      const snapshot = await this.fs.getDocs(this.fs.query(this.col('items'), ...parts));
+      if (snapshot.empty) return rows;
+      for (const doc of snapshot.docs) rows.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) });
+      if (snapshot.docs.length < SCAN_PAGE) return rows;
+      cursor = snapshot.docs[snapshot.docs.length - 1];
+    }
+  }
+
+  /** The first record carrying this identifier, for a uniqueness check. */
+  async findItemByUnique(field, value) {
+    if (!value) return null;
+    const snapshot = await this.fs.getDocs(
+      this.fs.query(this.col('items'), this.fs.where(field, '==', value), this.fs.limit(1)),
+    );
+    const doc = snapshot.docs[0];
+    return doc ? { id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } : null;
+  }
+
+  /**
+   * How many records reference a value, counted on the server. This is what a
+   * confirmation dialog needs: "312 items will return to the inventory" has to
+   * be the real number, not the number this device happens to have loaded.
+   */
+  async countItemsByField(field, value) {
+    if (value == null) return 0;
+    const q = this.fs.query(this.col('items'), this.fs.where(field, '==', value));
+    if (this.fs.getCountFromServer) {
+      const snapshot = await this.fs.getCountFromServer(q);
+      return snapshot.data().count;
+    }
+    return (await this.findItemsByField(field, value)).length;
+  }
+
   async runBatch(operations) {
     // Firestore caps a batch at 500 writes.
     for (let i = 0; i < operations.length; i += 450) {
@@ -208,6 +256,12 @@ class FirestoreBackend {
 }
 
 // ── IndexedDB backend ──────────────────────────────────────────────────────
+//
+// Every read below is keyed, indexed or cursored. A device holding 20,000
+// records must answer "which items are in this folder" and "is this SKU taken"
+// at the cost of the answer, not the cost of the inventory — otherwise the
+// relational operations that depend on them are correct only on small data,
+// which is the same as being wrong.
 class LocalBackend {
   constructor() {
     this.watchers = new Map();
@@ -217,52 +271,80 @@ class LocalBackend {
     return Date.now();
   }
 
+  /** The newest `max` records, straight off the updatedAt index. */
+  async _window(name, max) {
+    const { rows } = await local.page(name, { index: 'updatedAt', direction: 'prev', limit: max });
+    return rows;
+  }
+
+  /**
+   * How many live records exist, without reading any of them. Trashed records
+   * carry a numeric `deletedAt` and so occupy the `deletedAt` index; live ones
+   * carry null and are absent from it by IndexedDB's own rule, which makes the
+   * subtraction exact. (A record migrated down from the cloud with a non-key
+   * `deletedAt` would count as live; locally `deletedAt` is always a number.)
+   */
+  async _liveCount(name) {
+    const [total, trashed] = await Promise.all([
+      local.count(name),
+      local.countByIndex(name, 'deletedAt', IDBKeyRange.lowerBound(0)),
+    ]);
+    return { total, live: total - trashed };
+  }
+
   async _notify(name) {
     const watcher = this.watchers.get(name);
     if (!watcher) return;
-    const rows = await local.getAll(name);
-    watcher(rows, { fromCache: true, pending: false });
+    await watcher.refresh();
   }
 
   watch(name, onData, onError) {
-    this.watchers.set(name, onData);
-    local.getAll(name)
+    const refresh = () => local.getAll(name)
       .then((rows) => onData(rows, { fromCache: true, pending: false }))
       .catch(onError);
+    this.watchers.set(name, { refresh });
+    refresh();
     return () => this.watchers.delete(name);
   }
 
   watchActivity(onData, onError) {
-    this.watchers.set('activity', (rows) => {
-      onData([...rows].sort((a, b) => toMillis(b.timestamp) - toMillis(a.timestamp)).slice(0, 60));
-    });
-    local.getAll('activity')
-      .then((rows) => onData([...rows].sort((a, b) => toMillis(b.timestamp) - toMillis(a.timestamp)).slice(0, 60)))
+    // Newest 60, off the timestamp index — the log grows without bound and
+    // sorting all of it to show a screenful got more expensive every day.
+    const refresh = () => local.page('activity', { index: 'timestamp', direction: 'prev', limit: 60 })
+      .then(({ rows }) => onData(rows))
       .catch(onError);
+    this.watchers.set('activity', { refresh });
+    refresh();
     return () => this.watchers.delete('activity');
   }
 
   watchWindow(name, max, onData, onError) {
     // The same contract as the cloud backend, so one window exists in the app
-    // rather than two shapes of truth. IndexedDB is cheap to read, but a large
-    // device inventory still has a first paint worth protecting.
-    const deliver = (rows, meta) => {
-      const sorted = [...rows].sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
-      onData(sorted.slice(0, max), { ...meta, complete: sorted.length <= max });
+    // rather than two shapes of truth. `complete` comes from a store count
+    // rather than from the length of the window: a window of exactly `max`
+    // rows is ambiguous otherwise, and a count costs nothing.
+    const refresh = async () => {
+      try {
+        const [rows, counts] = await Promise.all([this._window(name, max), this._liveCount(name)]);
+        onData(rows, {
+          fromCache: true,
+          pending: false,
+          complete: counts.total <= max,
+          liveTotal: counts.live,
+        });
+      } catch (error) {
+        onError(error);
+      }
     };
-    this.watchers.set(name, deliver);
-    local.getAll(name)
-      .then((rows) => deliver(rows, { fromCache: true, pending: false }))
-      .catch(onError);
+    this.watchers.set(name, { refresh });
+    refresh();
     return () => this.watchers.delete(name);
   }
 
   async scanAll(name, { pageSize = SCAN_PAGE, onPage } = {}) {
-    const rows = [...(await local.getAll(name))]
-      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
-    for (let i = 0; i < rows.length; i += pageSize) {
-      await onPage?.(rows.slice(i, i + pageSize));
-    }
+    // Ordered by primary key and walked with a cursor: no full materialisation,
+    // and no sort of 20,000 rows before the first page can be handed over.
+    await local.scan(name, { pageSize, onPage });
   }
 
   async create(name, record) {
@@ -270,14 +352,24 @@ class LocalBackend {
     await this._notify(name);
   }
 
+  /**
+   * Optimistic concurrency, read and write inside one transaction. Reading the
+   * current version in a separate transaction and writing in the next leaves a
+   * window in which another tab can commit between the two, and the version
+   * check then passes against a record that no longer exists as read.
+   */
   async update(name, id, patch, expectedVersion) {
-    const rows = await local.getAll(name);
-    const current = rows.find((r) => r.id === id);
-    if (!current) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
-    if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
-      throw new ConflictError(current);
-    }
-    await local.put(name, { ...current, ...patch, updatedAt: Date.now(), version: (current.version ?? 1) + 1 });
+    await local.transaction(name, 'readwrite', async (stores) => {
+      const store = stores[name];
+      const current = await local.request(store.get(id));
+      if (!current) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+      if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
+        throw new ConflictError(current);
+      }
+      await local.request(store.put({
+        ...current, ...patch, updatedAt: Date.now(), version: (current.version ?? 1) + 1,
+      }));
+    });
     await this._notify(name);
   }
 
@@ -288,23 +380,55 @@ class LocalBackend {
 
   async appendLog(entry) {
     await local.put('activity', { id: uid('log'), ...entry, timestamp: Date.now() });
-    const watcher = this.watchers.get('activity');
-    if (watcher) watcher(await local.getAll('activity'));
+    await this._notify('activity');
   }
 
+  /**
+   * Every operation in one transaction. A folder deletion that reassigns 300
+   * records and then removes the folder must not be able to half-happen: with
+   * a loop of independent writes, a quota failure on record 200 left 200
+   * records moved, 100 not, and the folder still there or already gone
+   * depending on the order. Here the whole batch rolls back instead.
+   */
   async runBatch(operations) {
-    const touched = new Set();
-    for (const op of operations) {
-      if (op.type === 'set') {
-        const rows = await local.getAll(op.collection);
-        const existing = rows.find((r) => r.id === op.id);
-        await local.put(op.collection, { ...(op.merge !== false ? existing : null), ...op.data, id: op.id, updatedAt: Date.now() });
-      } else if (op.type === 'delete') {
-        await local.remove(op.collection, op.id);
+    if (!operations.length) return;
+    const touched = [...new Set(operations.map((op) => op.collection))];
+    await local.transaction(touched, 'readwrite', async (stores) => {
+      for (const op of operations) {
+        const store = stores[op.collection];
+        if (op.type === 'set') {
+          const existing = op.merge !== false ? await local.request(store.get(op.id)) : null;
+          await local.request(store.put({
+            ...existing, ...op.data, id: op.id, updatedAt: Date.now(),
+          }));
+        } else if (op.type === 'delete') {
+          await local.request(store.delete(op.id));
+        }
       }
-      touched.add(op.collection);
-    }
+    });
     for (const name of touched) await this._notify(name);
+  }
+
+  /**
+   * Records referencing one taxonomy row, by index. This is the query the
+   * relational deletions need: it is complete regardless of how much of the
+   * inventory the app happens to have loaded, which a filter over the loaded
+   * window can never be.
+   */
+  async findItemsByField(field, value) {
+    if (value == null) return [];
+    return local.getAllByIndex('items', field, value);
+  }
+
+  /** The first record carrying this identifier, for a uniqueness check. */
+  async findItemByUnique(field, value) {
+    if (!value) return null;
+    return local.firstByIndex('items', field, value);
+  }
+
+  async countItemsByField(field, value) {
+    if (value == null) return 0;
+    return local.countByIndex('items', field, value);
   }
 }
 
@@ -318,6 +442,7 @@ class Repository {
     this.unsubscribers = [];
     this.backend = null;
     this.ready = false;
+    this._taxonomyCounts = null;
 
     // `state.items` is composed from two sources: the live window, and the
     // rest of the inventory once something has asked for all of it.
@@ -330,6 +455,11 @@ class Repository {
     this.itemsComplete = false;
     this.itemsTotal = null;
     this._completing = null;
+    this._taxonomyCounts = null;
+    // Those object URLs point at the previous workspace's blobs. Keeping them
+    // pins that memory, and a cache keyed only by image id could otherwise
+    // hand one workspace a URL created for another.
+    releaseObjectUrls();
   }
 
   subscribe(listener) {
@@ -407,6 +537,10 @@ class Repository {
             // snapshot, never latched.
             this.itemsWindowShort = meta.complete === true;
             if (this.itemsWindowShort) this.itemsRest = new Map();
+            // A device-only backend can count its own records exactly, which
+            // is the same fact the cloud's usage counter supplies. Taking it
+            // here means "the newest 200 of 6,400" is true on both backends.
+            if (typeof meta.liveTotal === 'number') this.itemsTotal = meta.liveTotal;
             this._composeItems();
           } else {
             this.state[name] = this._normalizeRows(name, rows);
@@ -484,12 +618,18 @@ class Repository {
     this.itemsComplete = false;
     this.itemsTotal = null;
     this._completing = null;
+    this._taxonomyCounts = null;
+    // Those object URLs point at the previous workspace's blobs. Keeping them
+    // pins that memory, and a cache keyed only by image id could otherwise
+    // hand one workspace a URL created for another.
+    releaseObjectUrls();
   }
 
   // ── how much of the inventory is loaded ──
 
   /** state.items = the live window, plus whatever the scan found beyond it. */
   _composeItems() {
+    this._taxonomyCounts = null;
     const live = new Set(this.itemsWindow.map((i) => i.id));
     const rest = [];
     for (const [id, row] of this.itemsRest) if (!live.has(id)) rest.push(row);
@@ -817,6 +957,94 @@ class Repository {
     return copy;
   }
 
+  // ── referential integrity ──
+  //
+  // A relational operation is defined by every record that references a row,
+  // not by every record this device has loaded. Those two sets are the same
+  // only on a small inventory, which is precisely the case that never fails in
+  // testing. So the set comes from the backend's index, always.
+
+  /**
+   * Exact reference counts for every taxonomy row, in one call.
+   *
+   * The lists that show "N items" next to a folder or a category were counting
+   * the loaded window, so a workspace with 6,000 records described its folders
+   * by whichever 200 happened to be newest. These counts come from the index
+   * instead. They are cached until the next item write, because the lists
+   * re-render on every snapshot and the answer only changes when the data does.
+   */
+  taxonomyCounts() {
+    if (this._taxonomyCounts) return this._taxonomyCounts;
+    const rows = [
+      ...this.state.folders.map((f) => ['folders', 'folderId', f.id]),
+      ...this.state.categories.map((c) => ['categories', 'categoryId', c.id]),
+      ...this.state.locations.map((l) => ['locations', 'locationId', l.id]),
+    ];
+    this._taxonomyCounts = Promise.all(
+      rows.map(async ([group, field, id]) => [group, id, await this.countItemsReferencing(field, id)]),
+    ).then((results) => {
+      const counts = { folders: new Map(), categories: new Map(), locations: new Map() };
+      for (const [group, id, n] of results) counts[group].set(id, n);
+      return counts;
+    }).catch((error) => {
+      // A count is a nicety; failing to get one must not blank the list.
+      console.error('[repo] taxonomy counts unavailable', error);
+      this._taxonomyCounts = null;
+      return { folders: new Map(), categories: new Map(), locations: new Map() };
+    });
+    return this._taxonomyCounts;
+  }
+
+  /** Every record referencing `value` in `field`, trashed ones included —
+   *  a record in the Trash still carries the reference, and leaving it behind
+   *  is how a restored item comes back pointing at a folder that is gone. */
+  async itemsReferencing(field, value) {
+    if (value == null) return [];
+    return this.backend.findItemsByField(field, value);
+  }
+
+  /** The same set's size, counted without reading the records. */
+  async countItemsReferencing(field, value) {
+    if (value == null) return 0;
+    return this.backend.countItemsByField(field, value);
+  }
+
+  /**
+   * Write operations that clear or redirect a reference. The version moves
+   * with the record: an indirect change is still a change, and a device
+   * holding the old copy has to see a conflict rather than overwrite this.
+   */
+  _clearReferenceOps(items, patch) {
+    return items.map((item) => ({
+      type: 'set',
+      collection: 'items',
+      id: item.id,
+      merge: true,
+      data: { ...patch, updatedBy: this.session.userId, version: (item.version ?? 1) + 1 },
+    }));
+  }
+
+  /**
+   * Apply the same patch to whatever copies this device is holding. The window
+   * re-reads itself from its listener, but records pulled in by an earlier
+   * full scan live in `itemsRest` and nothing else would refresh them — they
+   * would keep showing a folder that no longer exists.
+   */
+  _patchLoaded(items, patch) {
+    if (!items.length) return;
+    const ids = new Set(items.map((i) => i.id));
+    let changed = false;
+    for (const [id, row] of this.itemsRest) {
+      if (!ids.has(id)) continue;
+      this.itemsRest.set(id, { ...row, ...patch, version: (row.version ?? 1) + 1 });
+      changed = true;
+    }
+    if (changed) {
+      this._composeItems();
+      this.emit();
+    }
+  }
+
   // ── folders ──
   async saveFolder(data) {
     this.assertCanWrite();
@@ -838,11 +1066,12 @@ class Repository {
   async deleteFolder(id) {
     this.assertCanWrite();
     const folder = this.folder(id);
-    const affected = this.state.items.filter((i) => i.folderId === id);
+    const affected = await this.itemsReferencing('folderId', id);
     await this.backend.runBatch([
-      ...affected.map((i) => ({ type: 'set', collection: 'items', id: i.id, data: { folderId: null } })),
+      ...this._clearReferenceOps(affected, { folderId: null }),
       { type: 'delete', collection: 'folders', id },
     ]);
+    this._patchLoaded(affected, { folderId: null });
     await this.log(ACTIONS.FOLDER_DELETED, {
       folderId: id, folderName: folder?.name, movedToRoot: affected.length,
     });
@@ -864,8 +1093,13 @@ class Repository {
     return category;
   }
 
+  /**
+   * How many records reference this category — asked of the backend, not of
+   * the window, so the number in the confirmation dialog is the number of
+   * records the deletion will actually rewrite.
+   */
   categoryUsage(id) {
-    return this.state.items.filter((i) => i.categoryId === id && !i.deletedAt).length;
+    return this.countItemsReferencing('categoryId', id);
   }
 
   /**
@@ -875,15 +1109,16 @@ class Repository {
   async deleteCategory(id, strategy, targetId) {
     this.assertCanWrite();
     const category = this.state.categories.find((c) => c.id === id);
-    const affected = this.state.items.filter((i) => i.categoryId === id);
+    const affected = await this.itemsReferencing('categoryId', id);
     if (affected.length && strategy === 'reassign' && !targetId) {
       throw new AppError('اختر التصنيف البديل', { code: 'repo/needs-target' });
     }
     const newCategory = strategy === 'reassign' ? targetId : UNCATEGORIZED_ID;
     await this.backend.runBatch([
-      ...affected.map((i) => ({ type: 'set', collection: 'items', id: i.id, data: { categoryId: newCategory } })),
+      ...this._clearReferenceOps(affected, { categoryId: newCategory }),
       { type: 'delete', collection: 'categories', id },
     ]);
+    this._patchLoaded(affected, { categoryId: newCategory });
     await this.log(ACTIONS.CATEGORY_DELETED, {
       categoryId: id, categoryName: category?.name, reassigned: affected.length, newCategoryId: newCategory,
     });
@@ -907,11 +1142,12 @@ class Repository {
   async deleteLocation(id) {
     this.assertCanWrite();
     const location = this.state.locations.find((l) => l.id === id);
-    const affected = this.state.items.filter((i) => i.locationId === id);
+    const affected = await this.itemsReferencing('locationId', id);
     await this.backend.runBatch([
-      ...affected.map((i) => ({ type: 'set', collection: 'items', id: i.id, data: { locationId: null } })),
+      ...this._clearReferenceOps(affected, { locationId: null }),
       { type: 'delete', collection: 'locations', id },
     ]);
+    this._patchLoaded(affected, { locationId: null });
     await this.log(ACTIONS.LOCATION_DELETED, {
       locationId: id, locationName: location?.name, clearedFrom: affected.length,
     });

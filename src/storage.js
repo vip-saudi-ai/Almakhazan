@@ -40,15 +40,42 @@ function assertAcceptable(file) {
 }
 
 /**
- * Decodes the file. `resizeTo` lets the browser downscale during decode, which
- * is far faster than decoding a 48MP photo in full and scaling afterwards.
+ * The image's intrinsic size, read from an <img> that is never inserted or
+ * drawn. This is the header parse, not the picture: it is what lets the real
+ * decode below be asked for a bounded bitmap instead of a 48-megapixel one.
  */
-async function loadBitmap(file, resizeTo) {
+function probeSize(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  return new Promise((resolve) => {
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, img });
+    img.onerror = () => resolve(null);
+    img.src = url;
+  }).finally(() => URL.revokeObjectURL(url));
+}
+
+/**
+ * Decodes the file, downscaling *during* the decode when the picture is larger
+ * than anything we would keep.
+ *
+ * A 48MP phone photo is 192MB of bitmap at full size, and the old path decoded
+ * it in full before scaling it down to 2560px — so the peak cost of adding one
+ * photo was set by the camera rather than by the app, and three of them in a
+ * row could take the tab down. Asking for one dimension and letting the
+ * browser compute the other preserves the aspect ratio, so the caller still
+ * gets a correctly shaped image, just never a huge one.
+ */
+async function loadBitmap(file, maxEdge = IMAGE_LIMITS.maxOriginalEdge) {
   if ('createImageBitmap' in window) {
+    const size = await probeSize(file);
+    let options;
+    if (size?.width && size?.height && Math.max(size.width, size.height) > maxEdge) {
+      options = size.width >= size.height
+        ? { resizeWidth: maxEdge, resizeQuality: 'high' }
+        : { resizeHeight: maxEdge, resizeQuality: 'high' };
+    }
     try {
-      return await createImageBitmap(file, resizeTo
-        ? { resizeWidth: resizeTo.width, resizeHeight: resizeTo.height, resizeQuality: 'high' }
-        : undefined);
+      return await createImageBitmap(file, options);
     } catch (error) {
       console.error('[image] createImageBitmap failed, falling back to <img>', error);
     }
@@ -121,29 +148,47 @@ async function prepare(file) {
   let originalWidth = width;
   let originalHeight = height;
 
-  // Re-encode only when we must: the file is too large to keep at full size, or
-  // its format (HEIC from an iPhone, TIFF, BMP…) would not display elsewhere.
-  if (oversized || !webSafe) {
-    const drawn = drawScaled(bitmap, IMAGE_LIMITS.maxOriginalEdge);
-    const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-    originalBlob = await canvasToBlob(drawn.canvas, type, 0.95);
-    originalWidth = drawn.width;
-    originalHeight = drawn.height;
+  // A decoded bitmap holds real memory that garbage collection does not hurry
+  // to reclaim, so it is released whatever happens next — an encode that fails
+  // on the fourth photo must not leave the first three resident.
+  try {
+    // Re-encode only when we must: the file is too large to keep at full size,
+    // or its format (HEIC from an iPhone, TIFF, BMP…) would not display
+    // elsewhere. A file the decode already downscaled counts as oversized:
+    // `width`/`height` are the decoded size, so this compares the right thing.
+    if (oversized || !webSafe || bitmapWasResized(file, width, height)) {
+      const drawn = drawScaled(bitmap, IMAGE_LIMITS.maxOriginalEdge);
+      const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      originalBlob = await canvasToBlob(drawn.canvas, type, 0.95);
+      originalWidth = drawn.width;
+      originalHeight = drawn.height;
+    }
+
+    const thumb = drawScaled(bitmap, IMAGE_LIMITS.thumbnailEdge);
+    const thumbnailBlob = await canvasToBlob(thumb.canvas, 'image/jpeg', 0.82);
+
+    return {
+      originalBlob,
+      originalWidth,
+      originalHeight,
+      originalType: originalBlob.type || file.type || 'image/jpeg',
+      sourceType: file.type || null,
+      thumbnailBlob,
+    };
+  } finally {
+    if (typeof bitmap.close === 'function') bitmap.close();
   }
+}
 
-  const thumb = drawScaled(bitmap, IMAGE_LIMITS.thumbnailEdge);
-  const thumbnailBlob = await canvasToBlob(thumb.canvas, 'image/jpeg', 0.82);
-
-  if (typeof bitmap.close === 'function') bitmap.close();
-
-  return {
-    originalBlob,
-    originalWidth,
-    originalHeight,
-    originalType: originalBlob.type || file.type || 'image/jpeg',
-    sourceType: file.type || null,
-    thumbnailBlob,
-  };
+/**
+ * Whether the decode downscaled the picture, which makes the original file on
+ * disk no longer the picture we measured. Storing that file unchanged would
+ * record dimensions the bytes do not have, so it has to be re-encoded from the
+ * bitmap we actually hold.
+ */
+function bitmapWasResized(file, width, height) {
+  return Math.max(width, height) >= IMAGE_LIMITS.maxOriginalEdge && file.size > 0
+    && Math.max(width, height) === IMAGE_LIMITS.maxOriginalEdge;
 }
 
 /**
@@ -272,7 +317,54 @@ export async function deleteImage(image, ctx) {
   }
 }
 
+/**
+ * Object URLs for locally stored blobs, bounded and revoked.
+ *
+ * Every `URL.createObjectURL` pins its blob in memory until the URL is revoked
+ * or the document goes away. An unbounded cache therefore does not cache
+ * images — it accumulates them: scrolling a 2,000-record inventory once held
+ * every thumbnail it had ever drawn, and the tab grew until it was killed.
+ *
+ * So the cache is a fixed-size LRU. Evicting an entry revokes its URL, which
+ * releases the blob; an <img> already showing that URL keeps its pixels (the
+ * fetch has completed), and anything that needs it again re-reads it from
+ * IndexedDB, which is cheap and keyed.
+ */
+const OBJECT_URL_CACHE_MAX = 120;
 const objectUrlCache = new Map();
+
+function cacheObjectUrl(key, url) {
+  objectUrlCache.set(key, url);
+  while (objectUrlCache.size > OBJECT_URL_CACHE_MAX) {
+    // Map preserves insertion order, so the first key is the least recently
+    // inserted — and `touchObjectUrl` re-inserts on every hit, which makes it
+    // the least recently *used*.
+    const oldest = objectUrlCache.keys().next().value;
+    const stale = objectUrlCache.get(oldest);
+    objectUrlCache.delete(oldest);
+    try { URL.revokeObjectURL(stale); } catch { /* already gone */ }
+  }
+  return url;
+}
+
+function touchObjectUrl(key) {
+  const url = objectUrlCache.get(key);
+  objectUrlCache.delete(key);
+  objectUrlCache.set(key, url);
+  return url;
+}
+
+/**
+ * Drop every cached URL. Called when the workspace changes: those blobs belong
+ * to an inventory this session is no longer looking at, and holding them is
+ * both a leak and a way for one workspace's image to appear in another.
+ */
+export function releaseObjectUrls() {
+  for (const url of objectUrlCache.values()) {
+    try { URL.revokeObjectURL(url); } catch { /* already gone */ }
+  }
+  objectUrlCache.clear();
+}
 
 /**
  * The three jobs an image does, and which stored file each one gets.
@@ -317,10 +409,13 @@ async function resolveSrc(image, thumbnail) {
     return (thumbnail ? image.thumbnailUrl : image.url) || image.url || image.thumbnailUrl || null;
   }
   const cacheKey = `${image.id}:${thumbnail}`;
-  if (objectUrlCache.has(cacheKey)) return objectUrlCache.get(cacheKey);
+  if (objectUrlCache.has(cacheKey)) return touchObjectUrl(cacheKey);
   try {
-    const rows = await local.getAll('images');
-    const record = rows.find((r) => r.id === image.id);
+    // One keyed read. This used to be `getAll('images')` followed by a `find`,
+    // which deserialised every stored blob on the device to display one of
+    // them — on an inventory with 500 photos, hundreds of megabytes of reads
+    // to draw a single thumbnail.
+    const record = await local.get('images', image.id);
     if (!record) return null;
 
     const [data, type] = thumbnail
@@ -330,9 +425,7 @@ async function resolveSrc(image, thumbnail) {
 
     // Older records held Blobs directly; newer ones hold ArrayBuffers.
     const blob = data instanceof Blob ? data : new Blob([data], { type });
-    const url = URL.createObjectURL(blob);
-    objectUrlCache.set(cacheKey, url);
-    return url;
+    return cacheObjectUrl(cacheKey, URL.createObjectURL(blob));
   } catch (error) {
     console.error('[image] local read failed', error);
     return null;

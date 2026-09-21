@@ -32,6 +32,30 @@ import {
 import { renderHome, view as homeView } from './home.js';
 import { goTab } from '../navigation.js';
 
+/**
+ * Exact reference counts, applied after the list is already on screen.
+ *
+ * These lists used to count the loaded window, so a workspace of 6,000 records
+ * described its folders by whichever 200 happened to be newest. The real count
+ * comes from an index and may cost a round trip, so the list draws immediately
+ * with what it has and corrects itself a moment later — which is both faster
+ * and, at the moment it matters, true. Nodes that have since been re-rendered
+ * away simply are not found, and nothing happens.
+ */
+function applyExactCounts(root, group, suffix = 'قطعة') {
+  if (!root) return;
+  repository.taxonomyCounts().then((counts) => {
+    for (const [id, n] of counts[group]) {
+      const node = root.querySelector(`[data-count-for="${CSS.escape(id)}"]`);
+      if (node) node.textContent = `${formatNumber(n)} ${suffix}`;
+      const labelled = root.querySelector(`[data-count-label="${CSS.escape(id)}"]`);
+      if (labelled) {
+        labelled.setAttribute('aria-label', `${labelled.dataset.countName}، ${formatNumber(n)} ${suffix}`);
+      }
+    }
+  });
+}
+
 // ── categories ──
 let selectedCategoryIcon = '📦';
 let editingCategoryId = null;
@@ -48,12 +72,14 @@ export function renderCategories() {
       return el('div', { class: 'catcell' }, [
         el('button', {
           class: 'catcell-main', type: 'button',
-          'aria-label': `${category.name}، ${count} قطعة`,
+          'aria-label': `${category.name}، ${formatNumber(count)} قطعة`,
+          'data-count-label': category.id,
+          'data-count-name': category.name,
           onClick: () => { filterHomeByCategory(category.id); },
         }, [
           el('div', { class: 'catcico', text: category.icon, 'aria-hidden': 'true' }),
           el('div', { class: 'catcname', text: category.name }),
-          el('div', { class: 'catccount', text: `${formatNumber(count)} قطعة` }),
+          el('div', { class: 'catccount', 'data-count-for': category.id, text: `${formatNumber(count)} قطعة` }),
         ]),
         repository.canWrite() ? el('div', { class: 'catcell-acts' }, [
           el('button', {
@@ -74,6 +100,7 @@ export function renderCategories() {
       el('div', { class: 'catcname', text: 'تصنيف جديد' }),
     ]) : null,
   ]);
+  applyExactCounts(grid, 'categories');
 }
 
 /** Jumps to the inventory tab showing only this category, across all folders. */
@@ -112,7 +139,7 @@ async function saveCategory() {
 
 async function deleteCategoryFlow(categoryId) {
   const category = repository.state.categories.find((c) => c.id === categoryId);
-  const usage = repository.categoryUsage(categoryId);
+  const usage = await repository.categoryUsage(categoryId);
 
   if (!usage) {
     const confirmed = await confirmAction({
@@ -244,7 +271,7 @@ async function saveFolder() {
 async function deleteFolderFlow() {
   const folder = repository.folder(editingFolderId);
   if (!folder) return;
-  const count = inventoryCounts().folders.get(folder.id) || 0;
+  const count = await repository.countItemsReferencing('folderId', folder.id);
 
   const confirmed = await confirmAction({
     title: `حذف مجلد "${folder.name}"؟`,
@@ -290,15 +317,19 @@ function renderLocations() {
         el('div', { class: 'srowiw', text: '📍', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
           el('div', { class: 'srowl', text: location.name }),
-          el('div', { class: 'srowd', text: `${formatNumber(count)} قطعة` }),
+          el('div', { class: 'srowd', 'data-count-for': location.id, text: `${formatNumber(count)} قطعة` }),
         ]),
         repository.canWrite() ? el('button', {
           class: 'catcell-act danger', type: 'button',
           'aria-label': `حذف ${location.name}`,
           onClick: async () => {
+            // The number in a destructive confirmation is the number of records
+            // the deletion will rewrite — asked of the backend, never counted
+            // off the loaded window.
+            const exact = await repository.countItemsReferencing('locationId', location.id);
             const confirmed = await confirmAction({
               title: `حذف موقع "${location.name}"؟`,
-              message: count ? `${formatNumber(count)} قطعة ستصبح بلا موقع محدد.` : 'لا توجد قطع في هذا الموقع.',
+              message: exact ? `${formatNumber(exact)} قطعة ستصبح بلا موقع محدد.` : 'لا توجد قطع في هذا الموقع.',
               icon: '📍',
               confirmLabel: 'حذف',
             });
@@ -318,6 +349,7 @@ function renderLocations() {
       el('div', { class: 'srowd', text: 'لا توجد مواقع' }),
     ]) : null,
   ]);
+  applyExactCounts(list, 'locations');
 }
 
 async function addLocation() {

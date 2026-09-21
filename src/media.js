@@ -134,8 +134,10 @@ class LocalMediaStore {
   }
 
   async get(mediaId) {
-    const rows = await local.getAll('mediaAssets');
-    return rows.find((r) => r.id === mediaId) || null;
+    // Keyed, not a scan: reference counting runs on every image add and remove,
+    // and reading the whole asset table each time made saving an item cost the
+    // size of the workspace's media rather than the size of the edit.
+    return (await local.get('mediaAssets', mediaId)) || null;
   }
 
   async adjust(mediaId, delta) {
