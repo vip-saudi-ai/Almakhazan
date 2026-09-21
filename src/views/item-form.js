@@ -16,13 +16,24 @@ import { $, el, render, setText, uid } from '../utils.js';
 import {
   formatValuation, normalizeValuation, parseValuationText, validateQuantity,
 } from '../validation.js';
-import { closeSheet, confirmAction, openSheet, optionList, toast, toastError, withBusy } from '../ui.js';
+import { closeSheet, confirmAction, onSheetClose, openSheet, optionList, toast, toastError, withBusy } from '../ui.js';
+import { discardUnreferenced } from '../media.js';
 
 const form = {
   itemId: null,
   isNew: true,
   baseVersion: null,
   images: [],
+  /**
+   * Images uploaded during this editing session, by id.
+   *
+   * An upload happens the moment a photograph is chosen — that is what makes
+   * the preview possible — but a record only claims it when the form is saved.
+   * Abandon the form and the file stays on the device belonging to nothing, so
+   * the set is kept and cleaned up on the way out. Saving empties it, because
+   * from then on the record's own references account for the file.
+   */
+  pendingImages: [],
   primaryImageId: null,
   aiData: null,
   autoAnalyzed: false,
@@ -252,6 +263,7 @@ async function handleFiles(fileList) {
       });
 
       form.images.push(image);
+      form.pendingImages.push(image);
       form.primaryImageId ||= image.id;
       renderImages();
     } catch (error) {
@@ -584,6 +596,7 @@ export function openItemForm({ itemId = null, folderId = null } = {}) {
   form.isNew = !item;
   form.baseVersion = item?.version ?? null;
   form.images = item ? [...item.images] : [];
+  form.pendingImages = [];
   form.primaryImageId = item?.primaryImageId || null;
   form.aiData = item?.aiData || null;
   form.autoAnalyzed = false;
@@ -691,6 +704,9 @@ async function saveItem() {
         toast('تم التحديث', '✓');
       }
 
+      // Saved: the record now accounts for every file this session uploaded,
+      // so nothing here is orphaned and the close handler has nothing to do.
+      form.pendingImages = [];
       closeSheet('add');
     } catch (error) {
       if (error instanceof ConflictError) {
@@ -753,6 +769,20 @@ export function bindItemForm() {
   $('dtbtn-ai')?.addEventListener('click', () => setDescriptionMode('ai'));
   $('aibtn')?.addEventListener('click', runAnalysis);
   $('save-item-btn')?.addEventListener('click', saveItem);
+
+  // However the form is dismissed — the close button, the overlay, Escape, the
+  // back gesture — a photograph uploaded into it and never saved onto a record
+  // is reclaimed. It ran only on the save path before, which is the one path
+  // where there is nothing to reclaim.
+  onSheetClose('add', () => {
+    const abandoned = form.pendingImages.filter(
+      (image) => !repository.item(form.itemId)?.images?.some((saved) => saved.id === image.id),
+    );
+    form.pendingImages = [];
+    if (!abandoned.length) return;
+    void discardUnreferenced(repository.session, abandoned)
+      .then((n) => { if (n) console.info(`[form] reclaimed ${n} unsaved image(s)`); });
+  });
   $('f-valuation')?.addEventListener('input', updateValuationPreview);
   $('f-currency')?.addEventListener('change', updateValuationPreview);
   $('f-unit')?.addEventListener('change', () => {

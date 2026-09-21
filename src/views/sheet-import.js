@@ -14,9 +14,10 @@
 // The planning is `src/import-mapping.js` — pure, and unit-tested — so the
 // preview and the write come from one answer rather than two.
 
-import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, planImport } from '../import-mapping.js';
+import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, importItemId, planImport } from '../import-mapping.js';
 import { MAX_ROWS, readSpreadsheet } from '../spreadsheet.js';
 import { normalizeArabic } from '../search.js';
+import * as local from '../local-store.js';
 import { repository } from '../repository.js';
 import { quotaStatus } from '../subscription.js';
 import { $, el, formatNumber, render, uid } from '../utils.js';
@@ -29,9 +30,23 @@ const state = {
   mapping: {},
   step: 'map',      // map | confirm | running
   progress: null,
+  /**
+   * The import currently being written, if any.
+   *
+   * `{ id, total, written, failedAt }`. Its `id` is what makes the row ids
+   * deterministic, so pressing "import" again after a failure rewrites the
+   * chunks that already landed rather than adding a second copy of them.
+   * Kept across a failure and cleared on success.
+   */
+  job: null,
 };
 
 const IGNORE = '';
+
+/** The job this screen is holding, for the test that covers resumption. */
+export function __jobForTest() {
+  return state.job;
+}
 
 export async function startSpreadsheetImport() {
   const input = document.createElement('input');
@@ -45,6 +60,39 @@ export async function startSpreadsheetImport() {
 }
 
 /** Opens the flow for a file that is already in hand. */
+/**
+ * An import of this exact file that stopped part way.
+ *
+ * Kept on the device rather than in memory, because the way an import on a
+ * phone usually stops is that the tab is discarded — and after that there is
+ * no session left to remember anything. Matching on the file's name and size
+ * is enough: adopting the old job's id makes the rows land on the same records
+ * as before, so continuing cannot double anything, and picking the wrong file
+ * simply produces a fresh job.
+ */
+async function findUnfinishedJob(file) {
+  try {
+    const jobs = await local.getAll('importJobs');
+    return jobs.find((job) => job.status === 'stopped'
+      && job.fileName === file.name && job.fileSize === file.size) || null;
+  } catch (error) {
+    console.error('[import] could not read the import history', error);
+    return null;
+  }
+}
+
+async function recordJob(job, status) {
+  try {
+    await local.put('importJobs', {
+      id: job.id, startedAt: job.startedAt, fileName: job.fileName, fileSize: job.fileSize,
+      total: job.total, written: job.written, status,
+    });
+  } catch (error) {
+    // Bookkeeping. Failing to write it must not fail the import itself.
+    console.error('[import] could not record the import job', error);
+  }
+}
+
 export async function openSpreadsheetImport(file) {
   try {
     const sheet = await readSpreadsheet(file);
@@ -57,6 +105,13 @@ export async function openSpreadsheetImport(file) {
     state.mapping = guessMapping(sheet.headers);
     state.step = 'map';
     state.progress = null;
+    // The same file, picked again after an import of it stopped: continue that
+    // job rather than starting a second one beside it. Any other file starts
+    // fresh.
+    const previous = await findUnfinishedJob(file);
+    state.job = previous
+      ? { ...previous, failedAt: previous.written }
+      : null;
     openSheet('simport');
     renderImport();
   } catch (error) {
@@ -191,6 +246,7 @@ function renderConfirm(body, foot) {
   const overflow = records.length > room;
 
   const newCount = newTaxonomy.categories.length + newTaxonomy.locations.length + newTaxonomy.folders.length;
+  const resuming = state.job?.failedAt != null;
 
   render(body, [
     fileLine(),
@@ -224,15 +280,43 @@ function renderConfirm(body, foot) {
       ]),
     ]) : null,
 
+    // An import that stopped part way. Saying where it stopped, and that
+    // continuing cannot double anything, is the difference between pressing
+    // the button again and giving up on the file.
+    resuming ? el('div', { class: 'imp-warnings' }, [
+      el('div', { class: 'imp-warn-title', text: 'توقف الاستيراد في المنتصف' }),
+      el('div', {
+        class: 'imp-warn',
+        text: `كُتبت ${formatNumber(state.job.written)} من ${formatNumber(state.job.total)} قطعة. المتابعة تكمل من حيث توقف — الصفوف المكتوبة تُكتب بنفس هويتها، فلا تتكرر.`,
+      }),
+    ]) : null,
+
     el('p', { class: 'sheet-note', text: 'الاستيراد يضيف فقط. لا يُعدّل قطعة موجودة ولا يحذف شيئاً.' }),
   ]);
 
   render(foot, [
-    el('button', { class: 'btn btn-s', type: 'button', text: 'رجوع', style: { flex: '1', padding: '12px' },
-      onClick: () => { state.step = 'map'; renderImport(); } }),
+    el('button', {
+      class: 'btn btn-s', type: 'button',
+      text: resuming ? 'إلغاء' : 'رجوع',
+      style: { flex: '1', padding: '12px' },
+      onClick: () => {
+        // Abandoning a half-written import keeps what was written — those are
+        // real records — and forgets the job, so a later run starts fresh.
+        if (resuming) {
+          void recordJob(state.job, 'abandoned');
+          state.job = null;
+          closeSheet('simport');
+          return;
+        }
+        state.step = 'map';
+        renderImport();
+      },
+    }),
     el('button', {
       class: 'btn btn-p', type: 'button',
-      text: `استيراد ${formatNumber(records.length)} قطعة`,
+      text: resuming
+        ? `متابعة الاستيراد (${formatNumber(state.job.total - state.job.written)} متبقية)`
+        : `استيراد ${formatNumber(records.length)} قطعة`,
       style: { flex: '2', padding: '12px' },
       disabled: records.length && !overflow ? undefined : true,
       onClick: () => { void run(); },
@@ -264,6 +348,20 @@ const CHUNK = 200;
 
 async function run() {
   const { records, newTaxonomy } = currentPlan();
+  // One job, kept across a retry. A failed import used to leave the written
+  // chunks behind and send the customer back to a button that would write
+  // everything again — 400 duplicates, then the rest of the file.
+  state.job = state.job || {
+    id: uid('job').slice(4),
+    startedAt: Date.now(),
+    fileName: state.file?.name || '',
+    fileSize: state.file?.size || 0,
+    total: records.length,
+    written: 0,
+    failedAt: null,
+  };
+  state.job.total = records.length;
+  await recordJob(state.job, 'running');
   state.step = 'running';
   state.progress = { done: 0, total: records.length, stage: 'جارٍ إنشاء التصنيفات…' };
   renderImport();
@@ -283,25 +381,38 @@ async function run() {
       }
     }
 
-    const resolved = attachTaxonomy(records, created);
+    // Each record's id comes from the job and its row, so writing a chunk
+    // twice writes the same documents twice rather than two copies of them.
+    const resolved = attachTaxonomy(records, created).map((record) => ({
+      ...record,
+      id: record.id || importItemId(state.job.id, record.sourceLine),
+    }));
     state.progress = { done: 0, total: resolved.length, stage: 'جارٍ كتابة القطع…' };
     renderImport();
 
     for (let i = 0; i < resolved.length; i += CHUNK) {
       const slice = resolved.slice(i, i + CHUNK);
       await repository.bulkCreateItems(slice);
+      state.job.written = Math.min(resolved.length, i + CHUNK);
+      state.job.failedAt = null;
       state.progress = {
-        done: Math.min(resolved.length, i + CHUNK),
+        done: state.job.written,
         total: resolved.length,
         stage: 'جارٍ كتابة القطع…',
       };
       renderImport();
     }
 
+    await recordJob(state.job, 'done');
+    state.job = null;
     closeSheet('simport');
     toast(`أُضيفت ${formatNumber(resolved.length)} قطعة`, '📥');
     window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
   } catch (error) {
+    if (state.job) {
+      state.job.failedAt = state.job.written;
+      await recordJob(state.job, 'stopped');
+    }
     state.step = 'confirm';
     renderImport();
     toastError(error, 'تعذّر الاستيراد');

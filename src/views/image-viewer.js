@@ -67,9 +67,9 @@ export function openImageViewer({ images, index = 0, title = '', actions = null 
   state.actions = actions;
   state.returnFocus = document.activeElement;
   state.stages = new Map();
-  state.controlsHidden = false;
 
   const root = ensureRoot();
+  resetSession(root);
   root.hidden = false;
   document.body.classList.add('viewer-open');
   buildStages();
@@ -80,6 +80,29 @@ export function openImageViewer({ images, index = 0, title = '', actions = null 
   requestAnimationFrame(() => $('viewer-close')?.focus());
 }
 
+/**
+ * Everything that belongs to one visit, put back.
+ *
+ * `controlsHidden` was reset on the state object but not on the DOM, so an
+ * image closed with its chrome hidden reopened with the chrome still hidden —
+ * a black screen with no way out but a guess. And the tap and pointer
+ * bookkeeping outlived the visit too: a tap that ended the last session was
+ * still "the first tap" of the next one, so opening an image and tapping it
+ * once within 300ms of that earlier tap zoomed instead of toggling the
+ * controls. A pointer left in the map by a gesture the browser cancelled made
+ * the next one-finger pan behave like half a pinch.
+ *
+ * None of this is state the next visit should inherit, so none of it does.
+ */
+function resetSession(root) {
+  state.controlsHidden = false;
+  state.lastTap = 0;
+  state.lastTapPoint = null;
+  state.pointers.clear();
+  state.gesture = null;
+  root?.classList.remove('controls-hidden');
+}
+
 export function closeImageViewer() {
   if (!state.open) return;
   state.open = false;
@@ -87,6 +110,10 @@ export function closeImageViewer() {
   if (root) root.hidden = true;
   document.body.classList.remove('viewer-open');
   releaseStages();
+  // Also on the way out, so a viewer that is inspected while closed — or
+  // reopened by a path that does not go through `openImageViewer` — is never
+  // found holding the last visit's gesture state.
+  resetSession(root);
 
   // Back to whatever opened it — the same thumbnail, not the top of the page.
   const target = state.returnFocus;
@@ -379,7 +406,11 @@ function bindGestures(root) {
 
   wrap.addEventListener('pointerdown', (event) => {
     if (event.button != null && event.button > 0) return;
-    wrap.setPointerCapture?.(event.pointerId);
+    // Capture is an optimisation — it keeps the moves coming when a finger
+    // leaves the element — and it throws if the pointer has already ended,
+    // which happens for a very fast tap and for a pointer the system took
+    // away. The gesture must still be tracked when it does.
+    try { wrap.setPointerCapture?.(event.pointerId); } catch { /* pointer already gone */ }
     state.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (state.pointers.size === 2) {

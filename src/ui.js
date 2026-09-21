@@ -83,6 +83,20 @@ export function openSheet(name, { focus } = {}) {
   });
 }
 
+/**
+ * Things to do when a sheet goes away, however it goes away.
+ *
+ * A sheet can be dismissed by its close button, the overlay, Escape, the back
+ * gesture or another sheet closing everything — and work started inside it
+ * (an uploaded photograph that was never saved onto a record) has to be
+ * cleaned up on all of those paths, not just the one with a button on it.
+ */
+const closers = new Map();
+
+export function onSheetClose(name, handler) {
+  closers.set(name, handler);
+}
+
 export function closeSheet(name) {
   const index = stack.findIndex((entry) => entry.name === name);
   const entry = index >= 0 ? stack.splice(index, 1)[0] : null;
@@ -91,6 +105,9 @@ export function closeSheet(name) {
   overlay?.classList.remove('open');
   panel?.classList.remove('open');
   entry?.opener?.focus?.({ preventScroll: true });
+  if (entry) {
+    try { closers.get(name)?.(); } catch (error) { console.error(`[ui] close handler for ${name} failed`, error); }
+  }
 }
 
 export function closeTop() {

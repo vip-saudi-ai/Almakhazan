@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, planImport } from '../../src/import-mapping.js';
+import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, importItemId, planImport } from '../../src/import-mapping.js';
 import { parseDelimited } from '../../src/spreadsheet.js';
 
 const EXISTING = {
@@ -233,4 +233,58 @@ test('a column already mapped is not asked about', () => {
 test('an unambiguous header is never turned into a question', () => {
   const headers = ['الاسم', 'الكمية', 'التصنيف'];
   assert.deepEqual(ambiguousColumns(headers, guessMapping(headers)), []);
+});
+
+// ── what a failed import must not do ───────────────────────────────────────
+
+test('a row always maps to the same record id within one import', () => {
+  // An import that fails on chunk 3 of 10 has already written chunks 1 and 2.
+  // Pressing the button again must rewrite those two, not add a second copy.
+  const a = importItemId('j1', 2);
+  const b = importItemId('j1', 2);
+  assert.equal(a, b);
+  assert.notEqual(importItemId('j1', 2), importItemId('j1', 3));
+  assert.notEqual(importItemId('j1', 2), importItemId('j2', 2));
+});
+
+test('every record carries the row it came from', () => {
+  const { records } = plan(
+    [['ساعة', '2'], ['خاتم', '3']],
+    { name: 0, quantity: 1 },
+    { lines: [7, 9] },
+  );
+  assert.deepEqual(records.map((r) => r.sourceLine), [7, 9]);
+  // Which is what makes the ids stable across a retry.
+  const ids = records.map((r) => importItemId('job', r.sourceLine));
+  assert.equal(new Set(ids).size, 2);
+});
+
+// ── valuations the file got wrong ──────────────────────────────────────────
+
+test('an unreadable upper bound is reported, not dropped in silence', () => {
+  const { problems } = plan([['ساعة', '5000', 'كثير']], { name: 0, valuationMin: 1, valuationMax: 2 });
+  assert.ok(problems.some((p) => p.field === 'valuationMax'), JSON.stringify(problems));
+});
+
+test('bounds the wrong way round are reported, and then put the right way round', () => {
+  const { records, problems } = plan([['ساعة', '8000', '5000']], { name: 0, valuationMin: 1, valuationMax: 2 });
+  assert.ok(problems.some((p) => p.field === 'valuationMax' && /أقل من/.test(p.reason)), JSON.stringify(problems));
+  assert.equal(records[0].valuation.min, 5000);
+  assert.equal(records[0].valuation.max, 8000);
+});
+
+// ── currencies ─────────────────────────────────────────────────────────────
+
+test('a currency the file names is kept, whether or not the picker offers it', () => {
+  const { records, problems } = plan([['ساعة', '5000', 'AED']], { name: 0, valuationMin: 1, currency: 2 });
+  assert.equal(records[0].valuation.currency, 'AED');
+  assert.equal(problems.filter((p) => p.field === 'currency').length, 0);
+});
+
+test('a currency column holding something that is not a currency is reported', () => {
+  // Silently becoming SAR turns one unreadable cell into a confident wrong
+  // number on every row of the file.
+  const { records, problems } = plan([['ساعة', '5000', 'قطعة']], { name: 0, valuationMin: 1, currency: 2 });
+  assert.ok(problems.some((p) => p.field === 'currency'), JSON.stringify(problems));
+  assert.equal(records[0].valuation.currency, 'SAR');
 });

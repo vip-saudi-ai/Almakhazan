@@ -11,7 +11,7 @@ import { SYNC_LABELS, SyncState, repository } from './repository.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
-import { goTab, registerTab } from './navigation.js';
+import { goTab, registerTab, renderActiveTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
 import { hydrateIcons } from './icons.js';
 import { isImageViewerOpen, reflowViewer } from './views/image-viewer.js';
@@ -257,6 +257,9 @@ function initializeUI() {
   registerTab('home', renderHome);
   registerTab('ov', renderOverview);
   registerTab('ai', renderAssistant);
+  // Registered so opening them goes through the same path as the tabs — which
+  // is also what applies the "this screen needs the whole inventory" rule to
+  // Categories.
   registerTab('cats', renderCategories);
   registerTab('set', renderSettings);
 
@@ -291,17 +294,22 @@ function initializeUI() {
 }
 
 let renderScheduled = false;
+
+/**
+ * One frame, one screen: the one being looked at.
+ *
+ * This used to redraw the inventory list on every change regardless of which
+ * screen was open — so an import writing 2,000 records rebuilt two hundred
+ * cards per chunk into a hidden view, on the same thread as the screen the
+ * customer was actually using. The other screens are marked stale instead and
+ * redraw when they are opened.
+ */
 function renderAll() {
   if (renderScheduled) return;
   renderScheduled = true;
   requestAnimationFrame(() => {
     renderScheduled = false;
-    renderHome();
-    const active = document.querySelector('.view.active')?.id;
-    if (active === 'v-ov') renderOverview();
-    if (active === 'v-ai') renderAssistant();
-    if (active === 'v-cats') renderCategories();
-    if (active === 'v-set') renderSettings();
+    renderActiveTab();
     persistPrefs();
   });
 }

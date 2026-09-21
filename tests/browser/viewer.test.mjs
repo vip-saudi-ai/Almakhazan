@@ -415,6 +415,83 @@ const viewerState = (page) => page.evaluate(() => {
   await context.close();
 }
 
+// ── a visit does not inherit the last one ─────────────────────────────────
+{
+  const { page, context, errs } = await open({ count: 2 });
+
+  const reopened = await page.evaluate(async () => {
+    const { openImageViewer, closeImageViewer } = await import('/src/views/image-viewer.js');
+    const { repository } = await import('/src/repository.js');
+    const item = repository.liveItems()[0];
+    const wait = () => new Promise((r) => setTimeout(r, 120));
+
+    openImageViewer({ images: item.images, title: item.name });
+    await wait();
+    // Hide the chrome, as a tap on the image does, then close on that state.
+    document.getElementById('viewer').classList.add('controls-hidden');
+    const hiddenWhileOpen = document.getElementById('viewer').classList.contains('controls-hidden');
+    closeImageViewer();
+    await wait();
+
+    openImageViewer({ images: item.images, title: item.name });
+    await wait();
+    const root = document.getElementById('viewer');
+    const stillHidden = root.classList.contains('controls-hidden');
+    const closeVisible = getComputedStyle(document.getElementById('viewer-close')).display !== 'none';
+    closeImageViewer();
+    return { hiddenWhileOpen, stillHidden, closeVisible };
+  });
+
+  check('V36 the chrome can be hidden during a visit', reopened.hiddenWhileOpen === true);
+  // An image closed with its controls hidden used to reopen with them still
+  // hidden: a black screen with no visible way out.
+  check('V37 and reopening starts with the chrome back', reopened.stillHidden === false, String(reopened.stillHidden));
+  check('V38 the way out is on screen', reopened.closeVisible === true, String(reopened.closeVisible));
+
+  const gestures = await page.evaluate(async () => {
+    const mod = await import('/src/views/image-viewer.js');
+    const { repository } = await import('/src/repository.js');
+    const item = repository.liveItems()[0];
+    const wrap = () => document.querySelector('.viewer-stagewrap');
+    const wait = () => new Promise((r) => setTimeout(r, 120));
+
+    mod.openImageViewer({ images: item.images, title: item.name });
+    await wait();
+    // A pointer the browser never finishes — the gesture is cancelled by a
+    // system swipe, a call, a notification. The bookkeeping used to survive it.
+    const target = wrap();
+    target.dispatchEvent(new PointerEvent('pointerdown', {
+      pointerId: 91, pointerType: 'touch', clientX: 120, clientY: 300, bubbles: true,
+    }));
+    await wait();
+    mod.closeImageViewer();
+    await wait();
+
+    mod.openImageViewer({ images: item.images, title: item.name });
+    await wait();
+    // One tap. With a stale pointer still registered this is read as the
+    // second finger of a pinch, and with a stale lastTap as a double tap.
+    const stage = () => document.querySelector('.viewer-stage[data-index="0"] .viewer-img');
+    const before = +new DOMMatrix(getComputedStyle(stage()).transform).a.toFixed(2);
+    for (const type of ['pointerdown', 'pointerup']) {
+      wrap().dispatchEvent(new PointerEvent(type, {
+        pointerId: 92, pointerType: 'touch', clientX: 200, clientY: 400, bubbles: true,
+      }));
+    }
+    await new Promise((r) => setTimeout(r, 450));
+    const after = +new DOMMatrix(getComputedStyle(stage()).transform).a.toFixed(2);
+    const chrome = document.getElementById('viewer').classList.contains('controls-hidden');
+    mod.closeImageViewer();
+    return { before, after, chrome };
+  });
+
+  check('V39 a single tap in a fresh visit toggles the chrome rather than zooming',
+    Math.abs(gestures.after - gestures.before) < 0.02 && gestures.chrome === true,
+    JSON.stringify(gestures));
+  check('V40 no JS errors', errs.length === 0, errs.join(' / '));
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);

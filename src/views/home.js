@@ -4,7 +4,7 @@
 import { icon } from '../icons.js';
 import { CONDITIONS, PAGE_SIZE, UNCATEGORIZED_ID } from '../config.js';
 import { partialNotice, withFullInventory } from '../inventory-load.js';
-import { ensureFor, inventoryCounts, runQuery, summarize } from '../query.js';
+import { inventoryCounts, queryInventory, runQuery, summarize } from '../query.js';
 import { currenciesPresent, currencySymbol } from '../money.js';
 import { repository } from '../repository.js';
 import { canUseFeature, quotaStatus } from '../subscription.js';
@@ -112,15 +112,18 @@ async function narrowing(apply) {
   const after = currentQuery();
   const ticket = ++narrowingGeneration;
 
-  // If the data is already in hand this does not yield at all, so typing stays
-  // instant and nothing flashes a loading state for work that takes no time.
-  if (await ensureFor(after, () => withFullInventory('جارٍ قراءة المخزون كاملاً…'))) {
-    if (ticket !== narrowingGeneration) return;   // superseded; the newer one paints
-    renderHome();
+  // One call: it loads whatever the query needs and answers it. If the data is
+  // already in hand it does not yield at all, so typing stays instant and
+  // nothing flashes a loading state for work that takes no time.
+  const result = await queryInventory(after, {
+    ensure: () => withFullInventory('جارٍ قراءة المخزون كاملاً…'),
+  });
+  if (ticket !== narrowingGeneration) return;     // superseded; the newer one paints
+  if (result.answerable) {
+    renderHome(result);
     return;
   }
 
-  if (ticket !== narrowingGeneration) return;
   // Put the screen back rather than answering a narrowed question from a
   // fraction of the inventory.
   Object.assign(view, {
@@ -267,18 +270,30 @@ function cardNode(item) {
   const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
 
   return el('div', {
+    // In selection mode the card IS the control — one tap, one meaning — so it
+    // carries the checkbox role and nothing interactive sits inside it.
+    // Browsing, it is a container: `role="button"` around a real <button> is
+    // invalid, and assistive technology flattens a button's contents, so the
+    // actions button either disappeared into the card's label or could not be
+    // reached at all. The card's primary action is its own button, stretched
+    // over the card by CSS — see `.icard-open`.
     class: `icard gl-s${selected ? ' picked' : ''}`,
     dataset: { id: item.id },
-    role: view.selection ? 'checkbox' : 'button',
+    role: view.selection ? 'checkbox' : undefined,
     'aria-checked': view.selection ? String(selected) : undefined,
-    tabindex: '0',
-    'aria-label': `${item.name}، ${category.name}`,
-    onClick: activate,
-    onKeydown: (event) => {
+    tabindex: view.selection ? '0' : undefined,
+    'aria-label': view.selection ? `${item.name}، ${category.name}` : undefined,
+    onClick: view.selection ? activate : undefined,
+    onKeydown: view.selection ? (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
-    },
+    } : undefined,
   }, [
     view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
+    view.selection ? null : el('button', {
+      class: 'icard-open', type: 'button',
+      'aria-label': `${item.name}، ${category.name}`,
+      onClick: activate,
+    }),
     // The same actions the long press offers, on a button that can be seen.
     // A long press is a shortcut for people who know it exists; it is not a
     // way to find out that "duplicate" or "print a label" exist at all.
@@ -319,18 +334,25 @@ function rowNode(item) {
   const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
 
   return el('div', {
+    // Same reasoning as the card: a control while selecting, a container while
+    // browsing, with the row's own action as a button stretched across it.
     class: `litem${selected ? ' picked' : ''}`,
     dataset: { id: item.id },
-    role: view.selection ? 'checkbox' : 'button',
+    role: view.selection ? 'checkbox' : undefined,
     'aria-checked': view.selection ? String(selected) : undefined,
-    tabindex: '0',
-    'aria-label': item.name || 'قطعة',
-    onClick: activate,
-    onKeydown: (event) => {
+    tabindex: view.selection ? '0' : undefined,
+    'aria-label': view.selection ? (item.name || 'قطعة') : undefined,
+    onClick: view.selection ? activate : undefined,
+    onKeydown: view.selection ? (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
-    },
+    } : undefined,
   }, [
     view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
+    view.selection ? null : el('button', {
+      class: 'icard-open', type: 'button',
+      'aria-label': `${item.name || 'قطعة'}، ${subtitle}`,
+      onClick: activate,
+    }),
     itemThumb(item, 'lthumb'),
     el('div', { class: 'linfo' }, [
       el('div', { class: 'lname', text: item.name || '—' }),
@@ -698,7 +720,14 @@ function renderPagination(totalPages) {
 }
 
 // ── main render ──
-export function renderHome() {
+/**
+ * @param {object} [prepared] a result already obtained from `queryInventory`.
+ *   Narrowing takes the asynchronous path — it may have to load records first
+ *   — and hands the answer here rather than asking a second time. Everything
+ *   else (a snapshot arriving, a view toggle) re-runs the query synchronously,
+ *   because the data is already in hand.
+ */
+export function renderHome(prepared) {
   const folder = view.folderId ? repository.folder(view.folderId) : null;
   if (view.folderId && !folder) { view.folderId = null; }
 
@@ -712,7 +741,7 @@ export function renderHome() {
   // asks for what it needs and renders the answer. An assistant hand-over is
   // the same query with an explicit id set, so it narrows this screen rather
   // than opening a second one.
-  const result = runQuery(currentQuery());
+  const result = prepared || runQuery(currentQuery());
   const { rows: pageItems, total, totalPages, searching, scopeItems } = result;
   view.page = result.page;
   renderSortNotice(result);

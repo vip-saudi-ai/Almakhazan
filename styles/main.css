@@ -1258,3 +1258,25 @@ html:not([dir="rtl"]) .ask-result-go .nz-icon{transform:scaleX(-1)}
   background:var(--surface-sunken);border:1px solid var(--border-quiet);border-radius:var(--r-sm);
   font:var(--type-small);color:var(--ts);line-height:1.5}
 .sortnote-ico{flex-shrink:0;font-size:13px;color:var(--brand)}
+
+
+/* A card's primary action, stretched over the card.
+   `role="button"` on the card itself is invalid around the actions button it
+   contains, and assistive technology flattens a button's contents — so the
+   action is a real button that covers the card, and the actions button sits
+   above it. One tab stop for "open this", one for "what else can I do". */
+.icard,.litem{position:relative}
+.icard-open{position:absolute;inset:0;z-index:1;width:100%;height:100%;
+  padding:0;border:0;background:none;cursor:pointer;border-radius:inherit;
+  -webkit-appearance:none;appearance:none}
+/* The ring belongs on the card, not on an invisible overlay sitting inside
+   it: a shadow drawn on a transparent element clipped to the card's bounds is
+   invisible. `:has()` is progressive — without it the global ring still lands
+   on the button, just tighter. */
+.icard:has(> .icard-open:focus-visible),
+.litem:has(> .icard-open:focus-visible){box-shadow:var(--focus-ring)}
+.icard-open:focus-visible{box-shadow:none}
+/* Everything the card draws stays above the invisible button so it is still
+   visible; the button stays above them for hit-testing on its own layer. */
+.icard > .icimg,.icard > .icbody,.litem > .lthumb,.litem > .linfo,.litem > .lchev{position:relative}
+.icmore,.lmore{position:relative;z-index:2}

@@ -14,6 +14,24 @@ export function registerTab(name, render) {
   renderers.set(name, render);
 }
 
+/**
+ * Redraw the screen in front of the customer, and only that one.
+ *
+ * A data change used to re-render the inventory list whatever the customer was
+ * looking at. An import writing 2,000 records emits a snapshot per chunk, and
+ * each one rebuilt two hundred cards, resolved their images and recomputed
+ * their pills — into a screen nobody could see, on the same thread as the
+ * screen they were actually using.
+ *
+ * The hidden screens need no bookkeeping to stay correct: `goTab` redraws
+ * whatever it opens, from the data as it is at that moment. Being shown is the
+ * first time a drawing can be looked at, and therefore the first time it has
+ * to be right.
+ */
+export function renderActiveTab() {
+  renderers.get(activeTab())?.();
+}
+
 // Which screens are a statement about the whole inventory.
 //
 //   ov    a dashboard of totals and proportions

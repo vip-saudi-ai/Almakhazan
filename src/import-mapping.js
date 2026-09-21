@@ -14,9 +14,23 @@
 //     that is not one of ours, is reported as a problem on that row rather
 //     than quietly replaced with a default that looks deliberate.
 
-import { CONDITIONS, UNCATEGORIZED_ID } from './config.js';
+import { CONDITIONS, UNCATEGORIZED_ID, isCurrencyCode, normalizeCurrencyCode } from './config.js';
 import { normalizeArabic } from './search.js';
 import { parseNumber } from './utils.js';
+
+/**
+ * The id a given row of a given import becomes.
+ *
+ * Derived from the job and the row rather than generated, so running the same
+ * import twice writes the same documents twice instead of two copies of them.
+ * That is what makes a failed import resumable: chunk 3 of 10 fails, the first
+ * two are already written, and pressing "import" again rewrites those two
+ * identically and carries on — where before it added 400 duplicates and then
+ * the rest.
+ */
+export function importItemId(importId, sourceLine) {
+  return `imp-${importId}-${String(sourceLine).padStart(6, '0')}`;
+}
 
 /**
  * The fields a spreadsheet can fill. Images are absent on purpose: a cell can
@@ -137,14 +151,40 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     const min = parseNumber(cell(row, mapping.valuationMin));
     const max = parseNumber(cell(row, mapping.valuationMax));
     const rawMin = cell(row, mapping.valuationMin);
+    const rawMax = cell(row, mapping.valuationMax);
     if (rawMin && min == null) {
       problems.push({ line, field: 'valuationMin', reason: `قيمة غير مفهومة: «${rawMin}»`, value: rawMin });
     }
+    // The upper bound was read and then never looked at: an unreadable one was
+    // dropped without a word, and a row where the columns had been filled in
+    // the wrong order (8,000 then 5,000) was silently swapped rather than
+    // questioned. Both are worth one line on the preview.
+    if (rawMax && max == null) {
+      problems.push({ line, field: 'valuationMax', reason: `قيمة غير مفهومة: «${rawMax}»`, value: rawMax });
+    }
+    if (min != null && max != null && max < min) {
+      problems.push({
+        line, field: 'valuationMax',
+        reason: `أعلى قيمة (${max}) أقل من أدنى قيمة (${min}) — سيُعكس الترتيب`,
+        value: rawMax,
+      });
+    }
     if (min != null || max != null) {
+      const rawCurrency = cell(row, mapping.currency);
+      // A currency column holding something that is not a currency used to
+      // fall back to SAR without a word, which turns an unreadable cell into a
+      // confident wrong number on every row of the file.
+      if (rawCurrency && !isCurrencyCode(rawCurrency)) {
+        problems.push({
+          line, field: 'currency',
+          reason: `عملة غير معروفة: «${rawCurrency}» — سيُستخدم ${currency}`,
+          value: rawCurrency,
+        });
+      }
       record.valuation = {
-        min: min ?? max,
-        max: max ?? min,
-        currency: cell(row, mapping.currency) || currency,
+        min: Math.min(min ?? max, max ?? min),
+        max: Math.max(min ?? max, max ?? min),
+        currency: normalizeCurrencyCode(rawCurrency, currency),
         source: 'import',
       };
     }
@@ -166,6 +206,9 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     }
     if (!record.categoryId && !record.categoryName) record.categoryId = UNCATEGORIZED_ID;
 
+    // The row this record came from. It is what makes a retry write the same
+    // documents instead of a second copy of them — see `importItemId`.
+    record.sourceLine = line;
     records.push(record);
   });
 

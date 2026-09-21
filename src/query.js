@@ -148,28 +148,33 @@ export function currentAdapter() {
 /**
  * The one entry point. Ensures what the adapter needs, then answers.
  *
- * @returns {Promise<{items: Array, total: number, nextCursor: ?string,
- *                    summary: object, complete: boolean}>}
+ * The result shape is the contract every screen reads, and it is the same
+ * shape `runQuery` returns — the async form only adds what it learned on the
+ * way: whether the query could be answered at all, a cursor, and the summary.
+ *
+ * @returns {Promise<{rows: Array, total: number, page: number,
+ *   totalPages: number, searching: boolean, scopeItems: Array,
+ *   valueCurrencies: string[], groupedByCurrency: boolean, complete: boolean,
+ *   nextCursor: ?string, summary: object, answerable: boolean}>}
+ *
+ *   `answerable` is false when the adapter needed records it could not get.
+ *   A caller must not show such a result as the answer to the question asked:
+ *   a filter applied to a fraction of an inventory answers confidently and
+ *   wrongly, which is the failure this whole module exists to prevent.
  */
 export async function queryInventory(query, { ensure } = {}) {
   const full = { ...emptyQuery(), ...query };
-  const ready = await ensureFor(full, ensure);
+  const answerable = await ensureFor(full, ensure);
   const page = adapter.run(full);
   return {
-    items: page.rows,
-    total: page.total,
+    ...page,
+    answerable,
+    complete: answerable && repository.itemsComplete,
     // Page numbers are what the local adapter has; a cursor is what a remote
     // one would return. Both travel under the same name so the UI's
     // "there is more" test does not change when the adapter does.
     nextCursor: page.page < page.totalPages ? String(page.page + 1) : null,
     summary: summarize(full),
-    complete: ready && repository.itemsComplete,
-    page: page.page,
-    totalPages: page.totalPages,
-    searching: page.searching,
-    scopeItems: page.scopeItems,
-    valueCurrencies: page.valueCurrencies || [],
-    groupedByCurrency: Boolean(page.groupedByCurrency),
   };
 }
 
@@ -181,10 +186,12 @@ export async function queryInventory(query, { ensure } = {}) {
  * the customer narrows — taps a filter, types a search — and it is allowed to
  * take time and show a progress state. Running is then instant.
  *
- * @returns {Promise<boolean>} false when the data could not be loaded. The
- *   caller must not narrow on a partial set and present the result as whole.
+ * @returns {Promise<boolean>} false when the data could not be loaded. It
+ *   reaches callers as `answerable` on the query result; nothing outside this
+ *   module calls it directly, because running a query and making sure it can
+ *   be run are one decision, not two for a screen to sequence itself.
  */
-export async function ensureFor(query, ensure) {
+async function ensureFor(query, ensure) {
   if (!adapter.needsEverything(query)) return true;
   if (repository.itemsComplete) return true;
   return ensure ? ensure() : false;
@@ -200,7 +207,12 @@ export async function ensureFor(query, ensure) {
  *   `complete` says whether the answer covers the whole inventory.
  */
 export function runQuery(query) {
-  return { ...runLocal(query), complete: repository.itemsComplete };
+  // Through the adapter, not around it. This called `runLocal` directly, so
+  // swapping the adapter changed what the app *loaded* and what it *counted*
+  // but not what it actually listed — the seam existed everywhere except on
+  // the path every screen takes, which is the same as not existing.
+  const full = { ...emptyQuery(), ...query };
+  return { ...adapter.run(full), complete: repository.itemsComplete };
 }
 
 /** The local implementation. One day this is the `else` branch of a fetch. */

@@ -16,6 +16,23 @@ import { AppError } from './utils.js';
 
 export const MAX_ROWS = 5000;
 
+/**
+ * What a spreadsheet is allowed to cost this tab.
+ *
+ * A row cap alone does not bound the work: the rows are counted only after the
+ * file has been decompressed and parsed. A 2MB .xlsx holding one enormous
+ * shared-strings part expands to hundreds of megabytes of text before anything
+ * has counted a row — which is not an attack on a server here, it is the
+ * customer's own phone becoming unresponsive on a file they were sent.
+ *
+ * So the limits sit before the work: what may be read, and what a compressed
+ * part may become once it is not compressed any more.
+ */
+export const MAX_FILE_BYTES = 25 * 1024 * 1024;
+export const MAX_INFLATED_BYTES = 120 * 1024 * 1024;
+/** A part that expands more than this from its stored size is not a spreadsheet. */
+export const MAX_INFLATION_RATIO = 400;
+
 // ── CSV / TSV ──────────────────────────────────────────────────────────────
 
 /**
@@ -125,8 +142,33 @@ async function readEntry(bytes, view, entry) {
     );
   }
 
+  // Read the expansion as it arrives rather than after it. `Response.text()`
+  // would buffer the whole thing first, which is precisely the cost being
+  // guarded against — by the time it could be measured it has already been
+  // paid.
+  const ceiling = Math.min(
+    MAX_INFLATED_BYTES,
+    Math.max(1024 * 1024, entry.compressedSize * MAX_INFLATION_RATIO),
+  );
   const stream = new Blob([slice]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-  return new Response(stream).text();
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+  let seen = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    seen += value.byteLength;
+    if (seen > ceiling) {
+      await reader.cancel().catch(() => {});
+      throw new AppError(
+        'هذا الملف يتمدّد إلى حجم غير معقول عند فتحه — صدّره من جديد بصيغة CSV',
+        { code: 'sheet/inflation' },
+      );
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
 }
 
 // ── XLSX ───────────────────────────────────────────────────────────────────
@@ -306,6 +348,17 @@ async function readXlsx(buffer) {
 export async function readSpreadsheet(file) {
   const name = (file?.name || '').toLowerCase();
   let table;
+
+  // Before anything is read. A file this size is a database export or a
+  // mistake, and either way the honest answer is the one that arrives
+  // immediately rather than after the tab has stopped responding.
+  if (file?.size > MAX_FILE_BYTES) {
+    const mb = Math.round(MAX_FILE_BYTES / 1024 / 1024);
+    throw new AppError(
+      `حجم الملف يتجاوز ${mb} ميجابايت — قسّمه أو صدّر جزءاً منه`,
+      { code: 'sheet/too-large' },
+    );
+  }
 
   if (name.endsWith('.xlsx') || name.endsWith('.xlsm')) {
     table = await readXlsx(await file.arrayBuffer());

@@ -151,19 +151,67 @@ class LocalMediaStore {
       orphanedAt: next === 0 ? Date.now() : null,
     });
     // On a single device there is no backend sweeper, so reclaim immediately.
-    if (next === 0) {
-      await local.remove('images', mediaId).catch((error) => {
-        console.error('[media] local blob cleanup failed', error);
-      });
-      await local.remove('mediaAssets', mediaId).catch(() => {});
-    }
+    if (next === 0) await this.discard(mediaId);
     return next;
+  }
+
+  /** Reclaim now: the blob and its row, in one transaction. */
+  async discard(mediaId) {
+    await local.transaction(['images', 'mediaAssets'], 'readwrite', async (stores) => {
+      await local.request(stores.images.delete(mediaId));
+      await local.request(stores.mediaAssets.delete(mediaId));
+    });
+    return true;
   }
 }
 
 export function mediaStore(session) {
   if (!session?.workspaceId) throw new AppError('لا يوجد مخزن نشط', { code: 'media/no-workspace' });
   return session.mode === 'cloud' ? new CloudMediaStore(session.workspaceId) : new LocalMediaStore();
+}
+
+/**
+ * Throws away media that no record ever pointed at.
+ *
+ * An image uploaded into a form that is then abandoned — the customer
+ * photographs something, changes their mind, closes the sheet — leaves a blob
+ * on the device and an asset row with a reference count of nought. Nothing
+ * ever adjusted that count, so nothing ever reclaimed it: on a phone, a
+ * session of adding and abandoning a few records quietly cost tens of
+ * megabytes that no record accounted for.
+ *
+ * The count is what decides. A second record may have picked up the same file
+ * in the meantime — uploads are deduplicated by hash, so two records can share
+ * one asset — and in that case this does nothing at all. Never destroy a file
+ * something still points at.
+ *
+ * Only the device backend reclaims here. A cloud asset is already created
+ * unreferenced and marked orphaned, and the backend sweeper collects it after
+ * its grace window; deleting a Storage object from a browser is not something
+ * this app does, for the same reason it is not something it can be trusted to
+ * get right under a dropped connection.
+ *
+ * @returns {Promise<number>} how many assets were actually reclaimed.
+ */
+export async function discardUnreferenced(session, images) {
+  if (!images?.length) return 0;
+  const store = mediaStore(session);
+  let reclaimed = 0;
+  for (const image of images) {
+    const mediaId = image.mediaId || image.id;
+    if (!mediaId) continue;
+    try {
+      const asset = await store.get(mediaId);
+      if (!asset) continue;
+      if ((asset.refCount ?? 0) > 0) continue;
+      if (await store.discard?.(mediaId, image)) reclaimed += 1;
+    } catch (error) {
+      // Reclaiming space is a courtesy; failing at it must never surface as an
+      // error on a screen the customer has already walked away from.
+      console.error(`[media] could not reclaim ${mediaId}`, error);
+    }
+  }
+  return reclaimed;
 }
 
 /**

@@ -251,6 +251,78 @@ async function open(colorScheme) {
   await context.close();
 }
 
+// ── a card is a container, not a button with a button inside it ───────────
+{
+  const { page, context } = await open('light');
+
+  const semantics = await page.evaluate(() => {
+    // A `button` role forbids interactive descendants, and assistive
+    // technology flattens a button's contents — so the card's own actions
+    // button was either folded into the card's name or unreachable.
+    const offenders = [];
+    for (const node of document.querySelectorAll('[role="button"]')) {
+      if (node.querySelector('button, a[href], input, select, [role="button"]')) {
+        offenders.push(`${node.tagName}.${(node.className || '').toString().split(' ')[0]}`);
+      }
+    }
+    const card = document.querySelector('.icard');
+    const openBtn = card?.querySelector('.icard-open');
+    const moreBtn = card?.querySelector('.icmore');
+    return {
+      offenders: [...new Set(offenders)],
+      cardHasRole: card?.getAttribute('role') || null,
+      openName: openBtn?.getAttribute('aria-label') || '',
+      moreName: moreBtn?.getAttribute('aria-label') || '',
+      // The action must cover the card, or the card is only clickable on
+      // whichever part happens to be behind it.
+      // Within the card's border, so a 1px frame is not a failure.
+      covers: (() => {
+        if (!card || !openBtn) return false;
+        const a = card.getBoundingClientRect();
+        const b = openBtn.getBoundingClientRect();
+        return b.width * b.height > a.width * a.height * 0.93;
+      })(),
+    };
+  });
+
+  check('X17 no element with a button role contains another control',
+    semantics.offenders.length === 0, semantics.offenders.join(', '));
+  check('X18 a browsing card carries no button role of its own',
+    semantics.cardHasRole === null, String(semantics.cardHasRole));
+  check('X19 its primary action is a real button, named, covering the card',
+    semantics.covers && /ساعة/.test(semantics.openName), JSON.stringify(semantics));
+  check('X20 and the actions button keeps its own name',
+    /إجراءات/.test(semantics.moreName), semantics.moreName);
+
+  // Both are reachable, and in the order they are read.
+  const order = await page.evaluate(() => {
+    const card = document.querySelector('.icard');
+    const focusable = [...card.querySelectorAll('button')].filter((b) => b.tabIndex >= 0);
+    return focusable.map((b) => b.className.split(' ')[0]);
+  });
+  check('X21 the card offers exactly two tab stops: open it, and act on it',
+    order.length === 2 && order.includes('icard-open') && order.includes('icmore'),
+    JSON.stringify(order));
+
+  // In selection mode the card *is* the control, so it carries the role and
+  // holds nothing interactive.
+  const selecting = await page.evaluate(async () => {
+    const { startSelection } = await import('/src/views/home.js');
+    startSelection();
+    await new Promise((r) => setTimeout(r, 300));
+    const card = document.querySelector('.icard');
+    return {
+      role: card?.getAttribute('role') || null,
+      checked: card?.getAttribute('aria-checked'),
+      inner: card ? card.querySelectorAll('button').length : -1,
+    };
+  });
+  check('X22 while selecting, the card is the checkbox and holds no control',
+    selecting.role === 'checkbox' && selecting.inner === 0 && selecting.checked === 'false',
+    JSON.stringify(selecting));
+  await context.close();
+}
+
 await browser.close();
 console.log(`PASS ${pass.length}`);
 pass.forEach(p => console.log('  ✓', p));
