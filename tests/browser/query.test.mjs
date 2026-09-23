@@ -544,6 +544,140 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
     JSON.stringify(semantics.agree));
 }
 
+// ── the semantics matrix ───────────────────────────────────────────────────
+//
+// §46. Every previous check asks one question well. This asks the same
+// question of a spread of scopes, sorts and filters, and checks the three
+// properties that have to hold for all of them:
+//
+//   completeness  paging through the answer returns every record once, and
+//                 the same set a single unpaged read returns;
+//   order         the concatenated pages are in the order the customer asked
+//                 for, across page boundaries and not merely inside them;
+//   membership    every record returned really does satisfy the scope and the
+//                 filters, checked against the stored record rather than
+//                 against what the engine claimed.
+//
+// The reference is the engine's own unpaged answer rather than a second
+// implementation of the semantics, because a second implementation would be a
+// second thing to get wrong; the order and membership checks read the records
+// and so do not depend on the engine being right about anything.
+{
+  const matrix = await page.evaluate(async (ids) => {
+    const { queryInventory } = await import('/src/query.js');
+    const local = await import('/src/local-store.js');
+    const collator = new Intl.Collator('ar', { numeric: true, sensitivity: 'base' });
+
+    const cases = [
+      { label: 'الجذر · الأحدث', query: { sort: 'newest' } },
+      { label: 'الجذر · الأقدم', query: { sort: 'oldest' } },
+      { label: 'الجذر · الاسم', query: { sort: 'name-az' } },
+      { label: 'مجلد · الأحدث', query: { folderId: ids.folderId, sort: 'newest' } },
+      { label: 'مجلد · الأقدم', query: { folderId: ids.folderId, sort: 'oldest' } },
+      { label: 'مجلد · الاسم', query: { folderId: ids.folderId, sort: 'name-az' } },
+      { label: 'تصنيف · الأحدث', query: { filters: { categoryId: ids.categoryId }, sort: 'newest' } },
+      { label: 'تصنيف · الاسم', query: { filters: { categoryId: ids.categoryId }, sort: 'name-za' } },
+      { label: 'موقع · الأحدث', query: { filters: { locationId: ids.locationId }, sort: 'newest' } },
+      { label: 'موقع · الأقدم', query: { filters: { locationId: ids.locationId }, sort: 'oldest' } },
+      {
+        label: 'مجلد + حالة · الأحدث',
+        query: { folderId: ids.folderId, filters: { condition: 'ممتازة' }, sort: 'newest' },
+      },
+      { label: 'المحذوفات · الأحدث', query: { trashed: true, sort: 'newest' } },
+    ];
+
+    // Bounded on purpose. Walking all twenty thousand records twenty-five at
+    // a time would be eight hundred queries for one row of the matrix, and
+    // would measure the loop rather than the engine. A scope that fits inside
+    // the budget is walked whole; a larger one is walked to the budget, and
+    // the check says how far it got rather than implying it went further.
+    const PER_PAGE = 25;
+    const MAX_PAGES = 24;
+    const report = [];
+
+    for (const { label, query } of cases) {
+      const first = await queryInventory({ ...query, page: 1, perPage: PER_PAGE });
+      const total = first.total;
+      const pages = total == null
+        ? 1
+        : Math.min(MAX_PAGES, Math.max(1, Math.ceil(total / PER_PAGE)));
+
+      const paged = [...first.rows.map((row) => row.id)];
+      for (let n = 2; n <= pages; n += 1) {
+        const next = await queryInventory({ ...query, page: n, perPage: PER_PAGE });
+        paged.push(...next.rows.map((row) => row.id));
+      }
+      const whole = total != null && total <= pages * PER_PAGE;
+
+      // The same question asked once, as the reference for the stretch the
+      // paged walk covered.
+      const unpaged = await queryInventory({
+        ...query, page: 1, perPage: Math.max(1, pages * PER_PAGE),
+      });
+      const wholeIds = unpaged.rows.map((row) => row.id).slice(0, paged.length);
+
+      const records = [];
+      for (const id of paged) records.push(await local.get('items', id));
+
+      const wanted = query.sort || 'newest';
+      let ordered = true;
+      for (let n = 1; n < records.length; n += 1) {
+        const a = records[n - 1];
+        const b = records[n];
+        if (!a || !b) { ordered = false; break; }
+        if (wanted === 'newest' && b.createdAt > a.createdAt) { ordered = false; break; }
+        if (wanted === 'oldest' && b.createdAt < a.createdAt) { ordered = false; break; }
+        // Arabic collation, not code-point order: "قطعة 10" and "قطعة 2" sort
+        // by the locale's rules, and the test has to use the same ones the app
+        // does or it measures the difference between two collations.
+        if (wanted === 'name-az' && collator.compare(a.name, b.name) > 0) { ordered = false; break; }
+        if (wanted === 'name-za' && collator.compare(b.name, a.name) > 0) { ordered = false; break; }
+      }
+
+      const filters = query.filters || {};
+      const belongs = records.every((row) => row
+        && (query.trashed ? row.deletedAt != null : row.deletedAt == null)
+        && (query.folderId ? row.folderId === query.folderId : true)
+        // Browsing without a folder shows what is unfiled; a filter narrows
+        // that scope rather than replacing it.
+        && (!query.folderId && !query.trashed && !Object.keys(filters).length
+          ? row.folderId == null : true)
+        && (filters.categoryId ? row.categoryId === filters.categoryId : true)
+        && (filters.locationId ? row.locationId === filters.locationId : true)
+        && (filters.condition ? row.condition === filters.condition : true));
+
+      report.push({
+        label,
+        total,
+        walked: paged.length,
+        whole,
+        distinct: new Set(paged).size,
+        sameAsUnpaged: wholeIds.length === paged.length
+          && wholeIds.every((id, n) => id === paged[n]),
+        ordered,
+        belongs,
+      });
+    }
+    return report;
+  }, seeded);
+
+  for (const row of matrix) {
+    const detail = JSON.stringify(row);
+    // A total the engine cannot derive from index sizes is reported as
+    // unknown rather than guessed, and the pager falls back to prev/next —
+    // that is the honest answer, not a missing one.
+    check(`M «${row.label}» no record is returned twice${row.whole ? ', and every one comes back' : ''}`,
+      row.distinct === row.walked
+      && row.walked > 0
+      && (row.whole ? row.walked === row.total : true),
+      detail);
+    check(`M «${row.label}» paged and unpaged are the same answer, in the same order`,
+      row.sameAsUnpaged, detail);
+    check(`M «${row.label}» the order holds across page boundaries`, row.ordered, detail);
+    check(`M «${row.label}» and nothing outside the scope got in`, row.belongs, detail);
+  }
+}
+
 check('Q30 no JS errors', errs.length === 0, errs.slice(0, 2).join(' / '));
 await context.close();
 
