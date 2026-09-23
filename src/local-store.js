@@ -17,7 +17,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -65,6 +65,10 @@ export const SCHEMA = {
       folderCreatedAt: ['folderId', 'createdAt'],
       categoryCreatedAt: ['categoryId', 'createdAt'],
       locationCreatedAt: ['locationId', 'createdAt'],
+      // Which import wrote this record, so cancelling one can find its records
+      // without reading the inventory. Null on everything else, and IndexedDB
+      // does not index null, so the index holds imported records only.
+      importJobId: 'importJobId',
       deletedAt: 'deletedAt',
     },
   },
@@ -250,6 +254,22 @@ export function getAllByIndex(storeName, indexName, value, limit) {
     const index = store.index(indexName);
     const range = value instanceof IDBKeyRange ? value : IDBKeyRange.only(value);
     return req(limit ? index.getAll(range, limit) : index.getAll(range));
+  });
+}
+
+/**
+ * The primary keys of the records matching an index value, without reading the
+ * records themselves.
+ *
+ * Cancelling an import has to delete up to twenty thousand records. Reading
+ * them first to learn their ids would put the whole import in memory to throw
+ * it away, which is the one thing the rest of this file exists to avoid.
+ */
+export function keysByIndex(storeName, indexName, value, limit) {
+  return run(storeName, 'readonly', (store) => {
+    const index = store.index(indexName);
+    const range = value instanceof IDBKeyRange ? value : IDBKeyRange.only(value);
+    return req(limit ? index.getAllKeys(range, limit) : index.getAllKeys(range));
   });
 }
 

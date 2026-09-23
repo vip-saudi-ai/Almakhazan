@@ -268,6 +268,16 @@ export function normalizeItem(raw, options = {}) {
     images,
     primaryImageId: cleanText(src.primaryImageId, 64) || (images[0]?.id ?? null),
     aiData: validateAiData(src.aiData),
+    // Where the record came from, when it came from a spreadsheet.
+    //
+    // First-class fields rather than something inferred from the id. Cancelling
+    // a half-written import has to remove exactly the records that import
+    // wrote and nothing else, and "the ids that happen to start with imp-" is
+    // not a safe way to decide that — a customer can type an id, a restore can
+    // carry one in, and an id is not a place to keep meaning. Both are null on
+    // every record that was not imported.
+    importJobId: cleanText(src.importJobId, 128) || null,
+    sourceLine: Number.isInteger(src.sourceLine) && src.sourceLine > 0 ? src.sourceLine : null,
     createdAt: toMillis(src.createdAt) || now,
     createdBy: cleanText(src.createdBy, 128) || options.userId || null,
     updatedAt: toMillis(src.updatedAt) || now,

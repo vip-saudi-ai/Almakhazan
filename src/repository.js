@@ -69,6 +69,8 @@ export const ITEM_WINDOW = 200;
 const ATOMIC_BULK_MAX = 1000;
 /** How many operations one chunk carries when the whole set cannot be atomic. */
 const BULK_CHUNK = 100;
+/** How many records a cancellation removes per round trip. */
+const ROLLBACK_CHUNK = 200;
 
 const DAY = 24 * 60 * 60 * 1000;
 /** When the activity log was last trimmed, so it is trimmed about once a day. */
@@ -227,6 +229,19 @@ class FirestoreBackend {
       if (snapshot.docs.length < SCAN_PAGE) return rows;
       cursor = snapshot.docs[snapshot.docs.length - 1];
     }
+  }
+
+  /** The ids an import wrote. The server answers from its index, so the cost is
+   *  the size of the import rather than the size of the collection. */
+  async importedItemIds(importJobId, limit = SCAN_PAGE) {
+    if (!importJobId) return [];
+    const snapshot = await this.fs.getDocs(this.fs.query(
+      this.col('items'),
+      this.fs.where('importJobId', '==', importJobId),
+      this.fs.orderBy(this.fs.documentId()),
+      this.fs.limit(limit),
+    ));
+    return snapshot.docs.map((doc) => doc.id);
   }
 
   /** The first record carrying this identifier, for a uniqueness check. */
@@ -602,6 +617,18 @@ class LocalBackend {
   async countItemsByField(field, value) {
     if (value == null) return 0;
     return local.countByIndex('items', field, value);
+  }
+
+  /**
+   * The ids an import wrote, a page at a time, without reading the records.
+   *
+   * Cancelling an import of twenty thousand rows has to delete twenty thousand
+   * records. Reading them to learn their ids would load the entire import into
+   * memory in order to throw it away.
+   */
+  async importedItemIds(importJobId, limit) {
+    if (!importJobId) return [];
+    return local.keysByIndex('items', 'importJobId', importJobId, limit);
   }
 
   async countItems() {
@@ -1584,6 +1611,91 @@ class Repository {
     })));
     await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
     return { created: items.length };
+  }
+
+  /**
+   * Undo an import: remove exactly the records it wrote, and nothing else.
+   *
+   * This is what "إلغاء الاستيراد" means, as distinct from closing the screen.
+   * Closing keeps what was written — those are real records the customer can
+   * see and use. Cancelling says the half-written import was a mistake, and a
+   * half-written import is the one case where records can be removed outright
+   * rather than moved to the Trash: they are seconds old, the customer is
+   * watching, and leaving four hundred rows of a file they are abandoning in
+   * the Trash is not mercy, it is a second mess.
+   *
+   * What decides membership is the record's own `importJobId`, not its id.
+   * Nothing else is touched: a record the customer edited before cancelling is
+   * still that import's record and still goes, but a record that merely looks
+   * similar does not.
+   *
+   * Taxonomy the import created is removed only when it was created by this
+   * import *and* nothing references it any more — the count is asked of the
+   * backend, so a category the customer meanwhile put a hand-typed record into
+   * survives. `غير مصنّف` is never a candidate; it is not created by anything.
+   *
+   * Idempotent: running it twice removes nothing the second time, which is
+   * what makes it safe to retry after a failure half way through.
+   *
+   * @param {string} importJobId
+   * @param {{categories?: string[], locations?: string[], folders?: string[]}} created
+   * @param {{onProgress?: (removed: number) => void}} options
+   * @returns {Promise<{removed: number, taxonomy: number}>}
+   */
+  async rollbackImport(importJobId, created = {}, { onProgress } = {}) {
+    this.assertCanWrite();
+    if (!importJobId) return { removed: 0, taxonomy: 0 };
+    this.setSync(SyncState.SAVING);
+
+    let removed = 0;
+    for (;;) {
+      const ids = await this._importedIds(importJobId, ROLLBACK_CHUNK);
+      if (!ids.length) break;
+      await this.backend.runBatch(ids.map((id) => ({
+        type: 'delete', collection: 'items', id,
+      })));
+      removed += ids.length;
+      onProgress?.(removed);
+      // A pass that deletes fewer than it asked for has reached the end. The
+      // equal case still loops once more, and that pass finds nothing.
+      if (ids.length < ROLLBACK_CHUNK) break;
+    }
+
+    const orphans = [];
+    for (const [collection, field] of [
+      ['categories', 'categoryId'],
+      ['locations', 'locationId'],
+      ['folders', 'folderId'],
+    ]) {
+      const present = new Set(this.state[collection].map((row) => row.id));
+      for (const id of created[collection] || []) {
+        // A row that is already gone is not one this run removed. Counting it
+        // would make a second cancellation report work it did not do.
+        if (!id || id === UNCATEGORIZED_ID || !present.has(id)) continue;
+        if (await this.countItemsReferencing(field, id)) continue;
+        orphans.push({ type: 'delete', collection, id });
+      }
+    }
+    if (orphans.length) await this._runRelational(orphans);
+
+    if (removed || orphans.length) {
+      await this.log(ACTIONS.IMPORT_ROLLED_BACK, {
+        importJobId, items: removed, taxonomy: orphans.length,
+      });
+    }
+    return { removed, taxonomy: orphans.length };
+  }
+
+  /** The ids one import wrote, asked of the backend when it can answer from an
+   *  index and read from what is loaded when it cannot. */
+  async _importedIds(importJobId, limit) {
+    if (this.backend.importedItemIds) {
+      return this.backend.importedItemIds(importJobId, limit);
+    }
+    return this.state.items
+      .filter((item) => item.importJobId === importJobId)
+      .slice(0, limit)
+      .map((item) => item.id);
   }
 
   async bulkWrite(operations) {

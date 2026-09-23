@@ -435,6 +435,188 @@ for (const [planId, allowance] of [['free', 200], ['personal', 2000]]) {
   await context.close();
 }
 
+
+// ── stopping, keeping, and taking it back ─────────────────────────────────
+//
+// §21–§27. Two different things a customer can mean by stopping an import,
+// and the app has to mean the same thing they do:
+//
+//   إغلاق والمتابعة لاحقاً — what was written stays. It is real inventory.
+//   إلغاء الاستيراد        — it was a mistake; take exactly it back out.
+//
+// "Exactly it" is the whole test: the records that import wrote go, a record
+// that was there before does not, and a category the import created survives
+// if anything else has since been put in it.
+{
+  const { page, context, errs } = await open({ limit: 60000 });
+  page.on('dialog', (dialog) => dialog.accept());
+
+  // A file big enough that the write takes more than one transaction, so
+  // there is a middle to stop in.
+  await page.evaluate(async () => {
+    const mod = await import('/src/views/sheet-import.js');
+    const header = 'الاسم,الكمية,التصنيف,الموقع\n';
+    const lines = new Array(3000);
+    for (let i = 0; i < 3000; i += 1) lines[i] = `قطعة ${i},1,صنف مستورد,موقع مستورد`;
+    const file = new File([header + lines.join('\n') + '\n'], 'rollback.csv', { type: 'text/csv' });
+    await mod.openSpreadsheetImport(file);
+  });
+  await page.waitForTimeout(600);
+
+  const beforeItems = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    return local.count('items');
+  });
+
+  // Through the mapping step to the confirm screen, the way a customer goes.
+  await page.evaluate(() => {
+    [...document.querySelectorAll('#simport-foot button')]
+      .find((button) => button.textContent.includes('معاينة'))
+      .click();
+  });
+  await page.waitForTimeout(300);
+
+  // Start it, then stop it from the running screen the way a customer would.
+  await page.evaluate(() => {
+    [...document.querySelectorAll('#simport-foot button')]
+      .find((button) => button.textContent.startsWith('استيراد'))
+      .click();
+  });
+  await page.waitForFunction(
+    () => document.querySelector('#simport-body .import-progress'), null, { timeout: 15000 },
+  );
+  await page.evaluate(() => {
+    [...document.querySelectorAll('#simport-foot button')]
+      .find((button) => button.textContent === 'إيقاف')
+      .click();
+  });
+  await page.waitForFunction(
+    () => !document.querySelector('#simport-body .import-progress'), null, { timeout: 30000 },
+  );
+
+  const stopped = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const mod = await import('/src/views/sheet-import.js');
+    const job = mod.__jobForTest();
+    const jobs = await local.getAll('importJobs');
+    const stored = jobs.find((row) => row.id === job.id);
+    const ids = await local.keysByIndex('items', 'importJobId', job.id);
+    return {
+      jobId: job.id,
+      written: job.written,
+      total: job.total,
+      status: stored?.status,
+      created: stored?.created,
+      imported: ids.length,
+      items: await local.count('items'),
+      buttons: [...document.querySelectorAll('#simport-foot button')].map((b) => b.textContent),
+    };
+  });
+
+  check('R1 a running import can be stopped from its own screen',
+    stopped.written > 0 && stopped.written < stopped.total,
+    JSON.stringify({ written: stopped.written, total: stopped.total }));
+  check('R2 it stops as a resumable job, not as a failure',
+    stopped.status === 'stopped', String(stopped.status));
+  check('R3 every record it wrote carries which import wrote it',
+    stopped.imported === stopped.written,
+    JSON.stringify({ tagged: stopped.imported, written: stopped.written }));
+  check('R4 the taxonomy it created is recorded on the job',
+    stopped.created.categories.length === 1 && stopped.created.locations.length === 1,
+    JSON.stringify(stopped.created));
+  check('R5 the screen offers keeping and cancelling as different things',
+    stopped.buttons.some((text) => text === 'إغلاق والمتابعة لاحقاً')
+    && stopped.buttons.some((text) => text.startsWith('إلغاء الاستيراد'))
+    && stopped.buttons.some((text) => text.startsWith('متابعة الاستيراد')),
+    JSON.stringify(stopped.buttons));
+
+  const sample = await page.evaluate(async () => {
+    const local = await import('/src/local-store.js');
+    const mod = await import('/src/views/sheet-import.js');
+    const ids = await local.keysByIndex('items', 'importJobId', mod.__jobForTest().id, 1);
+    return local.get('items', ids[0]);
+  });
+  check('R6 and which line of the file it came from',
+    Number.isInteger(sample.sourceLine) && sample.sourceLine > 1,
+    JSON.stringify({ importJobId: sample.importJobId, sourceLine: sample.sourceLine }));
+
+  // Something the import did not write, put into the category the import
+  // created. Cancelling must leave both alone.
+  const survivor = await page.evaluate(async (categoryId) => {
+    const { repository } = await import('/src/repository.js');
+    const item = await repository.createItem({
+      name: 'قطعة كتبها المستخدم', quantity: 1, categoryId,
+    });
+    return { id: item.id, categoryId: item.categoryId };
+  }, stopped.created.categories[0]);
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('#simport-foot button')]
+      .find((button) => button.textContent.startsWith('إلغاء الاستيراد'))
+      .click();
+  });
+  await page.waitForFunction(
+    // The sheet closes as the last step of the cancellation, so this is the
+    // signal that the whole of it — records, taxonomy, job record — is done.
+    () => !document.getElementById('sh-simport').classList.contains('open'),
+    null, { timeout: 30000 },
+  );
+
+  const after = await page.evaluate(async (context) => {
+    const local = await import('/src/local-store.js');
+    const jobs = await local.getAll('importJobs');
+    return {
+      leftTagged: (await local.keysByIndex('items', 'importJobId', context.jobId)).length,
+      items: await local.count('items'),
+      survivor: await local.get('items', context.survivorId),
+      category: await local.get('categories', context.categoryId),
+      location: await local.get('locations', context.locationId),
+      status: jobs.find((row) => row.id === context.jobId)?.status,
+    };
+  }, {
+    jobId: stopped.jobId,
+    survivorId: survivor.id,
+    categoryId: stopped.created.categories[0],
+    locationId: stopped.created.locations[0],
+  });
+
+  check('R7 cancelling removes every record that import wrote',
+    after.leftTagged === 0, String(after.leftTagged));
+  check('R8 and only those — the inventory is back where it started, plus the one added since',
+    after.items === beforeItems + 1,
+    JSON.stringify({ before: beforeItems, after: after.items }));
+  check('R9 a record written by hand into the new category survives',
+    Boolean(after.survivor) && after.survivor.id === survivor.id,
+    JSON.stringify(after.survivor && { id: after.survivor.id }));
+  check('R10 a category the import created but something else now uses is kept',
+    Boolean(after.category), JSON.stringify(after.category));
+  check('R11 a location the import created and nothing references is removed',
+    after.location == null, JSON.stringify(after.location));
+  check('R12 the job is recorded as rolled back, so it is not offered as resumable',
+    after.status === 'rolled-back', String(after.status));
+
+  // Idempotent: the recovery path runs the same rollback again and finds
+  // nothing left to do, rather than failing or removing something else.
+  const again = await page.evaluate(async (context) => {
+    const { repository } = await import('/src/repository.js');
+    const local = await import('/src/local-store.js');
+    const result = await repository.rollbackImport(context.jobId, {
+      categories: [context.categoryId], locations: [context.locationId], folders: [],
+    });
+    return { result, items: await local.count('items'), category: await local.get('categories', context.categoryId) };
+  }, {
+    jobId: stopped.jobId,
+    categoryId: stopped.created.categories[0],
+    locationId: stopped.created.locations[0],
+  });
+  check('R13 running the cancellation twice is a no-op, and reports it as one',
+    again.result.removed === 0 && again.result.taxonomy === 0
+    && again.items === beforeItems + 1 && Boolean(again.category),
+    JSON.stringify(again.result));
+  check('R14 no JS errors', errs.length === 0, errs[0]);
+  await context.close();
+}
+
 await browser.close();
 for (const line of pass) console.log('  ✓ ' + line);
 for (const line of fail) console.log('  ✗ ' + line);

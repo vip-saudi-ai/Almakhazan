@@ -44,6 +44,20 @@ const state = {
    * Kept across a failure and cleared on success.
    */
   job: null,
+  /**
+   * Set when the customer presses "إيقاف" while the write is running. Read at
+   * the next chunk boundary: a chunk is one transaction and stopping inside it
+   * would mean stopping inside a commit, which is not a thing that can be done
+   * safely. Between chunks the import is exactly as resumable as it is after a
+   * tab is discarded, which is a state everything downstream already handles.
+   */
+  stopRequested: false,
+  /**
+   * True while a write, a cancellation or a close is in flight. Every import
+   * action is guarded by it, so a second press cannot start a second write
+   * over the first — §49.
+   */
+  busy: false,
 };
 
 const IGNORE = '';
@@ -84,6 +98,7 @@ export async function __stopJobForTest(written) {
     total: records.length,
     written,
     failedAt: written,
+    created: { categories: [], locations: [], folders: [] },
   };
   await recordJob(state.job, JOB.STOPPED);
   return state.job;
@@ -160,7 +175,15 @@ const JOB = {
   RUNNING: 'running',
   STOPPED: 'stopped',
   COMPLETED: 'completed',
+  // Closed with its records kept: the customer walked away from the file, but
+  // what it already wrote is real inventory.
   ABANDONED: 'abandoned',
+  // Being undone, and undone. Recorded before the first delete and after the
+  // last, so a tab that dies half way through a cancellation is recognisable
+  // as one — and running the cancellation again finishes it, because removing
+  // records that are already gone removes nothing.
+  ROLLING_BACK: 'rolling-back',
+  ROLLED_BACK: 'rolled-back',
 };
 
 /** Completed and abandoned jobs worth keeping for context, and no more. */
@@ -186,11 +209,77 @@ async function recordJob(job, status) {
       written: job.written,
       failedAt: job.failedAt ?? null,
       lastErrorCode: job.lastErrorCode ?? null,
+      // Which taxonomy rows this import brought into existence. Cancelling can
+      // then take back what the import added without touching a category the
+      // customer had before it — and without having to guess from names.
+      created: job.created || { categories: [], locations: [], folders: [] },
     });
-    if (status === JOB.COMPLETED || status === JOB.ABANDONED) void pruneJobHistory();
+    if (status === JOB.COMPLETED || status === JOB.ABANDONED || status === JOB.ROLLED_BACK) {
+      void pruneJobHistory();
+    }
   } catch (error) {
     // Bookkeeping. Failing to write it must not fail the import itself.
     console.error('[import] could not record the import job', error);
+  }
+}
+
+/**
+ * Undo an import, and say so on the screen while it happens.
+ *
+ * The distinction this exists to make: closing the screen on a half-written
+ * import keeps what it wrote, because those are real records. Cancelling says
+ * the import was a mistake, and takes its records back out — only its records,
+ * found by the `importJobId` each one carries, plus any category, location or
+ * folder the import itself created that nothing else has since pointed at.
+ *
+ * The job is marked `rolling-back` before the first delete, so a tab that dies
+ * half way through leaves evidence rather than a half-undone import that looks
+ * finished. Running it again from there finishes the job: deleting records
+ * that are already gone deletes nothing.
+ */
+async function rollback(job) {
+  if (!job?.id) return { removed: 0, taxonomy: 0 };
+  await recordJob(job, JOB.ROLLING_BACK);
+  state.step = 'running';
+  state.progress = { done: 0, total: job.written || 0, stage: 'جارٍ التراجع عن الاستيراد…' };
+  renderImport();
+
+  const result = await repository.rollbackImport(job.id, job.created, {
+    onProgress: (removed) => {
+      state.progress = {
+        done: removed,
+        total: Math.max(removed, job.written || 0),
+        stage: 'جارٍ التراجع عن الاستيراد…',
+      };
+      renderImport();
+    },
+  });
+
+  await recordJob({ ...job, written: 0 }, JOB.ROLLED_BACK);
+  return result;
+}
+
+/**
+ * Finish a cancellation that a closed tab interrupted.
+ *
+ * A job left at `rolling-back` is an import that is half removed: some of its
+ * records are gone and some are not, which is the one state nothing else in
+ * the app can make sense of. Finishing it is safe to do unasked because it
+ * only ever removes what the cancellation had already been told to remove.
+ */
+async function finishInterruptedRollbacks() {
+  try {
+    const stuck = await local.getAllByIndex('importJobs', 'status', JOB.ROLLING_BACK);
+    for (const job of stuck) {
+      const result = await repository.rollbackImport(job.id, job.created);
+      await recordJob({ ...job, written: 0 }, JOB.ROLLED_BACK);
+      if (result.removed) {
+        console.info(`[import] finished a cancellation the tab interrupted: ${result.removed} record(s)`);
+      }
+    }
+  } catch (error) {
+    // Recovery. A failure here must not stop the customer importing.
+    console.error('[import] could not finish an interrupted cancellation', error);
   }
 }
 
@@ -201,7 +290,9 @@ async function pruneJobHistory() {
   try {
     const jobs = await local.getAll('importJobs');
     const finished = jobs
-      .filter((job) => job.status === JOB.COMPLETED || job.status === JOB.ABANDONED)
+      .filter((job) => job.status === JOB.COMPLETED
+        || job.status === JOB.ABANDONED
+        || job.status === JOB.ROLLED_BACK)
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     const stale = finished.slice(JOB_HISTORY).map((job) => job.id);
     if (stale.length) await local.removeMany('importJobs', stale);
@@ -213,6 +304,11 @@ async function pruneJobHistory() {
 /** Opens the flow for a file that is already in hand. */
 export async function openSpreadsheetImport(file) {
   try {
+    // A cancellation that a closed tab interrupted is finished before anything
+    // else happens, so the customer never imports on top of an inventory that
+    // is half way through having an import removed from it.
+    await finishInterruptedRollbacks();
+
     // Identity first, before anything expensive. A file that cannot be
     // identified cannot be safely resumed, so there is no point parsing it —
     // and this throws rather than continuing with a weaker identity.
@@ -465,38 +561,109 @@ function renderConfirm(body, foot) {
         class: 'imp-warn',
         text: `كُتبت ${formatNumber(state.job.written)} من ${formatNumber(state.job.total)} قطعة. المتابعة تكمل من حيث توقف — الصفوف المكتوبة تُكتب بنفس هويتها، فلا تتكرر.`,
       }),
+      el('div', {
+        class: 'imp-warn',
+        text: 'الإغلاق يُبقي ما كُتب كقطع حقيقية في المخزون. الإلغاء يحذف ما كتبه هذا الاستيراد وحده.',
+      }),
     ]) : null,
 
     el('p', { class: 'sheet-note', text: 'الاستيراد يضيف فقط. لا يُعدّل قطعة موجودة ولا يحذف شيئاً.' }),
   ]);
 
-  render(foot, [
+  // Two different things a customer can mean by "stop", kept apart because
+  // they have opposite consequences — §21.
+  //
+  //   إغلاق والمتابعة لاحقاً  — the records written so far stay. Real inventory.
+  //   إلغاء الاستيراد        — they were a mistake; take them back out.
+  //
+  // One button called "إلغاء" could only have meant one of those, and whichever
+  // it meant would have been the wrong one for somebody.
+  const written = resuming ? state.job.written || 0 : 0;
+
+  render(foot, resuming ? [
+    el('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' } }, [
+      el('button', {
+        class: 'btn btn-p', type: 'button',
+        text: `متابعة الاستيراد (${formatNumber(state.job.total - written)} متبقية)`,
+        style: { width: '100%', padding: '12px' },
+        disabled: state.busy ? true : undefined,
+        onClick: () => { void guarded(run); },
+      }),
+      el('div', { style: { display: 'flex', gap: '8px' } }, [
+        el('button', {
+          class: 'btn btn-s', type: 'button',
+          text: 'إغلاق والمتابعة لاحقاً',
+          style: { flex: '1', padding: '12px' },
+          disabled: state.busy ? true : undefined,
+          onClick: () => {
+            void guarded(async () => {
+              // Kept as a stopped job, not abandoned: the customer said
+              // "later", and picking the same file again has to find it.
+              await recordJob(state.job, JOB.STOPPED);
+              state.job = null;
+              state.mappingLocked = false;
+              closeSheet('simport');
+              toast(`حُفظ الاستيراد — ${formatNumber(written)} قطعة مكتوبة حتى الآن`, '💾');
+            });
+          },
+        }),
+        el('button', {
+          class: 'btn btn-d', type: 'button',
+          text: written
+            ? `إلغاء الاستيراد وحذف ${formatNumber(written)} قطعة`
+            : 'إلغاء الاستيراد',
+          style: { flex: '1', padding: '12px' },
+          disabled: state.busy ? true : undefined,
+          onClick: () => {
+            // A destructive action, and the confirmation says the number out
+            // loud rather than asking "are you sure?" about nothing in
+            // particular.
+            if (written && !confirm(
+              `سيُحذف ${formatNumber(written)} قطعة كتبها هذا الاستيراد، ولن تُنقل للمحذوفات.`
+              + '\nالقطع التي كانت موجودة قبل الاستيراد لن تتأثر.',
+            )) return;
+            void guarded(async () => {
+              const job = state.job;
+              try {
+                const result = await rollback(job);
+                state.job = null;
+                state.mappingLocked = false;
+                closeSheet('simport');
+                toast(
+                  result.removed
+                    ? `أُلغي الاستيراد — حُذفت ${formatNumber(result.removed)} قطعة`
+                    : 'أُلغي الاستيراد',
+                  '↩',
+                );
+                window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
+              } catch (error) {
+                // The job stays at `rolling-back`, which is what brings the
+                // recovery pass back to it.
+                state.step = 'confirm';
+                renderImport();
+                toastError(error, 'تعذّر إلغاء الاستيراد');
+              }
+            });
+          },
+        }),
+      ]),
+    ]),
+  ] : [
     el('button', {
       class: 'btn btn-s', type: 'button',
-      text: resuming ? 'إلغاء' : 'رجوع',
+      text: 'رجوع',
       style: { flex: '1', padding: '12px' },
       onClick: () => {
-        // Abandoning a half-written import keeps what was written — those are
-        // real records — and forgets the job, so a later run starts fresh.
-        if (resuming) {
-          void recordJob(state.job, JOB.ABANDONED);
-          state.job = null;
-          state.mappingLocked = false;
-          closeSheet('simport');
-          return;
-        }
         state.step = 'map';
         renderImport();
       },
     }),
     el('button', {
       class: 'btn btn-p', type: 'button',
-      text: resuming
-        ? `متابعة الاستيراد (${formatNumber(state.job.total - state.job.written)} متبقية)`
-        : `استيراد ${formatNumber(records.length)} قطعة`,
+      text: `استيراد ${formatNumber(records.length)} قطعة`,
       style: { flex: '2', padding: '12px' },
-      disabled: records.length && !overflow ? undefined : true,
-      onClick: () => { void run(); },
+      disabled: records.length && !overflow && !state.busy ? undefined : true,
+      onClick: () => { void guarded(run); },
     }),
   ]);
 }
@@ -509,6 +676,10 @@ function taxonomyLine(label, names) {
 
 function renderRunning(body, foot) {
   const { done, total, stage } = state.progress || { done: 0, total: 0, stage: '' };
+  // A cancellation is not something to interrupt: stopping half way through an
+  // undo leaves exactly the mess the undo exists to clear.
+  const undoing = stage.includes('التراجع');
+
   render(body, [
     fileLine(),
     el('div', { class: 'import-progress', role: 'status', 'aria-live': 'polite' }, [
@@ -516,14 +687,51 @@ function renderRunning(body, foot) {
       el('div', { text: `${formatNumber(done)} من ${formatNumber(total)}` }),
     ]),
   ]);
-  render(foot, []);
+
+  render(foot, undoing ? [] : [
+    el('button', {
+      class: 'btn btn-s', type: 'button',
+      text: state.stopRequested ? 'جارٍ الإيقاف…' : 'إيقاف',
+      style: { flex: '1', padding: '12px' },
+      disabled: state.stopRequested ? true : undefined,
+      // Not an abort. It stops at the end of the chunk being written, and what
+      // was written stays — the screen that follows is where "continue" and
+      // "cancel and remove" are offered.
+      onClick: () => {
+        state.stopRequested = true;
+        renderImport();
+        toast('سيتوقف الاستيراد بعد إتمام الدفعة الحالية', '⏸');
+      },
+    }),
+  ]);
 }
 
 // ── writing ────────────────────────────────────────────────────────────────
 
 const CHUNK = 200;
 
+/**
+ * One import action at a time — §49.
+ *
+ * Writing, stopping and cancelling all move the same records, and a second
+ * press while the first is in flight is not a second intention, it is the
+ * customer wondering whether the first one registered. So the second press
+ * does nothing, and the buttons say why by going flat while the work runs.
+ */
+async function guarded(run) {
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    await run();
+  } finally {
+    state.busy = false;
+    if (state.step !== 'running') renderImport();
+  }
+}
+
 async function run() {
+  // A stop asked for during the previous attempt is not a stop asked for now.
+  state.stopRequested = false;
   const { records, newTaxonomy } = currentPlan();
 
   // The screen already said what the limit is. This is the rule, asked again
@@ -549,6 +757,7 @@ async function run() {
     total: records.length,
     written: 0,
     failedAt: null,
+    created: { categories: [], locations: [], folders: [] },
   };
   state.job.total = records.length;
   await recordJob(state.job, JOB.RUNNING);
@@ -562,6 +771,9 @@ async function run() {
     // already exists — including anything the stopped attempt created — so a
     // resumed import does not add a second "ساعات" beside the first.
     const created = { categories: {}, locations: {}, folders: {} };
+    // What this import brought into existence, as opposed to what it merely
+    // found. Only these are candidates for removal if the import is cancelled.
+    const mine = { categories: [], locations: [], folders: [] };
     for (const [collection, existing, save] of [
       ['categories', () => repository.state.categories,
         (name) => repository.saveCategory({ id: uid('cat'), name, icon: '📦' })],
@@ -575,14 +787,30 @@ async function run() {
         const already = existing().find((row) => normalizeArabic(row.name) === key);
         const saved = already || await save(name);
         created[collection][key] = saved.id;
+        if (!already) mine[collection].push(saved.id);
       }
     }
+
+    // Recorded before the first record is written, and merged rather than
+    // replaced: a resumed import may create the rest of the taxonomy its first
+    // attempt did not reach, and cancelling has to know about both halves.
+    state.job.created = {
+      categories: [...new Set([...(state.job.created?.categories || []), ...mine.categories])],
+      locations: [...new Set([...(state.job.created?.locations || []), ...mine.locations])],
+      folders: [...new Set([...(state.job.created?.folders || []), ...mine.folders])],
+    };
+    await recordJob(state.job, JOB.RUNNING);
 
     // Each record's id comes from the job and its row, so writing a chunk
     // twice writes the same documents twice rather than two copies of them.
     const resolved = attachTaxonomy(records, created).map((record) => ({
       ...record,
       id: record.id || importItemId(state.job.id, record.sourceLine),
+      // Provenance as a field rather than as a naming convention. This is what
+      // a cancellation selects on, and what tells anyone reading a record
+      // later which file and which line it came from.
+      importJobId: state.job.id,
+      sourceLine: record.sourceLine,
     }));
 
     // Resume where it stopped. The deterministic ids are what make a rewrite
@@ -607,6 +835,21 @@ async function run() {
         stage: 'جارٍ كتابة القطع…',
       };
       renderImport();
+
+      // Asked to stop, between two transactions. Everything written so far is
+      // committed and the job records where it reached, which is the same
+      // state a discarded tab leaves behind — so continuing later, and
+      // cancelling instead, both work from here.
+      if (state.stopRequested) {
+        state.stopRequested = false;
+        state.job.failedAt = state.job.written;
+        state.mappingLocked = state.job.written > 0;
+        await recordJob(state.job, JOB.STOPPED);
+        state.step = 'confirm';
+        renderImport();
+        toast(`أُوقف الاستيراد بعد ${formatNumber(state.job.written)} قطعة`, '⏸');
+        return;
+      }
     }
 
     await recordJob(state.job, JOB.COMPLETED);
