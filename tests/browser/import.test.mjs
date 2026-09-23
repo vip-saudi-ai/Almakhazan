@@ -195,6 +195,35 @@ const foot = (page) => page.evaluate(() => document.getElementById('simport-foot
     return repository.liveItems().length;
   });
   check('I27 nothing was written', written === 0, String(written));
+
+  // §38–§41. Two limits that constrain different things: how much of a file
+  // may be read, and how much the workspace may hold. Both are on the screen,
+  // and the one that bites is the reason the import is blocked rather than
+  // trimmed to fit.
+  check('I27b both limits are named, not just whichever one bit',
+    t.includes('الحدود') && t.includes('صفّاً لكل ملف') && t.includes('قطعة متبقية في خطتك'),
+    t.replace(/\n/g, ' / ').slice(0, 300));
+  check('I27c and it says nothing will be written, rather than a part of it',
+    /\b0\b[\s\S]*قطعة ستُكتب الآن/.test(t) && t.includes('الاستيراد الناقص'),
+    t.replace(/\n/g, ' / ').slice(0, 300));
+
+  // The button is disabled, but the rule is also asked again where the screen
+  // cannot skip it: calling the write path directly must refuse too.
+  const forced = await page.evaluate(async () => {
+    const mod = await import('/src/views/sheet-import.js');
+    await mod.__runForTest();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const { repository } = await import('/src/repository.js');
+    return {
+      items: repository.liveItems().length,
+      toast: (document.querySelector('.toast') || {}).innerText || '',
+    };
+  });
+  check('I27d pressing past the screen does not write a part of the file',
+    forced.items === 0, String(forced.items));
+  check('I27e it refuses with the numbers instead',
+    /المتبقي في خطتك/.test(forced.toast), JSON.stringify(forced.toast));
+
   check('I28 no JS errors', errs.length === 0, errs.join(' / '));
   await context.close();
 }

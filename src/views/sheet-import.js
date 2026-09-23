@@ -2,8 +2,14 @@
 //
 //   1. Map      — which column is which field, guessed then confirmed.
 //   2. Confirm  — exactly what will be written: how many records, how many
-//                 new categories, and every cell that could not be read.
-//   3. Write    — batched, with progress, after a plan check.
+//                 new categories, every cell that could not be read, and both
+//                 limits that bound the write.
+//   3. Write    — batched, with progress, after a plan check, and stoppable at
+//                 a chunk boundary.
+//
+// A write that stopped can be continued, closed, or cancelled, and the last
+// two are different things: closing keeps the records already written, and
+// cancelling removes exactly the ones this import wrote.
 //
 // What this screen refuses to do is the point of it. It does not invent a
 // name for a nameless row, does not turn "ثلاثة" into 3, does not accept a
@@ -81,6 +87,12 @@ export function __mappingForTest() {
 export function __setMappingForTest(mapping, resolved = {}) {
   state.mapping = { ...mapping };
   state.resolved = { ...resolved };
+}
+
+/** The write path, reached without the button — so a test can check that the
+ *  rules are the write's rules and not the screen's. */
+export async function __runForTest() {
+  await run();
 }
 
 /** Leave a stopped job behind, as a tab discarded mid-import would. */
@@ -513,12 +525,34 @@ function renderConfirm(body, foot) {
   const { records, problems, newTaxonomy, rowStatus } = currentPlan();
   const mapped = new Set(Object.values(state.mapping));
   const unknownColumns = state.sheet.headers.filter((_, i) => !mapped.has(i)).length;
-  const quota = quotaStatus();
-  const room = quota.limit == null ? Infinity : Math.max(0, quota.limit - quota.used);
-  const overflow = records.length > room;
-
   const newCount = newTaxonomy.categories.length + newTaxonomy.locations.length + newTaxonomy.folders.length;
   const resuming = state.job?.failedAt != null;
+
+  // ── the two limits, which are not the same limit ──────────────────────
+  //
+  // §38–§41. `importRows` says how many rows of a file may be *read*. The item
+  // quota says how many records the workspace may *hold*. They constrain
+  // different things and a file can meet either one first, so the screen shows
+  // both rather than showing whichever happens to bite and leaving the
+  // customer to guess which number they are looking at.
+  //
+  // What will actually be written is the smallest of three: the rows that
+  // parsed cleanly, the rows the read limit allowed in, and the room left in
+  // the plan. When the plan is the smallest of the three the import is blocked
+  // — not trimmed to fit. Writing the first eight hundred rows of a thousand
+  // and calling it done is how a customer ends up with an inventory they
+  // believe is complete and is not.
+  const limit = state.limit || importLimit();
+  const quota = quotaStatus();
+  const room = !quota || quota.limit == null
+    ? Infinity
+    : Math.max(0, quota.limit - quota.used);
+  // A resumed import's written records are already counted in `used`, so what
+  // has to fit is what is left to write, not the whole file again.
+  const pending = resuming
+    ? Math.max(0, records.length - (state.job.written || 0))
+    : records.length;
+  const overflow = pending > room;
 
   render(body, [
     fileLine(),
@@ -534,8 +568,26 @@ function renderConfirm(body, foot) {
 
     overflow ? el('div', { class: 'imp-warnings' }, [
       el('div', { class: 'imp-warn-title', text: 'لا تتسع خطتك لهذا الملف' }),
-      el('div', { class: 'imp-warn', text: `${formatNumber(records.length)} قطعة في الملف، والمتبقي في خطتك ${formatNumber(room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.` }),
+      el('div', { class: 'imp-warn', text: `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.` }),
+      el('div', { class: 'imp-warn', text: 'لن يُستورد جزء من الملف — الاستيراد الناقص يبدو مكتملاً وهو ليس كذلك.' }),
     ]) : null,
+
+    section('الحدود', [
+      el('div', { class: 'imp-stats' }, [
+        el('div', { class: 'imp-stat' }, [
+          el('b', { text: limit.unlimitedPlan ? formatNumber(limit.technical) : formatNumber(limit.effective) }),
+          limit.boundBy === 'plan' ? ' صفّاً لكل ملف (خطتك)' : ' صفّاً لكل ملف (حد الملف)',
+        ]),
+        el('div', { class: 'imp-stat' }, [
+          el('b', { text: room === Infinity ? 'بلا حد' : formatNumber(room) }),
+          ' قطعة متبقية في خطتك',
+        ]),
+        el('div', { class: overflow ? 'imp-stat imp-error' : 'imp-stat imp-ready' }, [
+          el('b', { text: formatNumber(overflow ? 0 : pending) }),
+          ' قطعة ستُكتب الآن',
+        ]),
+      ]),
+    ]),
 
     newCount ? section('سيُنشأ', [
       ...taxonomyLine('تصنيفات', newTaxonomy.categories),
@@ -734,11 +786,28 @@ async function run() {
   state.stopRequested = false;
   const { records, newTaxonomy } = currentPlan();
 
-  // The screen already said what the limit is. This is the rule, asked again
-  // where it cannot be skipped by anything the screen did or did not draw.
-  const allowed = canImportRows(records.length);
+  // The screen already said what the limits are. These are the rules, asked
+  // again where they cannot be skipped by anything the screen did or did not
+  // draw — and they are two rules, not one. The first is how much of a file
+  // may be read; the second is how much the workspace may hold.
+  const allowed = canImportRows(state.sheet.rows.length);
   if (!allowed.allowed) {
     toast(allowed.message, '⚠');
+    return;
+  }
+
+  const quota = quotaStatus();
+  const room = !quota || quota.limit == null
+    ? Infinity
+    : Math.max(0, quota.limit - quota.used);
+  const pending = Math.max(0, records.length - (state.job?.written || 0));
+  if (pending > room) {
+    // Blocked, not trimmed. An import that writes the part that fits and stops
+    // leaves an inventory that looks complete and is not.
+    toast(
+      `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.`,
+      '⚠',
+    );
     return;
   }
 
