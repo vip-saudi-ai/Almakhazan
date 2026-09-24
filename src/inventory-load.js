@@ -39,16 +39,14 @@
 //   (Excel, JSON)      inventory. A short file that looks complete is worse
 //                      than a slow one.
 //
-//   sheet-import.js    Matches taxonomy by name against what already exists
-//                      and counts the result against the plan limit.
-//
 //   restore.js         Takes the safety backup. A backup of a window would
 //   (completeItems)    let step three delete records it never backed up.
 //
 //   device-upload.js   "No image still points at the device" must be true of
 //   (completeItems)    every record.
 //
-// What is NOT here any more: opening Settings, and drawing category, folder
+// What is NOT here any more: spreadsheet import (taxonomy is held in full
+// anyway, and plan room is a count), opening Settings, and drawing category, folder
 // or location counts — those now come from one pass over whatever is loaded
 // (`inventoryCounts` in query.js) rather than one filter per entry.
 

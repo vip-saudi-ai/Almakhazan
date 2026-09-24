@@ -23,23 +23,29 @@
 import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, importItemId, planImport } from '../import-mapping.js';
 import { readSpreadsheet } from '../spreadsheet.js';
 import { normalizeArabic } from '../search.js';
-import * as local from '../local-store.js';
 import { repository } from '../repository.js';
 import { canImportRows, importLimit, quotaStatus } from '../subscription.js';
 import { AppError, $, el, formatNumber, render, uid } from '../utils.js';
-import { closeSheet, openSheet, section, toast, toastError } from '../ui.js';
-import { withFullInventory } from '../inventory-load.js';
+import { closeSheet, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
+import {
+  JOB, ensureImportReady, findUnfinishedJob, importRecoveryState, markJobActive,
+  markJobInactive, persistJobCritical, runImportRecovery,
+} from '../import-jobs.js';
 
 const state = {
   file: null,
   sheet: null,        // { headers, rows, lines, sheetName, truncated, totalRows, appliedLimit }
   fingerprint: null,  // what the file is, as opposed to what it is called
   limit: null,        // { plan, technical, effective, boundBy }
+  /** Records the plan still has room for, counted when the file was opened
+   *  and again before writing — from the usage counter and a direct count,
+   *  never from an inventory loaded into memory. */
+  room: Infinity,
   mapping: {},
   resolved: {},       // the customer's answers for the ambiguous columns
   /** True once records have been written under this mapping — see §26. */
   mappingLocked: false,
-  step: 'map',        // map | confirm | running
+  step: 'map',        // map | confirm | running | blocked
   progress: null,
   /**
    * The import currently being written, if any.
@@ -112,11 +118,34 @@ export async function __stopJobForTest(written) {
     failedAt: written,
     created: { categories: [], locations: [], folders: [] },
   };
-  await recordJob(state.job, JOB.STOPPED);
+  await persistJobCritical(state.job, JOB.STOPPED);
   return state.job;
 }
 
+/** What the import screen is still holding, as booleans — so a test can see
+ *  that a closed import let go of the file without being handed the file. */
+export function __importMemoryForTest() {
+  return {
+    file: state.file !== null,
+    sheet: state.sheet !== null,
+    fingerprint: state.fingerprint !== null,
+    limit: state.limit !== null,
+    mapping: Object.keys(state.mapping).length > 0,
+    resolved: Object.keys(state.resolved).length > 0,
+    mappingLocked: state.mappingLocked,
+    progress: state.progress !== null,
+    stopRequested: state.stopRequested,
+    job: state.job !== null,
+  };
+}
+
 export async function startSpreadsheetImport() {
+  // Known to be blocked: say so now rather than after the customer has gone
+  // looking for a file.
+  if (importRecoveryState.checked && !importRecoveryState.ready) {
+    openRecoveryBlocked();
+    return;
+  }
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.xlsx,.xlsm,.csv,.tsv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -162,80 +191,6 @@ async function fingerprint(file) {
 }
 
 /**
- * An import of this exact file that stopped part way.
- *
- * Kept on the device rather than in memory, because the way an import on a
- * phone usually stops is that the tab is discarded — and after that there is
- * no session left to remember anything.
- */
-async function findUnfinishedJob(fileFingerprint) {
-  if (!fileFingerprint) return null;
-  try {
-    const candidates = await local.getAllByIndex('importJobs', 'fileFingerprint', fileFingerprint);
-    return candidates
-      .filter((job) => job.status === JOB.STOPPED)
-      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0] || null;
-  } catch (error) {
-    console.error('[import] could not read the import history', error);
-    return null;
-  }
-}
-
-/** The states an import passes through. One vocabulary, used everywhere. */
-const JOB = {
-  PREPARED: 'prepared',
-  RUNNING: 'running',
-  STOPPED: 'stopped',
-  COMPLETED: 'completed',
-  // Closed with its records kept: the customer walked away from the file, but
-  // what it already wrote is real inventory.
-  ABANDONED: 'abandoned',
-  // Being undone, and undone. Recorded before the first delete and after the
-  // last, so a tab that dies half way through a cancellation is recognisable
-  // as one — and running the cancellation again finishes it, because removing
-  // records that are already gone removes nothing.
-  ROLLING_BACK: 'rolling-back',
-  ROLLED_BACK: 'rolled-back',
-};
-
-/** Completed and abandoned jobs worth keeping for context, and no more. */
-const JOB_HISTORY = 20;
-
-async function recordJob(job, status) {
-  try {
-    await local.put('importJobs', {
-      id: job.id,
-      startedAt: job.startedAt,
-      updatedAt: Date.now(),
-      status,
-      fileName: job.fileName,
-      fileSize: job.fileSize,
-      fileFingerprint: job.fileFingerprint,
-      sheetName: job.sheetName,
-      // The decisions that give the file its meaning. Without them a resumed
-      // import would re-guess the columns, and "Ref" could come back meaning
-      // something other than the serial number the customer said it was.
-      mapping: job.mapping,
-      resolved: job.resolved,
-      total: job.total,
-      written: job.written,
-      failedAt: job.failedAt ?? null,
-      lastErrorCode: job.lastErrorCode ?? null,
-      // Which taxonomy rows this import brought into existence. Cancelling can
-      // then take back what the import added without touching a category the
-      // customer had before it — and without having to guess from names.
-      created: job.created || { categories: [], locations: [], folders: [] },
-    });
-    if (status === JOB.COMPLETED || status === JOB.ABANDONED || status === JOB.ROLLED_BACK) {
-      void pruneJobHistory();
-    }
-  } catch (error) {
-    // Bookkeeping. Failing to write it must not fail the import itself.
-    console.error('[import] could not record the import job', error);
-  }
-}
-
-/**
  * Undo an import, and say so on the screen while it happens.
  *
  * The distinction this exists to make: closing the screen on a half-written
@@ -251,75 +206,48 @@ async function recordJob(job, status) {
  */
 async function rollback(job) {
   if (!job?.id) return { removed: 0, taxonomy: 0 };
-  await recordJob(job, JOB.ROLLING_BACK);
-  state.step = 'running';
-  state.progress = { done: 0, total: job.written || 0, stage: 'جارٍ التراجع عن الاستيراد…' };
-  renderImport();
-
-  const result = await repository.rollbackImport(job.id, job.created, {
-    onProgress: (removed) => {
-      state.progress = {
-        done: removed,
-        total: Math.max(removed, job.written || 0),
-        stage: 'جارٍ التراجع عن الاستيراد…',
-      };
-      renderImport();
-    },
-  });
-
-  await recordJob({ ...job, written: 0 }, JOB.ROLLED_BACK);
-  return result;
-}
-
-/**
- * Finish a cancellation that a closed tab interrupted.
- *
- * A job left at `rolling-back` is an import that is half removed: some of its
- * records are gone and some are not, which is the one state nothing else in
- * the app can make sense of. Finishing it is safe to do unasked because it
- * only ever removes what the cancellation had already been told to remove.
- */
-async function finishInterruptedRollbacks() {
+  // Durable before the first delete, or no delete at all: a tab that dies
+  // after deleting has begun must leave a job that says so, or the half that
+  // is left looks like an import that was never cancelled.
+  markJobActive(job.id);
   try {
-    const stuck = await local.getAllByIndex('importJobs', 'status', JOB.ROLLING_BACK);
-    for (const job of stuck) {
-      const result = await repository.rollbackImport(job.id, job.created);
-      await recordJob({ ...job, written: 0 }, JOB.ROLLED_BACK);
-      if (result.removed) {
-        console.info(`[import] finished a cancellation the tab interrupted: ${result.removed} record(s)`);
-      }
-    }
-  } catch (error) {
-    // Recovery. A failure here must not stop the customer importing.
-    console.error('[import] could not finish an interrupted cancellation', error);
-  }
-}
+    await persistJobCritical(job, JOB.ROLLING_BACK);
+    state.step = 'running';
+    state.progress = { done: 0, total: job.written || 0, stage: 'جارٍ التراجع عن الاستيراد…' };
+    renderImport();
 
-/** Finished jobs are history, and history does not need to be unbounded. A
- *  stopped job is never pruned: it is something the customer may still
- *  continue. */
-async function pruneJobHistory() {
-  try {
-    const jobs = await local.getAll('importJobs');
-    const finished = jobs
-      .filter((job) => job.status === JOB.COMPLETED
-        || job.status === JOB.ABANDONED
-        || job.status === JOB.ROLLED_BACK)
-      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-    const stale = finished.slice(JOB_HISTORY).map((job) => job.id);
-    if (stale.length) await local.removeMany('importJobs', stale);
-  } catch (error) {
-    console.error('[import] could not prune the import history', error);
+    const result = await repository.rollbackImport(job.id, job.created, {
+      onProgress: (removed) => {
+        state.progress = {
+          done: removed,
+          total: Math.max(removed, job.written || 0),
+          stage: 'جارٍ التراجع عن الاستيراد…',
+        };
+        renderImport();
+      },
+    });
+
+    await persistJobCritical({ ...job, written: 0 }, JOB.ROLLED_BACK);
+    return result;
+  } finally {
+    markJobInactive(job.id);
   }
 }
 
 /** Opens the flow for a file that is already in hand. */
 export async function openSpreadsheetImport(file) {
   try {
-    // A cancellation that a closed tab interrupted is finished before anything
-    // else happens, so the customer never imports on top of an inventory that
-    // is half way through having an import removed from it.
-    await finishInterruptedRollbacks();
+    // Before the file is touched: every interrupted import is back in a known
+    // state, and any cancellation a closed tab left half done is finished. If
+    // one cannot be, this refuses — no fingerprint, no parse, no job, nothing
+    // written — because importing into a half-undone import is the one thing
+    // that would make both of them impossible to reason about.
+    try {
+      await ensureImportReady();
+    } catch (error) {
+      if (error?.code === 'import/recovery-blocked') { openRecoveryBlocked(); return; }
+      throw error;
+    }
 
     // Identity first, before anything expensive. A file that cannot be
     // identified cannot be safely resumed, so there is no point parsing it —
@@ -328,21 +256,25 @@ export async function openSpreadsheetImport(file) {
 
     const limit = importLimit();
     const sheet = await readSpreadsheet(file, { rowLimit: limit.effective });
-    // The importer matches taxonomy by name and counts against the plan, so
-    // it needs the inventory it is adding to, not a window of it.
-    if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
+
+    // No inventory load. Matching taxonomy by name needs the categories,
+    // locations and folders, which are held in full anyway; how much room the
+    // plan has left is a count, asked of the counter and of the store. Neither
+    // needs twenty thousand records in memory — that is what this used to do.
+    const room = await importRoom();
 
     state.file = file;
     state.sheet = sheet;
     state.limit = limit;
+    state.room = room;
     state.fingerprint = fileFingerprint;
     state.step = 'map';
     state.progress = null;
 
-    // The same file, picked again after an import of it stopped: continue that
-    // job rather than starting a second one beside it — with the mapping the
-    // customer chose the first time, not a fresh guess at it. Any other file,
-    // or a file that could not be identified, starts fresh.
+    // The same file, picked again after an import of it stopped — or after the
+    // tab died while it was running: continue that job rather than starting a
+    // second one beside it, with the mapping and the answers the customer gave
+    // the first time. Any other file starts fresh.
     const previous = await findUnfinishedJob(fileFingerprint);
     const sameSheet = previous && previous.sheetName === sheet.sheetName;
     if (previous && !sameSheet) {
@@ -370,8 +302,128 @@ export async function openSpreadsheetImport(file) {
     openSheet('simport');
     renderImport();
   } catch (error) {
+    releaseImportMemory();
     toastError(error, 'تعذّر قراءة الملف');
   }
+}
+
+/**
+ * How many more records the plan has room for.
+ *
+ * The usage counter is the authority where there is one. It is checked
+ * against a direct count of the store, and the larger of the two is used: a
+ * counter that has fallen behind must not let an import through that the
+ * inventory itself says does not fit. No plan limit, or an unlimited one, is
+ * no ceiling.
+ */
+async function importRoom() {
+  const quota = quotaStatus();
+  if (!quota || quota.limit == null || quota.limit < 0) return Infinity;
+  const counts = await repository.recordCounts();
+  const used = Math.max(quota.used ?? 0, counts?.live ?? 0);
+  return Math.max(0, quota.limit - used);
+}
+
+// ── releasing the file ─────────────────────────────────────────────────────
+//
+// One place, because an import can end in many: completed, cancelled,
+// continued later, refused, closed by a swipe. A parsed 50,000-row sheet is
+// tens of megabytes, and every path that used to close the sheet without
+// clearing it kept all of it alive until the next import replaced it.
+//
+// Releasing memory is not abandoning a job. A stopped job keeps everything it
+// needs on the device — fingerprint, sheet, mapping, answers, progress — and
+// continues when the customer picks the same file again, which is parsed
+// afresh and matched by its fingerprint.
+
+function releaseImportMemory() {
+  state.file = null;
+  state.sheet = null;
+  state.fingerprint = null;
+  state.limit = null;
+  state.room = Infinity;
+  state.mapping = {};
+  state.resolved = {};
+  state.mappingLocked = false;
+  state.progress = null;
+  state.stopRequested = false;
+  state.job = null;
+  state.step = 'map';
+}
+
+function importSheetOpen() {
+  return Boolean($('sh-simport')?.classList.contains('open'));
+}
+
+/** Closes the sheet and lets go of the file, once nothing is still using it. */
+function closeImport() {
+  closeSheet('simport');
+  releaseWhenIdle();
+}
+
+/** A write in flight still holds the job and its progress; the release waits
+ *  for it to finish rather than pulling the state out from under it. */
+function releaseWhenIdle() {
+  if (!state.busy && !importSheetOpen()) releaseImportMemory();
+}
+
+// Every way the sheet can close — a button, the overlay, the back gesture —
+// goes through here.
+onSheetClose('simport', releaseWhenIdle);
+
+// ── a cancellation that could not be finished ──────────────────────────────
+
+/**
+ * The one screen shown instead of an import while an earlier cancellation is
+ * unfinished. It offers the retry, and nothing that would start a new import.
+ */
+function openRecoveryBlocked() {
+  releaseImportMemory();
+  state.step = 'blocked';
+  openSheet('simport');
+  renderImport();
+}
+
+function renderBlocked(body, foot) {
+  render(body, [
+    el('div', { class: 'imp-warnings', role: 'alert' }, [
+      el('div', { class: 'imp-warn-title', text: 'يوجد استيراد سابق لم يكتمل التراجع عنه' }),
+      el('div', {
+        class: 'imp-warn',
+        text: 'تعذّر إكمال التراجع عن استيراد سابق. أعد المحاولة قبل بدء استيراد جديد.',
+      }),
+      el('div', {
+        class: 'imp-warn',
+        text: 'مخزونك متاح للتصفح كالمعتاد — الاستيراد وحده متوقف حتى يكتمل التراجع.',
+      }),
+    ]),
+  ]);
+  render(foot, [
+    el('button', {
+      class: 'btn btn-s', type: 'button', text: 'إغلاق',
+      style: { flex: '1', padding: '12px' },
+      onClick: () => closeImport(),
+    }),
+    el('button', {
+      class: 'btn btn-p', type: 'button',
+      text: state.busy ? 'جارٍ إكمال التراجع…' : 'إعادة محاولة إكمال التراجع',
+      style: { flex: '2', padding: '12px' },
+      disabled: state.busy ? true : undefined,
+      onClick: () => {
+        void guarded(async () => {
+          renderImport();
+          const result = await runImportRecovery();
+          if (result.ready) {
+            closeImport();
+            toast('اكتمل التراجع عن الاستيراد السابق. يمكنك بدء استيراد جديد الآن.', '✓');
+            window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
+          } else {
+            toast('تعذّر إكمال التراجع مرة أخرى. حاول لاحقاً.', '⚠');
+          }
+        });
+      },
+    }),
+  ]);
 }
 
 function currentPlan() {
@@ -394,6 +446,9 @@ function renderImport() {
   const foot = $('simport-foot');
   if (!body) return;
 
+  if (state.step === 'blocked') { renderBlocked(body, foot); return; }
+  // Released while a write was finishing in the background: nothing to draw.
+  if (!state.sheet) return;
   if (state.step === 'running') { renderRunning(body, foot); return; }
   if (state.step === 'confirm') { renderConfirm(body, foot); return; }
   renderMap(body, foot);
@@ -463,7 +518,7 @@ function renderMap(body, foot) {
 
   render(foot, [
     el('button', { class: 'btn btn-s', type: 'button', text: 'إلغاء', style: { flex: '1', padding: '12px' },
-      onClick: () => closeSheet('simport') }),
+      onClick: () => closeImport() }),
     el('button', {
       class: 'btn btn-p', type: 'button', text: 'معاينة', style: { flex: '2', padding: '12px' },
       disabled: nameMapped ? undefined : true,
@@ -543,10 +598,7 @@ function renderConfirm(body, foot) {
   // and calling it done is how a customer ends up with an inventory they
   // believe is complete and is not.
   const limit = state.limit || importLimit();
-  const quota = quotaStatus();
-  const room = !quota || quota.limit == null
-    ? Infinity
-    : Math.max(0, quota.limit - quota.used);
+  const room = state.room;
   // A resumed import's written records are already counted in `used`, so what
   // has to fit is what is left to write, not the whole file again.
   const pending = resuming
@@ -611,6 +663,10 @@ function renderConfirm(body, foot) {
       el('div', { class: 'imp-warn-title', text: 'توقف الاستيراد في المنتصف' }),
       el('div', {
         class: 'imp-warn',
+        text: 'وجد نَظْم استيراداً سابقاً توقف قبل اكتماله. يمكنك متابعة العملية من حيث توقفت.',
+      }),
+      el('div', {
+        class: 'imp-warn',
         text: `كُتبت ${formatNumber(state.job.written)} من ${formatNumber(state.job.total)} قطعة. المتابعة تكمل من حيث توقف — الصفوف المكتوبة تُكتب بنفس هويتها، فلا تتكرر.`,
       }),
       el('div', {
@@ -650,12 +706,16 @@ function renderConfirm(body, foot) {
           onClick: () => {
             void guarded(async () => {
               // Kept as a stopped job, not abandoned: the customer said
-              // "later", and picking the same file again has to find it.
-              await recordJob(state.job, JOB.STOPPED);
-              state.job = null;
-              state.mappingLocked = false;
-              closeSheet('simport');
-              toast(`حُفظ الاستيراد — ${formatNumber(written)} قطعة مكتوبة حتى الآن`, '💾');
+              // "later", and picking the same file again has to find it. The
+              // file itself is let go — the job holds everything needed to
+              // match it again.
+              try {
+                await persistJobCritical(state.job, JOB.STOPPED);
+                toast(`حُفظ الاستيراد — ${formatNumber(written)} قطعة مكتوبة حتى الآن`, '💾');
+              } catch (error) {
+                toastError(error, 'تعذّر حفظ حالة الاستيراد');
+              }
+              closeImport();
             });
           },
         }),
@@ -678,9 +738,7 @@ function renderConfirm(body, foot) {
               const job = state.job;
               try {
                 const result = await rollback(job);
-                state.job = null;
-                state.mappingLocked = false;
-                closeSheet('simport');
+                closeImport();
                 toast(
                   result.removed
                     ? `أُلغي الاستيراد — حُذفت ${formatNumber(result.removed)} قطعة`
@@ -689,10 +747,22 @@ function renderConfirm(body, foot) {
                 );
                 window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
               } catch (error) {
-                // The job stays at `rolling-back`, which is what brings the
-                // recovery pass back to it.
-                state.step = 'confirm';
-                renderImport();
+                if (error?.code === 'import/job-unsaved') {
+                  // `rolling-back` never reached the device, so nothing was
+                  // deleted: the job is still the stopped job it was.
+                  state.step = 'confirm';
+                  renderImport();
+                  toastError(error, 'تعذّر إلغاء الاستيراد');
+                  return;
+                }
+                // Deleting began and did not finish. The job is at
+                // `rolling-back`, which recovery finishes — and until it does,
+                // no new import starts on top of it.
+                importRecoveryState.ready = false;
+                importRecoveryState.error = error;
+                importRecoveryState.pendingRollbackJobs = [job.id];
+                console.error('[import] rollback failed part way; recovery is now required', error);
+                openRecoveryBlocked();
                 toastError(error, 'تعذّر إلغاء الاستيراد');
               }
             });
@@ -777,7 +847,11 @@ async function guarded(run) {
     await run();
   } finally {
     state.busy = false;
-    if (state.step !== 'running') renderImport();
+    if (importSheetOpen()) {
+      if (state.step !== 'running') renderImport();
+    } else {
+      releaseWhenIdle();
+    }
   }
 }
 
@@ -796,16 +870,13 @@ async function run() {
     return;
   }
 
-  const quota = quotaStatus();
-  const room = !quota || quota.limit == null
-    ? Infinity
-    : Math.max(0, quota.limit - quota.used);
+  state.room = await importRoom();
   const pending = Math.max(0, records.length - (state.job?.written || 0));
-  if (pending > room) {
+  if (pending > state.room) {
     // Blocked, not trimmed. An import that writes the part that fits and stops
     // leaves an inventory that looks complete and is not.
     toast(
-      `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.`,
+      `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(state.room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.`,
       '⚠',
     );
     return;
@@ -814,7 +885,8 @@ async function run() {
   // One job, kept across a retry. A failed import used to leave the written
   // chunks behind and send the customer back to a button that would write
   // everything again — 400 duplicates, then the rest of the file.
-  state.job = state.job || {
+  const resuming = Boolean(state.job);
+  const job = state.job || {
     id: uid('job').slice(4),
     startedAt: Date.now(),
     fileName: state.file?.name || '',
@@ -828,17 +900,31 @@ async function run() {
     failedAt: null,
     created: { categories: [], locations: [], folders: [] },
   };
-  state.job.total = records.length;
-  await recordJob(state.job, JOB.RUNNING);
+  job.total = records.length;
+  state.job = job;
+  markJobActive(job.id);
+
   state.step = 'running';
-  state.progress = { done: 0, total: records.length, stage: 'جارٍ إنشاء التصنيفات…' };
+  state.progress = { done: job.written || 0, total: records.length, stage: 'جارٍ التحضير…' };
   renderImport();
 
   try {
-    // Taxonomies first: the records reference them by id, so they have to
-    // exist before a record can point at one. Resolved by name against what
-    // already exists — including anything the stopped attempt created — so a
-    // resumed import does not add a second "ساعات" beside the first.
+    // ── 1. the job exists on the device before anything carries its id ──
+    //
+    // Every record this import writes has the job's id inside its own id and
+    // in its provenance. A record written under a job the device does not
+    // know about can be neither resumed nor cancelled, so if the job cannot
+    // be written, nothing is.
+    if (!resuming) await persistJobCritical(job, JOB.PREPARED);
+
+    // ── 2. taxonomy ──
+    //
+    // The records reference categories, locations and folders by id, so they
+    // have to exist first. Resolved by name against what already exists —
+    // including anything a stopped attempt created — so a resumed import does
+    // not add a second "ساعات" beside the first.
+    state.progress = { ...state.progress, stage: 'جارٍ إنشاء التصنيفات…' };
+    renderImport();
     const created = { categories: {}, locations: {}, folders: {} };
     // What this import brought into existence, as opposed to what it merely
     // found. Only these are candidates for removal if the import is cancelled.
@@ -860,46 +946,53 @@ async function run() {
       }
     }
 
-    // Recorded before the first record is written, and merged rather than
-    // replaced: a resumed import may create the rest of the taxonomy its first
-    // attempt did not reach, and cancelling has to know about both halves.
-    state.job.created = {
-      categories: [...new Set([...(state.job.created?.categories || []), ...mine.categories])],
-      locations: [...new Set([...(state.job.created?.locations || []), ...mine.locations])],
-      folders: [...new Set([...(state.job.created?.folders || []), ...mine.folders])],
+    // ── 3. what it created, durably, before the first record ──
+    //
+    // Merged rather than replaced: a resumed import may create the rest of
+    // the taxonomy its first attempt did not reach, and cancelling has to know
+    // about both halves.
+    job.created = {
+      categories: [...new Set([...(job.created?.categories || []), ...mine.categories])],
+      locations: [...new Set([...(job.created?.locations || []), ...mine.locations])],
+      folders: [...new Set([...(job.created?.folders || []), ...mine.folders])],
     };
-    await recordJob(state.job, JOB.RUNNING);
+    await persistJobCritical(job, JOB.RUNNING);
 
     // Each record's id comes from the job and its row, so writing a chunk
     // twice writes the same documents twice rather than two copies of them.
     const resolved = attachTaxonomy(records, created).map((record) => ({
       ...record,
-      id: record.id || importItemId(state.job.id, record.sourceLine),
+      id: record.id || importItemId(job.id, record.sourceLine),
       // Provenance as a field rather than as a naming convention. This is what
       // a cancellation selects on, and what tells anyone reading a record
       // later which file and which line it came from.
-      importJobId: state.job.id,
+      importJobId: job.id,
       sourceLine: record.sourceLine,
     }));
 
-    // Resume where it stopped. The deterministic ids are what make a rewrite
-    // safe; `written` is what makes it unnecessary. If the tab died between
-    // the last commit and recording the progress, that one chunk is written
-    // again — which changes nothing, because the ids are the same.
-    const start = Math.min(Math.max(0, state.job.written || 0), resolved.length);
+    // Resume where it stopped. `written` is the last boundary recorded on the
+    // device; if the tab died between a chunk committing and its progress
+    // being recorded, that one chunk is written again — which changes
+    // nothing, because the ids are the same.
+    const start = Math.min(Math.max(0, job.written || 0), resolved.length);
     state.progress = { done: start, total: resolved.length, stage: 'جارٍ كتابة القطع…' };
     renderImport();
 
+    // ── 4. chunks: commit, then record the boundary, then the next ──
+    //
+    // The record of how far it got is what makes the gap after a crash one
+    // chunk wide. If that record cannot be written the import stops here,
+    // rather than writing chunk after chunk with nothing on the device saying
+    // they exist — the chunk just committed is safe to replay, several are an
+    // ever-wider gap.
     for (let i = start; i < resolved.length; i += CHUNK) {
       const slice = resolved.slice(i, i + CHUNK);
       await repository.bulkCreateItems(slice);
-      state.job.written = Math.min(resolved.length, i + CHUNK);
-      state.job.failedAt = null;
-      // Recorded per chunk, so a tab that dies mid-import resumes from the
-      // last chunk that landed rather than from the beginning.
-      await recordJob(state.job, JOB.RUNNING);
+      job.written = Math.min(resolved.length, i + CHUNK);
+      job.failedAt = null;
+      await persistJobCritical(job, JOB.RUNNING);
       state.progress = {
-        done: state.job.written,
+        done: job.written,
         total: resolved.length,
         stage: 'جارٍ كتابة القطع…',
       };
@@ -911,33 +1004,55 @@ async function run() {
       // cancelling instead, both work from here.
       if (state.stopRequested) {
         state.stopRequested = false;
-        state.job.failedAt = state.job.written;
-        state.mappingLocked = state.job.written > 0;
-        await recordJob(state.job, JOB.STOPPED);
+        job.failedAt = job.written;
+        state.mappingLocked = job.written > 0;
+        await persistJobCritical(job, JOB.STOPPED);
         state.step = 'confirm';
         renderImport();
-        toast(`أُوقف الاستيراد بعد ${formatNumber(state.job.written)} قطعة`, '⏸');
+        toast(`أُوقف الاستيراد بعد ${formatNumber(job.written)} قطعة`, '⏸');
         return;
       }
     }
 
-    await recordJob(state.job, JOB.COMPLETED);
+    await persistJobCritical(job, JOB.COMPLETED);
     const written = resolved.length - start;
-    state.job = null;
-    state.mappingLocked = false;
-    closeSheet('simport');
+    closeImport();
     toast(`أُضيفت ${formatNumber(written)} قطعة`, '📥');
     window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
   } catch (error) {
-    if (state.job) {
-      state.job.failedAt = state.job.written;
-      state.job.lastErrorCode = error?.code || null;
-      // From here on the mapping is what the written records mean.
-      state.mappingLocked = state.job.written > 0;
-      await recordJob(state.job, JOB.STOPPED);
-    }
-    state.step = 'confirm';
-    renderImport();
-    toastError(error, 'تعذّر الاستيراد');
+    await stopAfterFailure(job, error);
+  } finally {
+    markJobInactive(job.id);
   }
+}
+
+/**
+ * What a failed write leaves behind.
+ *
+ * A record write that failed leaves an import that can be continued, so the
+ * job is recorded as stopped and the screen offers to continue. A job write
+ * that failed is different: the device would not keep the record of what
+ * happened, so nothing more is written — not even the `stopped` status. The
+ * job on disk still says where it last durably reached; it reads as
+ * interrupted the next time this file is picked, and resumes from there.
+ */
+async function stopAfterFailure(job, error) {
+  const bookkeeping = String(error?.code || '').startsWith('import/job-');
+  if (!bookkeeping) {
+    job.failedAt = job.written;
+    job.lastErrorCode = error?.code || null;
+    // From here on the mapping is what the written records mean.
+    state.mappingLocked = job.written > 0;
+    try {
+      await persistJobCritical(job, JOB.STOPPED);
+      state.step = 'confirm';
+      if (importSheetOpen()) renderImport();
+      toastError(error, 'تعذّر الاستيراد');
+      return;
+    } catch (persistError) {
+      error = persistError;
+    }
+  }
+  closeImport();
+  toastError(error, 'تعذّر الاستيراد');
 }

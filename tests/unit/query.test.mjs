@@ -138,7 +138,7 @@ test('browsing the root is a test, because null is not in an index', () => {
   // IndexedDB leaves a null key out of its index entirely, which is what makes
   // the folderId index exactly the filed records — and what stops it from
   // answering "the unfiled ones".
-  assert.ok(plan(emptyQuery()).residualPredicates.includes('rootOnly'));
+  assert.ok(plan(emptyQuery()).residualPredicates.includes('scope.root'));
 });
 
 // ── pagination strategy ────────────────────────────────────────────────────

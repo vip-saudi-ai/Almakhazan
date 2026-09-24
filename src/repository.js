@@ -67,6 +67,20 @@ export const ITEM_WINDOW = 200;
  * guarantee that only holds on a fast phone is not a guarantee.
  */
 const ATOMIC_BULK_MAX = 1000;
+
+/** What a bulk edit did, named for the activity log rather than inferred from
+ *  its patch by whoever reads the log later. */
+function bulkOperationName(patch) {
+  const keys = Object.keys(patch);
+  if (keys.length !== 1) return 'update';
+  return {
+    folderId: 'move-folder',
+    categoryId: 'set-category',
+    locationId: 'move-location',
+    condition: 'set-condition',
+    unit: 'set-unit',
+  }[keys[0]] || 'update';
+}
 /** How many operations one chunk carries when the whole set cannot be atomic. */
 const BULK_CHUNK = 100;
 /** How many records a cancellation removes per round trip. */
@@ -1444,8 +1458,9 @@ class Repository {
    * rather than a loop of updates: a hundred separate writes is a hundred
    * chances for the connection to drop halfway, and a hundred times the cost.
    *
-   * Optimistic concurrency does not apply here — the customer is changing one
-   * field across a selection they can see, not resolving an edit conflict.
+   * Every record carries the version the screen showed when it was selected,
+   * so a record another tab changed in the meantime is a conflict rather than
+   * an overwrite — see `_runBulk` for what a conflict leaves behind.
    */
   async bulkUpdate(ids, patch) {
     this.assertCanWrite();
@@ -1475,13 +1490,37 @@ class Repository {
     }));
 
     this.setSync(SyncState.SAVING);
-    const { applied, atomic } = await this._runBulk(operations, 'التعديل الجماعي');
+    const { applied, atomic } = await this._runBulk(operations, {
+      what: 'التعديل الجماعي',
+      action: ACTIONS.ITEMS_BULK_UPDATED,
+      operation: bulkOperationName(patch),
+      meta: { fields: Object.keys(patch) },
+    });
     // The log records what happened, not what was asked for. "250 updated"
     // against 100 actual changes is a record that lies to whoever reads it next.
     await this.log(ACTIONS.ITEMS_BULK_UPDATED, {
-      requested: operations.length, count: applied, atomic, fields: Object.keys(patch),
+      requested: operations.length, count: applied, applied, atomic, status: 'complete',
+      operation: bulkOperationName(patch), fields: Object.keys(patch),
     });
     return { updated: applied, atomic };
+  }
+
+  /**
+   * A relational rewrite — clearing every reference to a taxonomy row, then
+   * removing the row.
+   *
+   * No expected versions: the customer is deleting a folder, not resolving an
+   * edit conflict, and a record edited elsewhere still has to stop pointing at
+   * something that is about to stop existing. What matters here is that the
+   * reference clearing and the deletion cannot come apart, which is why it is
+   * one transaction on the device.
+   */
+  async _runRelational(operations) {
+    if (this.backend.runAtomicBatch && operations.length <= ATOMIC_BULK_MAX) {
+      await this.backend.runAtomicBatch(operations);
+      return;
+    }
+    await this.backend.runBatch(operations);
   }
 
   /**
@@ -1504,38 +1543,33 @@ class Repository {
    * The caller is told which one happened, because the sentence the customer
    * reads depends on it.
    *
-   * @returns {Promise<{applied: number, atomic: boolean}>}
-   */
-  /**
-   * A relational rewrite — clearing every reference to a taxonomy row, then
-   * removing the row.
+   * When the chunked path stops part way, what did land is written to the
+   * activity log before the error goes back up — as a partial entry, with the
+   * same `applied` number the error carries and the customer is told. A
+   * thrown error used to skip the log line entirely, which left 700 changed
+   * records with no trace of who changed them. An all-or-nothing failure logs
+   * nothing: nothing happened.
    *
-   * No expected versions: the customer is deleting a folder, not resolving an
-   * edit conflict, and a record edited elsewhere still has to stop pointing at
-   * something that is about to stop existing. What matters here is that the
-   * reference clearing and the deletion cannot come apart, which is why it is
-   * one transaction on the device.
+   * @param {Array} operations
+   * @param {{what: string, action: string, operation: string, meta?: object}} audit
+   * @returns {Promise<{applied: number, atomic: boolean}>}
+   * @throws {AppError} `repo/bulk-conflict` when nothing was applied, or
+   *   `repo/bulk-partial` carrying `{requested, applied, remaining, failedAt,
+   *   atomic: false}` when some of it was.
    */
-  async _runRelational(operations) {
-    if (this.backend.runAtomicBatch && operations.length <= ATOMIC_BULK_MAX) {
-      await this.backend.runAtomicBatch(operations);
-      return;
-    }
-    await this.backend.runBatch(operations);
-  }
-
-  async _runBulk(operations, what) {
-    const atomic = Boolean(this.backend.runAtomicBatch) && operations.length <= ATOMIC_BULK_MAX;
+  async _runBulk(operations, { what, action, operation, meta = {} }) {
+    const requested = operations.length;
+    const atomic = Boolean(this.backend.runAtomicBatch) && requested <= ATOMIC_BULK_MAX;
 
     if (atomic) {
       try {
         await this.backend.runAtomicBatch(operations);
-        return { applied: operations.length, atomic: true };
+        return { applied: requested, atomic: true };
       } catch (error) {
         if (error instanceof ConflictError) {
           throw new AppError(
             `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
-            { code: 'repo/bulk-conflict', cause: error, applied: 0 },
+            { code: 'repo/bulk-conflict', cause: error, requested, applied: 0, atomic: true },
           );
         }
         throw error;
@@ -1544,25 +1578,46 @@ class Repository {
 
     let applied = 0;
     try {
-      for (let i = 0; i < operations.length; i += BULK_CHUNK) {
+      for (let i = 0; i < requested; i += BULK_CHUNK) {
         const chunk = operations.slice(i, i + BULK_CHUNK);
         await this.backend.runBatch(chunk);
         applied += chunk.length;
       }
       return { applied, atomic: false };
     } catch (error) {
-      if (error instanceof ConflictError) {
-        // Never "nothing was applied" here: the chunks before this one are
-        // committed, and telling the customer otherwise sends them looking for
-        // a change that already happened.
+      const conflict = error instanceof ConflictError;
+      if (!applied) {
+        if (!conflict) throw error;
         throw new AppError(
-          applied
-            ? `تعذّر إكمال ${what}: طُبّق التغيير على ${applied.toLocaleString('en-US')} قطعة ثم تغيّرت قطعة أخرى منذ فتح القائمة. حدّث القائمة وأكمل الباقي.`
-            : `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
-          { code: 'repo/bulk-conflict', cause: error, applied },
+          `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
+          { code: 'repo/bulk-conflict', cause: error, requested, applied: 0, atomic: false },
         );
       }
-      throw error;
+
+      // Some of it landed. Never "nothing was applied": the chunks before this
+      // one are committed, and telling the customer otherwise sends them
+      // looking for a change that already happened.
+      const partial = {
+        requested,
+        applied,
+        remaining: requested - applied,
+        failedAt: applied,
+        atomic: false,
+      };
+      try {
+        await this.log(action, {
+          ...meta, ...partial, count: applied, status: 'partial', operation,
+        });
+      } catch (logError) {
+        console.error('[repo] the partial bulk change could not be logged', logError);
+      }
+      const n = applied.toLocaleString('en-US');
+      throw new AppError(
+        conflict
+          ? `تعذّر إكمال ${what}: طُبّق التغيير على ${n} قطعة ثم تغيّرت قطعة أخرى منذ فتح القائمة. حدّث القائمة وأكمل الباقي.`
+          : `تعذّر إكمال ${what}: طُبّق التغيير على ${n} قطعة ثم توقف. حدّث القائمة وأكمل الباقي.`,
+        { code: 'repo/bulk-partial', cause: error, ...partial },
+      );
     }
   }
 
@@ -1587,8 +1642,10 @@ class Repository {
         deletedAt: this.backend.serverTime,
         deletedBy: this.session.userId,
       },
-    })), 'الحذف الجماعي');
-    await this.log(ACTIONS.ITEMS_BULK_DELETED, { requested: items.length, count: applied, atomic });
+    })), { what: 'الحذف الجماعي', action: ACTIONS.ITEMS_BULK_DELETED, operation: 'trash' });
+    await this.log(ACTIONS.ITEMS_BULK_DELETED, {
+      requested: items.length, count: applied, applied, atomic, status: 'complete', operation: 'trash',
+    });
     return { trashed: applied, atomic };
   }
 

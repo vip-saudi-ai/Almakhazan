@@ -9,6 +9,7 @@ import { FirebaseStatus, firebaseContext, initializeFirebase, watchConnectivity 
 import { currentSession, initializeAuthentication, onSessionChange, refreshWorkspace } from './auth.js';
 import { SYNC_LABELS, SyncState, repository } from './repository.js';
 import { useQueryAdapter } from './query.js';
+import { runImportRecovery } from './import-jobs.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
@@ -184,6 +185,17 @@ async function loadApplicationData(firebase, session) {
     startPlanWatch(cloudReady
       ? { mode: 'cloud', workspaceId: session.workspaceId }
       : { mode: 'local', workspaceId: null });
+
+    // Before anything else reads the inventory: an import the last page
+    // lifecycle left running is marked stopped (nothing can still be writing
+    // it — that runtime is gone), and a cancellation it left half done is
+    // finished. If one cannot be finished the app still opens and the
+    // inventory can still be browsed; only new imports are refused, and the
+    // import screen offers the retry. Never throws.
+    const recovery = await runImportRecovery();
+    if (!recovery.ready) {
+      console.error('[app] import recovery is needed; new imports are blocked until it succeeds');
+    }
 
     // Without a cloud copy, what is on this device is the only copy — and a
     // browser evicts unpersisted storage when the device needs room. Asking is

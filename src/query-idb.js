@@ -154,8 +154,19 @@ export function plan(query) {
 
   // Whatever the base did not claim is tested per record.
   const claimed = new Set(indexedPredicates);
-  if (filters.folderId === '__root__') residualPredicates.push('rootOnly');
-  else if (scopeRoot) residualPredicates.push('rootOnly');
+  // "No folder" can mean two different things, and they are kept as two
+  // predicates because a search treats them differently:
+  //
+  //   scope.root    the customer is browsing the top of the inventory. That is
+  //                 where they are, not a restriction they asked for, and a
+  //                 search is meant to reach past it into folders.
+  //   filters.root  the customer chose «المخزون الرئيسي» in the filter sheet.
+  //                 That is a restriction, and it holds during a search too.
+  //
+  // Both test the same thing. What differs is whether a search may drop it,
+  // and that is decided by the name alone — see `exactPredicate`.
+  if (filters.folderId === '__root__') residualPredicates.push('filters.root');
+  else if (scopeRoot) residualPredicates.push('scope.root');
   for (const [key, value] of Object.entries(filters)) {
     if (!value) continue;
     if (claimed.has(`filters.${key}`)) continue;
@@ -270,8 +281,8 @@ export function exactPredicate(query) {
     if (claimed.startsWith('filters.') || claimed === 'pill.categoryId') residual.push(claimed);
   }
   // The browsing scope is not an explicit restriction, and a search is meant
-  // to cross it.
-  const explicit = residual.filter((name) => name !== 'scope.folderId' && name !== 'rootOnly');
+  // to cross it. Everything under `filters.` was chosen, and stays.
+  const explicit = residual.filter((name) => !name.startsWith('scope.'));
   return predicateFor(full, { ...queryPlan, residualPredicates: explicit });
 }
 
@@ -284,7 +295,8 @@ function predicateFor(query, queryPlan) {
   for (const name of queryPlan.residualPredicates) {
     switch (name) {
       case 'live': checks.push((item) => !item.deletedAt); break;
-      case 'rootOnly': checks.push((item) => !item.folderId); break;
+      case 'scope.root':
+      case 'filters.root': checks.push((item) => !item.folderId); break;
       case 'search': checks.push((item) => matchesQuery(item, queryPlan.terms, lookups)); break;
       case 'scope.folderId': checks.push((item) => item.folderId === query.folderId); break;
       case 'pill.categoryId':
@@ -408,7 +420,9 @@ async function byOffset(query, queryPlan, perPage) {
 async function cheapTotal(query, queryPlan) {
   const residual = new Set(queryPlan.residualPredicates);
   residual.delete('live');
-  const rootOnly = residual.delete('rootOnly');
+  // Either kind of "no folder" is the same count; which one it was only
+  // matters to a search.
+  const rootOnly = [residual.delete('scope.root'), residual.delete('filters.root')].some(Boolean);
   if (residual.size) return null;
   // Ordering by name or value needs every match in hand anyway, so the walk
   // that produces the page counts them and this is not needed.

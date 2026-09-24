@@ -518,6 +518,10 @@ export async function readSpreadsheet(file, { rowLimit = MAX_ROWS } = {}) {
     table = await readXlsx(await file.arrayBuffer(), { rowLimit: readLimit });
   } else if (name.endsWith('.csv') || name.endsWith('.tsv') || name.endsWith('.txt')) {
     {
+      // Not constant-memory. The whole file becomes one string before it is
+      // split, so a CSV costs its own size in memory, twice over while the
+      // rows are built. What bounds it is MAX_FILE_BYTES, checked above; a
+      // streaming reader would lift that bound and is not built.
       const parsed = parseDelimited(await file.text(), null, { rowLimit: readLimit });
       table = {
         rows: parsed.map((cells, index) => ({ cells, line: index + 1 })),

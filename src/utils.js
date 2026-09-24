@@ -165,5 +165,10 @@ export class AppError extends Error {
     super(message, { cause: options.cause });
     this.name = 'AppError';
     this.code = options.code || 'app/unknown';
+    // Anything else the thrower knows — how many records a bulk write reached
+    // before it stopped, say — travels as a field, so the caller reads a
+    // number instead of parsing one out of an Arabic sentence.
+    const { cause, code, ...details } = options;
+    Object.assign(this, details);
   }
 }
