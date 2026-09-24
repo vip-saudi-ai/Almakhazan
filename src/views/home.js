@@ -501,9 +501,9 @@ function renderQuotaBanner() {
       onClick: () => { openPlansSheet(); },
     }),
     quota.level === 'full' ? null : el('button', {
-      class: 'qb-close', type: 'button', text: '✕', 'aria-label': 'إخفاء',
+      class: 'qb-close', type: 'button', 'aria-label': 'إخفاء',
       onClick: () => { dismissedQuotaLevel = quota.level; renderQuotaBanner(); },
-    }),
+    }, [icon('close', { size: 14 })]),
   ]);
 }
 

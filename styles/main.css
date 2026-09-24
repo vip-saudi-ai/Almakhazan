@@ -1186,6 +1186,11 @@ body.viewer-open{overflow:hidden}
 .ctx-as-ico .nz-icon{margin:auto}
 .fsact-btn-ico{display:flex;align-items:center;justify-content:center}
 .fld-add .nz-icon{display:inline-block}
+/* An icon before a button's text: it sits on the text's line, and the gap
+   follows the reading direction. */
+.ico-inline{display:inline-flex;vertical-align:middle;margin-inline-end:6px;margin-top:-2px}
+.btn > .ico-inline{margin:0}
+.fscan .nz-icon,.sclear .nz-icon{margin:auto}
 
 /* ── the overflow action ──
    Everything the long press offers, on a control that can be seen. A gesture

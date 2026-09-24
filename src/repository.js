@@ -18,6 +18,9 @@ import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
 import { releaseObjectUrls } from './storage.js';
 import { currenciesPresent as currenciesInItems } from './money.js';
 import { quotaStatus } from './subscription.js';
+import {
+  GENERATED_SKU_MAX, formatGeneratedSku, generatedSkuPrefix, parseGeneratedSku,
+} from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
@@ -267,10 +270,12 @@ export class FirestoreBackend {
   }
 
   /**
-   * The highest generated SKU sequence with this prefix — one indexed query,
-   * newest first, once per session (the caller caches it).
+   * The highest generated SKU sequence for a year — one indexed query over
+   * the six-digit range, newest first, once per session (the caller caches
+   * it). The first result that parses as a generated SKU is the highest.
    */
-  async maxGeneratedSkuSequence(prefix) {
+  async maxGeneratedSkuSequence(year) {
+    const prefix = generatedSkuPrefix(year);
     const snapshot = await this.fs.getDocs(this.fs.query(
       this.col('items'),
       this.fs.where('sku', '>=', `${prefix}000000`),
@@ -278,12 +283,11 @@ export class FirestoreBackend {
       this.fs.orderBy('sku', 'desc'),
       this.fs.limit(20),
     ));
-    let highest = 0;
     for (const doc of snapshot.docs) {
-      const match = new RegExp(`^${prefix}(\\d{6,})$`).exec(doc.data().sku || '');
-      if (match) highest = Math.max(highest, Number(match[1]));
+      const parsed = parseGeneratedSku(doc.data().sku);
+      if (parsed && parsed.year === year) return parsed.sequence;
     }
-    return highest;
+    return 0;
   }
 
   /** One document by id — answered by the server whether or not any listener
@@ -630,9 +634,9 @@ export class LocalBackend {
     await this._notify(name);
   }
 
-  /** The highest generated SKU sequence with this prefix, from the index. */
-  async maxGeneratedSkuSequence(prefix) {
-    return local.maxSkuSequence(prefix);
+  /** The highest generated SKU sequence for a year, from the index. */
+  async maxGeneratedSkuSequence(year) {
+    return local.maxSkuSequence(year);
   }
 
   /** One record by primary key. Never a scan. */
@@ -1338,7 +1342,7 @@ class Repository {
 
   // ── SKU ──
   static formatSku(sequence, year = new Date().getFullYear()) {
-    return `INV-${year}-${String(sequence).padStart(6, '0')}`;
+    return formatGeneratedSku(sequence, year);
   }
 
   /**
@@ -1346,15 +1350,7 @@ class Repository {
    * loaded. It is only a placeholder — two devices can produce the same one.
    */
   provisionalSku() {
-    const prefix = `INV-${new Date().getFullYear()}-`;
-    let highest = 0;
-    for (const item of this.state.items) {
-      if (typeof item.sku === 'string' && item.sku.startsWith(prefix)) {
-        const n = Number.parseInt(item.sku.slice(prefix.length), 10);
-        if (Number.isFinite(n) && n > highest) highest = n;
-      }
-    }
-    return Repository.formatSku(highest + 1);
+    return Repository.formatSku(this._provisionalSequence());
   }
 
   // ── generated SKU sequence ──
@@ -1373,10 +1369,13 @@ class Repository {
   //     the highest generated SKU on record (the "floor", read from the SKU
   //     index and cached until the next bulk write).
   //   · a customer's own SKU (WATCH-001) is never part of this and never
-  //     rewritten.
+  //     rewritten. What counts as generated is decided in one place, sku.js:
+  //     exactly INV-<year>-<six digits>.
+  //   · the old year-less counter is considered once, and only for a year
+  //     that already has generated SKUs; see local-store `reserveSkuSequence`.
 
   static skuPrefix(year = new Date().getFullYear()) {
-    return `INV-${year}-`;
+    return generatedSkuPrefix(year);
   }
 
   /** Forget the known floor: a bulk write may have brought higher SKUs in. */
@@ -1389,7 +1388,7 @@ class Repository {
     if (this._skuFloor?.year === year && this._skuFloor.workspaceId === this.session.workspaceId) {
       return this._skuFloor.value;
     }
-    const value = await this.backend.maxGeneratedSkuSequence(Repository.skuPrefix(year));
+    const value = await this.backend.maxGeneratedSkuSequence(year);
     this._skuFloor = { year, workspaceId: this.session.workspaceId, value };
     return value;
   }
@@ -1439,17 +1438,27 @@ class Repository {
           const snap = await tx.get(ref);
           if (!snap.exists()) {
             // First reservation of the year. The single counter the app used
-            // before counters were per year is honoured once, as a floor.
-            const legacy = await tx.get(legacyRef);
-            const start = Math.max(legacy.exists() ? (legacy.data().value ?? 0) : 0, floor) + 1;
+            // before counters were per year is honoured only if this year
+            // already has generated SKUs on record — evidence it was counting
+            // this year. A new year with none starts at 000001.
+            const legacy = floor > 0 ? await tx.get(legacyRef) : null;
+            const start = Math.max(legacy?.exists() ? (legacy.data().value ?? 0) : 0, floor) + 1;
+            if (start > GENERATED_SKU_MAX) {
+              throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+            }
             tx.set(ref, { value: start, updatedAt: sdk.firestore.serverTimestamp() });
             return start;
           }
           const next = Math.max((snap.data().value ?? 0) + 1, floor + 1);
+          if (next > GENERATED_SKU_MAX) {
+            throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+          }
           tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
           return next;
         });
       } catch (error) {
+        // The year's sequence is used up: retrying cannot change that.
+        if (error?.code === 'repo/sku-exhausted') throw error;
         lastError = error;
         console.error(`[repo] SKU reservation attempt ${attempt + 1} failed`, error);
         await new Promise((resolve) => setTimeout(resolve, 150 * 2 ** attempt));
@@ -1462,16 +1471,15 @@ class Repository {
     });
   }
 
+  /** A placeholder only: what the window suggests. The saved SKU is reserved. */
   _provisionalSequence() {
-    const prefix = Repository.skuPrefix();
+    const year = new Date().getFullYear();
     let highest = 0;
     for (const item of this.state.items) {
-      if (typeof item.sku === 'string' && item.sku.startsWith(prefix)) {
-        const n = Number.parseInt(item.sku.slice(prefix.length), 10);
-        if (Number.isFinite(n) && n > highest) highest = n;
-      }
+      const parsed = parseGeneratedSku(item.sku);
+      if (parsed && parsed.year === year && parsed.sequence > highest) highest = parsed.sequence;
     }
-    return highest + 1;
+    return Math.min(highest + 1, GENERATED_SKU_MAX);
   }
 
   /**
@@ -1646,16 +1654,52 @@ class Repository {
     await this.log(ACTIONS.ITEM_DELETED, { itemId: id, itemName: item.name });
   }
 
-  async restoreItem(id, expectedVersion) {
+  /**
+   * Out of the Trash and back into the inventory.
+   *
+   * A trashed record does not hold its SKU — the customer may have given the
+   * same SKU to a new record since. Bringing the old one back would then put
+   * two live records under one SKU, so that is checked first, before any
+   * write and before the plan's capacity is asked: a conflict changes
+   * nothing, consumes nothing and logs nothing. Barcodes and serial numbers
+   * keep their existing, softer rule (a warning at save), and are not checked
+   * here.
+   *
+   * @param {{newSku?: boolean}} [options] `newSku` gives a record whose
+   *   generated SKU is now taken a freshly reserved one, in the same write.
+   *   Only offered for generated SKUs; a customer's own is never changed
+   *   without them editing it.
+   * @throws {AppError} `item/sku-conflict` with `{sku, conflictId,
+   *   conflictName, generated}`
+   */
+  async restoreItem(id, expectedVersion, { newSku = false } = {}) {
     this.assertCanWrite();
     const shown = this._shownVersions([id]).get(id);
     const item = await this._current(id);
+    const patch = { deletedAt: null, deletedBy: null };
+    if (item.deletedAt && item.sku) {
+      const clash = await this.skuConflict(item.sku, id);
+      if (clash) {
+        const generated = Boolean(parseGeneratedSku(item.sku));
+        if (!(newSku && generated)) {
+          throw new AppError('لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.', {
+            code: 'item/sku-conflict', sku: item.sku, conflictId: clash.id, conflictName: clash.name, generated,
+          });
+        }
+        // A counter number is spent only once the plan would take it back.
+        if (item.deletedAt) await this.assertItemCapacity(1);
+        patch.sku = await this.reserveUniqueSku();
+      }
+    }
     // Out of the Trash is back into the plan's count.
-    await this.backend.update('items', id, { deletedAt: null, deletedBy: null },
+    await this.backend.update('items', id, patch,
       expectedVersion ?? shown ?? item.version, { liveLimit: item.deletedAt ? this._liveLimit() : null });
     this._forgetItem(id);
     this._invalidateAggregates();
-    await this.log(ACTIONS.ITEM_RESTORED, { itemId: id, itemName: item.name });
+    await this.log(ACTIONS.ITEM_RESTORED, {
+      itemId: id, itemName: item.name, ...(patch.sku ? { changes: { before: { sku: item.sku }, after: { sku: patch.sku } } } : {}),
+    });
+    return { sku: patch.sku || item.sku };
   }
 
   /**
@@ -2209,23 +2253,34 @@ class Repository {
    *   two hundred and logs once, as the import, when it finishes — not once per
    *   chunk, which made a 12,000-row file sixty entries of "200 added".
    */
+  /**
+   * @returns {Promise<{created: number, skippedExisting: string[], processed: number}>}
+   *   `created` is what was actually written; `processed` is every record
+   *   handed in, including those skipped because they already exist.
+   */
   async bulkCreateItems(records, { log = true } = {}) {
     this.assertCanWrite();
-    if (!records.length) return { created: 0 };
+    if (!records.length) return { created: 0, skippedExisting: [], processed: 0 };
     const items = records.map((record) => normalizeItem(
       { ...record, createdBy: this.session.userId, updatedBy: this.session.userId },
       { userId: this.session.userId },
     ));
     this.setSync(SyncState.SAVING);
-    // A replayed chunk writes records that already exist; those cost no slot,
-    // and the backend counts only the ones it actually brings to life.
-    await this.backend.runBatch(items.map((item) => ({
-      type: 'set', collection: 'items', id: item.id, data: item, merge: false,
+    // Create, never replace. An import's ids are deterministic so that a
+    // chunk replayed after a crash lands on the same records — and a record
+    // that already exists under one of them is proof that row was committed.
+    // It may have been edited since; replaying the spreadsheet's original
+    // values over it would silently undo that edit. So an existing id is
+    // skipped, whole, inside the write (`ifAbsent`), and costs no plan slot.
+    const result = await this.backend.runBatch(items.map((item) => ({
+      type: 'set', collection: 'items', id: item.id, data: item, merge: false, ifAbsent: true,
     })), { liveLimit: this._liveLimit() });
+    const skippedExisting = result?.skippedExisting || [];
+    const created = items.length - skippedExisting.length;
     this._invalidateAggregates();
     this.invalidateSkuFloor();
-    if (log) await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
-    return { created: items.length };
+    if (log && created) await this.log(ACTIONS.IMPORT_MERGED, { items: created });
+    return { created, skippedExisting, processed: items.length };
   }
 
   /**

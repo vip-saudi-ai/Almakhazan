@@ -634,7 +634,7 @@ for (const limit of [50, 1000, 5000]) {
 
   const nextYear = await first.page.evaluate(async (year) => {
     const local = await import('/src/local-store.js');
-    const floor = await local.maxSkuSequence(`INV-${year + 1}-`);
+    const floor = await local.maxSkuSequence(year + 1);
     const first = await local.reserveSkuSequence(year + 1, floor);
     return { floor, first, thisYear: await local.getMeta(`counter.sku.${year}`) };
   }, YEAR);
@@ -646,7 +646,7 @@ for (const limit of [50, 1000, 5000]) {
     await local.setMeta('counter.sku', 777);
     return local.reserveSkuSequence(year + 5, 0);
   }, YEAR);
-  check('K8 the old single counter is honoured once, as a floor, for a year with no counter yet', legacy === 778, String(legacy));
+  check('K8 the old year-less counter never seeds a later year: it still starts at 000001', legacy === 1, String(legacy));
 
   const collision = await first.page.evaluate(async (year) => {
     const local = await import('/src/local-store.js');

@@ -11,6 +11,7 @@
 // or an explicit cursor — never a full materialisation unless the caller asks.
 
 import { AppError } from './utils.js';
+import { GENERATED_SKU_MAX, generatedSkuPrefix, parseGeneratedSku } from './sku.js';
 
 const DB_NAME = 'almakhzan';
 // Bumped when STORES or INDEXES gains an entry. `onupgradeneeded` creates
@@ -326,55 +327,70 @@ export function uniqueKeys(storeName, indexName) {
 }
 
 /**
- * The highest generated SKU sequence with this prefix (`INV-2026-`), read from
- * the `sku` index backwards — the cost is the handful of keys at the top of
- * the range, not the inventory.
- *
- * Generated sequences are zero-padded to six digits, so among six-digit keys
- * string order is numeric order and the first one met walking backwards is
- * the largest. Longer ones (past 999,999) sort among them, so every key met
- * before that point is parsed too; custom SKUs sharing the prefix are skipped.
+ * The highest generated SKU sequence for a year, read from the `sku` index
+ * backwards over `INV-<year>-000000 … INV-<year>-999999`. Generated sequences
+ * are exactly six digits (see sku.js), and among strings of one length text
+ * order is numeric order — so the first key met that parses as a generated SKU
+ * is the highest. Keys of other shapes inside the range (custom SKUs sharing
+ * the prefix) are stepped over.
  */
-export function maxSkuSequence(prefix) {
-  const pattern = new RegExp(`^${prefix.replace(/[-]/g, '\\-')}(\\d{6,})$`);
-  const range = IDBKeyRange.bound(`${prefix}000000`, `${prefix}999999\uffff`);
+export function maxSkuSequence(year) {
+  const prefix = generatedSkuPrefix(year);
+  const range = IDBKeyRange.bound(`${prefix}000000`, `${prefix}999999`);
   return run('items', 'readonly', (store) => new Promise((resolve, reject) => {
-    let highest = 0;
     const cursorRequest = store.index('sku').openKeyCursor(range, 'prev');
     cursorRequest.onsuccess = () => {
       const cursor = cursorRequest.result;
-      if (!cursor) { resolve(highest); return; }
-      const match = pattern.exec(String(cursor.key));
-      if (match) {
-        highest = Math.max(highest, Number(match[1]));
-        if (match[1].length === 6) { resolve(highest); return; }
-      }
+      if (!cursor) { resolve(0); return; }
+      const parsed = parseGeneratedSku(String(cursor.key));
+      if (parsed && parsed.year === year) { resolve(parsed.sequence); return; }
       cursor.continue();
     };
     cursorRequest.onerror = () => reject(storageError(cursorRequest.error));
   }));
 }
 
+/** Set once the year-less counter from before per-year counters has been
+ *  considered. After that it is never read again. */
+const LEGACY_SKU_KEY = 'counter.sku';
+const LEGACY_SKU_MIGRATED = 'counter.sku.legacyMigrated';
+
 /**
- * Take the next generated SKU sequence for a year: read, advance and write the
- * counter in ONE readwrite transaction, so two tabs cannot take the same
- * number. The counter holds the last sequence handed out; the result is the
- * larger of it plus one and `floor` plus one — and that is what is stored, so
- * a number returned is always a number the counter has already reached.
+ * Take the next generated SKU sequence for a year, in ONE readwrite
+ * transaction on the meta store, so two tabs cannot take the same number.
  *
- * The single year-less counter used before (`counter.sku`) is honoured once,
- * as a floor, the first time a year's counter is created.
+ *   · the counter (`counter.sku.<year>`) holds the LAST sequence handed out,
+ *     and is written before this resolves — a number returned is always one
+ *     the counter has already reached;
+ *   · the result is above `floor`, the highest generated SKU on record for
+ *     the year, so records imported or restored with higher SKUs than the
+ *     counter issued are never collided with;
+ *   · each year starts again at 000001.
+ *
+ * The year-less counter the app used before is considered once, ever. It is
+ * honoured only if this year already has generated SKUs on record — evidence
+ * it was counting this year — and ignored otherwise, so a counter left at 850
+ * in 2026 does not start 2027 at 000851.
+ *
+ * @throws {AppError} `repo/sku-exhausted` past INV-<year>-999999
  */
 export function reserveSkuSequence(year, floor = 0) {
   const key = `counter.sku.${year}`;
   return run('meta', 'readwrite', async (store) => {
     const current = await req(store.get(key));
-    let last = current?.value;
-    if (last == null) {
-      const legacy = await req(store.get('counter.sku'));
-      last = Number(legacy?.value) || 0;
+    let last = Number(current?.value) || 0;
+    if (current == null) {
+      const migrated = await req(store.get(LEGACY_SKU_MIGRATED));
+      if (!migrated) {
+        const legacy = Number((await req(store.get(LEGACY_SKU_KEY)))?.value) || 0;
+        if (floor > 0) last = Math.max(last, legacy);
+        await req(store.put({ key: LEGACY_SKU_MIGRATED, value: { year, legacy } }));
+      }
     }
-    const next = Math.max(Number(last) || 0, Number(floor) || 0) + 1;
+    const next = Math.max(last, Number(floor) || 0) + 1;
+    if (next > GENERATED_SKU_MAX) {
+      throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+    }
     await req(store.put({ key, value: next }));
     return next;
   });

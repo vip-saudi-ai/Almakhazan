@@ -97,6 +97,24 @@ Extending `functions/src/usage.js` to maintain them would close the gap.
 trigger fails. `recalculateUsage` and `reconcileMedia` are the repair path.
 Consider running the media reconciler on a schedule once real traffic exists.
 
+### DEFERRED PRODUCTION CLOUD HARDENING
+
+**The last plan slot can be taken twice in the cloud.** On the device the
+record limit is checked inside the same IndexedDB transaction as the write, so
+it cannot be passed. In the cloud, `_precheckCapacity` counts on the server
+immediately before the commit, but outside the commit: two devices adding a
+record at the same instant with one slot left can both pass, and the
+workspace ends up one (or a few) over its plan. Nothing is lost and nothing is
+deleted — the workspace is simply over its limit and further additions are
+refused. Closing it needs backend enforcement (a server-side write path or a
+rule that checks the usage counter transactionally). That is deliberately not
+built in the client, which is not the subscription authority.
+
+**Generated SKU counters in the cloud** are per year (`counters/sku-<year>`),
+reserved in a Firestore transaction. The rule allows a forward jump so the
+counter can move past imported data; a hostile member could still advance it
+arbitrarily. That wastes numbers, never duplicates them.
+
 ---
 
 ## Before you accept the first payment

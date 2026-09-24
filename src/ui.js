@@ -240,7 +240,8 @@ export function optionList(select, options, selectedValue) {
 /** Disables a control for the duration of an async action. */
 export async function withBusy(button, busyLabel, action) {
   if (!button) return action();
-  const original = button.textContent;
+  // The nodes, not the text: a button's icon comes back with its label.
+  const original = [...button.childNodes];
   const wasDisabled = button.disabled;
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
@@ -250,6 +251,6 @@ export async function withBusy(button, busyLabel, action) {
   } finally {
     button.disabled = wasDisabled;
     button.removeAttribute('aria-busy');
-    if (busyLabel) button.textContent = original;
+    if (busyLabel) button.replaceChildren(...original);
   }
 }

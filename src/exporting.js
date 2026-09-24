@@ -180,9 +180,45 @@ export function exportJSON() {
 }
 
 /**
+ * The largest backup file read at all. A NAZM backup is JSON metadata only —
+ * records, categories, locations, folders, settings; images are never inside
+ * it — so even the largest plan (20,000 records) stays well below this. A
+ * file past it is not a backup of this app, and reading it whole would have
+ * the browser hold it in memory twice (bytes, then text) before parsing.
+ */
+export const MAX_BACKUP_FILE_BYTES = 50 * 1024 * 1024;
+
+/**
+ * Checked from the file's metadata alone, before a byte of it is read. The
+ * extension is the rule; the MIME type is only a hint (systems report
+ * `application/json`, `text/plain` or nothing for the same file), so it is
+ * never the reason to refuse.
+ * @throws {AppError} `backup/no-file`, `backup/empty-file`,
+ *   `backup/file-too-large` or `backup/not-json`
+ */
+export function validateBackupFileMetadata(file) {
+  if (!file || typeof file.size !== 'number') {
+    throw new AppError('لم يُختر ملف بيانات.', { code: 'backup/no-file' });
+  }
+  if (!(file.size > 0)) {
+    throw new AppError('ملف البيانات فارغ.', { code: 'backup/empty-file' });
+  }
+  if (file.size > MAX_BACKUP_FILE_BYTES) {
+    throw new AppError('حجم ملف البيانات أكبر من الحد المسموح.', {
+      code: 'backup/file-too-large', size: file.size, max: MAX_BACKUP_FILE_BYTES,
+    });
+  }
+  if (!/\.json$/i.test(String(file.name || ''))) {
+    throw new AppError('الملف ليس ملف بيانات JSON.', { code: 'backup/not-json' });
+  }
+}
+
+/**
  * Reads a JSON backup once, and says exactly which backup it is.
  *
- * The bytes are read one time. Their SHA-256 is the backup's identity — the
+ * Its metadata is checked first ({@link validateBackupFileMetadata}), so an
+ * oversized or wrong file is refused before a byte is read. Then the bytes
+ * are read one time. Their SHA-256 is the backup's identity — the
  * same principle as a spreadsheet's: same bytes, same backup; any difference,
  * a different one. That identity is what lets an interrupted restore be
  * finished only by the file that started it. It used to be a hash of the
@@ -196,6 +232,7 @@ export function exportJSON() {
  *   identified — nothing proceeds on a weaker identity — or `import/parse`
  */
 export async function readBackupFile(file) {
+  validateBackupFileMetadata(file);
   let bytes;
   try {
     bytes = await file.arrayBuffer();
@@ -219,6 +256,8 @@ export async function readBackupFile(file) {
   } catch (error) {
     throw new AppError('الملف ليس JSON صالحاً', { code: 'import/parse', cause: error });
   }
+  // The decoded object is what continues; the raw bytes go now.
+  bytes = null;
   return { data, sourceFingerprint };
 }
 

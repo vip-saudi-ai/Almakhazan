@@ -462,17 +462,18 @@ async function renderTrash() {
       ]),
       el('div', { class: 'trash-acts' }, [
         el('button', {
-          class: 'btn btn-g trash-btn', type: 'button', text: '↩ استعادة',
+          class: 'btn btn-g trash-btn', type: 'button',
           onClick: async () => {
             try {
               await repository.restoreItem(item.id);
               void renderTrash();
               toast('استُعيدت القطعة', '↩');
             } catch (error) {
+              if (error?.code === 'item/sku-conflict') { await resolveRestoreConflict(item, error); return; }
               toastError(error, 'تعذّر استعادة القطعة');
             }
           },
-        }),
+        }, [el('span', { class: 'ico-inline', 'aria-hidden': 'true' }, [icon('restore', { size: 16 })]), 'استعادة']),
         el('button', {
           class: 'btn btn-d trash-btn', type: 'button', text: 'حذف نهائي',
           onClick: async () => {
@@ -496,6 +497,43 @@ async function renderTrash() {
       ]),
     ]);
   }), pager]);
+}
+
+/**
+ * A trashed record whose SKU a live record now carries. Nothing has changed
+ * yet; the customer chooses. A generated SKU can simply be replaced with a
+ * fresh one as the record comes back. A SKU the customer typed is theirs, so
+ * the only way forward offered is to edit the record and choose another.
+ */
+async function resolveRestoreConflict(item, error) {
+  const message = `الرمز "${error.sku}" مستخدم على "${error.conflictName || 'قطعة أخرى'}".`;
+  if (error.generated) {
+    const renew = await confirmAction({
+      title: 'لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.',
+      message: `${message} يمكن إعطاؤها رمزاً جديداً واستعادتها.`,
+      icon: '🔖',
+      confirmLabel: 'إنشاء رمز جديد واستعادة',
+    });
+    if (!renew) return;
+    try {
+      const { sku } = await repository.restoreItem(item.id, undefined, { newSku: true });
+      void renderTrash();
+      toast(`استُعيدت القطعة برمز ${sku}`, '↩');
+    } catch (retryError) {
+      toastError(retryError, 'تعذّر استعادة القطعة');
+    }
+    return;
+  }
+  const edit = await confirmAction({
+    title: 'لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.',
+    message: `${message} عدّل رمز إحدى القطعتين ثم أعد المحاولة.`,
+    icon: '🔖',
+    confirmLabel: 'تعديل القطعة',
+  });
+  if (edit) {
+    closeSheet('trash');
+    setTimeout(() => { void import('./item-form.js').then(({ openItemForm }) => openItemForm({ itemId: item.id })); }, 240);
+  }
 }
 
 // ── import ──

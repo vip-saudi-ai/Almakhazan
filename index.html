@@ -108,7 +108,7 @@
         <span class="sico" aria-hidden="true">⌕</span>
         <label class="visually-hidden" for="hsearch">بحث في المخزون</label>
         <input id="hsearch" type="search" placeholder="بحث في المخزون…" autocomplete="off">
-        <button class="sclear" id="sclear" type="button" aria-label="مسح البحث">✕</button>
+        <button class="sclear" id="sclear" type="button" aria-label="مسح البحث"><span aria-hidden="true" data-icon="close" data-icon-size="12"></span></button>
       </div>
       <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود" data-icon="scan"></button>
     </div>
@@ -244,7 +244,7 @@
 <div class="ov" id="ov-add"></div>
 <div class="sh" id="sh-add" tabindex="-1" aria-labelledby="addtitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="addtitle">إضافة قطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="addtitle">إضافة قطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
       <div class="fstitle">الصور <span class="fstitle-sub" id="img-count">لا توجد صور</span></div>
@@ -263,7 +263,7 @@
     </div>
 
     <div class="desc-toggle" role="group" aria-label="نمط الوصف">
-      <button class="desc-toggle-btn on" id="dtbtn-manual" type="button" aria-pressed="true">✏️ يدوي</button>
+      <button class="desc-toggle-btn on" id="dtbtn-manual" type="button" aria-pressed="true"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="16"></span>يدوي</button>
       <button class="desc-toggle-btn" id="dtbtn-ai" type="button" aria-pressed="false">✦ تحليل بصري</button>
     </div>
 
@@ -285,7 +285,7 @@
            letters and punctuation, and a numeric keypad made those unenterable
            on a phone. `autocapitalize`/`autocorrect` are off for the same
            reason a serial number is: the device must not improve it. -->
-      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود">⊡</button></div>
+      <div class="frow"><label for="f-barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود"><span aria-hidden="true" data-icon="scan"></span></button></div>
     </div>
 
     <div class="fsec">
@@ -325,7 +325,7 @@
   </div>
   <div class="shfoot">
     <button class="btn btn-d" type="button" data-close style="flex:1;padding:12px">إلغاء</button>
-    <button class="btn btn-p" id="save-item-btn" type="button" style="flex:2;padding:12px">✓ حفظ</button>
+    <button class="btn btn-p" id="save-item-btn" type="button" style="flex:2;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="check" data-icon-size="18"></span>حفظ</button>
   </div>
 </div>
 
@@ -333,13 +333,13 @@
 <div class="ov" id="ov-det"></div>
 <div class="sh" id="sh-det" tabindex="-1" aria-labelledby="dettitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="dettitle">تفاصيل</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="dettitle">تفاصيل</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="detbody"></div>
   <div class="shfoot">
     <button class="btn btn-d" id="detdel" type="button" style="flex:1;padding:12px">حذف</button>
-    <button class="btn btn-g" id="detlabel" type="button" style="flex:1;padding:12px">⊡ ملصق</button>
-    <button class="btn btn-g" id="detmove" type="button" style="flex:1;padding:12px">🗂 نقل</button>
-    <button class="btn btn-p" id="detedit" type="button" style="flex:2;padding:12px">✎ تعديل</button>
+    <button class="btn btn-g" id="detlabel" type="button" style="flex:1;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="label" data-icon-size="16"></span>ملصق</button>
+    <button class="btn btn-g" id="detmove" type="button" style="flex:1;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="move" data-icon-size="16"></span>نقل</button>
+    <button class="btn btn-p" id="detedit" type="button" style="flex:2;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="16"></span>تعديل</button>
   </div>
 </div>
 
@@ -347,7 +347,7 @@
 <div class="ov" id="ov-qp"></div>
 <div class="sh" id="sh-qp" tabindex="-1" aria-labelledby="qptitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="qptitle">معاينة سريعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="qptitle">معاينة سريعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="qpbody"></div>
   <div class="shfoot"><button class="btn btn-p" id="qp-open" type="button" style="flex:1;padding:12px">فتح التفاصيل</button></div>
 </div>
@@ -356,7 +356,7 @@
 <div class="ov" id="ov-fld"></div>
 <div class="sh" id="sh-fld" tabindex="-1" aria-labelledby="fldshtitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="fldshtitle">مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="fldshtitle">مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
       <div class="frow"><label for="fld-name">الاسم</label><input id="fld-name" placeholder="مثال: مجموعة الجد"></div>
@@ -369,7 +369,7 @@
   </div>
   <div class="shfoot">
     <button class="btn btn-d" id="flddelbtn" type="button" style="flex:1;padding:12px;display:none">حذف</button>
-    <button class="btn btn-p" id="save-folder-btn" type="button" style="flex:2;padding:12px">✓ حفظ المجلد</button>
+    <button class="btn btn-p" id="save-folder-btn" type="button" style="flex:2;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="check" data-icon-size="18"></span>حفظ المجلد</button>
   </div>
 </div>
 
@@ -377,7 +377,7 @@
 <div class="ov" id="ov-mv"></div>
 <div class="sh" id="sh-mv" tabindex="-1" aria-labelledby="mv-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="mv-title">نقل إلى مجلد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="mv-title">نقل إلى مجلد</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="mvlist"></div>
 </div>
 
@@ -385,20 +385,20 @@
 <div class="ov" id="ov-cat"></div>
 <div class="sh" id="sh-cat" tabindex="-1" aria-labelledby="cat-sheet-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title">تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title">تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec"><div class="frow"><label for="cat-name">الاسم</label><input id="cat-name" placeholder="مثال: لوحات زيتية"></div></div>
     <div class="fstitle">الأيقونة</div>
     <div class="pick-row" id="caticolist" role="group" aria-label="أيقونة التصنيف"></div>
   </div>
-  <div class="shfoot"><button class="btn btn-p" id="save-cat-btn" type="button" style="width:100%;padding:12px">✓ حفظ التصنيف</button></div>
+  <div class="shfoot"><button class="btn btn-p" id="save-cat-btn" type="button" style="width:100%;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="check" data-icon-size="18"></span>حفظ التصنيف</button></div>
 </div>
 
 <!-- REASSIGN BEFORE CATEGORY DELETE -->
 <div class="ov" id="ov-reassign"></div>
 <div class="sh" id="sh-reassign" tabindex="-1" aria-labelledby="reassign-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="reassign-title">حذف التصنيف</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="reassign-title">حذف التصنيف</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <p class="sheet-note" id="reassign-message"></p>
     <div class="fsec"><div class="frow"><label for="reassign-target">الوجهة</label><select id="reassign-target"></select></div></div>
@@ -413,7 +413,7 @@
 <div class="ov" id="ov-loc"></div>
 <div class="sh" id="sh-loc" tabindex="-1" aria-labelledby="loc-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="loc-title">المواقع</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="loc-title">المواقع</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
       <div class="frow">
@@ -430,7 +430,7 @@
 <div class="ov" id="ov-trash"></div>
 <div class="sh" id="sh-trash" tabindex="-1" aria-labelledby="trash-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="trash-title">سلة المحذوفات</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="trash-title">سلة المحذوفات</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="trash-list"></div>
 </div>
 
@@ -438,7 +438,7 @@
 <div class="ov" id="ov-import"></div>
 <div class="sh" id="sh-import" tabindex="-1" aria-labelledby="import-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="import-title">استيراد بيانات</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="import-title">استيراد بيانات</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <p class="sheet-note">الملف: <b id="import-file">—</b></p>
     <div class="imp-stats" id="import-stats"></div>
@@ -466,7 +466,7 @@
 <div class="ov" id="ov-simport"></div>
 <div class="sh" id="sh-simport" tabindex="-1" aria-labelledby="simport-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="simport-title">استيراد من جدول</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="simport-title">استيراد من جدول</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div id="simport-body"></div></div>
   <div class="shfoot" id="simport-foot"></div>
 </div>
@@ -479,7 +479,7 @@
     <h2 class="shtitle" id="filter-title">الفلتر</h2>
     <div class="shhdr-acts">
       <button class="reset-btn" id="filter-reset" type="button">إعادة ضبط</button>
-      <button class="shclose" type="button" data-close aria-label="إغلاق">✕</button>
+      <button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button>
     </div>
   </div>
   <div class="shscroll" style="padding:0">
@@ -499,7 +499,7 @@
 <div class="ov" id="ov-sort"></div>
 <div class="sh" id="sh-sort" tabindex="-1" aria-labelledby="sort-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="sort-title">ترتيب حسب</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="sort-title">ترتيب حسب</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" style="padding:0">
     <div class="sgroup" style="margin:0 20px 16px" id="sort-options"></div>
   </div>
@@ -509,7 +509,7 @@
 <div class="ov" id="ov-bulk"></div>
 <div class="sh" id="sh-bulk" tabindex="-1" aria-labelledby="bulk-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="bulk-title">اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="bulk-title">اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div class="sgroup" id="bulk-options"></div></div>
 </div>
 
@@ -517,7 +517,7 @@
 <div class="ov" id="ov-labels"></div>
 <div class="sh" id="sh-labels" tabindex="-1" aria-labelledby="labels-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="labels-title">ملصق القطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="labels-title">ملصق القطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div id="labels-body"></div></div>
 </div>
 
@@ -525,7 +525,7 @@
 <div class="ov" id="ov-scan"></div>
 <div class="sh" id="sh-scan" tabindex="-1" aria-labelledby="scan-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="scan-title">مسح الباركود</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="scan-title">مسح الباركود</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="scan-frame"><video id="scan-video" class="scan-video" muted playsinline></video><div class="scan-guide" aria-hidden="true"></div></div>
     <p class="scan-hint" id="scan-hint">وجّه الكاميرا نحو الباركود أو رمز QR</p>
@@ -536,7 +536,7 @@
 <div class="ov" id="ov-plans"></div>
 <div class="sh" id="sh-plans" tabindex="-1" aria-labelledby="plans-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="plans-title">الخطط والأسعار</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="plans-title">الخطط والأسعار</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div id="plans-body"></div></div>
 </div>
 
@@ -544,7 +544,7 @@
 <div class="ov" id="ov-team"></div>
 <div class="sh" id="sh-team" tabindex="-1" aria-labelledby="team-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="team-title">الفريق</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="team-title">الفريق</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div id="team-body"></div></div>
 </div>
 
@@ -552,7 +552,7 @@
 <div class="ov" id="ov-ws"></div>
 <div class="sh" id="sh-ws" tabindex="-1" aria-labelledby="ws-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="ws-title">المساحات</h2><button class="shclose" type="button" data-close aria-label="إغلاق">✕</button></div>
+  <div class="shhdr"><h2 class="shtitle" id="ws-title">المساحات</h2><button class="shclose" type="button" data-close aria-label="إغلاق"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div id="ws-body"></div></div>
 </div>
 
@@ -561,10 +561,10 @@
 <div class="asht" id="sh-as" tabindex="-1" role="dialog" aria-modal="true" aria-label="تصدير واستيراد">
   <div class="ashg">
     <div class="asht-t">البيانات</div>
-    <button class="ashbtn" id="as-excel" type="button">📊 تصدير Excel</button>
-    <button class="ashbtn" id="as-json" type="button">💾 تصدير بيانات JSON (بدون ملفات الصور)</button>
-    <button class="ashbtn" id="as-sheet" type="button">📄 استيراد من Excel أو CSV</button>
-    <button class="ashbtn" id="as-import" type="button">📥 استيراد نسخة JSON</button>
+    <button class="ashbtn" id="as-excel" type="button"><span class="ico-inline" aria-hidden="true" data-icon="sheet" data-icon-size="18"></span>تصدير Excel</button>
+    <button class="ashbtn" id="as-json" type="button"><span class="ico-inline" aria-hidden="true" data-icon="download" data-icon-size="18"></span>تصدير بيانات JSON (بدون ملفات الصور)</button>
+    <button class="ashbtn" id="as-sheet" type="button"><span class="ico-inline" aria-hidden="true" data-icon="sheet" data-icon-size="18"></span>استيراد من Excel أو CSV</button>
+    <button class="ashbtn" id="as-import" type="button"><span class="ico-inline" aria-hidden="true" data-icon="upload" data-icon-size="18"></span>استيراد نسخة JSON</button>
   </div>
   <div class="ashcancel"><button class="ashbtn" type="button" data-close style="font-weight:600">إلغاء</button></div>
 </div>

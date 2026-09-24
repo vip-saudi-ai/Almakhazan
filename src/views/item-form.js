@@ -139,9 +139,9 @@ function renderImages() {
             onClick: () => moveImage(image.id, 1),
           }, [icon('back', { size: 14 })]),
           el('button', {
-            class: 'img-act danger', type: 'button', text: '✕', title: 'حذف الصورة', 'aria-label': 'حذف الصورة',
+            class: 'img-act danger', type: 'button', title: 'حذف الصورة', 'aria-label': 'حذف الصورة',
             onClick: () => removeImage(image.id),
-          }),
+          }, [icon('close', { size: 14 })]),
         ]),
       ]);
     }),

@@ -1031,9 +1031,16 @@ async function run() {
     // rather than writing chunk after chunk with nothing on the device saying
     // they exist — the chunk just committed is safe to replay, several are an
     // ever-wider gap.
+    let createdThisRun = 0;
     for (let i = start; i < resolved.length; i += CHUNK) {
       const slice = resolved.slice(i, i + CHUNK);
-      await repository.bulkCreateItems(slice, { log: false });
+      // Rows processed and records created are different numbers on a
+      // replay: a row whose record already exists is done — `written`
+      // moves past it — but it created nothing, and is not counted as if it had.
+      const outcome = await repository.bulkCreateItems(slice, { log: false });
+      job.createdRecords = (job.createdRecords || 0) + outcome.created;
+      job.skippedRecords = (job.skippedRecords || 0) + outcome.skippedExisting.length;
+      createdThisRun += outcome.created;
       job.written = Math.min(resolved.length, i + CHUNK);
       job.failedAt = null;
       await persistJobCritical(job, JOB.RUNNING);
@@ -1062,7 +1069,7 @@ async function run() {
     }
 
     await persistJobCritical(job, JOB.COMPLETED);
-    const written = resolved.length - start;
+    const written = createdThisRun;
     await logImport(ACTIONS.SPREADSHEET_IMPORTED, job, { status: 'completed' });
     closeImport();
     toast(`أُضيفت ${formatNumber(written)} قطعة`, '📥');
@@ -1117,11 +1124,15 @@ async function logImport(action, job, extra = {}) {
     fileName: job.fileName,
     fingerprint: job.fileFingerprint,
     totalRows: job.total,
-    writtenRows: job.written,
+    // Source rows done, and records that are new because of them — which
+    // differ when a resume replayed rows an earlier attempt had written.
+    processedRows: job.written,
+    writtenRows: job.createdRecords ?? job.written,
+    skippedExistingRows: job.skippedRecords ?? 0,
     errors: rowStatus ? rowStatus.error.length : null,
     startedAt: job.startedAt,
     completedAt: Date.now(),
-    summary: `${formatNumber(job.written)} قطعة من ${job.fileName}`,
+    summary: `${formatNumber(job.createdRecords ?? job.written)} قطعة من ${job.fileName}`,
     ...extra,
   });
 }

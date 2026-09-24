@@ -503,8 +503,8 @@ const state = (page) => page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 300));
     const afterPartial = await (await import('/src/local-store.js')).count('items');
 
-    // The customer presses import again. The whole file is written, and the
-    // half that already landed is rewritten rather than duplicated.
+    // The customer presses import again. The whole file is processed; the
+    // half that already landed is skipped, never duplicated or overwritten.
     await repository.bulkCreateItems(resolved);
     await new Promise((r) => setTimeout(r, 300));
     const afterRetry = await (await import('/src/local-store.js')).count('items');

@@ -45,6 +45,7 @@ const PATHS = {
   more: 'M6 12h.01M12 12h.01M18 12h.01',
   edit: 'M4 20h4L19 9a2.1 2.1 0 00-3-3L5 17z',
   trash: 'M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6',
+  restore: 'M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11',
   duplicate: 'M9 9h10v10H9zM5 15V5h10',
   move: 'M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2z',
   select: 'M4 5h16v14H4zM8 12l3 3 5-6',
