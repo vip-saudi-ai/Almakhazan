@@ -3,6 +3,7 @@
 
 import { withFullInventory } from './inventory-load.js';
 import { repository } from './repository.js';
+import { cancelItemOpens } from './views/detail.js';
 import { $ } from './utils.js';
 
 // 'cats' keeps a view but no longer a tab: categories are managed from
@@ -47,6 +48,9 @@ const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai']);
 
 export function goTab(name) {
   if (!TABS.includes(name)) return;
+  // A record still being fetched for a sheet on the screen being left is no
+  // longer wanted; its answer must not open a sheet over the new one.
+  cancelItemOpens();
 
   for (const tab of TABS) {
     const view = $(`v-${tab}`);

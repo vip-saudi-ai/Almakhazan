@@ -43,7 +43,7 @@ export async function checkIntegrity({ onProgress } = {}) {
   const categoryIds = new Set(categories.map((c) => c.id));
   const locationIds = new Set(locations.map((l) => l.id));
   const assetById = new Map(mediaAssets.map((a) => [a.id, a]));
-  const referencedMedia = new Set();
+  const referencedMedia = new Map();
 
   const skus = new Map();
   const serials = new Map();
@@ -78,7 +78,7 @@ export async function checkIntegrity({ onProgress } = {}) {
         for (const image of item.images || []) {
           const mediaId = image.mediaId || image.id;
           if (!mediaId) continue;
-          referencedMedia.add(mediaId);
+          referencedMedia.set(mediaId, (referencedMedia.get(mediaId) || 0) + 1);
           if (mediaAssets.length && !assetById.has(mediaId)) {
             findings.push(finding('error', 'media-missing',
               'صورة تشير إلى ملف غير موجود', { itemId: item.id, mediaId }));
@@ -152,23 +152,36 @@ export async function checkIntegrity({ onProgress } = {}) {
   });
 
   // ── media, from the other side ──
+  //
+  // The count must equal the number of references the records actually hold
+  // — not merely be non-zero when referenced. An overstated count keeps a file
+  // forever; an understated one deletes it one release early, under a record
+  // that still shows it.
+  const localBlobs = await local.existingKeys('images', mediaAssets
+    .filter((asset) => String(asset.storagePath || '').startsWith('local:'))
+    .map((asset) => asset.id)).catch(() => null);
   for (const asset of mediaAssets) {
-    if ((asset.refCount ?? 0) < 0) {
+    const stored = asset.refCount ?? 0;
+    const actual = referencedMedia.get(asset.id) || 0;
+    if (stored < 0) {
       findings.push(finding('error', 'negative-refcount',
-        'عدّاد مراجع سالب', { mediaId: asset.id, refCount: asset.refCount }));
+        'عدّاد مراجع سالب', { mediaId: asset.id, refCount: stored }));
     }
-    const referenced = referencedMedia.has(asset.id);
-    if (referenced && (asset.refCount ?? 0) === 0) {
+    if (actual > 0 && stored < actual) {
       findings.push(finding('error', 'refcount-understated',
-        'ملف مشار إليه وعدّاده صفر', { mediaId: asset.id }));
+        'عدّاد الملف أقل من عدد السجلات التي تعرضه', { mediaId: asset.id, refCount: stored, actual }));
     }
-    if (!referenced && (asset.refCount ?? 0) > 0) {
+    if (stored > actual) {
       findings.push(finding('warning', 'refcount-overstated',
-        'عدّاد ملف أكبر مما يشير إليه', { mediaId: asset.id, refCount: asset.refCount }));
+        'عدّاد ملف أكبر مما يشير إليه', { mediaId: asset.id, refCount: stored, actual }));
     }
-    if (!referenced && (asset.refCount ?? 0) === 0 && !asset.orphanedAt) {
+    if (actual === 0) {
       findings.push(finding('warning', 'orphan-media',
-        'ملف لا يشير إليه شيء ولم يُعلَّم يتيماً', { mediaId: asset.id }));
+        'ملف لا يشير إليه أي سجل', { mediaId: asset.id, orphanedAt: asset.orphanedAt ?? null }));
+    }
+    if (localBlobs && String(asset.storagePath || '').startsWith('local:') && !localBlobs.has(asset.id)) {
+      findings.push(finding('error', 'blob-missing',
+        'بيانات الصورة غير موجودة على الجهاز', { mediaId: asset.id }));
     }
   }
 

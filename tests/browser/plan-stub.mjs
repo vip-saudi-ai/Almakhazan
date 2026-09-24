@@ -59,6 +59,9 @@ export function planStub({
     ${only('importLimit', `export function importLimit(){ return importRowLimit({ entitlement }, MAX_ROWS); }`)}
     ${only('canImportRows', `export function canImportRows(rows){ return checkImportRows({ entitlement }, rows, MAX_ROWS); }`)}
     ${only('activityRetentionDays', `export function activityRetentionDays(){ return plan.limits.activityRetentionDays ?? 0; }`)}
+    ${only('scheduleLocalUsageRefresh', `export function scheduleLocalUsageRefresh(){}`)}
+    ${only('refreshLocalUsage', `export async function refreshLocalUsage(){}`)}
+    ${only('localPolicy', `export function localPolicy(){ return null; }`)}
     ${extra}
   `;
 }

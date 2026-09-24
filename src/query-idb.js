@@ -480,6 +480,11 @@ async function countTrashedIn(queryPlan, rootOnly) {
     ? null
     : (SCOPE_FIELD[queryPlan.baseIndex] || queryPlan.baseIndex);
   if (!field && !rootOnly) return trashed;
+  // A folder, category or location has an index of its own trashed records.
+  if (field && !rootOnly && TRASH_INDEX[field]) {
+    return local.countRange('items', TRASH_INDEX[field],
+      IDBKeyRange.bound([queryPlan.baseValue], [queryPlan.baseValue, []]));
+  }
 
   let inScope = 0;
   await local.walk('items', {
@@ -700,10 +705,28 @@ export async function counts() {
   return { categories, folders, locations, live: total - trashed, trashed, complete: true };
 }
 
+/** The index holding only the trashed records of each scope value. */
+export const TRASH_INDEX = {
+  folderId: 'folderDeleted',
+  categoryId: 'categoryDeleted',
+  locationId: 'locationDeleted',
+};
+
+/**
+ * Live records carrying `value` in `field`: every record with it, less the
+ * trashed ones. Two range counts. It used to be the first count alone, so a
+ * folder with 17 live records and 3 in the Trash said 20 and opened on 17.
+ */
+export async function liveCountIn(field, value) {
+  const [all, trashed] = await Promise.all([
+    local.countRange('items', field, IDBKeyRange.only(value)),
+    local.countRange('items', TRASH_INDEX[field], IDBKeyRange.bound([value], [value, []])),
+  ]);
+  return Math.max(0, all - trashed);
+}
+
 async function countBy(index, ids) {
-  const entries = await Promise.all(ids.map(async (id) => [
-    id, await local.countRange('items', index, IDBKeyRange.only(id)),
-  ]));
+  const entries = await Promise.all(ids.map(async (id) => [id, await liveCountIn(index, id)]));
   return new Map(entries.filter(([, n]) => n > 0));
 }
 
@@ -734,9 +757,12 @@ export async function summarize(query) {
   const inScope = scopeIndex ? await local.countRange('items', scopeIndex, scopeRange) : storeTotal;
   const liveTotal = Math.max(0, storeTotal - trashed);
 
+  // Live, like every other count on the screen. Small scope or large, the
+  // answer means the same thing; only the way it is reached differs.
+  const liveInScope = query.folderId ? await liveCountIn('folderId', query.folderId) : liveTotal;
   const base = {
     complete: true,
-    records: query.folderId ? inScope : liveTotal,
+    records: liveInScope,
     quantity: null,
     documentedRatio: null,
     categories: null,

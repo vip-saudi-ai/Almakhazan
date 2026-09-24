@@ -495,6 +495,37 @@ async function readXlsx(buffer, { rowLimit = Infinity } = {}) {
  *   what `totalKnown` says. Stopping early is the point of the limit, and a
  *   total invented from a partial read would be worse than no total.
  */
+/**
+ * What can be known about a file without reading a byte of it.
+ *
+ * Runs before the fingerprint, which has to read the whole file to hash it:
+ * checking the size only after hashing meant a mistakenly chosen 2 GB export
+ * was read into memory first and refused afterwards. The extension decides
+ * the type, not the MIME type — browsers disagree about what a .csv is.
+ *
+ * @throws {AppError} `import/file-too-large`, `sheet/empty`, `sheet/legacy-xls`
+ *   or `sheet/unsupported`
+ */
+export function validateSpreadsheetFileMetadata(file) {
+  if (!file || typeof file.size !== 'number') {
+    throw new AppError('اختر ملف .xlsx أو .csv', { code: 'sheet/unsupported' });
+  }
+  const name = String(file.name || '').toLowerCase();
+  if (name.endsWith('.xls')) {
+    throw new AppError('صيغة .xls القديمة غير مدعومة — احفظ الملف بصيغة .xlsx أو .csv', { code: 'sheet/legacy-xls' });
+  }
+  if (!/\.(xlsx|xlsm|csv|tsv|txt)$/.test(name)) {
+    throw new AppError('اختر ملف .xlsx أو .csv', { code: 'sheet/unsupported' });
+  }
+  if (file.size === 0) throw new AppError('الملف فارغ', { code: 'sheet/empty' });
+  if (file.size > MAX_FILE_BYTES) {
+    const mb = Math.round(MAX_FILE_BYTES / 1024 / 1024);
+    throw new AppError(`حجم الملف أكبر من الحد المسموح للاستيراد (${mb} ميجابايت).`, {
+      code: 'import/file-too-large', limitBytes: MAX_FILE_BYTES,
+    });
+  }
+}
+
 export async function readSpreadsheet(file, { rowLimit = MAX_ROWS } = {}) {
   const name = (file?.name || '').toLowerCase();
   const appliedLimit = Math.max(1, Math.min(rowLimit || MAX_ROWS, MAX_ROWS));

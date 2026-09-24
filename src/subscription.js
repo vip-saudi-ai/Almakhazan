@@ -13,6 +13,8 @@ import {
 } from './entitlements.js';
 import { MAX_ROWS } from './spreadsheet.js';
 import { firebaseContext } from './firebase.js';
+import { LocalModePolicy, localModePolicy } from './config.js';
+import * as local from './local-store.js';
 
 const state = {
   mode: 'local',
@@ -43,9 +45,17 @@ function emit() {
 }
 
 function recompute() {
-  state.entitlement = state.mode === 'cloud'
-    ? resolveEntitlement(state.workspace, state.subscription)
-    : null;
+  if (state.mode === 'cloud') {
+    state.entitlement = resolveEntitlement(state.workspace, state.subscription);
+  } else {
+    // Device-only: the policy decides, not the absence of an account. Under
+    // the free tier the device is held to the Free plan, and its usage is
+    // counted from the device's own store.
+    state.policy = localModePolicy();
+    state.entitlement = state.policy === LocalModePolicy.CONSUMER_FREE_TIER
+      ? resolveEntitlement(null, null)
+      : null;
+  }
   state.ready = true;
   emit();
 }
@@ -65,6 +75,7 @@ export function startPlanWatch({ mode, workspaceId }) {
 
   if (mode !== 'cloud' || !workspaceId) {
     recompute();
+    if (state.entitlement) void refreshLocalUsage();
     return;
   }
 
@@ -135,7 +146,8 @@ export function currentPlan() {
 }
 
 export function planStatus() {
-  return state.entitlement?.status || (state.mode === 'cloud' ? 'free' : 'local');
+  if (state.mode !== 'cloud') return state.entitlement ? 'local-free' : 'local';
+  return state.entitlement?.status || 'free';
 }
 
 /** null in local mode, where no plan applies. */
@@ -151,7 +163,7 @@ export function canAddItem() {
 
 /** Whether the assistant may run — credits, freeze and plan all considered. */
 export function canUseAssistant() {
-  if (!state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد نَظْم يتطلب حساباً' };
+  if (state.mode !== 'cloud' || !state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد نَظْم يتطلب حساباً' };
   return checkUseAI({ entitlement: state.entitlement, usage: state.usage });
 }
 
@@ -197,11 +209,43 @@ export function canImportRows(rows) {
 /**
  * How long this plan keeps activity. Zero or less means "for as long as the
  * workspace exists", which is what an unlimited plan promises.
+ *
+ * Follows the same policy as every other limit. A device with no plan keeps
+ * everything; a device held to the free tier keeps what the Free plan keeps.
+ * It used to fall back to the default plan's retention even where the screen
+ * said no plan applied.
  */
 export function activityRetentionDays() {
-  const plan = state.entitlement?.plan || planById(DEFAULT_PLAN);
+  if (!state.entitlement) return state.mode === 'cloud' ? retentionOf(planById(DEFAULT_PLAN)) : 0;
+  return retentionOf(state.entitlement.plan);
+}
+
+function retentionOf(plan) {
   const days = plan?.limits?.activityRetentionDays;
   return days === UNLIMITED ? 0 : (days ?? 0);
+}
+
+/** Which device-only policy is in force — for the settings screen. */
+export function localPolicy() {
+  return state.mode === 'cloud' ? null : (state.policy || localModePolicy());
+}
+
+/**
+ * Live records on this device, counted from the store, as the device's usage
+ * under the free tier. Called at start and after writes; a count, not a read.
+ */
+export async function refreshLocalUsage() {
+  if (state.mode === 'cloud' || !state.entitlement) return;
+  try {
+    const [total, trashed] = await Promise.all([
+      local.count('items'),
+      local.countRange('items', 'deletedAt', null),
+    ]);
+    state.usage = { ...state.usage, items: Math.max(0, total - trashed) };
+    emit();
+  } catch (error) {
+    console.error('[plan] device usage could not be counted', error);
+  }
 }
 
 export function planUsage() {
@@ -210,6 +254,15 @@ export function planUsage() {
 }
 
 export function assistantLabel() {
-  if (!state.entitlement) return { included: false, label: 'يتطلب حساباً' };
+  if (state.mode !== 'cloud' || !state.entitlement) return { included: false, label: 'يتطلب حساباً' };
   return assistantPresentation({ entitlement: state.entitlement });
+}
+
+let usageTimer = null;
+
+/** A refresh after a burst of writes, not one per write. */
+export function scheduleLocalUsageRefresh() {
+  if (state.mode === 'cloud' || !state.entitlement) return;
+  clearTimeout(usageTimer);
+  usageTimer = setTimeout(() => { void refreshLocalUsage(); }, 300);
 }

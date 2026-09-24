@@ -17,7 +17,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -69,6 +69,23 @@ export const SCHEMA = {
       // without reading the inventory. Null on everything else, and IndexedDB
       // does not index null, so the index holds imported records only.
       importJobId: 'importJobId',
+      // ── scope + trash ──
+      //
+      // A live record carries `deletedAt: null`, and a compound key with a
+      // null part is not a valid key, so IndexedDB leaves the record out of
+      // these indexes entirely. Each one therefore holds exactly the trashed
+      // records of each folder, category or location — which makes "how many
+      // live records are in this folder" two range counts and a subtraction,
+      // with no walk and no stored flag that could drift from `deletedAt`.
+      // An existing database backfills them in the upgrade transaction.
+      // The currencies the inventory holds values in, without reading it: a
+      // record with no valuation has no key here and is left out. The
+      // `...Deleted` twin holds the same for the Trash, as above.
+      valuationCurrency: 'valuation.currency',
+      currencyDeleted: ['valuation.currency', 'deletedAt'],
+      folderDeleted: ['folderId', 'deletedAt'],
+      categoryDeleted: ['categoryId', 'deletedAt'],
+      locationDeleted: ['locationId', 'deletedAt'],
       deletedAt: 'deletedAt',
     },
   },
@@ -213,6 +230,23 @@ export function get(storeName, id) {
   return run(storeName, 'readonly', (store) => req(store.get(id)));
 }
 
+/**
+ * Which of these keys are present in the store, without reading the records.
+ * One transaction, one keyed probe per id — what a merge needs to know before
+ * it writes, and nothing it does not.
+ */
+export function existingKeys(storeName, ids) {
+  const wanted = [...new Set(ids.filter((id) => id != null))];
+  if (!wanted.length) return Promise.resolve(new Set());
+  return run(storeName, 'readonly', async (store) => {
+    const found = new Set();
+    for (const id of wanted) {
+      if (await req(store.count(id))) found.add(id);
+    }
+    return found;
+  });
+}
+
 export function getMany(storeName, ids) {
   const wanted = [...new Set(ids.filter((id) => id != null))];
   if (!wanted.length) return Promise.resolve([]);
@@ -271,6 +305,24 @@ export function keysByIndex(storeName, indexName, value, limit) {
     const range = value instanceof IDBKeyRange ? value : IDBKeyRange.only(value);
     return req(limit ? index.getAllKeys(range, limit) : index.getAllKeys(range));
   });
+}
+
+/**
+ * The distinct keys of an index, one cursor step per distinct value — the
+ * cost is the number of different values, not the number of records.
+ */
+export function uniqueKeys(storeName, indexName) {
+  return run(storeName, 'readonly', (store) => new Promise((resolve, reject) => {
+    const keys = [];
+    const cursorRequest = store.index(indexName).openKeyCursor(null, 'nextunique');
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) { resolve(keys); return; }
+      keys.push(cursor.key);
+      cursor.continue();
+    };
+    cursorRequest.onerror = () => reject(storageError(cursorRequest.error));
+  }));
 }
 
 /** The first record matching an index value, without materialising the rest —

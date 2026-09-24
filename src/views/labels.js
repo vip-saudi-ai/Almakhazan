@@ -14,7 +14,7 @@ import { closeSheet, openSheet, toast, toastError } from '../ui.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
-const state = { itemIds: [], mono: false, withLocation: true };
+const state = { itemIds: [], items: [], mono: false, withLocation: true };
 
 function qrNode(text, size = 120) {
   const code = encodeQr(text);
@@ -103,9 +103,7 @@ function renderLabels() {
   const body = $('labels-body');
   if (!body) return;
 
-  const items = state.itemIds
-    .map((id) => repository.item(id))
-    .filter(Boolean);
+  const items = state.items;
 
   if (!items.length) {
     render(body, [el('p', { class: 'plan-note', text: 'لا توجد قطع مختارة.' })]);
@@ -147,10 +145,25 @@ function print() {
 }
 
 /** @param {string[]} itemIds */
-export function openLabels(itemIds) {
+/**
+ * The records are read from the store by id, not looked for in the window:
+ * a label is as often wanted for the oldest thing on the shelf as the newest.
+ * An id the store no longer holds is said out loud, not quietly dropped from
+ * the sheet.
+ */
+export async function openLabels(itemIds) {
   const ids = itemIds.filter(Boolean);
   if (!ids.length) { toast('اختر قطعة أولاً', '⚠'); return; }
+  let found;
+  try {
+    found = await repository.getItems(ids);
+  } catch (error) {
+    toastError(error, 'تعذّر فتح القطع. حاول مرة أخرى.');
+    return;
+  }
   state.itemIds = ids;
+  state.items = found.items.filter((item) => !item.deletedAt);
+  if (found.missing.length) toast(`${found.missing.length} قطعة لم تعد موجودة`, '⚠');
   renderLabels();
   openSheet('labels');
 }

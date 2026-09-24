@@ -21,14 +21,15 @@
 // preview and the write come from one answer rather than two.
 
 import { FIELDS, ambiguousColumns, attachTaxonomy, guessMapping, importItemId, planImport } from '../import-mapping.js';
-import { readSpreadsheet } from '../spreadsheet.js';
+import { readSpreadsheet, validateSpreadsheetFileMetadata } from '../spreadsheet.js';
 import { normalizeArabic } from '../search.js';
+import { ACTIONS } from '../config.js';
 import { repository } from '../repository.js';
 import { canImportRows, importLimit, quotaStatus } from '../subscription.js';
-import { AppError, $, el, formatNumber, render, uid } from '../utils.js';
-import { closeSheet, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
+import { AppError, $, el, formatDate, formatNumber, render, uid } from '../utils.js';
+import { closeSheet, confirmAction, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
 import {
-  JOB, ensureImportReady, findUnfinishedJob, importRecoveryState, markJobActive,
+  JOB, ensureImportReady, findCompletedJob, findUnfinishedJob, importRecoveryState, markJobActive,
   markJobInactive, persistJobCritical, runImportRecovery,
 } from '../import-jobs.js';
 
@@ -249,7 +250,12 @@ export async function openSpreadsheetImport(file) {
       throw error;
     }
 
-    // Identity first, before anything expensive. A file that cannot be
+    // What the file is, from its name and size alone — before the fingerprint,
+    // which reads every byte to hash them. A file too large to import is
+    // refused here, not after it has been read into memory.
+    validateSpreadsheetFileMetadata(file);
+
+    // Identity next, before anything expensive. A file that cannot be
     // identified cannot be safely resumed, so there is no point parsing it —
     // and this throws rather than continuing with a weaker identity.
     const fileFingerprint = await fingerprint(file);
@@ -293,6 +299,19 @@ export async function openSpreadsheetImport(file) {
       state.mappingLocked = previous.written > 0;
       state.step = 'confirm';
     } else {
+      // The same bytes, already imported in full. Asked, not refused: a second
+      // import of one file is sometimes deliberate, and always something the
+      // customer should choose rather than stumble into.
+      const done = previous ? null : await findCompletedJob(fileFingerprint);
+      if (done && !(await confirmAction({
+        title: 'سبق استيراد هذا الملف',
+        message: `سبق استيراد هذا الملف بتاريخ ${formatDate(done.updatedAt)} (${formatNumber(done.written || 0)} قطعة). استيراده مرة أخرى يضيف نسخة ثانية من قطعه.`,
+        icon: '⚠️',
+        confirmLabel: 'استيراده مرة أخرى',
+      }))) {
+        releaseImportMemory();
+        return;
+      }
       state.job = null;
       state.mapping = guessMapping(sheet.headers);
       state.resolved = {};
@@ -917,45 +936,63 @@ async function run() {
     // be written, nothing is.
     if (!resuming) await persistJobCritical(job, JOB.PREPARED);
 
-    // ── 2. taxonomy ──
+    // ── 2. taxonomy: ownership recorded before creation ──
     //
-    // The records reference categories, locations and folders by id, so they
-    // have to exist first. Resolved by name against what already exists —
-    // including anything a stopped attempt created — so a resumed import does
-    // not add a second "ساعات" beside the first.
+    // The order is the point. Each name this import needs gets its id chosen
+    // first; the ids go into the job's `created` list and the job is written;
+    // only then are the rows created, with exactly those ids. If the tab dies
+    // between the two, the job claims an id that was never created — which a
+    // rollback deletes as a no-op. The other order — create, then record —
+    // left a window in which a crash made an import's own category look like
+    // one the customer had before, and no rollback would ever take it back.
+    //
+    // Matched by name against what exists, so a resumed import does not add a
+    // second "ساعات" beside the first; and a name planned by an earlier
+    // attempt keeps the id it was given then.
     state.progress = { ...state.progress, stage: 'جارٍ إنشاء التصنيفات…' };
     renderImport();
     const created = { categories: {}, locations: {}, folders: {} };
-    // What this import brought into existence, as opposed to what it merely
-    // found. Only these are candidates for removal if the import is cancelled.
-    const mine = { categories: [], locations: [], folders: [] };
-    for (const [collection, existing, save] of [
-      ['categories', () => repository.state.categories,
-        (name) => repository.saveCategory({ id: uid('cat'), name, icon: '📦' })],
-      ['locations', () => repository.state.locations,
-        (name) => repository.saveLocation({ id: uid('loc'), name })],
-      ['folders', () => repository.state.folders,
-        (name) => repository.saveFolder({ id: uid('fld'), name, icon: '🗂', color: '#2563FF' })],
-    ]) {
+    const planned = {
+      categories: { ...(job.plannedTaxonomy?.categories || {}) },
+      locations: { ...(job.plannedTaxonomy?.locations || {}) },
+      folders: { ...(job.plannedTaxonomy?.folders || {}) },
+    };
+    const claimed = {
+      categories: new Set(job.created?.categories || []),
+      locations: new Set(job.created?.locations || []),
+      folders: new Set(job.created?.folders || []),
+    };
+    const toCreate = [];
+    const PREFIX = { categories: 'cat', locations: 'loc', folders: 'fld' };
+    for (const collection of ['categories', 'locations', 'folders']) {
       for (const name of newTaxonomy[collection]) {
         const key = normalizeArabic(name);
-        const already = existing().find((row) => normalizeArabic(row.name) === key);
-        const saved = already || await save(name);
-        created[collection][key] = saved.id;
-        if (!already) mine[collection].push(saved.id);
+        const plannedId = planned[collection][key];
+        const already = repository.state[collection].find((row) => (plannedId && row.id === plannedId)
+          || normalizeArabic(row.name) === key);
+        if (already) { created[collection][key] = already.id; continue; }
+        const id = plannedId || uid(PREFIX[collection]);
+        planned[collection][key] = id;
+        claimed[collection].add(id);
+        created[collection][key] = id;
+        toCreate.push({ collection, id, name });
       }
     }
-
-    // ── 3. what it created, durably, before the first record ──
-    //
-    // Merged rather than replaced: a resumed import may create the rest of
-    // the taxonomy its first attempt did not reach, and cancelling has to know
-    // about both halves.
+    job.plannedTaxonomy = planned;
     job.created = {
-      categories: [...new Set([...(job.created?.categories || []), ...mine.categories])],
-      locations: [...new Set([...(job.created?.locations || []), ...mine.locations])],
-      folders: [...new Set([...(job.created?.folders || []), ...mine.folders])],
+      categories: [...claimed.categories],
+      locations: [...claimed.locations],
+      folders: [...claimed.folders],
     };
+    await persistJobCritical(job, resuming ? JOB.RUNNING : JOB.PREPARED);
+
+    for (const { collection, id, name } of toCreate) {
+      if (collection === 'categories') await repository.saveCategory({ id, name, icon: '📦' });
+      else if (collection === 'locations') await repository.saveLocation({ id, name });
+      else await repository.saveFolder({ id, name, icon: '🗂', color: '#2563FF' });
+    }
+
+    // ── 3. running, durably, before the first record ──
     await persistJobCritical(job, JOB.RUNNING);
 
     // Each record's id comes from the job and its row, so writing a chunk
@@ -987,7 +1024,7 @@ async function run() {
     // ever-wider gap.
     for (let i = start; i < resolved.length; i += CHUNK) {
       const slice = resolved.slice(i, i + CHUNK);
-      await repository.bulkCreateItems(slice);
+      await repository.bulkCreateItems(slice, { log: false });
       job.written = Math.min(resolved.length, i + CHUNK);
       job.failedAt = null;
       await persistJobCritical(job, JOB.RUNNING);
@@ -1007,6 +1044,7 @@ async function run() {
         job.failedAt = job.written;
         state.mappingLocked = job.written > 0;
         await persistJobCritical(job, JOB.STOPPED);
+        await logImport(ACTIONS.SPREADSHEET_IMPORT_STOPPED, job, { status: 'stopped' });
         state.step = 'confirm';
         renderImport();
         toast(`أُوقف الاستيراد بعد ${formatNumber(job.written)} قطعة`, '⏸');
@@ -1016,6 +1054,7 @@ async function run() {
 
     await persistJobCritical(job, JOB.COMPLETED);
     const written = resolved.length - start;
+    await logImport(ACTIONS.SPREADSHEET_IMPORTED, job, { status: 'completed' });
     closeImport();
     toast(`أُضيفت ${formatNumber(written)} قطعة`, '📥');
     window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
@@ -1055,4 +1094,25 @@ async function stopAfterFailure(job, error) {
   }
   closeImport();
   toastError(error, 'تعذّر الاستيراد');
+}
+
+/**
+ * One activity entry for an import, when it ends — completed, or stopped by the
+ * customer. Structured, so the log can say "12,430 قطعة من inventory.xlsx"
+ * rather than the same "200 added" sixty times over.
+ */
+async function logImport(action, job, extra = {}) {
+  const { rowStatus } = state.sheet ? currentPlan() : { rowStatus: null };
+  await repository.log(action, {
+    importJobId: job.id,
+    fileName: job.fileName,
+    fingerprint: job.fileFingerprint,
+    totalRows: job.total,
+    writtenRows: job.written,
+    errors: rowStatus ? rowStatus.error.length : null,
+    startedAt: job.startedAt,
+    completedAt: Date.now(),
+    summary: `${formatNumber(job.written)} قطعة من ${job.fileName}`,
+    ...extra,
+  });
 }

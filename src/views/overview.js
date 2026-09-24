@@ -213,7 +213,7 @@ export function renderOverview() {
         el('div', { class: 'ov-act-ico', text: actionIcon(entry.action), 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1', minWidth: '0' } }, [
           el('div', { class: 'ov-act-name', text: ACTION_LABELS[entry.action] || entry.action }),
-          el('div', { class: 'ov-act-meta', text: entry.itemName || entry.folderName || entry.categoryName || '—' }),
+          el('div', { class: 'ov-act-meta', text: entry.summary || entry.itemName || entry.folderName || entry.categoryName || '—' }),
         ]),
         el('div', { style: { fontSize: '11px', color: 'var(--tt)', flexShrink: '0' }, text: timeAgo(entry.timestamp) }),
       ]))),

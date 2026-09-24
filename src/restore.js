@@ -12,12 +12,95 @@
 //   3. Remove only the records that the backup does not contain, and only
 //      after every write has landed.
 //
-// Progress is written to a job document as it goes, so an interrupted restore
-// can be resumed and, more importantly, can be *seen* rather than guessed at.
+// A compact restore job is kept on the device (`restoreJob` in the meta
+// store): which backup, which stage, how far. It is written before each stage
+// begins and as each chunk lands, so a restore the tab died in the middle of
+// is *known* to be unfinished the next time the app opens — rather than a
+// workspace holding half of two inventories looking like a normal one.
+//
+// Resuming is re-running. Both halves are idempotent: step 2 writes each
+// incoming record under its own id, so writing it again changes nothing, and
+// step 3 removes whatever the backup does not contain, which on a second run
+// is only what the first run did not reach. So picking the same backup again
+// finishes the job — after taking a new safety backup of the mixed state,
+// because that state is now the thing that must not be lost. A different
+// backup, or a merge, is refused until the unfinished one is finished.
 
 import { ACTIONS, SCHEMA_VERSION } from './config.js';
+import * as local from './local-store.js';
 import { repository } from './repository.js';
 import { AppError } from './utils.js';
+
+// ── the restore job ──
+
+const JOB_KEY = 'restoreJob';
+
+export const RestoreStatus = {
+  PREPARED: 'prepared',
+  WRITING: 'writing',
+  REMOVING: 'removing',
+  COMPLETED: 'completed',
+  RECOVERY_REQUIRED: 'recovery-required',
+};
+
+const UNFINISHED = new Set([
+  RestoreStatus.PREPARED, RestoreStatus.WRITING, RestoreStatus.REMOVING, RestoreStatus.RECOVERY_REQUIRED,
+]);
+
+/** A restore running in this page right now — not an interrupted one. */
+let activeRestoreId = null;
+
+export const RESTORE_BLOCKED_MESSAGE = 'توجد استعادة سابقة لم تكتمل. أكملها قبل بدء استعادة جديدة.';
+
+async function saveJob(job) {
+  try {
+    await local.setMeta(JOB_KEY, { ...job, updatedAt: Date.now() });
+  } catch (error) {
+    // The job is what makes an interruption visible. Without it, stop.
+    throw new AppError('تعذّر حفظ حالة الاستعادة، ولم تُغيَّر أي بيانات بعدها. حاول مرة أخرى.', {
+      code: 'restore/state-unsaved', cause: error,
+    });
+  }
+}
+
+/** The unfinished restore on this device, if any. */
+export async function unfinishedRestore() {
+  const job = await local.getMeta(JOB_KEY, null).catch(() => null);
+  if (!job || !UNFINISHED.has(job.status)) return null;
+  if (job.id === activeRestoreId) return null;
+  return job;
+}
+
+/**
+ * At startup: a restore the previous page left mid-way is marked as needing
+ * recovery. Nothing is changed in the inventory; it is only made visible.
+ */
+export async function markInterruptedRestore() {
+  const job = await unfinishedRestore();
+  if (!job || job.status === RestoreStatus.RECOVERY_REQUIRED) return job;
+  const marked = { ...job, status: RestoreStatus.RECOVERY_REQUIRED, interruptedAt: job.status };
+  await local.setMeta(JOB_KEY, { ...marked, updatedAt: Date.now() }).catch((error) => {
+    console.error('[restore] could not mark an interrupted restore', error);
+  });
+  console.error(`[restore] an interrupted restore was found (stage ${job.status}); recovery is required`);
+  return marked;
+}
+
+/** Throws unless no restore is unfinished — the gate in front of merge. */
+export async function assertNoUnfinishedRestore() {
+  if (await unfinishedRestore()) {
+    throw new AppError(RESTORE_BLOCKED_MESSAGE, { code: 'restore/recovery-required' });
+  }
+}
+
+/** What a backup *is*: a hash of its content, not its file name. */
+export async function backupFingerprint(data) {
+  const bytes = new TextEncoder().encode(JSON.stringify(
+    Object.fromEntries(COLLECTIONS.map((name) => [name, (data[name] || []).map((r) => r.id).sort()])),
+  ));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export const RestoreStage = {
   BACKUP: 'backup',
@@ -83,6 +166,36 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
   const repo = repository;
   repo.assertCanWrite();
 
+  // An unfinished restore of a *different* backup blocks this one. The same
+  // backup resumes it: see the note at the top of this file.
+  const sourceFingerprint = await backupFingerprint(data);
+  const previous = await unfinishedRestore();
+  if (previous && previous.sourceFingerprint !== sourceFingerprint) {
+    throw new AppError(RESTORE_BLOCKED_MESSAGE, { code: 'restore/recovery-required' });
+  }
+  const job = {
+    id: previous?.id || `rst-${Date.now().toString(36)}`,
+    status: RestoreStatus.PREPARED,
+    stage: RestoreStage.BACKUP,
+    startedAt: previous?.startedAt || Date.now(),
+    resumed: Boolean(previous),
+    sourceFingerprint,
+    sourceCounts: Object.fromEntries(COLLECTIONS.map((name) => [name, (data[name] || []).length])),
+    writeProgress: { done: 0, total: 0 },
+    removalProgress: { done: 0, total: 0 },
+    safetyBackup: null,
+  };
+  activeRestoreId = job.id;
+  try {
+    return await runRestore(repo, data, job, { onProgress, saveBackup });
+  } finally {
+    activeRestoreId = null;
+  }
+}
+
+async function runRestore(repo, data, job, { onProgress, saveBackup }) {
+  await saveJob(job);
+
   // ── 0. the whole inventory, before anything else ──
   // The app browses on a window of the newest records. A safety backup taken
   // from a window backs up a fraction, and step 3 would then remove records
@@ -105,6 +218,7 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
     );
   }
   onProgress({ stage: RestoreStage.BACKUP, done: 1, total: 1 });
+  job.safetyBackup = safety.counts;
 
   // ── 2. write the incoming records ──
   const writes = [];
@@ -114,36 +228,58 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
     }
   }
 
+  job.status = RestoreStatus.WRITING;
+  job.stage = RestoreStage.WRITE;
+  job.writeProgress = { done: 0, total: writes.length };
+  await saveJob(job);
+
   let done = 0;
   for (let i = 0; i < writes.length; i += CHUNK) {
     await repo.bulkWrite(writes.slice(i, i + CHUNK));
     done = Math.min(writes.length, i + CHUNK);
+    job.writeProgress = { done, total: writes.length };
+    await saveJob(job);
     onProgress({ stage: RestoreStage.WRITE, done, total: writes.length });
   }
 
   // ── 3. remove what the backup does not contain ──
   // Only now, with every incoming record already written. If the run stops
-  // here the workspace holds a superset — untidy, never empty.
+  // here the workspace holds a superset — untidy, never empty — and the job
+  // says so. Which records existed before is read from the safety backup,
+  // the complete copy taken in step 1, not from whatever is in memory now.
   const incoming = Object.fromEntries(
     COLLECTIONS.map((name) => [name, new Set((data[name] || []).map((r) => r.id))]),
   );
   const removals = [];
   for (const name of COLLECTIONS) {
-    for (const record of repo.state[name]) {
+    for (const record of safety.payload[name] || []) {
       if (!incoming[name].has(record.id)) {
         removals.push({ type: 'delete', collection: name, id: record.id });
       }
     }
   }
 
+  job.status = RestoreStatus.REMOVING;
+  job.stage = RestoreStage.REMOVE;
+  job.removalProgress = { done: 0, total: removals.length };
+  await saveJob(job);
+
   done = 0;
   for (let i = 0; i < removals.length; i += CHUNK) {
     await repo.bulkWrite(removals.slice(i, i + CHUNK));
     done = Math.min(removals.length, i + CHUNK);
+    job.removalProgress = { done, total: removals.length };
+    await saveJob(job);
     onProgress({ stage: RestoreStage.REMOVE, done, total: removals.length });
   }
 
+  job.status = RestoreStatus.COMPLETED;
+  job.stage = RestoreStage.DONE;
+  await saveJob(job);
+
   await repo.log(ACTIONS.IMPORT_RESTORED, {
+    restoreJobId: job.id,
+    resumed: job.resumed,
     items: data.items?.length || 0,
     folders: data.folders?.length || 0,
     removed: removals.length,

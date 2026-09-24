@@ -10,6 +10,8 @@ import { currentSession, initializeAuthentication, onSessionChange, refreshWorks
 import { SYNC_LABELS, SyncState, repository } from './repository.js';
 import { useQueryAdapter } from './query.js';
 import { runImportRecovery } from './import-jobs.js';
+import { reconcileOccasionally } from './media.js';
+import { markInterruptedRestore } from './restore.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
@@ -30,7 +32,9 @@ import { bindManageViews, openFolderSheet, renderCategories, renderSettings } fr
 import { bindAssistant, renderAssistant } from './views/assistant.js';
 import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
-import { activityRetentionDays, onSubscriptionChange, startPlanWatch, subscriptionState } from './subscription.js';
+import {
+  activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
+} from './subscription.js';
 
 const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
 
@@ -196,6 +200,14 @@ async function loadApplicationData(firebase, session) {
     if (!recovery.ready) {
       console.error('[app] import recovery is needed; new imports are blocked until it succeeds');
     }
+    // Reference counts are kept incrementally, and a tab killed between a
+    // record write and its count adjustment leaves them wrong. Once a day the
+    // device's counts are re-derived from its records. Not awaited: it is
+    // maintenance, and the inventory does not wait for it.
+    void reconcileOccasionally(repository.session);
+    // A restore the last page died in the middle of is made visible now, and
+    // blocks the next restore or merge until the same backup finishes it.
+    await markInterruptedRestore().catch((error) => console.error('[app] restore check failed', error));
 
     // Without a cloud copy, what is on this device is the only copy — and a
     // browser evicts unpersisted storage when the device needs room. Asking is
@@ -320,6 +332,8 @@ function initializeUI() {
   repository.subscribe(() => {
     renderSyncIndicator();
     renderAll();
+    // Under the device free tier the record quota is counted from the store.
+    scheduleLocalUsageRefresh();
   });
 
   syncFilterControls();

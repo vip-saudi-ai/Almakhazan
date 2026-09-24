@@ -5,6 +5,7 @@
 // itself and in the UI, so nobody mistakes it for a full media backup.
 
 import { ACTIONS, APP_VERSION, SCHEMA_VERSION } from './config.js';
+import { assertNoUnfinishedRestore } from './restore.js';
 import { repository } from './repository.js';
 import { ACTION_LABELS } from './config.js';
 import { AppError, toDate } from './utils.js';
@@ -158,7 +159,11 @@ export function exportJSON() {
     appVersion: APP_VERSION,
     exportedAt: new Date().toISOString(),
     backupType: 'metadata-only',
-    note: 'نسخة بيانات فقط — ملفات الصور محفوظة في Firebase Storage ولا يتضمنها هذا الملف.',
+    imagesIncluded: false,
+    // What this file is not, said in the file itself.
+    note: repo.session.mode === 'cloud'
+      ? 'بيانات القطع فقط — ملفات الصور تبقى في التخزين السحابي ولا يتضمنها هذا الملف.'
+      : 'بيانات القطع فقط — ملفات الصور محفوظة على الجهاز ولا يتضمنها هذا الملف.',
     workspaceId: repo.session.workspaceId,
     items: repo.state.items,
     folders: repo.state.folders,
@@ -192,23 +197,30 @@ export function readJsonFile(file) {
 /**
  * Adds the imported records alongside the existing ones. An incoming record
  * whose id already exists is skipped, so a merge never overwrites local edits.
+ *
+ * "Already exists" is asked of the store, by key, for every incoming id. It
+ * used to be asked of the records in memory — which, for items, is the newest
+ * few hundred — so an old record's id looked new, and the `merge: false`
+ * write that followed replaced the customer's record with the backup's copy.
+ * The write itself also refuses to replace anything (`ifAbsent`), so a record
+ * created between the check and the write is not overwritten either.
  */
 export async function applyMerge(data) {
   const repo = repository;
-  const existing = {
-    items: new Set(repo.state.items.map((i) => i.id)),
-    folders: new Set(repo.state.folders.map((f) => f.id)),
-    categories: new Set(repo.state.categories.map((c) => c.id)),
-    locations: new Set(repo.state.locations.map((l) => l.id)),
-  };
-
+  // A restore left half done is a workspace holding parts of two
+  // inventories; merging a third into it would make that unrecoverable.
+  await assertNoUnfinishedRestore();
   const operations = [];
   const skipped = { items: 0, folders: 0, categories: 0, locations: 0 };
 
   for (const name of ['categories', 'locations', 'folders', 'items']) {
-    for (const record of data[name] || []) {
-      if (existing[name].has(record.id)) { skipped[name] += 1; continue; }
-      operations.push({ type: 'set', collection: name, id: record.id, data: record, merge: false });
+    const incoming = (data[name] || []).filter((record) => record?.id);
+    const existing = await repo.backend.existingIds(name, incoming.map((record) => record.id));
+    for (const record of incoming) {
+      if (existing.has(record.id)) { skipped[name] += 1; continue; }
+      operations.push({
+        type: 'set', collection: name, id: record.id, data: record, merge: false, ifAbsent: true,
+      });
     }
   }
 

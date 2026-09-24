@@ -59,6 +59,8 @@ function currentQuery() {
 }
 
 let contextItemId = null;
+/** The version the menu was opened on, carried to move and delete. */
+let contextVersion = null;
 
 export function setGridMode(grid) {
   view.grid = grid;
@@ -333,7 +335,7 @@ function cardNode(item) {
   }
 
   const selected = view.selection?.has(item.id) === true;
-  const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
+  const activate = () => (view.selection ? toggleSelected(item.id) : void openDetail(item.id));
 
   return el('div', {
     // In selection mode the card IS the control — one tap, one meaning — so it
@@ -397,7 +399,7 @@ function rowNode(item) {
     .filter(Boolean).join(' · ');
 
   const selected = view.selection?.has(item.id) === true;
-  const activate = () => (view.selection ? toggleSelected(item.id) : openDetail(item.id));
+  const activate = () => (view.selection ? toggleSelected(item.id) : void openDetail(item.id));
 
   return el('div', {
     // Same reasoning as the card: a control while selecting, a container while
@@ -522,7 +524,9 @@ async function findMatchingRecord(value) {
   const byIndex = await findByIdentifier(value);
   if (byIndex?.length) return byIndex[0];
 
-  const direct = repository.item(value);
+  // A NAZM label carries the record's id. Looked up by key in the store,
+  // not in the window: the label may be on the oldest thing on the shelf.
+  const direct = await repository.getItem(value).catch(() => null);
   if (direct && !direct.deletedAt) return direct;
   if (byIndex) return null;
 
@@ -543,7 +547,7 @@ export async function scanIntoSearch() {
       // for 20,000 records before telling them whether they own the thing in
       // their hand was the wrong shape for the job.
       const match = await findMatchingRecord(value);
-      if (match) { openDetail(match.id); return; }
+      if (match) { void openDetail(match.id); return; }
 
       $('hsearch').value = value;
       view.query = value;
@@ -568,11 +572,15 @@ export function startSelection(firstId = null) {
     return;
   }
   view.selection = new Set(firstId ? [firstId] : []);
+  selectionVersions.clear();
+  const first = firstId ? (drawn.get(firstId) || repository.item(firstId)) : null;
+  if (first) selectionVersions.set(first.id, first.version ?? 1);
   renderHome();
 }
 
 export function endSelection() {
   view.selection = null;
+  selectionVersions.clear();
   renderHome();
 }
 
@@ -580,18 +588,44 @@ export function isSelecting() {
   return view.selection !== null;
 }
 
+/**
+ * The version each record showed when it was selected.
+ *
+ * Selection is a set of ids — it can span pages and records the window has
+ * never held — and the records themselves are read from the store only when
+ * an action runs. What is kept is the version the customer saw, so a record
+ * another tab changed after it was ticked is a conflict rather than an
+ * overwrite.
+ */
+const selectionVersions = new Map();
+
 function toggleSelected(id) {
   if (!view.selection) return;
-  if (view.selection.has(id)) view.selection.delete(id);
-  else view.selection.add(id);
+  if (view.selection.has(id)) {
+    view.selection.delete(id);
+    selectionVersions.delete(id);
+  } else {
+    view.selection.add(id);
+    const shown = drawn.get(id) || repository.item(id);
+    if (shown) selectionVersions.set(id, shown.version ?? 1);
+  }
   renderHome();
 }
 
-/** The records currently selected, in the order the screen shows them. */
-function selectedItems() {
-  if (!view.selection) return [];
-  const ids = view.selection;
-  return repository.liveItems().filter((item) => ids.has(item.id));
+/** The selected ids, every one of them — the window has no say in this. */
+function selectedIds() {
+  return view.selection ? [...view.selection] : [];
+}
+
+/**
+ * The toast after a bulk action: what was done, and — never silently — what
+ * could not be, because it no longer exists or is already in the Trash.
+ */
+function bulkOutcome(label, done, result) {
+  const notes = [];
+  if (result.missing?.length) notes.push(`${formatNumber(result.missing.length)} لم تعد موجودة`);
+  if (result.skipped?.length) notes.push(`${formatNumber(result.skipped.length)} في المحذوفات`);
+  toast(`${label} — ${formatNumber(done)} قطعة${notes.length ? ` (${notes.join('، ')})` : ''}`, notes.length ? '⚠' : '✓');
 }
 
 function renderSelectionBar(visibleItems) {
@@ -630,8 +664,14 @@ function renderSelectionBar(visibleItems) {
         text: allOnPage ? 'إلغاء تحديد الصفحة' : 'تحديد الصفحة',
         onClick: () => {
           for (const id of pageIds) {
-            if (allOnPage) view.selection.delete(id);
-            else view.selection.add(id);
+            if (allOnPage) {
+              view.selection.delete(id);
+              selectionVersions.delete(id);
+            } else {
+              view.selection.add(id);
+              const shown = drawn.get(id);
+              if (shown) selectionVersions.set(id, shown.version ?? 1);
+            }
           }
           renderHome();
         },
@@ -671,14 +711,16 @@ async function withBulkLock(run) {
 
 function applyToSelection(label, patch) {
   return withBulkLock(async () => {
-    const items = selectedItems();
-    if (!items.length) return;
+    const ids = selectedIds();
+    if (!ids.length) return;
     try {
       // The count comes back from the write, not from the selection: on a
       // backend that can only commit in chunks, a conflict part way leaves
       // fewer records changed than were asked for, and the message says so.
-      const { updated } = await repository.bulkUpdate(items.map((item) => item.id), patch);
-      toast(`${label} — ${formatNumber(updated)} قطعة`, '✓');
+      // Every selected id is resolved in the store, so a record selected on
+      // page 40 is changed as surely as one on page 1.
+      const result = await repository.bulkUpdate(ids, patch, { versions: selectionVersions });
+      bulkOutcome(label, result.updated, result);
       endSelection();
     } catch (error) {
       toastError(error, 'تعذّر تنفيذ الإجراء');
@@ -701,20 +743,21 @@ function bulkField(field, title) {
   pickOne(`تغيير ${title}`, options, (value) => applyToSelection('حُدّثت', { [field]: value }));
 }
 
-function bulkExport() {
-  const items = selectedItems();
+async function bulkExport() {
   try {
-    exportSelection(items);
-    toast(`صُدِّرت ${formatNumber(items.length)} قطعة`, '📤');
+    const { items, missing } = await repository.getItems(selectedIds());
+    const live = items.filter((item) => !item.deletedAt);
+    exportSelection(live);
+    bulkOutcome('صُدِّرت', live.length, { missing, skipped: items.filter((i) => i.deletedAt).map((i) => i.id) });
   } catch (error) {
     toastError(error, 'تعذّر التصدير');
   }
 }
 
 async function bulkDelete() {
-  const items = selectedItems();
+  const ids = selectedIds();
   const confirmed = await confirmAction({
-    title: `نقل ${formatNumber(items.length)} قطعة إلى المحذوفات؟`,
+    title: `نقل ${formatNumber(ids.length)} قطعة إلى المحذوفات؟`,
     message: 'يمكنك استرجاعها من المحذوفات — لا شيء يُحذف نهائياً الآن.',
     icon: '🗑',
     confirmLabel: 'نقل للمحذوفات',
@@ -722,8 +765,8 @@ async function bulkDelete() {
   if (!confirmed) return;
   await withBulkLock(async () => {
     try {
-      const { trashed } = await repository.bulkTrash(items.map((item) => item.id));
-      toast(`نُقلت ${formatNumber(trashed)} قطعة للمحذوفات`, '✓');
+      const result = await repository.bulkTrash(ids, { versions: selectionVersions });
+      bulkOutcome('نُقلت للمحذوفات', result.trashed, result);
       endSelection();
     } catch (error) {
       toastError(error, 'تعذّر الحذف');
@@ -905,9 +948,19 @@ function renderChrome() {
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';
 }
 
+/**
+ * The records this page was drawn from, by id — display snapshots, not
+ * mutation sources. The context menu reads its header from here so a card
+ * for a record outside the window still opens it at once; every action it
+ * leads to fetches the record from the store before changing anything.
+ */
+const drawn = new Map();
+
 function paintList(result) {
   const folder = view.folderId ? repository.folder(view.folderId) : null;
   const { rows: pageItems, total, totalPages, searching } = result;
+  drawn.clear();
+  for (const row of pageItems) drawn.set(row.id, row);
   view.page = result.page;
 
   renderStats(result.summary);
@@ -1107,15 +1160,26 @@ export function openFilterSheet() {
   // Offered only when there is more than one currency to choose between: on a
   // single-currency inventory — most of them — the control is a question with
   // one answer, and the row is simply not drawn.
-  const present = currenciesPresent(repository.liveItems());
+  // Which currencies exist is a question about the whole inventory, asked of
+  // the store's currency index — the window of the newest records can be all
+  // riyals while a dollar valuation sits on record three thousand. When the
+  // backend cannot say, what the window shows is offered, never hidden.
   const currencyRow = $('fp-currency-row');
-  if (currencyRow) currencyRow.style.display = present.length > 1 ? '' : 'none';
-  if (present.length > 1) {
-    optionList($('fp-currency'), [
-      { value: '', label: 'كل العملات' },
-      ...present.map((code) => ({ value: code, label: `${currencySymbol(code)} ${code}` })),
-    ], view.filters.currency);
-  }
+  const paint = (present) => {
+    if (currencyRow) currencyRow.style.display = present.length > 1 ? '' : 'none';
+    if (present.length > 1) {
+      optionList($('fp-currency'), [
+        { value: '', label: 'كل العملات' },
+        ...present.map((code) => ({ value: code, label: `${currencySymbol(code)} ${code}` })),
+      ], view.filters.currency);
+    }
+  };
+  paint(currenciesPresent(repository.liveItems()));
+  void repository.currenciesPresent().then((present) => {
+    if (!present) return;
+    const selected = view.filters.currency;
+    paint(selected && !present.includes(selected) ? [...present, selected] : present);
+  });
 
   openSheet('filter');
 }
@@ -1279,10 +1343,24 @@ export function bindLongPress() {
   });
 }
 
-export function openContextMenu(itemId) {
-  const item = repository.item(itemId);
-  if (!item) return;
+let contextGeneration = 0;
+
+export async function openContextMenu(itemId) {
+  const mine = ++contextGeneration;
+  let item = drawn.get(itemId) || repository.item(itemId);
+  if (!item) {
+    try {
+      item = await repository.getItem(itemId);
+    } catch (error) {
+      if (mine === contextGeneration) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
+      return;
+    }
+    // A later long-press has already opened another item's menu.
+    if (mine !== contextGeneration) return;
+    if (!item) { toast('لم تعد هذه القطعة موجودة.', '✕'); return; }
+  }
   contextItemId = itemId;
+  contextVersion = item.version;
   const category = repository.category(item.categoryId);
 
   setText('ctx-name', item.name || '—');
@@ -1320,12 +1398,12 @@ export function bindContextActions() {
 
   $('ctx-open')?.addEventListener('click', run(openDetail));
   $('ctx-preview')?.addEventListener('click', run(openQuickPreview));
-  $('ctx-move')?.addEventListener('click', run(openMoveSheet));
+  $('ctx-move')?.addEventListener('click', run((id) => openMoveSheet(id, { version: contextVersion })));
   $('ctx-edit')?.addEventListener('click', run((id) => openItemForm({ itemId: id })));
   $('ctx-duplicate')?.addEventListener('click', run(duplicateItemFlow));
   $('ctx-label')?.addEventListener('click', run((id) => openLabels([id])));
   $('ctx-select')?.addEventListener('click', run((id) => startSelection(id)));
-  $('ctx-delete')?.addEventListener('click', run(deleteItemFlow));
+  $('ctx-delete')?.addEventListener('click', run((id) => deleteItemFlow(id, { version: contextVersion })));
   $('ctx-cancel')?.addEventListener('click', closeContextMenu);
   $('ov-ctx')?.addEventListener('click', closeContextMenu);
 }

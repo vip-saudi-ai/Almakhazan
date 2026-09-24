@@ -377,7 +377,10 @@ function summarizeInMemory(query = emptyQuery()) {
 
   return {
     complete,
-    records: complete ? scope.length : total,
+    // Held records are the whole scope only when everything is held. A
+    // folder's number is not the inventory's total, so when it cannot be
+    // counted here it is unknown, not borrowed.
+    records: complete ? scope.length : (query.folderId ? null : total),
     quantity: complete ? scope.reduce((sum, i) => sum + (i.quantity || 0), 0) : null,
     documentedRatio: complete && scope.length ? documented / scope.length : null,
     categories: complete ? categories : null,

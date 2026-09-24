@@ -113,6 +113,12 @@ function record(job, status) {
     // then take back what the import added without touching a category the
     // customer had before it — and without having to guess from names.
     created: job.created || { categories: [], locations: [], folders: [] },
+    // The id chosen for each taxonomy name this import needs, keyed by the
+    // normalised name. Written before the row exists, so a resume after a
+    // crash creates the same id it already claimed, never a second one.
+    plannedTaxonomy: job.plannedTaxonomy || { categories: {}, locations: {}, folders: {} },
+    // Why a job that will never run again is not running — e.g. `legacy`.
+    reason: job.reason ?? null,
   };
 }
 
@@ -195,17 +201,44 @@ export async function recoverInterruptedImportJobs() {
       if (job.fileFingerprint) {
         await persistJobCritical(stopped, JOB.STOPPED);
       } else {
-        // A job from before file identity was required. It can never be
-        // matched to a file again, so it will not be resumed — but it is still
-        // not running, and refusing to say so would leave every future import
-        // blocked behind it. Its records stay; they are real inventory.
-        await local.put('importJobs', { ...record(stopped, JOB.STOPPED), runtimeSessionId: job.runtimeSessionId ?? null });
+        await abandonLegacy(job);
       }
       recovered.push(job.id);
       console.info(`[import] stale ${status} job recovered as stopped: ${job.id} at ${job.written ?? 0}`);
     }
   }
   return recovered;
+}
+
+/**
+ * A job from before file identity was required.
+ *
+ * It can never be matched to a file again — resuming it by name and size is
+ * exactly the mistake the fingerprint exists to prevent — so it will never
+ * run again. It is marked abandoned, with the reason, which also lets the
+ * ordinary history pruning retire it; a `stopped` job is never pruned, and a
+ * legacy one left stopped would sit there forever. Its records stay: they are
+ * real inventory.
+ */
+async function abandonLegacy(job) {
+  await local.put('importJobs', {
+    ...record({ ...job, reason: 'legacy-unidentified' }, JOB.ABANDONED),
+    runtimeSessionId: job.runtimeSessionId ?? null,
+  });
+  console.info(`[import] legacy job without a file identity retired as abandoned: ${job.id}`);
+}
+
+/** Stopped jobs with no fingerprint can never resume; retire them. */
+export async function retireLegacyJobs() {
+  const stopped = await local.getAllByIndex('importJobs', 'status', JOB.STOPPED);
+  let retired = 0;
+  for (const job of stopped) {
+    if (job.fileFingerprint) continue;
+    await abandonLegacy(job);
+    retired += 1;
+  }
+  if (retired) void pruneJobHistory();
+  return retired;
 }
 
 /**
@@ -275,6 +308,7 @@ export function runImportRecovery() {
   inFlight = (async () => {
     try {
       await recoverInterruptedImportJobs();
+      await retireLegacyJobs();
       const rollbacks = await finishInterruptedRollbacks();
       importRecoveryState.ready = rollbacks.ok;
       importRecoveryState.error = rollbacks.ok ? null : rollbacks.error;
@@ -340,4 +374,17 @@ export async function findUnfinishedJob(fileFingerprint) {
     }
   }
   return resumable.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0] || null;
+}
+
+/**
+ * The last completed import of this exact file, if there is one — so picking
+ * it again can be questioned rather than silently doubling the inventory.
+ * Never a block: importing a file twice is sometimes what the customer means.
+ */
+export async function findCompletedJob(fileFingerprint) {
+  if (!fileFingerprint) return null;
+  const jobs = await local.getAllByIndex('importJobs', 'fileFingerprint', fileFingerprint).catch(() => []);
+  return jobs
+    .filter((job) => job.status === JOB.COMPLETED)
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0] || null;
 }

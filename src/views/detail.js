@@ -12,6 +12,44 @@ import {
 import { openItemForm } from './item-form.js';
 import { openLabels } from './labels.js';
 
+// ── fetching the record behind a card ──────────────────────────────────────
+//
+// A card can show any record the query engine found — the newest or the ten
+// thousandth — and the window in memory holds only the newest few hundred. So
+// every flow here asks the repository for the record by id rather than
+// looking for it in the window, and says "لم تعد هذه القطعة موجودة" only when
+// the store says so.
+//
+// Each flow also carries a generation. Tapping item A and then item B, or
+// navigating away, makes A's answer stale; a stale answer is dropped rather
+// than opening a sheet the customer has already moved on from.
+
+let generation = 0;
+
+/** Anything still being fetched is no longer wanted. Called on navigation. */
+export function cancelItemOpens() {
+  generation += 1;
+}
+
+/**
+ * @returns {Promise<{item: object|null, stale: boolean}>} `item` null means
+ *   the store confirmed there is no such record, or it could not be read —
+ *   either way the customer has been told which.
+ */
+async function resolve(itemId) {
+  const mine = ++generation;
+  let item = null;
+  try {
+    item = await repository.getItem(itemId);
+  } catch (error) {
+    if (mine === generation) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
+    return { item: null, stale: mine !== generation };
+  }
+  if (mine !== generation) return { item: null, stale: true };
+  if (!item) toast('لم تعد هذه القطعة موجودة.', '✕');
+  return { item, stale: false };
+}
+
 /** Opens the viewer on one of an item's images. */
 function inspect(item, imageId) {
   const images = item.images || [];
@@ -94,9 +132,9 @@ function aiPanel(item) {
   ]);
 }
 
-export function openDetail(itemId) {
-  const item = repository.item(itemId);
-  if (!item) { toast('القطعة غير موجودة', '✕'); return; }
+export async function openDetail(itemId) {
+  const { item } = await resolve(itemId);
+  if (!item) return;
 
   const category = repository.category(item.categoryId);
   const folder = repository.folder(item.folderId);
@@ -159,8 +197,10 @@ export function openDetail(itemId) {
 
   for (const [button, handler] of [
     [editButton, () => { closeSheet('det'); setTimeout(() => openItemForm({ itemId }), 240); }],
-    [deleteButton, () => { closeSheet('det'); setTimeout(() => deleteItemFlow(itemId), 240); }],
-    [moveButton, () => { closeSheet('det'); setTimeout(() => openMoveSheet(itemId), 240); }],
+    // The version on screen goes with the action, so a record changed
+    // elsewhere since this sheet was drawn is a conflict, not an overwrite.
+    [deleteButton, () => { closeSheet('det'); setTimeout(() => deleteItemFlow(itemId, { version: item.version }), 240); }],
+    [moveButton, () => { closeSheet('det'); setTimeout(() => openMoveSheet(itemId, { version: item.version }), 240); }],
   ]) {
     if (!button) continue;
     button.onclick = handler;
@@ -176,8 +216,8 @@ export function openDetail(itemId) {
   openSheet('det');
 }
 
-export function openQuickPreview(itemId) {
-  const item = repository.item(itemId);
+export async function openQuickPreview(itemId) {
+  const { item } = await resolve(itemId);
   if (!item) return;
   const category = repository.category(item.categoryId);
   const folder = repository.folder(item.folderId);
@@ -205,15 +245,16 @@ export function openQuickPreview(itemId) {
 
   const open = $('qp-open');
   if (open) {
-    open.onclick = () => { closeSheet('qp'); setTimeout(() => openDetail(itemId), 240); };
+    open.onclick = () => { closeSheet('qp'); setTimeout(() => { void openDetail(itemId); }, 240); };
   }
   openSheet('qp');
 }
 
-export function openMoveSheet(itemId) {
-  const item = repository.item(itemId);
-  if (!item) return;
+export async function openMoveSheet(itemId, { version } = {}) {
   if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
+  const { item } = await resolve(itemId);
+  if (!item) return;
+  const shownVersion = version ?? item.version;
 
   const targets = [
     { id: null, name: 'الجرد الرئيسي', icon: '📦', color: null },
@@ -237,7 +278,7 @@ export function openMoveSheet(itemId) {
       'aria-current': isCurrent ? 'true' : undefined,
       onClick: async () => {
         try {
-          await repository.moveItem(itemId, target.id);
+          await repository.moveItem(itemId, target.id, shownVersion);
           toast(target.id ? `نُقل إلى ${target.name}` : 'نُقل للجرد الرئيسي', '🗂');
           closeSheet('mv');
         } catch (error) {
@@ -262,8 +303,8 @@ export function openMoveSheet(itemId) {
   openSheet('mv');
 }
 
-export async function deleteItemFlow(itemId) {
-  const item = repository.item(itemId);
+export async function deleteItemFlow(itemId, { version } = {}) {
+  const { item } = await resolve(itemId);
   if (!item) return;
   const confirmed = await confirmAction({
     title: `نقل "${item.name}" للمحذوفات؟`,
@@ -274,7 +315,7 @@ export async function deleteItemFlow(itemId) {
   if (!confirmed) return;
 
   try {
-    await repository.deleteItem(itemId);
+    await repository.deleteItem(itemId, version ?? item.version);
     flashSuccess();
     toast('نُقلت للمحذوفات', '🗑');
   } catch (error) {

@@ -11,7 +11,9 @@ import {
 } from '../auth.js';
 import { FirebaseStatus, firebaseContext } from '../firebase.js';
 import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
-import { RestoreStage, restoreFromBackup, stageLabel } from '../restore.js';
+import {
+  RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
+} from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
 import { queryInventory } from '../query.js';
 import { storageEstimate } from '../local-store.js';
@@ -377,7 +379,19 @@ async function addLocation() {
  * carries null, and IndexedDB leaves null out of an index — so the `deletedAt`
  * index contains exactly the deleted records and nothing else.
  */
+//
+// Paged, newest deletion first. It used to read one page of 200 and stop, so a
+// Trash that had grown past 200 hid everything older — records that could be
+// neither restored nor purged. The index orders by `deletedAt` and then by
+// primary key, so two records deleted in the same millisecond keep a stable
+// order across pages. Restoring or purging re-reads the page the customer is
+// on rather than sending them back to the first.
+
+const TRASH_PAGE = 50;
+const trashView = { page: 1, ticket: 0 };
+
 export async function openTrashSheet() {
+  trashView.page = 1;
   openSheet('trash');
   await renderTrash();
 }
@@ -385,30 +399,51 @@ export async function openTrashSheet() {
 async function renderTrash() {
   const list = $('trash-list');
   if (!list) return;
-  render(list, [el('div', { class: 'srowd', text: 'جارٍ القراءة…' })]);
+  const ticket = ++trashView.ticket;
+  if (!list.childElementCount) render(list, [el('div', { class: 'srowd', text: 'جارٍ القراءة…' })]);
 
-  let trashed;
+  let result;
   try {
-    const result = await queryInventory({ trashed: true, perPage: 200 }, {
+    result = await queryInventory({ trashed: true, sort: 'newest', page: trashView.page, perPage: TRASH_PAGE }, {
+      // Only the cloud adapter, which answers from what it holds, needs this.
       ensure: () => withFullInventory('جارٍ قراءة المحذوفات…'),
     });
-    if (!result?.answerable) {
-      render(list, [emptyState('🗑', 'تعذّر قراءة المحذوفات', 'حاول مرة أخرى')]);
-      return;
-    }
-    trashed = result.rows;
   } catch (error) {
     console.error('[trash] could not be read', error);
+    result = null;
+  }
+  // A restore on page 3 followed quickly by a purge: only the newest read paints.
+  if (ticket !== trashView.ticket) return;
+  if (!result?.answerable) {
     render(list, [emptyState('🗑', 'تعذّر قراءة المحذوفات', 'حاول مرة أخرى')]);
     return;
   }
+  trashView.page = result.page;
+  const trashed = result.rows;
 
   if (!trashed.length) {
     render(list, [emptyState('🗑', 'سلة المحذوفات فارغة', 'القطع المحذوفة تظهر هنا ويمكن استعادتها')]);
     return;
   }
 
-  render(list, trashed.map((item) => {
+  const pages = result.totalPages;
+  const pager = pages && pages > 1 ? el('nav', { class: 'trash-pager', 'aria-label': 'صفحات المحذوفات',
+    style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '12px 4px' } }, [
+    el('button', {
+      class: 'btn btn-g', type: 'button', text: 'السابقة',
+      disabled: trashView.page <= 1 || undefined,
+      onClick: () => { trashView.page -= 1; void renderTrash(); },
+    }),
+    el('span', { class: 'lsub', 'aria-live': 'polite',
+      text: `صفحة ${formatNumber(trashView.page)} من ${formatNumber(pages)} · ${formatNumber(result.total)} قطعة` }),
+    el('button', {
+      class: 'btn btn-g', type: 'button', text: 'التالية',
+      disabled: trashView.page >= pages || undefined,
+      onClick: () => { trashView.page += 1; void renderTrash(); },
+    }),
+  ]) : null;
+
+  render(list, [...trashed.map((item) => {
     const image = primaryImage(item);
     let thumb;
     if (image) {
@@ -460,7 +495,7 @@ async function renderTrash() {
         }),
       ]),
     ]);
-  }));
+  }), pager]);
 }
 
 // ── import ──
@@ -499,6 +534,14 @@ function showImportSummary(result, filename) {
   ]);
 
   const warnings = $('import-warnings');
+  // An unfinished restore is said up front, on the screen that would start
+  // another one — not only after the customer has confirmed.
+  void unfinishedRestore().then((job) => {
+    if (!job) return;
+    warnings.style.display = '';
+    warnings.prepend(el('div', { class: 'imp-warn', text: 'اختر ملف الاستعادة نفسه ثم «استبدال» لإكمالها.' }));
+    warnings.prepend(el('div', { class: 'imp-warn-title', role: 'alert', text: RESTORE_BLOCKED_MESSAGE }));
+  });
   if (result.warnings.length) {
     warnings.style.display = '';
     render(warnings, [
@@ -555,6 +598,38 @@ async function runImport(mode) {
       toastError(error, 'فشل الاستيراد');
     }
   });
+}
+
+// ── full exports ──
+//
+// One path per format, used by every button that exports. An export is a
+// statement about the whole inventory, so it — and only it — loads the whole
+// inventory, explicitly, says so while it does, and refuses rather than write
+// a short file that looks complete. Settings used to call the exporter
+// directly against the window and fail with "the inventory is incomplete".
+
+export async function runFullExcelExport() {
+  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً للتصدير…'))) return false;
+  try {
+    exportExcel();
+    toast('تم التصدير', '📊');
+    return true;
+  } catch (error) {
+    toastError(error, 'فشل تصدير Excel');
+    return false;
+  }
+}
+
+export async function runFullJsonExport() {
+  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً للتصدير…'))) return false;
+  try {
+    exportJSON();
+    toast('تم تصدير البيانات — بدون ملفات الصور', '💾');
+    return true;
+  } catch (error) {
+    toastError(error, 'فشل تصدير البيانات');
+    return false;
+  }
 }
 
 // ── settings ──
@@ -685,13 +760,20 @@ export function renderPlanPanel() {
   if (!panel) return;
 
   const status = planStatus();
-  if (status === 'local') {
+  if (status === 'local' || status === 'local-free') {
+    // What the device-only policy actually is, stated — not implied by an
+    // absent account. And honest about the data: nothing here is synced or
+    // backed up anywhere else.
+    const quota = quotaStatus();
+    const text = status === 'local-free'
+      ? `بلا حساب: على هذا الجهاز فقط، بحدود الخطة المجانية (${formatNumber(quota?.limit ?? 0)} قطعة). البيانات غير متزامنة ولا نسخة لها خارج الجهاز. أنشئ حساباً لمزامنة مخزنك.`
+      : 'نسخة تجريبية على هذا الجهاز: بلا حدود خطة. البيانات غير متزامنة ولا نسخة لها خارج الجهاز.';
     render(panel, [
       el('div', { class: 'srow', style: { cursor: 'default' } }, [
         el('div', { class: 'srowiw', style: { background: 'rgba(142,142,147,.15)' }, text: '📱', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
           el('div', { class: 'srowl', text: 'هذا الجهاز فقط' }),
-          el('div', { class: 'srowd', text: 'بلا حساب: لا مزامنة ولا حدود خطة. أنشئ حساباً لمزامنة مخزنك وحفظه.' }),
+          el('div', { class: 'srowd', text }),
         ]),
       ]),
     ]);
@@ -859,12 +941,13 @@ function renderDataPanel() {
     // these are absent rather than present and refusing.
     cloudSession ? row('👥', 'rgba(37,99,255,.15)', 'الفريق', 'الأعضاء وأدوارهم، ودعوة من يعمل معك', openTeamSheet) : null,
     cloudSession ? row('🗄', 'rgba(147,197,253,.25)', 'المساحات', 'تنقّل بين المساحات التي تنتمي إليها', () => { void openWorkspaceSheet(); }) : null,
-    row('📊', 'rgba(52,199,89,.15)', 'تصدير Excel', 'جرد كامل بقيم رقمية وتواريخ حقيقية', () => {
-      try { exportExcel(); toast('تم التصدير', '📊'); } catch (error) { toastError(error); }
-    }),
-    row('💾', 'rgba(0,122,255,.15)', 'نسخة احتياطية JSON', 'بيانات فقط — الصور محفوظة في التخزين السحابي', () => {
-      try { exportJSON(); toast('تم إنشاء النسخة', '💾'); } catch (error) { toastError(error); }
-    }),
+    row('📊', 'rgba(52,199,89,.15)', 'تصدير Excel', 'جرد كامل بقيم رقمية وتواريخ حقيقية', () => { void runFullExcelExport(); }),
+    // Honest about what the file holds. It is the records, never the image
+    // files: on a device-only workspace those stay on the device, and on a
+    // cloud workspace they stay in cloud storage.
+    repository.session.mode === 'cloud'
+      ? row('💾', 'rgba(0,122,255,.15)', 'نسخة بيانات JSON', 'بيانات القطع فقط — ملفات الصور تبقى في التخزين السحابي ولا يتضمنها الملف', () => { void runFullJsonExport(); })
+      : row('💾', 'rgba(0,122,255,.15)', 'تصدير بيانات JSON', 'يشمل بيانات القطع فقط، ولا يتضمن ملفات الصور.', () => { void runFullJsonExport(); }),
     row('📄', 'rgba(255,149,0,.15)', 'استيراد من Excel أو CSV', 'طابق الأعمدة بنفسك، وشاهد ما سيُكتب قبل كتابته', () => { void startSpreadsheetImport(); }),
     row('📥', 'rgba(255,149,0,.15)', 'استيراد نسخة JSON', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
     // The count comes from the index that holds exactly the deleted records,
@@ -1025,13 +1108,11 @@ export function bindManageViews() {
   // is about the whole inventory, so the whole inventory is loaded first.
   $('as-excel')?.addEventListener('click', async () => {
     closeSheet('as');
-    if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
-    try { exportExcel(); toast('تم التصدير', '📊'); } catch (error) { toastError(error); }
+    await runFullExcelExport();
   });
   $('as-json')?.addEventListener('click', async () => {
     closeSheet('as');
-    if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً…'))) return;
-    try { exportJSON(); toast('تم إنشاء النسخة', '💾'); } catch (error) { toastError(error); }
+    await runFullJsonExport();
   });
   $('as-sheet')?.addEventListener('click', () => { closeSheet('as'); void startSpreadsheetImport(); });
   $('as-import')?.addEventListener('click', () => { closeSheet('as'); startImport(); });

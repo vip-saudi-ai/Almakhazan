@@ -183,6 +183,8 @@ export const ACTIONS = {
   IMPORT_MERGED: 'IMPORT_MERGED',
   IMPORT_RESTORED: 'IMPORT_RESTORED',
   IMPORT_ROLLED_BACK: 'IMPORT_ROLLED_BACK',
+  SPREADSHEET_IMPORTED: 'SPREADSHEET_IMPORTED',
+  SPREADSHEET_IMPORT_STOPPED: 'SPREADSHEET_IMPORT_STOPPED',
   ITEMS_BULK_UPDATED: 'ITEMS_BULK_UPDATED',
   ITEMS_BULK_DELETED: 'ITEMS_BULK_DELETED',
   MIGRATION_COMPLETED: 'MIGRATION_COMPLETED',
@@ -206,9 +208,11 @@ export const ACTION_LABELS = {
   CATEGORY_DELETED: 'حُذف تصنيف',
   LOCATION_CREATED: 'أُضيف موقع',
   LOCATION_DELETED: 'حُذف موقع',
-  IMPORT_MERGED: 'دمج استيراد',
+  IMPORT_MERGED: 'دمج نسخة بيانات',
   IMPORT_RESTORED: 'استعادة نسخة',
   IMPORT_ROLLED_BACK: 'تراجع عن استيراد',
+  SPREADSHEET_IMPORTED: 'استيراد جدول',
+  SPREADSHEET_IMPORT_STOPPED: 'توقف استيراد جدول',
   ITEMS_BULK_UPDATED: 'تعديل جماعي',
   ITEMS_BULK_DELETED: 'حذف جماعي',
   MIGRATION_COMPLETED: 'اكتملت الترقية',
@@ -248,3 +252,37 @@ export const DEFAULT_LOCATIONS = [
 
 export const UNCATEGORIZED_ID = 'uncategorized';
 export const UNCATEGORIZED = { id: UNCATEGORIZED_ID, name: 'غير مصنّف', icon: '📦', system: true };
+
+// ── device-only mode: an explicit commercial policy ─────────────────────────
+//
+// Without an account there is no workspace and no subscription, and the old
+// code read that absence as "no limits" — a side effect of a null entitlement
+// rather than a decision. Every plan limit was one "don't sign in" away from
+// not applying. The policy is now a named choice:
+//
+//   consumer_free_tier     device-only inventories get the Free plan's limits
+//                          (record quota, activity retention). The default for
+//                          any real, hosted origin.
+//   development_unlimited  no plan limits on the device. Only for development
+//                          (localhost) and for the single-file demo opened from
+//                          disk, where there is nothing being sold.
+//
+// To decide it differently for a deployment, set LOCAL_MODE_POLICY_OVERRIDE.
+// The plan values themselves are not touched here.
+
+export const LocalModePolicy = {
+  CONSUMER_FREE_TIER: 'consumer_free_tier',
+  DEVELOPMENT_UNLIMITED: 'development_unlimited',
+};
+
+/** null = decided by the origin, as described above. */
+export const LOCAL_MODE_POLICY_OVERRIDE = null;
+
+export function localModePolicy(where = globalThis.location) {
+  if (LOCAL_MODE_POLICY_OVERRIDE) return LOCAL_MODE_POLICY_OVERRIDE;
+  const protocol = where?.protocol || '';
+  const host = where?.hostname || '';
+  const development = protocol === 'file:'
+    || host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.local');
+  return development ? LocalModePolicy.DEVELOPMENT_UNLIMITED : LocalModePolicy.CONSUMER_FREE_TIER;
+}

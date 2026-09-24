@@ -9,7 +9,7 @@
 // untouched until the whole thing is verified.
 
 import * as local from './local-store.js';
-import { mediaStore, mediaReference } from './media.js';
+import { mediaStore, mediaReference, reconcileLocalMediaReferences } from './media.js';
 import { repository } from './repository.js';
 import { firebaseContext } from './firebase.js';
 import { AppError, uid } from './utils.js';
@@ -70,10 +70,17 @@ function toBlob(data, type) {
  * Throws if the blob is missing, so the caller can record the failure rather
  * than writing a broken reference.
  */
+/**
+ * The stored bytes behind one local image: one keyed read. It used to read the
+ * whole image table and search it — for every image — so a device with 3,000
+ * photographs read 3,000 × 3,000 rows (and their bytes) to upload them.
+ */
+export async function readLocalImageRecord(image) {
+  return (await local.get('images', localBlobId(image))) || null;
+}
+
 async function uploadLocalImage(image, ctx) {
-  const blobId = localBlobId(image);
-  const rows = await local.getAll('images');
-  const record = rows.find((r) => r.id === blobId);
+  const record = await readLocalImageRecord(image);
   if (!record) {
     throw new AppError('لم يُعثر على ملف الصورة على هذا الجهاز', { code: 'upload/missing-blob' });
   }
@@ -145,6 +152,14 @@ export async function uploadDeviceData({ onProgress } = {}) {
   const imageFailures = [...(state.imageFailures || [])];
   const report = (phase, done, total, message) => onProgress?.({ phase, done, total, message });
 
+  // Counts first: an upload should carry the device's real reference counts,
+  // and it only ever uploads images a record references, so an orphan left
+  // on the device is never sent to the cloud.
+  await reconcileLocalMediaReferences({ reclaim: false }).catch((error) => {
+    console.error('[upload] media reconciliation before upload failed', error);
+  });
+
+  // A full-data operation by definition: everything on the device goes up.
   const [items, folders, categories, locations] = await Promise.all([
     local.getAll('items'), local.getAll('folders'),
     local.getAll('categories'), local.getAll('locations'),

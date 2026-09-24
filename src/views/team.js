@@ -20,7 +20,7 @@ import {
   removeMember, revokeInvitation, setActiveWorkspace, watchMembers,
 } from '../team.js';
 import { $, el, formatNumber, render } from '../utils.js';
-import { closeSheet, confirmAction, openSheet, section, toast, toastError } from '../ui.js';
+import { closeSheet, confirmAction, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
 
 const state = {
   members: [],
@@ -71,11 +71,29 @@ export function openTeamSheet() {
   if (canAdmin()) void refreshInvitations(workspaceId);
 }
 
-export function closeTeamSheet() {
+/**
+ * Stops listening to the member list. Runs however the sheet closes — its own
+ * button, the overlay, Escape, the back gesture, navigation or another sheet
+ * closing everything — because it is registered as the sheet's close handler,
+ * not called from one button. A watcher left running after the sheet closed
+ * kept a live server listener open, and every reopening added another.
+ */
+function stopWatching() {
   state.unwatch?.();
   state.unwatch = null;
   state.fresh = null;
+}
+
+onSheetClose('team', stopWatching);
+
+export function closeTeamSheet() {
   closeSheet('team');
+  stopWatching();
+}
+
+/** For the tests: whether a member watcher is currently open. */
+export function __teamWatcherActive() {
+  return state.unwatch !== null;
 }
 
 const RANK = { owner: 3, admin: 2, editor: 1, viewer: 0 };

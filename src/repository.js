@@ -16,6 +16,7 @@ import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
 import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
 import { releaseObjectUrls } from './storage.js';
+import { currenciesPresent as currenciesInItems } from './money.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
@@ -67,6 +68,15 @@ export const ITEM_WINDOW = 200;
  * guarantee that only holds on a fast phone is not a guarantee.
  */
 const ATOMIC_BULK_MAX = 1000;
+
+/** Keyed reads per transaction or per round of requests. Bounded, so a
+ *  selection of five thousand is fifty short reads, not one unbounded fan-out. */
+const KEYED_BATCH = 100;
+
+/** Records fetched by id and kept for a moment — a detail opened twice, the
+ *  item a context menu was opened on. Small on purpose: this is a cache, not a
+ *  second copy of the inventory. */
+const ITEM_CACHE_MAX = 100;
 
 /** What a bulk edit did, named for the activity log rather than inferred from
  *  its patch by whoever reads the log later. */
@@ -218,6 +228,27 @@ class FirestoreBackend {
     await this.fs.deleteDoc(this.ref(name, id));
   }
 
+  /** One document by id — answered by the server whether or not any listener
+   *  on this device happens to hold it. */
+  async get(name, id) {
+    const snap = await this.fs.getDoc(this.ref(name, id));
+    return snap.exists() ? { id: snap.id, ...snap.data({ serverTimestamps: 'estimate' }) } : null;
+  }
+
+  async getMany(name, ids) {
+    const out = [];
+    for (let i = 0; i < ids.length; i += KEYED_BATCH) {
+      const rows = await Promise.all(ids.slice(i, i + KEYED_BATCH).map((id) => this.get(name, id)));
+      out.push(...rows.filter(Boolean));
+    }
+    return out;
+  }
+
+  async existingIds(name, ids) {
+    const rows = await this.getMany(name, ids);
+    return new Set(rows.map((row) => row.id));
+  }
+
   async appendLog(entry) {
     const ref = this.fs.doc(this.col('activityLogs'));
     await this.fs.setDoc(ref, { ...entry, timestamp: this.serverTime });
@@ -281,6 +312,15 @@ class FirestoreBackend {
       return snapshot.data().count;
     }
     return (await this.findItemsByField(field, value)).length;
+  }
+
+  /** Live records carrying a value — the Trash excluded, counted on the server. */
+  async countLiveItemsByField(field, value) {
+    if (value == null) return 0;
+    const q = this.fs.query(this.col('items'), this.fs.where(field, '==', value), this.fs.where('deletedAt', '==', null));
+    if (this.fs.getCountFromServer) return (await this.fs.getCountFromServer(q)).data().count;
+    const snapshot = await this.fs.getDocs(q);
+    return snapshot.size;
   }
 
   /** How many records exist, live and trashed, counted on the server. */
@@ -473,6 +513,27 @@ class LocalBackend {
     await this._notify(name);
   }
 
+  /** One record by primary key. Never a scan. */
+  async get(name, id) {
+    return (await local.get(name, id)) || null;
+  }
+
+  async getMany(name, ids) {
+    const out = [];
+    for (let i = 0; i < ids.length; i += KEYED_BATCH) {
+      out.push(...await local.getMany(name, ids.slice(i, i + KEYED_BATCH)));
+    }
+    return out;
+  }
+
+  async existingIds(name, ids) {
+    const found = new Set();
+    for (let i = 0; i < ids.length; i += KEYED_BATCH) {
+      for (const id of await local.existingKeys(name, ids.slice(i, i + KEYED_BATCH))) found.add(id);
+    }
+    return found;
+  }
+
   async appendLog(entry) {
     await local.put('activity', { id: uid('log'), ...entry, timestamp: Date.now() });
     await this._notify('activity');
@@ -532,8 +593,11 @@ class LocalBackend {
         }
         if (op.type !== 'set') continue;
 
-        const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion;
+        const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion || op.ifAbsent;
         const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
+        // A write that must never replace a record: read in this transaction,
+        // so nothing can appear between the check and the put.
+        if (op.ifAbsent && existing) continue;
 
         if (op.expectedVersion != null) {
           if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
@@ -633,6 +697,32 @@ class LocalBackend {
     return local.countByIndex('items', field, value);
   }
 
+  /** Every currency a live record holds a value in, from the currency index. */
+  async currenciesPresent() {
+    const candidates = await local.uniqueKeys('items', 'valuationCurrency');
+    const present = [];
+    for (const code of candidates) {
+      const [all, trashed] = await Promise.all([
+        local.countByIndex('items', 'valuationCurrency', code),
+        local.countByIndex('items', 'currencyDeleted', IDBKeyRange.bound([code], [code, []])),
+      ]);
+      if (all - trashed > 0) present.push(code);
+    }
+    return present;
+  }
+
+  /** Live records only: every record carrying the value, less those in the
+   *  Trash, which have an index of their own per scope (see local-store). */
+  async countLiveItemsByField(field, value) {
+    if (value == null) return 0;
+    const trashIndex = { folderId: 'folderDeleted', categoryId: 'categoryDeleted', locationId: 'locationDeleted' }[field];
+    const [all, trashed] = await Promise.all([
+      local.countByIndex('items', field, value),
+      trashIndex ? local.countByIndex('items', trashIndex, IDBKeyRange.bound([value], [value, []])) : 0,
+    ]);
+    return Math.max(0, all - trashed);
+  }
+
   /**
    * The ids an import wrote, a page at a time, without reading the records.
    *
@@ -670,6 +760,10 @@ class Repository {
     this.itemsRest = new Map();
     this.itemsWindowShort = false;
     this.itemsScanned = false;
+    // Records fetched by id. Separate from the window on purpose: the window
+    // is "the newest N", this is "the ones somebody just asked for", and
+    // mixing them would turn a bounded window into an unbounded one.
+    this.itemCache = new Map();
     this.itemsComplete = false;
     this.itemsTotal = null;
     this.itemsTotalFromBackend = false;
@@ -750,6 +844,9 @@ class Repository {
       for (const name of COLLECTIONS) {
         const onRows = (rows, meta) => {
           if (name === 'items') {
+            // Something wrote an item. A fetched copy may now be stale, and a
+            // stale copy is exactly what a mutation must never start from.
+            this.itemCache.clear();
             this.itemsWindow = this._normalizeRows('items', rows);
             // A window that came back short *is* the whole collection — but
             // only for as long as it stays short. It is re-read on every
@@ -840,11 +937,12 @@ class Repository {
     this.itemsRest = new Map();
     this.itemsWindowShort = false;
     this.itemsScanned = false;
+    this.itemCache.clear();
     this.itemsComplete = false;
     this.itemsTotal = null;
     this.itemsTotalFromBackend = false;
     this._completing = null;
-    this._taxonomyCounts = null;
+    this._invalidateAggregates();
     // Those object URLs point at the previous workspace's blobs. Keeping them
     // pins that memory, and a cache keyed only by image id could otherwise
     // hand one workspace a URL created for another.
@@ -854,8 +952,16 @@ class Repository {
   // ── how much of the inventory is loaded ──
 
   /** state.items = the live window, plus whatever the scan found beyond it. */
-  _composeItems() {
+  /** Every figure derived from the whole inventory rather than from the
+   *  window — live taxonomy counts, the currencies present — is dropped
+   *  whenever an item is written, and recomputed from the store on next use. */
+  _invalidateAggregates() {
     this._taxonomyCounts = null;
+    this._currencies = null;
+  }
+
+  _composeItems() {
+    this._invalidateAggregates();
     const live = new Set(this.itemsWindow.map((i) => i.id));
     const rest = [];
     for (const [id, row] of this.itemsRest) if (!live.has(id)) rest.push(row);
@@ -940,7 +1046,124 @@ class Repository {
   }
 
   // ── lookups ──
-  item(id) { return this.state.items.find((i) => i.id === id) || null; }
+  //
+  // THE HOME SCREEN IS A WINDOW, NOT THE DATABASE. `state.items` holds the
+  // newest few hundred records (and everything, only after an explicit
+  // full-data operation). A record found by a search, a filter or a scan can
+  // be anywhere in the store, so:
+  //
+  //   item(id)           synchronous; what is in memory right now — the window
+  //                      or the small fetch cache. Null means "not held", never
+  //                      "does not exist". For display only.
+  //   getItem(id)        authoritative; memory first, then the store by primary
+  //                      key. Null means the store has no such record.
+  //   getItems(ids)      the same for a selection, in bounded keyed batches.
+  //
+  // A mutation always starts from `{ fresh: true }`: a query row or a card is
+  // a display snapshot, not a mutation source.
+
+  item(id) {
+    return this.state.items.find((i) => i.id === id) || this.itemCache.get(id) || null;
+  }
+
+  _cacheItem(item) {
+    if (!item) return;
+    this.itemCache.delete(item.id);
+    this.itemCache.set(item.id, item);
+    while (this.itemCache.size > ITEM_CACHE_MAX) {
+      this.itemCache.delete(this.itemCache.keys().next().value);
+    }
+  }
+
+  _forgetItem(id) {
+    this.itemCache.delete(id);
+  }
+
+  /**
+   * @param {string} id
+   * @param {{fresh?: boolean}} [options] fresh skips memory and reads the store
+   * @returns {Promise<object|null>} null only when the store has no such record
+   * @throws {AppError} `item/load-failed` when the store could not be read —
+   *   which is not the same thing as the record not existing
+   */
+  async getItem(id, { fresh = false } = {}) {
+    if (!id) return null;
+    if (!fresh) {
+      const held = this.item(id);
+      if (held) return held;
+    }
+    let row;
+    try {
+      row = await this.backend.get('items', id);
+    } catch (error) {
+      throw new AppError('تعذّر فتح القطعة. حاول مرة أخرى.', { code: 'item/load-failed', cause: error });
+    }
+    if (!row) { this._forgetItem(id); return null; }
+    const item = normalizeItem(row);
+    this._cacheItem(item);
+    return item;
+  }
+
+  /**
+   * @returns {Promise<{items: object[], missing: string[]}>} `items` in the
+   *   order asked for; `missing` names every id the store does not hold, so a
+   *   caller can say so rather than quietly acting on fewer.
+   */
+  async getItems(ids, { fresh = false } = {}) {
+    const wanted = [...new Set(ids.filter(Boolean))];
+    const found = new Map();
+    const toFetch = [];
+    for (const id of wanted) {
+      const held = fresh ? null : this.item(id);
+      if (held) found.set(id, held); else toFetch.push(id);
+    }
+    if (toFetch.length) {
+      let rows;
+      try {
+        rows = await this.backend.getMany('items', toFetch);
+      } catch (error) {
+        throw new AppError('تعذّر قراءة القطع المحددة. حاول مرة أخرى.', { code: 'item/load-failed', cause: error });
+      }
+      for (const row of rows) {
+        const item = normalizeItem(row);
+        found.set(item.id, item);
+      }
+    }
+    return {
+      items: wanted.filter((id) => found.has(id)).map((id) => found.get(id)),
+      missing: wanted.filter((id) => !found.has(id)),
+    };
+  }
+
+  /**
+   * Every currency the live inventory holds a value in — the whole store, not
+   * the window. Cached until the next item write.
+   *
+   * @returns {Promise<string[]|null>} null when the backend cannot say without
+   *   reading everything, which the caller treats as "not known", not "none".
+   */
+  currenciesPresent() {
+    if (this._currencies) return this._currencies;
+    if (this.backend?.currenciesPresent) {
+      this._currencies = this.backend.currenciesPresent().catch((error) => {
+        console.error('[repo] currencies unavailable', error);
+        this._currencies = null;
+        return null;
+      });
+    } else {
+      this._currencies = Promise.resolve(
+        this.itemsComplete ? currenciesInItems(this.liveItems()) : null,
+      );
+    }
+    return this._currencies;
+  }
+
+  /** The item a mutation starts from: read now, from the store. */
+  async _current(id) {
+    const item = await this.getItem(id, { fresh: true });
+    if (!item) throw new AppError('لم تعد هذه القطعة موجودة.', { code: 'item/not-found' });
+    return item;
+  }
   folder(id) { return id ? this.state.folders.find((f) => f.id === id) || null : null; }
   category(id) {
     if (!id || id === UNCATEGORIZED_ID) return { id: UNCATEGORIZED_ID, name: 'غير مصنّف', icon: '📦' };
@@ -1110,7 +1333,7 @@ class Repository {
 
   async updateItem(id, patch, expectedVersion) {
     this.assertCanWrite();
-    const before = this.item(id);
+    const before = await this._current(id);
     this.setSync(SyncState.SAVING);
     await this.backend.update('items', id, { ...patch, updatedBy: this.session.userId }, expectedVersion);
 
@@ -1129,10 +1352,18 @@ class Repository {
     await this.log(ACTIONS.ITEM_UPDATED, { itemId: id, itemName: patch.name ?? before?.name, changes });
   }
 
-  async moveItem(id, folderId) {
+  /**
+   * @param {number} [expectedVersion] the version the screen was showing. When
+   *   given, a record changed since is a conflict; when not, the version just
+   *   read is used.
+   */
+  async moveItem(id, folderId, expectedVersion) {
     this.assertCanWrite();
-    const before = this.item(id);
-    await this.backend.update('items', id, { folderId: folderId || null, updatedBy: this.session.userId }, before?.version);
+    const shown = this._shownVersions([id]).get(id);
+    const before = await this._current(id);
+    await this.backend.update('items', id, { folderId: folderId || null, updatedBy: this.session.userId },
+      expectedVersion ?? shown ?? before.version);
+    this._forgetItem(id);
     await this.log(ACTIONS.ITEM_MOVED, {
       itemId: id,
       itemName: before?.name,
@@ -1141,36 +1372,51 @@ class Repository {
   }
 
   /** Soft delete — the record moves to Trash and stays recoverable. */
-  async deleteItem(id) {
+  async deleteItem(id, expectedVersion) {
     this.assertCanWrite();
-    const item = this.item(id);
+    const shown = this._shownVersions([id]).get(id);
+    const item = await this._current(id);
     this.setSync(SyncState.SAVING);
     await this.backend.update('items', id, {
       deletedAt: this.backend.serverTime,
       deletedBy: this.session.userId,
-    }, item?.version);
-    await this.log(ACTIONS.ITEM_DELETED, { itemId: id, itemName: item?.name });
+    }, expectedVersion ?? shown ?? item.version);
+    this._forgetItem(id);
+    this._invalidateAggregates();
+    await this.log(ACTIONS.ITEM_DELETED, { itemId: id, itemName: item.name });
   }
 
-  async restoreItem(id) {
+  async restoreItem(id, expectedVersion) {
     this.assertCanWrite();
-    const item = this.item(id);
-    await this.backend.update('items', id, { deletedAt: null, deletedBy: null }, item?.version);
-    await this.log(ACTIONS.ITEM_RESTORED, { itemId: id, itemName: item?.name });
+    const shown = this._shownVersions([id]).get(id);
+    const item = await this._current(id);
+    await this.backend.update('items', id, { deletedAt: null, deletedBy: null },
+      expectedVersion ?? shown ?? item.version);
+    this._forgetItem(id);
+    this._invalidateAggregates();
+    await this.log(ACTIONS.ITEM_RESTORED, { itemId: id, itemName: item.name });
   }
 
+  /**
+   * Permanent delete. The record is read from the store first, because its
+   * image list is what says which media this purge releases — a purge that
+   * did not know the images would delete the record and leak every file it
+   * pointed at.
+   */
   async purgeItem(id) {
     this.assertCanAdmin();
-    const item = this.item(id);
+    const item = await this._current(id);
     await this.backend.purge('items', id);
-    // A purged record is gone from the backend; drop the scanned copy too, or
-    // it lingers in `state.items` until the next reload.
+    // Gone from the store; gone from every copy held here too, or it lingers
+    // until the next reload.
     this.itemsRest.delete(id);
+    this._forgetItem(id);
     this._composeItems();
+    this._invalidateAggregates();
     // Releases this item's hold on its images. Any image another item still
     // references keeps a non-zero count and survives.
-    if (item) await releaseAll(this.session, item);
-    await this.log(ACTIONS.ITEM_PURGED, { itemId: id, itemName: item?.name });
+    await releaseAll(this.session, item);
+    await this.log(ACTIONS.ITEM_PURGED, { itemId: id, itemName: item.name });
   }
 
   /**
@@ -1180,8 +1426,7 @@ class Repository {
    */
   async duplicateItem(id) {
     this.assertCanWrite();
-    const source = this.item(id);
-    if (!source) throw new AppError('القطعة غير موجودة', { code: 'repo/missing' });
+    const source = await this._current(id);
     const copy = normalizeItem({
       ...source,
       id: uid('itm'),
@@ -1211,7 +1456,8 @@ class Repository {
   // testing. So the set comes from the backend's index, always.
 
   /**
-   * Exact reference counts for every taxonomy row, in one call.
+   * Exact live-record counts for every taxonomy row, in one call — the Trash
+   * excluded, so a folder's number is what opening it shows.
    *
    * The lists that show "N items" next to a folder or a category were counting
    * the loaded window, so a workspace with 6,000 records described its folders
@@ -1227,7 +1473,9 @@ class Repository {
       ...this.state.locations.map((l) => ['locations', 'locationId', l.id]),
     ];
     this._taxonomyCounts = Promise.all(
-      rows.map(async ([group, field, id]) => [group, id, await this.countItemsReferencing(field, id)]),
+      // Live records: the numbers beside a folder or a category describe what
+      // opening it shows, and the Trash is not in it.
+      rows.map(async ([group, field, id]) => [group, id, await this.backend.countLiveItemsByField(field, id)]),
     ).then((results) => {
       const counts = { folders: new Map(), categories: new Map(), locations: new Map() };
       for (const [group, id, n] of results) counts[group].set(id, n);
@@ -1462,7 +1710,7 @@ class Repository {
    * so a record another tab changed in the meantime is a conflict rather than
    * an overwrite — see `_runBulk` for what a conflict leaves behind.
    */
-  async bulkUpdate(ids, patch) {
+  async bulkUpdate(ids, patch, { versions = null } = {}) {
     this.assertCanWrite();
     const allowed = new Set(['folderId', 'categoryId', 'locationId', 'condition', 'unit']);
     for (const key of Object.keys(patch)) {
@@ -1471,8 +1719,9 @@ class Repository {
       }
     }
 
-    const selected = ids.map((id) => this.item(id)).filter(Boolean);
-    if (!selected.length) return { updated: 0 };
+    const shown = this._shownVersions(ids);
+    const { selected, missing, skipped } = await this._resolveSelection(ids);
+    if (!selected.length) return { updated: 0, requested: ids.length, missing, skipped };
 
     const operations = selected.map((item) => ({
       type: 'set',
@@ -1484,7 +1733,7 @@ class Repository {
       // record another tab changed in the meantime is a conflict rather than
       // an overwrite — and the new version is computed there too, from what is
       // stored, never from the copy this screen is holding.
-      expectedVersion: item.version ?? 1,
+      expectedVersion: versions?.get(item.id) ?? shown.get(item.id) ?? item.version ?? 1,
       bumpVersion: true,
       data: { ...patch, updatedBy: this.session.userId },
     }));
@@ -1498,11 +1747,12 @@ class Repository {
     });
     // The log records what happened, not what was asked for. "250 updated"
     // against 100 actual changes is a record that lies to whoever reads it next.
+    this._invalidateAggregates();
     await this.log(ACTIONS.ITEMS_BULK_UPDATED, {
       requested: operations.length, count: applied, applied, atomic, status: 'complete',
       operation: bulkOperationName(patch), fields: Object.keys(patch),
     });
-    return { updated: applied, atomic };
+    return { updated: applied, atomic, requested: ids.length, missing, skipped };
   }
 
   /**
@@ -1622,10 +1872,11 @@ class Repository {
   }
 
   /** Moves several records to Trash. Nothing is destroyed; Trash is reversible. */
-  async bulkTrash(ids) {
+  async bulkTrash(ids, { versions = null } = {}) {
     this.assertCanWrite();
-    const items = ids.map((id) => this.item(id)).filter(Boolean);
-    if (!items.length) return { trashed: 0 };
+    const shown = this._shownVersions(ids);
+    const { selected: items, missing, skipped } = await this._resolveSelection(ids);
+    if (!items.length) return { trashed: 0, requested: ids.length, missing, skipped };
 
     this.setSync(SyncState.SAVING);
     // The same concurrency rule as a bulk edit: moving a record to the Trash
@@ -1636,17 +1887,49 @@ class Repository {
       collection: 'items',
       id: item.id,
       merge: true,
-      expectedVersion: item.version ?? 1,
+      expectedVersion: versions?.get(item.id) ?? shown.get(item.id) ?? item.version ?? 1,
       bumpVersion: true,
       data: {
         deletedAt: this.backend.serverTime,
         deletedBy: this.session.userId,
       },
     })), { what: 'الحذف الجماعي', action: ACTIONS.ITEMS_BULK_DELETED, operation: 'trash' });
+    this._invalidateAggregates();
     await this.log(ACTIONS.ITEMS_BULK_DELETED, {
       requested: items.length, count: applied, applied, atomic, status: 'complete', operation: 'trash',
     });
-    return { trashed: applied, atomic };
+    return { trashed: applied, atomic, requested: ids.length, missing, skipped };
+  }
+
+  /**
+   * A selection is a set of ids, and every one of them is looked up in the
+   * store — not in the window, which holds the newest few hundred and would
+   * quietly turn "7 selected" into "2 changed".
+   *
+   * @returns {Promise<{selected: object[], missing: string[], skipped: string[]}>}
+   *   `missing` no longer exist; `skipped` are already in the Trash. Both are
+   *   returned so the caller can say so rather than act on fewer in silence.
+   */
+  /**
+   * The versions the screen was showing, for the records it holds. A record
+   * changed elsewhere since it was drawn is a conflict, not an overwrite; a
+   * record the screen does not hold has no shown version, and the one just
+   * read from the store stands in for it.
+   */
+  _shownVersions(ids) {
+    const shown = new Map();
+    for (const id of ids) {
+      const held = this.state.items.find((i) => i.id === id);
+      if (held) shown.set(id, held.version ?? 1);
+    }
+    return shown;
+  }
+
+  async _resolveSelection(ids) {
+    const { items, missing } = await this.getItems(ids, { fresh: true });
+    const selected = items.filter((item) => !item.deletedAt);
+    const skipped = items.filter((item) => item.deletedAt).map((item) => item.id);
+    return { selected, missing, skipped };
   }
 
   /**
@@ -1655,7 +1938,12 @@ class Repository {
    * would not accept from its own form; only the per-record activity log is
    * traded for one entry naming the count.
    */
-  async bulkCreateItems(records) {
+  /**
+   * @param {{log?: boolean}} [options] a spreadsheet import writes in chunks of
+   *   two hundred and logs once, as the import, when it finishes — not once per
+   *   chunk, which made a 12,000-row file sixty entries of "200 added".
+   */
+  async bulkCreateItems(records, { log = true } = {}) {
     this.assertCanWrite();
     if (!records.length) return { created: 0 };
     const items = records.map((record) => normalizeItem(
@@ -1666,7 +1954,8 @@ class Repository {
     await this.backend.runBatch(items.map((item) => ({
       type: 'set', collection: 'items', id: item.id, data: item, merge: false,
     })));
-    await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
+    this._invalidateAggregates();
+    if (log) await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
     return { created: items.length };
   }
 

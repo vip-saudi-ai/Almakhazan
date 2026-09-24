@@ -17,7 +17,7 @@ import {
   formatValuation, normalizeValuation, parseValuationText, validateQuantity,
 } from '../validation.js';
 import { closeSheet, confirmAction, onSheetClose, openSheet, optionList, toast, toastError, withBusy } from '../ui.js';
-import { discardUnreferenced } from '../media.js';
+import { discardUnreferenced, markPending, releasePending } from '../media.js';
 
 const form = {
   itemId: null,
@@ -264,6 +264,8 @@ async function handleFiles(fileList) {
 
       form.images.push(image);
       form.pendingImages.push(image);
+      // Held by this form, not yet by a record: the reconciler leaves it be.
+      markPending([image.mediaId || image.id]);
       form.primaryImageId ||= image.id;
       renderImages();
     } catch (error) {
@@ -576,10 +578,28 @@ function updateValuationPreview() {
 }
 
 // ── open / save ──
-export function openItemForm({ itemId = null, folderId = null } = {}) {
+let openGeneration = 0;
+
+export async function openItemForm({ itemId = null, folderId = null } = {}) {
   if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
 
-  const item = itemId ? repository.item(itemId) : null;
+  // An edit starts from the record as it is stored now, not from the card it
+  // was opened from: the card may be a snapshot of an older version, and the
+  // version it carries is what the save is checked against. And the record
+  // may be one the window has never held — found by a search, deep in the
+  // inventory — so it is read by id rather than looked for in memory.
+  const mine = ++openGeneration;
+  let item = null;
+  if (itemId) {
+    try {
+      item = await repository.getItem(itemId, { fresh: true });
+    } catch (error) {
+      if (mine === openGeneration) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
+      return;
+    }
+    if (mine !== openGeneration) return;
+    if (!item) { toast('لم تعد هذه القطعة موجودة.', '✕'); return; }
+  }
 
   // At the ceiling, say so before the form is filled in — and never for an
   // edit, so a full workspace can still be corrected and cleaned up. The
@@ -727,14 +747,13 @@ async function handleConflict(error) {
   });
 
   if (!keepMine) {
-    const fresh = repository.item(form.itemId);
-    if (fresh) openItemForm({ itemId: fresh.id });
+    await openItemForm({ itemId: form.itemId });
     toast('أُعيد تحميل النسخة الأحدث', '↻');
     return;
   }
 
   try {
-    const current = repository.item(form.itemId);
+    const current = await repository.getItem(form.itemId, { fresh: true });
     form.baseVersion = current?.version ?? error.current?.version ?? null;
     await saveItem();
   } catch (retryError) {
@@ -775,12 +794,24 @@ export function bindItemForm() {
   // is reclaimed. It ran only on the save path before, which is the one path
   // where there is nothing to reclaim.
   onSheetClose('add', () => {
-    const abandoned = form.pendingImages.filter(
-      (image) => !repository.item(form.itemId)?.images?.some((saved) => saved.id === image.id),
-    );
+    const pending = form.pendingImages;
+    const itemId = form.itemId;
     form.pendingImages = [];
-    if (!abandoned.length) return;
-    void discardUnreferenced(repository.session, abandoned)
+    if (!pending.length) return;
+    // Whether the record kept them is asked of the store, not of the window:
+    // an edited record deep in the inventory is not in the window at all, and
+    // reading "not in memory" as "not saved" would discard photographs that
+    // were saved a moment ago.
+    void repository.getItem(itemId, { fresh: true })
+      .catch(() => ({ images: pending }))
+      .then((saved) => {
+        const abandoned = pending.filter(
+          (image) => !saved?.images?.some((kept) => kept.id === image.id),
+        );
+        releasePending(pending.map((image) => image.mediaId || image.id));
+        if (!abandoned.length) return 0;
+        return discardUnreferenced(repository.session, abandoned);
+      })
       .then((n) => { if (n) console.info(`[form] reclaimed ${n} unsaved image(s)`); });
   });
   $('f-valuation')?.addEventListener('input', updateValuationPreview);
