@@ -110,6 +110,16 @@ refused. Closing it needs backend enforcement (a server-side write path or a
 rule that checks the usage counter transactionally). That is deliberately not
 built in the client, which is not the subscription authority.
 
+**Live SKU uniqueness is an application invariant, not a database one.**
+Add, edit, Trash restore, spreadsheet import, JSON merge and device→cloud
+upload all ask one engine (`findSkuConflicts` / `skuConflict`) before writing,
+and the spreadsheet import asks again at the commit. None of it is inside the
+write transaction, and the `sku` index is deliberately not unique (the Trash
+may hold a SKU a live record reuses; older data may already contain
+duplicates). Two devices writing the same new SKU in the same instant can
+both pass. The dev integrity check (`src/integrity.js`) reports duplicate live
+SKUs; nothing repairs them automatically.
+
 **Generated SKU counters in the cloud** are per year (`counters/sku-<year>`),
 reserved in a Firestore transaction. The rule allows a forward jump so the
 counter can move past imported data; a hostile member could still advance it

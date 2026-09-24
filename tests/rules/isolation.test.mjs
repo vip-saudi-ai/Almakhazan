@@ -191,6 +191,8 @@ async function main() {
   await check('counter cannot rewind', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 0 })));
   await check('counter cannot stay still', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 500 })));
   await check('counter must stay an integer', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: '600' })));
+  await check('the legacy-counter marker can be created once', () => assertSucceeds(setDoc(doc(editor, 'workspaces', A, 'counters', 'sku-legacy-migration'), { value: 850, year: 2026, applied: true })));
+  await check('and not rewritten', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku-legacy-migration'), { value: 850, year: 2027 })));
 
   console.log('\nA frozen workspace is readable but not writable');
   await env.withSecurityRulesDisabled(async (ctx) => {

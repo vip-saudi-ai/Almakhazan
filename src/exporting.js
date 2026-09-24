@@ -151,6 +151,14 @@ export function exportExcel() {
   }
 }
 
+/**
+ * Writes the JSON backup.
+ *
+ * @returns {{bytes: number, restorable: boolean}} `restorable` is false when
+ *   the file is past `MAX_BACKUP_FILE_BYTES` — NAZM's own restore would refuse
+ *   it — so the caller tells the customer now rather than on the day they
+ *   need it. The file is still delivered: it is their data, readable as JSON.
+ */
 export function exportJSON() {
   const repo = repository;
   repo.assertItemsComplete('النسخة الاحتياطية');
@@ -170,23 +178,49 @@ export function exportJSON() {
     categories: repo.state.categories,
     locations: repo.state.locations,
   };
+  let blob;
   try {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  } catch (error) {
+    console.error('[export] JSON export failed', error);
+    // Past what the browser can hold as one text: said as that, not as a
+    // generic failure.
+    throw new AppError(error instanceof RangeError
+      ? 'البيانات أكبر من أن يكتبها المتصفح في ملف JSON واحد. استخدم تصدير Excel.'
+      : 'فشل إنشاء النسخة الاحتياطية', { code: error instanceof RangeError ? 'export/too-large' : 'export/failed', cause: error });
+  }
+  try {
     download(blob, `nazm_backup_${stamp()}.json`);
   } catch (error) {
     console.error('[export] JSON export failed', error);
     throw new AppError('فشل إنشاء النسخة الاحتياطية', { cause: error });
   }
+  return { bytes: blob.size, restorable: blob.size <= MAX_BACKUP_FILE_BYTES };
 }
 
 /**
- * The largest backup file read at all. A NAZM backup is JSON metadata only —
- * records, categories, locations, folders, settings; images are never inside
- * it — so even the largest plan (20,000 records) stays well below this. A
- * file past it is not a backup of this app, and reading it whole would have
- * the browser hold it in memory twice (bytes, then text) before parsing.
+ * The largest JSON backup NAZM reads — and the size its own export is checked
+ * against, so the two can never disagree.
+ *
+ * Chosen from measurement, not taste (tools/measure-backup-size.mjs, which
+ * builds records the way the export writes them, `JSON.stringify(…, null, 2)`,
+ * UTF-8): a realistic record — an Arabic name and paragraph of description,
+ * identifiers, a valuation, three cloud images, an AI analysis — is about
+ * 7.4 KB, so a 20,000-record Business backup is about 141 MB. The old 50 MB
+ * ceiling refused that; 256 MB accepts it with ~1.8× headroom for longer
+ * descriptions and more photographs. A backup is metadata only: image files
+ * are never inside it, so they are not part of this budget.
+ *
+ * Every text field at its limit on every record (~40 KB each) is larger:
+ * 5,000 such records are ~192 MB and fit; 20,000 would be ~768 MB, which no
+ * browser can hold as one string to write or read. That case is not silent —
+ * `exportJSON` measures what it wrote and says so (see there).
+ *
+ * The ceiling still exists because reading is not free: the bytes, the
+ * decoded text and the parsed records are all in memory at once, so a file
+ * past this is refused from its metadata before any of that happens.
  */
-export const MAX_BACKUP_FILE_BYTES = 50 * 1024 * 1024;
+export const MAX_BACKUP_FILE_BYTES = 256 * 1024 * 1024;
 
 /**
  * Checked from the file's metadata alone, before a byte of it is read. The
@@ -291,12 +325,32 @@ export async function applyMerge(data) {
     }
   }
 
+  // Live SKUs stay unique. Checked for the records that will actually be
+  // added — a record skipped by id is not new, so its own SKU is no conflict —
+  // against each other and against the live inventory, and before anything
+  // is written: a merge with a conflict writes nothing at all, not the
+  // categories first and some of the items. Trashed records do not block.
+  const newItems = operations.filter((op) => op.collection === 'items' && !op.data.deletedAt);
+  const conflicts = await repo.findSkuConflicts(newItems.map((op) => ({ key: op.id, id: op.id, sku: op.data.sku })));
+  if (conflicts.length) {
+    const names = new Map(newItems.map((op) => [op.id, op.data.name || '']));
+    throw new AppError('يتضمن ملف البيانات رموز SKU مكررة أو مستخدمة مسبقاً. صحّح التعارضات ثم أعد المحاولة.', {
+      code: 'import/sku-conflict',
+      conflicts: conflicts.map((c) => ({
+        sku: c.sku,
+        incomingId: c.id,
+        incomingName: names.get(c.id) || '',
+        type: c.type,
+        ...(c.type === 'existing' ? { existingId: c.existingId, existingName: c.existingName } : { duplicateIds: firstOthers(c) }),
+      })),
+    });
+  }
+
   // Capacity for what will actually be added: the new live records, not the
   // ones skipped as already present. The whole merge is refused rather than
   // trimmed to fit — a merge that silently adds two of three is one the
   // customer believes finished. The write checks again, atomically.
-  const newLive = operations.filter((op) => op.collection === 'items' && !op.data.deletedAt).length;
-  await repo.assertItemCapacity(newLive);
+  await repo.assertItemCapacity(newItems.length);
 
   // What the write actually did. A record another device created between the
   // check above and the commit is skipped there too — never overwritten — and
@@ -366,4 +420,15 @@ export function exportSelection(items) {
 export function describeValuation(item) {
   if (!item.valuation) return '—';
   return `${formatValuation(item.valuation)} (وسط ${valuationMidpoint(item.valuation)})`;
+}
+
+/** Up to five other records carrying the same SKU — enough to find them,
+ *  without a list per record when thousands share one. */
+function firstOthers(conflict) {
+  const out = [];
+  for (const key of conflict.groupKeys) {
+    if (key !== conflict.key) out.push(key);
+    if (out.length === 5) break;
+  }
+  return out;
 }

@@ -7,9 +7,15 @@
 //
 // The run is checkpointed per item and resumable, and the local copy is left
 // untouched until the whole thing is verified.
+//
+// The cloud copy wins. A record the workspace already has under the same id is
+// never replaced by the device's copy: it is skipped before its images are
+// uploaded when that is known up front, and the write itself is `ifAbsent`, so
+// one created by another device mid-run is skipped at the commit too — and
+// the images uploaded for it are left unclaimed for the sweeper, not counted.
 
 import * as local from './local-store.js';
-import { mediaStore, mediaReference, reconcileLocalMediaReferences } from './media.js';
+import { discardUnreferenced, mediaStore, mediaReference, reconcileLocalMediaReferences } from './media.js';
 import { repository } from './repository.js';
 import { firebaseContext } from './firebase.js';
 import { AppError, uid } from './utils.js';
@@ -149,6 +155,8 @@ export async function uploadDeviceData({ onProgress } = {}) {
 
   const state = (await deviceUploadState()) || {};
   const uploaded = new Set(state.uploadedItemIds || []);
+  // Records the workspace already had: preserved, not uploaded, not failures.
+  const skipped = new Set(state.skippedItemIds || []);
   const imageFailures = [...(state.imageFailures || [])];
   const report = (phase, done, total, message) => onProgress?.({ phase, done, total, message });
 
@@ -169,9 +177,27 @@ export async function uploadDeviceData({ onProgress } = {}) {
   // anything is uploaded or the run is recorded, not discovered at item 1,001
   // of 3,000. Records already uploaded by an earlier run, or already in the
   // workspace, cost nothing. The device's copy is never touched either way.
-  const toAdd = items.filter((item) => item?.id && !uploaded.has(item.id) && !item.deletedAt);
-  const present = await repository.backend.existingIds('items', toAdd.map((item) => item.id));
-  await repository.assertItemCapacity(toAdd.length - present.size);
+  const pendingItems = items.filter((item) => item?.id && !uploaded.has(item.id) && !skipped.has(item.id));
+  const present = await repository.backend.existingIds('items', pendingItems.map((item) => item.id));
+  const toAdd = pendingItems.filter((item) => !item.deletedAt);
+  const newLive = toAdd.filter((item) => !present.has(item.id));
+  await repository.assertItemCapacity(newLive.length);
+
+  // Live SKUs stay unique in the workspace too. Checked, like a merge, before
+  // a single image is uploaded: a device record whose SKU a live cloud record
+  // (or another record on this device) already carries stops the upload, and
+  // the customer renames one of them first. Nothing is changed on either side.
+  const conflicts = await repository.findSkuConflicts(newLive.map((item) => ({ key: item.id, id: item.id, sku: item.sku })));
+  if (conflicts.length) {
+    const names = new Map(newLive.map((item) => [item.id, item.name || '']));
+    throw new AppError('بعض رموز SKU على هذا الجهاز مستخدمة في مساحة العمل أو مكررة. عدّلها ثم أعد الرفع.', {
+      code: 'import/sku-conflict',
+      conflicts: conflicts.map((c) => ({
+        sku: c.sku, incomingId: c.id, incomingName: names.get(c.id) || '', type: c.type,
+        ...(c.type === 'existing' ? { existingId: c.existingId, existingName: c.existingName } : { duplicateIds: firstOthers(c) }),
+      })),
+    });
+  }
 
   await local.setMeta(STATE_KEY, {
     ...state,
@@ -183,21 +209,44 @@ export async function uploadDeviceData({ onProgress } = {}) {
   try {
     // Taxonomy first, so item references resolve on arrival.
     report('taxonomy', 0, 1, 'رفع التصنيفات والمجلدات…');
+    // Created where missing, never replaced: a category the workspace
+    // already has keeps the workspace's name and icon.
     const taxonomy = [
-      ...categories.map((r) => ({ type: 'set', collection: 'categories', id: r.id, data: r, merge: false })),
-      ...locations.map((r) => ({ type: 'set', collection: 'locations', id: r.id, data: r, merge: false })),
-      ...folders.map((r) => ({ type: 'set', collection: 'folders', id: r.id, data: r, merge: false })),
+      ...categories.map((r) => ({ type: 'set', collection: 'categories', id: r.id, data: r, merge: false, ifAbsent: true })),
+      ...locations.map((r) => ({ type: 'set', collection: 'locations', id: r.id, data: r, merge: false, ifAbsent: true })),
+      ...folders.map((r) => ({ type: 'set', collection: 'folders', id: r.id, data: r, merge: false, ifAbsent: true })),
     ];
     if (taxonomy.length) await repository.bulkWrite(taxonomy);
 
     let done = uploaded.size;
     let imagesUploaded = 0;
 
+    const checkpoint = () => local.setMeta(STATE_KEY, {
+      ...state,
+      status: UploadState.IN_PROGRESS,
+      workspaceId: session.workspaceId,
+      uploadedItemIds: [...uploaded],
+      skippedItemIds: [...skipped],
+      imageFailures,
+    });
+
     for (const item of items) {
-      if (!item?.id || uploaded.has(item.id)) continue;
+      if (!item?.id || uploaded.has(item.id) || skipped.has(item.id)) continue;
       report('items', done, items.length, `رفع القطع… ${done}/${items.length}`);
 
+      // Already in the workspace: the cloud's record stays as it is, and
+      // this device's photographs of it are not uploaded at all.
+      if (present.has(item.id)) {
+        skipped.add(item.id);
+        done += 1;
+        await checkpoint();
+        continue;
+      }
+
       const images = [];
+      // Uploaded by this run for this record: claimed if the record lands,
+      // left for the sweeper if it does not.
+      const fresh = [];
       for (const image of item.images || []) {
         if (!isLocalImage(image)) { images.push(image); continue; }
         try {
@@ -207,7 +256,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
             itemId: item.id,
           });
           images.push(cloudImage);
-          imagesUploaded += 1;
+          fresh.push(cloudImage);
         } catch (error) {
           // The record is worth more than the photograph: keep the item, record
           // the miss, and never write a `local:` reference into the cloud.
@@ -220,13 +269,28 @@ export async function uploadDeviceData({ onProgress } = {}) {
         ? item.primaryImageId
         : images[0]?.id ?? null;
 
-      await repository.bulkWrite([{
+      const written = await repository.bulkWrite([{
         type: 'set',
         collection: 'items',
         id: item.id,
         data: { ...item, images, primaryImageId, mediaIds: images.map((i) => i.mediaId || i.id) },
         merge: false,
+        ifAbsent: true,
       }]);
+
+      if (written.skippedExisting?.includes(item.id)) {
+        // Another device created this id between the check above and this
+        // write. Its record stands. The images just uploaded for ours are not
+        // claimed — they stay unreferenced and orphan-marked, which is what the
+        // sweeper collects — and they are not counted as uploaded.
+        await discardUnreferenced(session, fresh);
+        skipped.add(item.id);
+        done += 1;
+        await checkpoint();
+        continue;
+      }
+
+      imagesUploaded += fresh.length;
 
       // Claim the uploaded assets so the sweeper does not reclaim them.
       for (const image of images) {
@@ -239,13 +303,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
 
       uploaded.add(item.id);
       done += 1;
-      await local.setMeta(STATE_KEY, {
-        ...state,
-        status: UploadState.IN_PROGRESS,
-        workspaceId: session.workspaceId,
-        uploadedItemIds: [...uploaded],
-        imageFailures,
-      });
+      await checkpoint();
     }
 
     // Verification: nothing may have reached the cloud carrying a local path.
@@ -263,9 +321,12 @@ export async function uploadDeviceData({ onProgress } = {}) {
       completedAt: Date.now(),
       workspaceId: session.workspaceId,
       items: uploaded.size,
+      created: uploaded.size,
+      skippedExisting: skipped.size,
       images: imagesUploaded,
       imageFailures,
       uploadedItemIds: [...uploaded],
+      skippedItemIds: [...skipped],
     };
     await local.setMeta(STATE_KEY, result);
     report('done', items.length, items.length, 'اكتمل الرفع');
@@ -276,6 +337,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
       status: UploadState.FAILED,
       workspaceId: session.workspaceId,
       uploadedItemIds: [...uploaded],
+      skippedItemIds: [...skipped],
       imageFailures,
       failedAt: Date.now(),
       error: error.message,
@@ -314,4 +376,15 @@ export async function clearLocalCopy() {
     });
   }
   await local.setMeta(STATE_KEY, { ...state, localCleared: true, clearedAt: Date.now() });
+}
+
+/** Up to five other records carrying the same SKU — enough to find them,
+ *  without a list per record when thousands share one. */
+function firstOthers(conflict) {
+  const out = [];
+  for (const key of conflict.groupKeys) {
+    if (key !== conflict.key) out.push(key);
+    if (out.length === 5) break;
+  }
+  return out;
 }

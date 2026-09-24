@@ -10,7 +10,9 @@ import {
   signInWithEmail, signInWithGoogle, signOutUser,
 } from '../auth.js';
 import { FirebaseStatus, firebaseContext } from '../firebase.js';
-import { applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile } from '../exporting.js';
+import {
+  MAX_BACKUP_FILE_BYTES, applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile,
+} from '../exporting.js';
 import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
 } from '../restore.js';
@@ -635,9 +637,28 @@ async function runImport(mode) {
       renderHome();
     } catch (error) {
       setText('import-progress', '');
+      if (error?.code === 'import/sku-conflict') showMergeSkuConflicts(error.conflicts || []);
       toastError(error, 'فشل الاستيراد');
     }
   });
+}
+
+/**
+ * Which records of the file stopped the merge, and why — on the import sheet,
+ * where the customer is looking, a few lines at most. Nothing was written.
+ */
+function showMergeSkuConflicts(conflicts) {
+  const warnings = $('import-warnings');
+  if (!warnings) return;
+  const line = (c) => (c.type === 'existing'
+    ? `• «${c.incomingName || 'قطعة'}»: الرمز SKU مستخدم على قطعة أخرى: ${c.sku}${c.existingName ? ` («${c.existingName}»)` : ''}`
+    : `• «${c.incomingName || 'قطعة'}»: الرمز SKU مكرر داخل الملف: ${c.sku}`);
+  warnings.style.display = '';
+  render(warnings, [
+    el('div', { class: 'imp-warn-title', role: 'alert', text: `لم يُدمج شيء — ${formatNumber(conflicts.length)} تعارضاً في رموز SKU` }),
+    ...conflicts.slice(0, 8).map((c) => el('div', { class: 'imp-warn', text: line(c) })),
+    conflicts.length > 8 ? el('div', { class: 'imp-warn', text: `• و${formatNumber(conflicts.length - 8)} تعارضاً آخر` }) : null,
+  ]);
 }
 
 // ── full exports ──
@@ -663,7 +684,17 @@ export async function runFullExcelExport() {
 export async function runFullJsonExport() {
   if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً للتصدير…'))) return false;
   try {
-    exportJSON();
+    const { bytes, restorable } = exportJSON();
+    if (!restorable) {
+      // Said now, not on the day the file is needed.
+      void confirmAction({
+        title: 'نُزّل الملف، لكنه أكبر من حد الاستعادة',
+        message: `حجم الملف ${formatNumber(Math.ceil(bytes / 1048576))} ميغابايت، والحد الذي يستعيده نَظْم في المتصفح ${formatNumber(MAX_BACKUP_FILE_BYTES / 1048576)} ميغابايت. احتفظ بتصدير Excel أيضاً.`,
+        icon: '⚠️',
+        confirmLabel: 'فهمت',
+      });
+      return true;
+    }
     toast('تم تصدير البيانات — بدون ملفات الصور', '💾');
     return true;
   } catch (error) {

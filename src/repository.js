@@ -23,7 +23,7 @@ import {
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
-  normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
+  normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation, normalizeSku,
 } from './validation.js';
 
 export const SyncState = {
@@ -136,6 +136,14 @@ const DAY = 24 * 60 * 60 * 1000;
 /** When the activity log was last trimmed, so it is trimmed about once a day. */
 const ACTIVITY_PRUNE_KEY = 'activity.lastPrunedAt';
 const SCAN_PAGE = 500;
+/** Marks the old year-less SKU counter as considered, once, in the cloud. */
+const LEGACY_SKU_MARKER = 'sku-legacy-migration';
+/** SKUs asked of the local index per read transaction. */
+const SKU_LOOKUP_BATCH = 500;
+/** Firestore's ceiling on the values of one `in` query. */
+const FIRESTORE_IN_LIMIT = 30;
+/** How many of those queries run at once. */
+const SKU_QUERY_CONCURRENCY = 4;
 
 // ── Firestore backend ──────────────────────────────────────────────────────
 export class FirestoreBackend {
@@ -336,6 +344,30 @@ export class FirestoreBackend {
       if (snapshot.docs.length < SCAN_PAGE) return rows;
       cursor = snapshot.docs[snapshot.docs.length - 1];
     }
+  }
+
+  /**
+   * Records carrying any of these SKUs. Firestore answers an `in` query of up
+   * to 30 values from its index; the groups run a few at a time rather than
+   * all at once, so five hundred SKUs are seventeen bounded queries, never
+   * five hundred simultaneous reads and never the collection.
+   */
+  async findItemsBySkus(skus) {
+    const groups = [];
+    for (let i = 0; i < skus.length; i += FIRESTORE_IN_LIMIT) groups.push(skus.slice(i, i + FIRESTORE_IN_LIMIT));
+    const out = new Map();
+    for (let i = 0; i < groups.length; i += SKU_QUERY_CONCURRENCY) {
+      const snapshots = await Promise.all(groups.slice(i, i + SKU_QUERY_CONCURRENCY).map((group) =>
+        this.fs.getDocs(this.fs.query(this.col('items'), this.fs.where('sku', 'in', group)))));
+      for (const snapshot of snapshots) {
+        for (const doc of snapshot.docs) {
+          const row = { id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) };
+          if (!out.has(row.sku)) out.set(row.sku, []);
+          out.get(row.sku).push(row);
+        }
+      }
+    }
+    return out;
   }
 
   /** The ids an import wrote. The server answers from its index, so the cost is
@@ -841,6 +873,17 @@ export class LocalBackend {
   async findItemsByField(field, value) {
     if (value == null) return [];
     return local.getAllByIndex('items', field, value);
+  }
+
+  /** Records carrying any of these SKUs, from the `sku` index, in bounded
+   *  batches. Map of SKU → the records (live and trashed) carrying it. */
+  async findItemsBySkus(skus) {
+    const out = new Map();
+    for (let i = 0; i < skus.length; i += SKU_LOOKUP_BATCH) {
+      const found = await local.getAllByIndexValues('items', 'sku', skus.slice(i, i + SKU_LOOKUP_BATCH));
+      for (const [sku, rows] of found) if (rows.length) out.set(sku, rows);
+    }
+    return out;
   }
 
   /** The first record carrying this identifier, for a uniqueness check. */
@@ -1423,10 +1466,30 @@ class Repository {
     throw new AppError('تعذّر حجز رمز فريد للقطعة. حاول مرة أخرى.', { code: 'repo/sku-unavailable' });
   }
 
+  /**
+   * The cloud side of `local.reserveSkuSequence`, with the same rules: one
+   * counter per year (`counters/sku-<year>`), above the floor, and the old
+   * year-less counter (`counters/sku`) considered once, ever.
+   *
+   * Once: the first reservation of any year that finds no year counter
+   * creates `counters/sku-legacy-migration` in the same transaction; after
+   * that the old counter is never read. Two devices racing the first
+   * reservation conflict on those documents and one transaction retries.
+   *
+   * Counted toward a year only on evidence: the SKU it last handed out,
+   * INV-<year>-<its value>, is on record. That is asked of the index before the
+   * transaction (Firestore transactions cannot run queries) and applied only
+   * if the old counter still holds the same value inside it. Without evidence
+   * the data on record decides, so a counter left at 850 in 2026 does not
+   * start 2027 at 000851 because 2027 already has imported generated SKUs.
+   */
   async _reserveCloudSkuSequence(year, floor) {
     const { db, sdk } = firebaseContext();
-    const ref = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', `sku-${year}`);
-    const legacyRef = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', 'sku');
+    const counters = (id) => sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', id);
+    const ref = counters(`sku-${year}`);
+    const legacyRef = counters('sku');
+    const markerRef = counters(LEGACY_SKU_MARKER);
+    const exhausted = () => new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
 
     // Contention between devices is the expected failure here, and it is
     // transient — so retry. What must never happen is falling back to a
@@ -1434,25 +1497,26 @@ class Repository {
     let lastError = null;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
+        const evidence = await this._legacySkuEvidence(year, { yearRef: ref, legacyRef, markerRef });
         return await sdk.firestore.runTransaction(db, async (tx) => {
           const snap = await tx.get(ref);
           if (!snap.exists()) {
-            // First reservation of the year. The single counter the app used
-            // before counters were per year is honoured only if this year
-            // already has generated SKUs on record — evidence it was counting
-            // this year. A new year with none starts at 000001.
-            const legacy = floor > 0 ? await tx.get(legacyRef) : null;
-            const start = Math.max(legacy?.exists() ? (legacy.data().value ?? 0) : 0, floor) + 1;
-            if (start > GENERATED_SKU_MAX) {
-              throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+            let last = 0;
+            const marker = await tx.get(markerRef);
+            if (!marker.exists()) {
+              const legacy = await tx.get(legacyRef);
+              const value = legacy.exists() ? Number(legacy.data().value) || 0 : 0;
+              const applied = evidence != null && evidence === value;
+              if (applied) last = value;
+              tx.set(markerRef, { value, year, applied, migratedAt: sdk.firestore.serverTimestamp() });
             }
+            const start = Math.max(last, floor) + 1;
+            if (start > GENERATED_SKU_MAX) throw exhausted();
             tx.set(ref, { value: start, updatedAt: sdk.firestore.serverTimestamp() });
             return start;
           }
           const next = Math.max((snap.data().value ?? 0) + 1, floor + 1);
-          if (next > GENERATED_SKU_MAX) {
-            throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
-          }
+          if (next > GENERATED_SKU_MAX) throw exhausted();
           tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
           return next;
         });
@@ -1469,6 +1533,22 @@ class Repository {
       code: 'repo/sku-unavailable',
       cause: lastError,
     });
+  }
+
+  /**
+   * The old counter's value, if it is proven to have been counting `year`:
+   * only asked when it could still matter (no year counter, no marker), and
+   * proven by its last SKU being on record. Otherwise null.
+   */
+  async _legacySkuEvidence(year, { yearRef, legacyRef, markerRef }) {
+    const { sdk } = firebaseContext();
+    const [yearSnap, markerSnap] = await Promise.all([sdk.firestore.getDoc(yearRef), sdk.firestore.getDoc(markerRef)]);
+    if (yearSnap.exists() || markerSnap.exists()) return null;
+    const legacySnap = await sdk.firestore.getDoc(legacyRef);
+    const value = legacySnap.exists() ? Number(legacySnap.data().value) || 0 : 0;
+    if (!(value > 0) || value > GENERATED_SKU_MAX) return null;
+    const rows = await this.backend.findItemsByField('sku', formatGeneratedSku(value, year));
+    return rows.length ? value : null;
   }
 
   /** A placeholder only: what the window suggests. The saved SKU is reserved. */
@@ -1500,7 +1580,69 @@ class Repository {
   }
 
   skuConflict(sku, exceptId) {
-    return this.identifierConflict('sku', sku, exceptId);
+    return this.identifierConflict('sku', normalizeSku(sku), exceptId);
+  }
+
+  /**
+   * The SKU conflicts of a set of records about to become live — the batched
+   * form of `skuConflict`, with the same rules, for the paths that create
+   * many records at once (spreadsheet import, JSON merge).
+   *
+   * The invariant: two live records never share a non-empty SKU. So an entry
+   * conflicts when
+   *   · another entry in the same set carries the same SKU
+   *     (`incoming-duplicate`; every one of them is reported), or
+   *   · a live record with a different id already carries it (`existing`).
+   * A trashed record never blocks, and a record never conflicts with itself
+   * (same id) — which is what lets a replayed import row, or a merge record
+   * that is already present, pass.
+   *
+   * Values are compared after `normalizeSku`, exactly as the add/edit form and
+   * the Trash restore compare them. Lookups go to the `sku` index in bounded
+   * batches; the inventory is never loaded.
+   *
+   * @param {Array<{key: *, id?: string, sku?: string}>} entries  `key` is how
+   *   the caller finds the entry again (a source line, an incoming id)
+   * @returns {Promise<Array<{key, id, sku, type: 'incoming-duplicate'|'existing',
+   *   groupKeys?: Array, existingId?: string, existingName?: string}>>}
+   *   `groupKeys` is every entry's key carrying that SKU, this one included.
+   */
+  async findSkuConflicts(entries) {
+    // A few hundred SKUs in a 50,000-row file: the loop is over the rows once,
+    // the lookups over the distinct SKUs in batches.
+    const bySku = new Map();
+    for (const entry of entries) {
+      const sku = normalizeSku(entry.sku);
+      if (!sku) continue;
+      if (!bySku.has(sku)) bySku.set(sku, []);
+      bySku.get(sku).push(entry);
+    }
+    if (!bySku.size) return [];
+
+    const conflicts = [];
+    for (const [sku, group] of bySku) {
+      if (group.length < 2) continue;
+      // One array per SKU, shared by every entry carrying it — a file with
+      // thousands of rows on one SKU must not build thousands of lists.
+      const groupKeys = group.map((entry) => entry.key);
+      for (const entry of group) {
+        conflicts.push({ key: entry.key, id: entry.id ?? null, sku, type: 'incoming-duplicate', groupKeys });
+      }
+    }
+
+    const found = await this.backend.findItemsBySkus([...bySku.keys()]);
+    for (const [sku, rows] of found) {
+      const live = rows.filter((row) => !row.deletedAt);
+      if (!live.length) continue;
+      for (const entry of bySku.get(sku) || []) {
+        const other = live.find((row) => row.id !== entry.id);
+        if (!other) continue;
+        conflicts.push({
+          key: entry.key, id: entry.id ?? null, sku, type: 'existing', existingId: other.id, existingName: other.name || '',
+        });
+      }
+    }
+    return conflicts;
   }
 
   barcodeConflict(barcode, exceptId) {

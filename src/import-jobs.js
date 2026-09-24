@@ -112,6 +112,7 @@ function record(job, status) {
     // existed (a replay). Reported; never used to decide where to resume.
     createdRecords: job.createdRecords ?? 0,
     skippedRecords: job.skippedRecords ?? 0,
+    blockedRecords: job.blockedRecords ?? 0,
     failedAt: job.failedAt ?? null,
     lastErrorCode: job.lastErrorCode ?? null,
     // Which taxonomy rows this import brought into existence. Cancelling can

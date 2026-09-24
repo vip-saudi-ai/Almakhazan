@@ -233,6 +233,17 @@ export function normalizeImage(raw) {
  * Normalizes an arbitrary object into a valid item document.
  * Used for user input, imports, and migration alike.
  */
+/**
+ * The one definition of what a SKU is, for storing it and for comparing it:
+ * control characters out, trimmed, bounded — and otherwise exactly as typed.
+ * Case is kept and compared as is, leading zeros are kept, nothing is parsed
+ * as a number. Every uniqueness check (add, edit, Trash restore, spreadsheet
+ * import, JSON merge) compares values that went through this.
+ */
+export function normalizeSku(value) {
+  return cleanText(value, TEXT_LIMITS.sku);
+}
+
 export function normalizeItem(raw, options = {}) {
   const now = Date.now();
   const src = raw && typeof raw === 'object' ? raw : {};
@@ -246,7 +257,7 @@ export function normalizeItem(raw, options = {}) {
   const item = {
     id: cleanText(src.id, 128) || uid('itm'),
     name: cleanText(src.name, TEXT_LIMITS.name),
-    sku: cleanText(src.sku, TEXT_LIMITS.sku),
+    sku: normalizeSku(src.sku),
     barcode: cleanText(src.barcode, TEXT_LIMITS.barcode),
     // Kept as typed. A serial number is a string even when it looks like a
     // number: "0042" and "42" are different objects, and coercing either way

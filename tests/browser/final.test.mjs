@@ -196,8 +196,10 @@ const expectedErrors = (errs, pattern) => errs.filter((line) => !pattern.test(li
     const later = await local.reserveSkuSequence(year + 3, await local.maxSkuSequence(year + 3));
     return { first, later };
   }, YEAR);
-  check('S3 an old counter in use this year is honoured once (851), and never seeds a later year (1)',
-    once.first === 851 && once.later === 1, JSON.stringify(once));
+  // The old counter counts only on evidence it was counting this year — its
+  // last SKU on record. INV-…-000100 is not that evidence; the data decides.
+  check('S3 an old counter without evidence does not lift this year (101), and never seeds a later year (1)',
+    once.first === 101 && once.later === 1, JSON.stringify(once));
 
   const floor = await page.evaluate(async (year) => {
     const local = await import('/src/local-store.js');

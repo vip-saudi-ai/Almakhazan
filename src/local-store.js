@@ -11,7 +11,7 @@
 // or an explicit cursor — never a full materialisation unless the caller asks.
 
 import { AppError } from './utils.js';
-import { GENERATED_SKU_MAX, generatedSkuPrefix, parseGeneratedSku } from './sku.js';
+import { GENERATED_SKU_MAX, formatGeneratedSku, generatedSkuPrefix, parseGeneratedSku } from './sku.js';
 
 const DB_NAME = 'almakhzan';
 // Bumped when STORES or INDEXES gains an entry. `onupgradeneeded` creates
@@ -293,6 +293,22 @@ export function getAllByIndex(storeName, indexName, value, limit) {
 }
 
 /**
+ * The records under each of several index values, in one read transaction.
+ * One request per value, all queued at once in the same transaction — a
+ * uniqueness check over several hundred SKUs is one round trip to the
+ * database, not several hundred sequential ones, and it touches only the
+ * matching records, never the store.
+ * @returns {Promise<Map<*, object[]>>}
+ */
+export function getAllByIndexValues(storeName, indexName, values) {
+  return run(storeName, 'readonly', async (store) => {
+    const index = store.index(indexName);
+    const pending = values.map((value) => req(index.getAll(IDBKeyRange.only(value))).then((rows) => [value, rows]));
+    return new Map(await Promise.all(pending));
+  });
+}
+
+/**
  * The primary keys of the records matching an index value, without reading the
  * records themselves.
  *
@@ -367,31 +383,36 @@ const LEGACY_SKU_MIGRATED = 'counter.sku.legacyMigrated';
  *     counter issued are never collided with;
  *   · each year starts again at 000001.
  *
- * The year-less counter the app used before is considered once, ever. It is
- * honoured only if this year already has generated SKUs on record — evidence
- * it was counting this year — and ignored otherwise, so a counter left at 850
- * in 2026 does not start 2027 at 000851.
+ * The year-less counter the app used before is considered once, ever — the
+ * first reservation of any year writes the marker, in the same transaction.
+ * It counts toward a year only on evidence that it was counting that year:
+ * the SKU it last handed out, INV-<year>-<its value>, is on record (live or
+ * in the Trash). Without that, the data on record decides — so a counter
+ * left at 850 in 2026 does not start 2027 at 000851 even when 2027 already
+ * has imported generated SKUs; 2027 continues from its own highest.
  *
  * @throws {AppError} `repo/sku-exhausted` past INV-<year>-999999
  */
 export function reserveSkuSequence(year, floor = 0) {
   const key = `counter.sku.${year}`;
-  return run('meta', 'readwrite', async (store) => {
-    const current = await req(store.get(key));
+  return transaction(['meta', 'items'], 'readwrite', async ({ meta, items }) => {
+    const current = await req(meta.get(key));
     let last = Number(current?.value) || 0;
     if (current == null) {
-      const migrated = await req(store.get(LEGACY_SKU_MIGRATED));
+      const migrated = await req(meta.get(LEGACY_SKU_MIGRATED));
       if (!migrated) {
-        const legacy = Number((await req(store.get(LEGACY_SKU_KEY)))?.value) || 0;
-        if (floor > 0) last = Math.max(last, legacy);
-        await req(store.put({ key: LEGACY_SKU_MIGRATED, value: { year, legacy } }));
+        const legacy = Number((await req(meta.get(LEGACY_SKU_KEY)))?.value) || 0;
+        const evidence = legacy > 0 && legacy <= GENERATED_SKU_MAX
+          && (await req(items.index('sku').count(IDBKeyRange.only(formatGeneratedSku(legacy, year))))) > 0;
+        if (evidence) last = Math.max(last, legacy);
+        await req(meta.put({ key: LEGACY_SKU_MIGRATED, value: { year, legacy, applied: evidence } }));
       }
     }
     const next = Math.max(last, Number(floor) || 0) + 1;
     if (next > GENERATED_SKU_MAX) {
       throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
     }
-    await req(store.put({ key, value: next }));
+    await req(meta.put({ key, value: next }));
     return next;
   });
 }

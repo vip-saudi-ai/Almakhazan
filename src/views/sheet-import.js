@@ -71,6 +71,16 @@ const state = {
    * over the first — §49.
    */
   busy: false,
+  /**
+   * The SKU check of the rows about to be written — see `refreshSkuCheck`.
+   * `{signature, blocked: Map<line, problem[]>, committed: Set<line>}`, or null
+   * before the first check.
+   */
+  skuCheck: null,
+  /** The signature of a check in flight, so one is not started twice. */
+  skuCheckPending: null,
+  /** The signature whose check failed, so the preview does not retry in a loop. */
+  skuCheckFailed: null,
 };
 
 const IGNORE = '';
@@ -368,6 +378,9 @@ function releaseImportMemory() {
   state.stopRequested = false;
   state.job = null;
   state.step = 'map';
+  state.skuCheck = null;
+  state.skuCheckPending = null;
+  state.skuCheckFailed = null;
 }
 
 function importSheetOpen() {
@@ -445,7 +458,7 @@ function renderBlocked(body, foot) {
   ]);
 }
 
-function currentPlan() {
+function basePlan() {
   return planImport({
     rows: state.sheet.rows,
     lines: state.sheet.lines,
@@ -456,6 +469,113 @@ function currentPlan() {
       folders: repository.state.folders,
     },
   });
+}
+
+/**
+ * What the file will do, with the SKU check applied.
+ *
+ * `records` keeps every row that parsed, in file order, blocked or not — a
+ * resume counts positions in that list (`job.written`), and a row whose SKU
+ * conflict comes or goes between two attempts must not shift every position
+ * after it. Blocked rows are carried in `blockedLines` and skipped at the
+ * write; `writable` is how many will actually be written.
+ */
+function currentPlan() {
+  const plan = basePlan();
+  const check = state.skuCheck?.signature === skuSignature() ? state.skuCheck : null;
+  const blocked = check?.blocked || new Map();
+  if (!blocked.size) {
+    return { ...plan, blockedLines: new Set(), writable: plan.records.length, skuChecked: Boolean(check) };
+  }
+  const skuProblems = [...blocked.values()].flat();
+  const warningByLine = new Map(plan.rowStatus.warning.map((entry) => [entry.line, entry]));
+  const blockedEntries = [...blocked.keys()].map((line) => ({
+    line,
+    reasons: [...(warningByLine.get(line)?.reasons || []), ...blocked.get(line).map((p) => p.reason)],
+    fatal: true,
+  }));
+  const warning = plan.rowStatus.warning.filter((entry) => !blocked.has(entry.line));
+  return {
+    ...plan,
+    problems: [...plan.problems, ...skuProblems].sort((a, b) => a.line - b.line),
+    rowStatus: {
+      ready: plan.records.length - blocked.size - warning.length,
+      warning,
+      error: [...plan.rowStatus.error, ...blockedEntries].sort((a, b) => a.line - b.line),
+    },
+    blockedLines: new Set(blocked.keys()),
+    writable: plan.records.length - blocked.size,
+    skuChecked: true,
+  };
+}
+
+/** The first other row of the file carrying the same SKU. */
+function otherLine(conflict) {
+  return conflict.groupKeys.find((line) => line !== conflict.key);
+}
+
+/** What a SKU check was computed for: the rows (file, sheet, mapping) and
+ *  the job whose ids they would be written under. */
+function skuSignature() {
+  return [state.fingerprint, state.sheet?.sheetName, JSON.stringify(state.mapping), state.job?.id || ''].join('|');
+}
+
+/**
+ * The live-SKU invariant, for a file: no row may give a new record a SKU that
+ * another row of the same file also gives (every such row is held back — there
+ * is no "last one wins"), or that a live record already carries. Both are
+ * fatal row errors, shown on the preview before anything is written; the row
+ * is not imported with its SKU dropped.
+ *
+ * A resumed import's rows whose record already exists (their deterministic id
+ * is present) are not new: they were committed by the earlier attempt, the
+ * write will skip them (`ifAbsent`), and whatever that record says now — even
+ * a SKU the customer has since edited — is the record. They are left out of
+ * the check entirely, so a replayed row never conflicts with itself.
+ *
+ * Only rows with a SKU are looked up, through the repository's one conflict
+ * engine (`findSkuConflicts`: same normalization as the add form, trashed
+ * records never block, the `sku` index in bounded batches).
+ */
+async function refreshSkuCheck() {
+  const signature = skuSignature();
+  state.skuCheckPending = signature;
+  try {
+    const { records } = basePlan();
+    const jobId = state.job?.id || null;
+    const entries = [];
+    for (const record of records) {
+      if (!record.sku) continue;
+      entries.push({ key: record.sourceLine, id: jobId ? record.id || importItemId(jobId, record.sourceLine) : null, sku: record.sku });
+    }
+    const committed = new Set();
+    if (jobId && entries.length) {
+      const present = await repository.backend.existingIds('items', entries.map((entry) => entry.id));
+      for (const entry of entries) if (present.has(entry.id)) committed.add(entry.key);
+    }
+    const conflicts = await repository.findSkuConflicts(entries.filter((entry) => !committed.has(entry.key)));
+    const blocked = new Map();
+    for (const conflict of conflicts) {
+      const problem = conflict.type === 'existing'
+        ? {
+          line: conflict.key, field: 'sku', fatal: true, value: conflict.sku,
+          reason: `الرمز SKU مستخدم على قطعة أخرى: ${conflict.sku}${conflict.existingName ? ` («${conflict.existingName}»)` : ''}`,
+          existingId: conflict.existingId, existingName: conflict.existingName,
+        }
+        : {
+          line: conflict.key, field: 'sku', fatal: true, value: conflict.sku,
+          reason: `الرمز SKU مكرر داخل الملف: ${conflict.sku} (صف ${formatNumber(otherLine(conflict))})`,
+          duplicateLine: otherLine(conflict),
+        };
+      if (!blocked.has(conflict.key)) blocked.set(conflict.key, []);
+      blocked.get(conflict.key).push(problem);
+    }
+    const check = { signature, blocked, committed };
+    if (skuSignature() === signature) state.skuCheck = check;
+    return check;
+  } finally {
+    if (state.skuCheckPending === signature) state.skuCheckPending = null;
+  }
 }
 
 // ── rendering ──────────────────────────────────────────────────────────────
@@ -596,7 +716,24 @@ function previewTable() {
 }
 
 function renderConfirm(body, foot) {
-  const { records, problems, newTaxonomy, rowStatus } = currentPlan();
+  const { records, problems, newTaxonomy, rowStatus, blockedLines, writable, skuChecked } = currentPlan();
+  // The SKU check needs the database, so it runs beside the screen: until it
+  // answers, the preview says so and the import button waits for it.
+  const signature = skuSignature();
+  const checkFailed = state.skuCheckFailed === signature;
+  if (!skuChecked && !checkFailed && state.skuCheckPending !== signature) {
+    void refreshSkuCheck()
+      .catch((error) => {
+        // Said once, not retried in a loop; pressing import checks again.
+        state.skuCheckFailed = signature;
+        console.error('[import] SKU check failed', error);
+        toastError(error, 'تعذّر التحقق من رموز SKU');
+      })
+      .finally(() => { if (state.step === 'confirm') renderImport(); });
+  }
+  // The import button is usable once the check has answered — or failed, in
+  // which case pressing it runs the check again at the write.
+  const checkSettled = skuChecked || checkFailed;
   const mapped = new Set(Object.values(state.mapping));
   const unknownColumns = state.sheet.headers.filter((_, i) => !mapped.has(i)).length;
   const newCount = newTaxonomy.categories.length + newTaxonomy.locations.length + newTaxonomy.folders.length;
@@ -620,9 +757,8 @@ function renderConfirm(body, foot) {
   const room = state.room;
   // A resumed import's written records are already counted in `used`, so what
   // has to fit is what is left to write, not the whole file again.
-  const pending = resuming
-    ? Math.max(0, records.length - (state.job.written || 0))
-    : records.length;
+  const pending = records.slice(resuming ? Math.max(0, state.job.written || 0) : 0)
+    .filter((record) => !blockedLines.has(record.sourceLine)).length;
   const overflow = pending > room;
 
   render(body, [
@@ -630,7 +766,7 @@ function renderConfirm(body, foot) {
     // Three counts, because a row is one of three things and calling them all
     // "warnings" hides which ones are actually going to be left behind.
     el('div', { class: 'imp-stats' }, [
-      el('div', { class: 'imp-stat imp-ready' }, [el('b', { text: formatNumber(records.length) }), ' قطعة ستُضاف']),
+      el('div', { class: 'imp-stat imp-ready' }, [el('b', { text: formatNumber(writable) }), ' قطعة ستُضاف']),
       el('div', { class: 'imp-stat imp-warning' }, [el('b', { text: formatNumber(rowStatus.warning.length) }), ' صفّاً يحتاج مراجعة']),
       el('div', { class: 'imp-stat imp-error' }, [el('b', { text: formatNumber(rowStatus.error.length) }), ' صفّاً لن يُستورد']),
       el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(newCount) }), ' تصنيف/موقع/مجلد جديد']),
@@ -665,6 +801,8 @@ function renderConfirm(body, foot) {
       ...taxonomyLine('مواقع', newTaxonomy.locations),
       ...taxonomyLine('مجلدات', newTaxonomy.folders),
     ]) : null,
+
+    skuChecked ? null : el('div', { class: 'imp-warn', role: 'status', text: checkFailed ? 'تعذّر التحقق من رموز SKU. سيُعاد التحقق عند الاستيراد.' : 'جارٍ التحقق من رموز SKU…' }),
 
     problems.length ? section(`تنبيهات (${formatNumber(problems.length)})`, [
       el('div', { class: 'imp-warnings' }, [
@@ -713,7 +851,7 @@ function renderConfirm(body, foot) {
         class: 'btn btn-p', type: 'button',
         text: `متابعة الاستيراد (${formatNumber(state.job.total - written)} متبقية)`,
         style: { width: '100%', padding: '12px' },
-        disabled: state.busy ? true : undefined,
+        disabled: state.busy || !checkSettled ? true : undefined,
         onClick: () => { void guarded(run); },
       }),
       el('div', { style: { display: 'flex', gap: '8px' } }, [
@@ -801,9 +939,9 @@ function renderConfirm(body, foot) {
     }),
     el('button', {
       class: 'btn btn-p', type: 'button',
-      text: `استيراد ${formatNumber(records.length)} قطعة`,
+      text: `استيراد ${formatNumber(writable)} قطعة`,
       style: { flex: '2', padding: '12px' },
-      disabled: records.length && !overflow && !state.busy ? undefined : true,
+      disabled: writable && checkSettled && !overflow && !state.busy ? undefined : true,
       onClick: () => { void guarded(run); },
     }),
   ]);
@@ -877,7 +1015,31 @@ async function guarded(run) {
 async function run() {
   // A stop asked for during the previous attempt is not a stop asked for now.
   state.stopRequested = false;
-  const { records, newTaxonomy } = currentPlan();
+
+  // ── SKUs, again, at the commit ──
+  //
+  // The preview showed which rows are held back. The inventory may have
+  // changed since — a record added in another tab, a record trashed — so the
+  // check is asked again now. A row newly blocked that the customer was not
+  // shown sends them back to the preview instead of being dropped silently.
+  const shown = state.skuCheck?.signature === skuSignature() ? state.skuCheck.blocked : null;
+  let check;
+  try {
+    check = await refreshSkuCheck();
+  } catch (error) {
+    toastError(error, 'تعذّر التحقق من رموز SKU');
+    return;
+  }
+  state.skuCheckFailed = null;
+  const unseen = [...check.blocked.keys()].filter((line) => !shown?.has(line));
+  if (unseen.length) {
+    state.step = 'confirm';
+    renderImport();
+    toast(`${formatNumber(unseen.length)} صفّاً لديه تعارض في رمز SKU. راجع التنبيهات قبل الاستيراد.`, '⚠');
+    return;
+  }
+
+  const { records, newTaxonomy, blockedLines } = currentPlan();
 
   // The screen already said what the limits are. These are the rules, asked
   // again where they cannot be skipped by anything the screen did or did not
@@ -920,6 +1082,7 @@ async function run() {
   // import that writes the part that fits looks complete and is not.
   try {
     const remainingIds = records.slice(Math.max(0, job.written || 0))
+      .filter((record) => !blockedLines.has(record.sourceLine))
       .map((record) => record.id || importItemId(job.id, record.sourceLine));
     const present = await repository.backend.existingIds('items', remainingIds);
     await repository.assertItemCapacity(remainingIds.length - present.size);
@@ -1033,11 +1196,18 @@ async function run() {
     // ever-wider gap.
     let createdThisRun = 0;
     for (let i = start; i < resolved.length; i += CHUNK) {
-      const slice = resolved.slice(i, i + CHUNK);
+      const span = resolved.slice(i, i + CHUNK);
+      // A row held back for its SKU is processed — the position moves past
+      // it — and not written: it is a fatal row error, not a record without
+      // its SKU.
+      const slice = span.filter((record) => !blockedLines.has(record.sourceLine));
+      job.blockedRecords = (job.blockedRecords || 0) + (span.length - slice.length);
       // Rows processed and records created are different numbers on a
       // replay: a row whose record already exists is done — `written`
       // moves past it — but it created nothing, and is not counted as if it had.
-      const outcome = await repository.bulkCreateItems(slice, { log: false });
+      const outcome = slice.length
+        ? await repository.bulkCreateItems(slice, { log: false })
+        : { created: 0, skippedExisting: [] };
       job.createdRecords = (job.createdRecords || 0) + outcome.created;
       job.skippedRecords = (job.skippedRecords || 0) + outcome.skippedExisting.length;
       createdThisRun += outcome.created;
@@ -1129,6 +1299,7 @@ async function logImport(action, job, extra = {}) {
     processedRows: job.written,
     writtenRows: job.createdRecords ?? job.written,
     skippedExistingRows: job.skippedRecords ?? 0,
+    skuBlockedRows: job.blockedRecords ?? 0,
     errors: rowStatus ? rowStatus.error.length : null,
     startedAt: job.startedAt,
     completedAt: Date.now(),
