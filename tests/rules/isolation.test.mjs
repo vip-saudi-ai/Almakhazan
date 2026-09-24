@@ -185,8 +185,12 @@ async function main() {
     await assertSucceeds(setDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 0 }));
     await assertSucceeds(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 1 }));
   });
-  await check('counter cannot jump', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 500 })));
+  // A counter may jump forward — past SKUs an import or restore brought in —
+  // but never backward, and never to a non-integer.
+  await check('counter can move forward past imported SKUs', () => assertSucceeds(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 500 })));
   await check('counter cannot rewind', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 0 })));
+  await check('counter cannot stay still', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: 500 })));
+  await check('counter must stay an integer', () => assertFails(updateDoc(doc(editor, 'workspaces', A, 'counters', 'sku'), { value: '600' })));
 
   console.log('\nA frozen workspace is readable but not writable');
   await env.withSecurityRulesDisabled(async (ctx) => {

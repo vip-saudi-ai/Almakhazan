@@ -17,6 +17,7 @@ import * as local from './local-store.js';
 import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
 import { releaseObjectUrls } from './storage.js';
 import { currenciesPresent as currenciesInItems } from './money.js';
+import { quotaStatus } from './subscription.js';
 import { AppError, toMillis, uid } from './utils.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation,
@@ -69,6 +70,38 @@ export const ITEM_WINDOW = 200;
  */
 const ATOMIC_BULK_MAX = 1000;
 
+// ── plan capacity ──────────────────────────────────────────────────────────
+
+/**
+ * The refusal when an operation would take live records past the plan.
+ * Structured, so a caller reads numbers rather than parsing a sentence.
+ */
+export function capacityError({ limit, used, requested }) {
+  const remaining = Math.max(0, limit - used);
+  const n = (value) => Number(value).toLocaleString('en-US');
+  return new AppError(
+    remaining > 0
+      ? `يتبقى في خطتك ${n(remaining)} قطعة فقط، بينما تتطلب العملية إضافة ${n(requested)} قطعة.`
+      : `اكتمل حد خطتك (${n(limit)} قطعة). احذف ما لم يعد يلزمك أو ارفع الخطة لإضافة المزيد.`,
+    { code: 'plan/item-limit', limit, used, remaining, requested },
+  );
+}
+
+/**
+ * Inside a readwrite transaction on `items`: are there `adds` more live slots?
+ * Counted with the store's own count and the Trash index — no records read —
+ * in the same transaction that then writes, which is what stops two tabs at
+ * 49 of 50 from both writing the fiftieth.
+ */
+async function assertLiveRoom(itemsStore, limit, adds) {
+  const [total, trashed] = await Promise.all([
+    local.request(itemsStore.count()),
+    local.request(itemsStore.index('deletedAt').count(IDBKeyRange.lowerBound(0))),
+  ]);
+  const used = total - trashed;
+  if (used + adds > limit) throw capacityError({ limit, used, requested: adds });
+}
+
 /** Keyed reads per transaction or per round of requests. Bounded, so a
  *  selection of five thousand is fifty short reads, not one unbounded fan-out. */
 const KEYED_BATCH = 100;
@@ -102,7 +135,7 @@ const ACTIVITY_PRUNE_KEY = 'activity.lastPrunedAt';
 const SCAN_PAGE = 500;
 
 // ── Firestore backend ──────────────────────────────────────────────────────
-class FirestoreBackend {
+export class FirestoreBackend {
   constructor(workspaceId) {
     this.workspaceId = workspaceId;
     const { db, sdk } = firebaseContext();
@@ -193,8 +226,9 @@ class FirestoreBackend {
     }
   }
 
-  async create(name, record) {
+  async create(name, record, { liveLimit = null } = {}) {
     const { id, ...rest } = record;
+    if (liveLimit != null && name === 'items') await this._precheckCapacity([{ type: 'set', collection: 'items', id, data: rest }], liveLimit);
     await this.fs.setDoc(this.ref(name, id), {
       ...rest,
       createdAt: this.serverTime,
@@ -207,8 +241,12 @@ class FirestoreBackend {
    * Optimistic concurrency: the transaction re-reads the document and refuses
    * the write when its version moved since the caller read it.
    */
-  async update(name, id, patch, expectedVersion) {
+  async update(name, id, patch, expectedVersion, { liveLimit = null } = {}) {
     const ref = this.ref(name, id);
+    if (liveLimit != null && name === 'items' && 'deletedAt' in patch && !patch.deletedAt) {
+      const counts = await this.countItems();
+      if (counts && counts.live + 1 > liveLimit) throw capacityError({ limit: liveLimit, used: counts.live, requested: 1 });
+    }
     await this.fs.runTransaction(this.db, async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists()) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
@@ -226,6 +264,26 @@ class FirestoreBackend {
 
   async purge(name, id) {
     await this.fs.deleteDoc(this.ref(name, id));
+  }
+
+  /**
+   * The highest generated SKU sequence with this prefix — one indexed query,
+   * newest first, once per session (the caller caches it).
+   */
+  async maxGeneratedSkuSequence(prefix) {
+    const snapshot = await this.fs.getDocs(this.fs.query(
+      this.col('items'),
+      this.fs.where('sku', '>=', `${prefix}000000`),
+      this.fs.where('sku', '<=', `${prefix}999999`),
+      this.fs.orderBy('sku', 'desc'),
+      this.fs.limit(20),
+    ));
+    let highest = 0;
+    for (const doc of snapshot.docs) {
+      const match = new RegExp(`^${prefix}(\\d{6,})$`).exec(doc.data().sku || '');
+      if (match) highest = Math.max(highest, Number(match[1]));
+    }
+    return highest;
   }
 
   /** One document by id — answered by the server whether or not any listener
@@ -344,8 +402,20 @@ class FirestoreBackend {
    * one transaction may touch, which is why the caller chunks rather than
    * handing over a thousand operations at once.
    */
-  async runBatch(operations) {
-    const guarded = operations.some((op) => op.expectedVersion != null || op.bumpVersion);
+  /**
+   * @returns {Promise<{applied: number, skippedExisting: string[]}>}
+   *   `skippedExisting` names every `ifAbsent` write that found its document
+   *   already there and so wrote nothing — the same contract as the device
+   *   backend.
+   */
+  async runBatch(operations, { liveLimit = null } = {}) {
+    // Anything whose correctness depends on what is stored *at commit time*
+    // runs as a transaction. That includes `ifAbsent`: a write batch cannot
+    // read, and `set(..., {merge: false})` on a document another device
+    // created a moment ago replaces it. The existence query a merge runs
+    // beforehand is for counting and for the screen; this is the guarantee.
+    const guarded = operations.some((op) => op.expectedVersion != null || op.bumpVersion || op.ifAbsent);
+    if (liveLimit != null) await this._precheckCapacity(operations, liveLimit);
     if (guarded) return this._runGuardedBatch(operations);
 
     // Firestore caps a batch at 500 writes.
@@ -361,19 +431,48 @@ class FirestoreBackend {
       }
       await batch.commit();
     }
+    return { applied: operations.length, skippedExisting: [] };
+  }
+
+  /**
+   * The cloud's capacity check, just before the commit.
+   *
+   * Counted on the server immediately beforehand, so a limit reached on
+   * another device a minute ago is seen. It is not inside the transaction —
+   * the usage counter is maintained server-side and a client transaction
+   * cannot hold it — so two devices committing the last slot in the same
+   * instant can both pass. Closing that needs enforcement in the backend,
+   * which is deferred; see the note at `assertItemCapacity`.
+   */
+  async _precheckCapacity(operations, liveLimit) {
+    const counts = await this.countItems();
+    if (!counts) return;
+    const items = operations.filter((op) => op.collection === 'items' && op.type === 'set' && !op.data?.deletedAt);
+    const present = await this.existingIds('items', items.map((op) => op.id));
+    const adds = items.filter((op) => !present.has(op.id)).length;
+    if (counts.live + adds > liveLimit) {
+      throw capacityError({ limit: liveLimit, used: counts.live, requested: adds });
+    }
   }
 
   async _runGuardedBatch(operations) {
+    let applied = 0;
+    const skippedExisting = [];
     for (let i = 0; i < operations.length; i += 100) {
       const chunk = operations.slice(i, i + 100);
-      await this.fs.runTransaction(this.db, async (tx) => {
+      // Collected per attempt: Firestore may run the function more than once.
+      const result = await this.fs.runTransaction(this.db, async (tx) => {
+        const attempt = { applied: 0, skipped: [] };
         const refs = chunk.map((op) => this.ref(op.collection, op.id));
         // Every read before any write: a Firestore transaction requires it.
         const snapshots = await Promise.all(refs.map((ref) => tx.get(ref)));
         chunk.forEach((op, index) => {
           const ref = refs[index];
           const snap = snapshots[index];
-          if (op.type === 'delete') { tx.delete(ref); return; }
+          if (op.type === 'delete') { tx.delete(ref); attempt.applied += 1; return; }
+          // Read inside the transaction, so a document created after any
+          // earlier check is still seen here — and left exactly as it is.
+          if (op.ifAbsent && snap.exists()) { attempt.skipped.push(op.id); return; }
           if (op.expectedVersion != null) {
             if (!snap.exists()) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
             const current = snap.data();
@@ -384,9 +483,14 @@ class FirestoreBackend {
           const data = { ...op.data, updatedAt: this.serverTime };
           if (op.bumpVersion) data.version = ((snap.exists() ? snap.data().version : 0) ?? 0) + 1;
           tx.set(ref, data, { merge: op.merge !== false });
+          attempt.applied += 1;
         });
+        return attempt;
       });
+      applied += result.applied;
+      skippedExisting.push(...result.skipped);
     }
+    return { applied, skippedExisting };
   }
 }
 
@@ -397,7 +501,7 @@ class FirestoreBackend {
 // at the cost of the answer, not the cost of the inventory — otherwise the
 // relational operations that depend on them are correct only on small data,
 // which is the same as being wrong.
-class LocalBackend {
+export class LocalBackend {
   constructor() {
     this.watchers = new Map();
   }
@@ -482,8 +586,17 @@ class LocalBackend {
     await local.scan(name, { pageSize, onPage });
   }
 
-  async create(name, record) {
-    await local.put(name, { ...record, createdAt: record.createdAt || Date.now(), updatedAt: Date.now(), version: 1 });
+  async create(name, record, { liveLimit = null } = {}) {
+    const row = { ...record, createdAt: record.createdAt || Date.now(), updatedAt: Date.now(), version: 1 };
+    if (liveLimit == null || name !== 'items') {
+      await local.put(name, row);
+    } else {
+      // The count and the write in one transaction: see `assertLiveRoom`.
+      await local.transaction(name, 'readwrite', async (stores) => {
+        await assertLiveRoom(stores[name], liveLimit, 1);
+        await local.request(stores[name].put(row));
+      });
+    }
     await this._notify(name);
   }
 
@@ -493,13 +606,17 @@ class LocalBackend {
    * window in which another tab can commit between the two, and the version
    * check then passes against a record that no longer exists as read.
    */
-  async update(name, id, patch, expectedVersion) {
+  async update(name, id, patch, expectedVersion, { liveLimit = null } = {}) {
     await local.transaction(name, 'readwrite', async (stores) => {
       const store = stores[name];
       const current = await local.request(store.get(id));
       if (!current) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
       if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
         throw new ConflictError(current);
+      }
+      // A record coming back out of the Trash takes a live slot again.
+      if (liveLimit != null && current.deletedAt && !{ ...current, ...patch }.deletedAt) {
+        await assertLiveRoom(store, liveLimit, 1);
       }
       await local.request(store.put({
         ...current, ...patch, updatedAt: Date.now(), version: (current.version ?? 1) + 1,
@@ -511,6 +628,11 @@ class LocalBackend {
   async purge(name, id) {
     await local.remove(name, id);
     await this._notify(name);
+  }
+
+  /** The highest generated SKU sequence with this prefix, from the index. */
+  async maxGeneratedSkuSequence(prefix) {
+    return local.maxSkuSequence(prefix);
   }
 
   /** One record by primary key. Never a scan. */
@@ -581,29 +703,58 @@ class LocalBackend {
    * reason: a stale screen's idea of "version 5" must not become version 6 on
    * top of somebody else's version 6.
    */
-  async runBatch(operations) {
-    if (!operations.length) return;
-    const touched = [...new Set(operations.map((op) => op.collection))];
+  /**
+   * One transaction, in two phases: every record the batch touches is read
+   * and every condition checked, then everything is written. A condition that
+   * fails — a version that moved, a plan limit — fails before any write.
+   *
+   * @param {{liveLimit?: number|null}} [options] when set, the batch may not
+   *   take the number of live records above it. Counted inside this same
+   *   transaction, so two tabs cannot both take the last slot.
+   * @returns {Promise<{applied: number, skippedExisting: string[]}>}
+   */
+  async runBatch(operations, { liveLimit = null } = {}) {
+    if (!operations.length) return { applied: 0, skippedExisting: [] };
+    const touched = [...new Set([...operations.map((op) => op.collection), ...(liveLimit != null ? ['items'] : [])])];
+    const skippedExisting = [];
+    let applied = 0;
     await local.transaction(touched, 'readwrite', async (stores) => {
+      // ── phase one: read and check ──
+      const plan = [];
       for (const op of operations) {
         const store = stores[op.collection];
-        if (op.type === 'delete') {
-          await local.request(store.delete(op.id));
-          continue;
-        }
+        if (op.type === 'delete') { plan.push({ op }); continue; }
         if (op.type !== 'set') continue;
-
-        const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion || op.ifAbsent;
+        const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion || op.ifAbsent
+          || (liveLimit != null && op.collection === 'items');
         const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
         // A write that must never replace a record: read in this transaction,
         // so nothing can appear between the check and the put.
-        if (op.ifAbsent && existing) continue;
-
+        if (op.ifAbsent && existing) { skippedExisting.push(op.id); continue; }
         if (op.expectedVersion != null) {
           if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
           if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
         }
+        plan.push({ op, existing });
+      }
 
+      if (liveLimit != null) {
+        // Records this batch brings to life: new ones, and trashed ones it
+        // restores. A record already live, or a replayed one, costs nothing.
+        let adds = 0;
+        for (const { op, existing } of plan) {
+          if (op.collection !== 'items' || op.type !== 'set') continue;
+          const after = { ...(op.merge !== false ? existing : null), ...op.data };
+          const wasLive = existing && !existing.deletedAt;
+          if (!after.deletedAt && !wasLive) adds += 1;
+        }
+        if (adds) await assertLiveRoom(stores.items, liveLimit, adds);
+      }
+
+      // ── phase two: write ──
+      for (const { op, existing } of plan) {
+        const store = stores[op.collection];
+        if (op.type === 'delete') { await local.request(store.delete(op.id)); applied += 1; continue; }
         const record = {
           ...(op.merge !== false ? existing : null),
           ...op.data,
@@ -613,9 +764,11 @@ class LocalBackend {
         // The next version is the stored one plus one, never the caller's.
         if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
         await local.request(store.put(record));
+        applied += 1;
       }
     });
     for (const name of touched) await this._notify(name);
+    return { applied, skippedExisting };
   }
 
   /**
@@ -1127,6 +1280,7 @@ class Repository {
       for (const row of rows) {
         const item = normalizeItem(row);
         found.set(item.id, item);
+        this._cacheItem(item);
       }
     }
     return {
@@ -1203,21 +1357,77 @@ class Repository {
     return Repository.formatSku(highest + 1);
   }
 
+  // ── generated SKU sequence ──
+  //
+  // Generated SKUs are `INV-<year>-<sequence>`. The rules:
+  //
+  //   · the sequence is per year — 2027 starts again at 000001 — because the
+  //     year is in the code and a 2027 SKU numbered after 2026's last one
+  //     reads as a mistake. The counter key is per year to match.
+  //   · the counter holds the LAST sequence handed out, and is advanced in
+  //     the same transaction that reads it. reserveSku() never returns a
+  //     number the counter has not already moved to.
+  //   · the counter never falls behind the SKUs that exist. Records arrive
+  //     from imports, merges and restores carrying generated SKUs the counter
+  //     never issued, so each reservation takes the larger of the counter and
+  //     the highest generated SKU on record (the "floor", read from the SKU
+  //     index and cached until the next bulk write).
+  //   · a customer's own SKU (WATCH-001) is never part of this and never
+  //     rewritten.
+
+  static skuPrefix(year = new Date().getFullYear()) {
+    return `INV-${year}-`;
+  }
+
+  /** Forget the known floor: a bulk write may have brought higher SKUs in. */
+  invalidateSkuFloor() {
+    this._skuFloor = null;
+  }
+
+  /** The highest generated sequence on record for a year, from the index. */
+  async _generatedSkuFloor(year) {
+    if (this._skuFloor?.year === year && this._skuFloor.workspaceId === this.session.workspaceId) {
+      return this._skuFloor.value;
+    }
+    const value = await this.backend.maxGeneratedSkuSequence(Repository.skuPrefix(year));
+    this._skuFloor = { year, workspaceId: this.session.workspaceId, value };
+    return value;
+  }
+
   /**
-   * Takes the next SKU authoritatively. The counter lives in the workspace and
-   * is advanced in a transaction, so two devices saving at the same moment get
-   * different numbers. Security Rules only permit +1, so the sequence cannot be
-   * rewritten or rewound by a client.
+   * Takes the next SKU authoritatively: transactional on both backends, and
+   * above every generated SKU already on record.
    */
   async reserveSku() {
-    if (this.session.mode !== 'cloud') {
-      const next = (await local.getMeta('counter.sku', 0)) + 1;
-      await local.setMeta('counter.sku', next);
-      return Repository.formatSku(Math.max(next, this._provisionalSequence()));
-    }
+    const year = new Date().getFullYear();
+    const floor = await this._generatedSkuFloor(year);
+    const sequence = this.session.mode !== 'cloud'
+      ? await local.reserveSkuSequence(year, floor)
+      : await this._reserveCloudSkuSequence(year, floor);
+    // Keep the cached floor at what has now been issued, so the next
+    // reservation in this session does not need to consult the index.
+    if (this._skuFloor?.year === year) this._skuFloor.value = Math.max(this._skuFloor.value, sequence);
+    return Repository.formatSku(sequence, year);
+  }
 
+  /**
+   * A generated SKU no live record already carries. The floor makes a clash
+   * all but impossible; this is the last check, bounded, for data the floor
+   * could not see (a record written in another tab a moment ago).
+   */
+  async reserveUniqueSku() {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const sku = await this.reserveSku();
+      if (!(await this.skuConflict(sku))) return sku;
+      this.invalidateSkuFloor();
+    }
+    throw new AppError('تعذّر حجز رمز فريد للقطعة. حاول مرة أخرى.', { code: 'repo/sku-unavailable' });
+  }
+
+  async _reserveCloudSkuSequence(year, floor) {
     const { db, sdk } = firebaseContext();
-    const ref = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', 'sku');
+    const ref = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', `sku-${year}`);
+    const legacyRef = sdk.firestore.doc(db, 'workspaces', this.session.workspaceId, 'counters', 'sku');
 
     // Contention between devices is the expected failure here, and it is
     // transient — so retry. What must never happen is falling back to a
@@ -1225,17 +1435,20 @@ class Repository {
     let lastError = null;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        const value = await sdk.firestore.runTransaction(db, async (tx) => {
+        return await sdk.firestore.runTransaction(db, async (tx) => {
           const snap = await tx.get(ref);
           if (!snap.exists()) {
-            tx.set(ref, { value: 1, updatedAt: sdk.firestore.serverTimestamp() });
-            return 1;
+            // First reservation of the year. The single counter the app used
+            // before counters were per year is honoured once, as a floor.
+            const legacy = await tx.get(legacyRef);
+            const start = Math.max(legacy.exists() ? (legacy.data().value ?? 0) : 0, floor) + 1;
+            tx.set(ref, { value: start, updatedAt: sdk.firestore.serverTimestamp() });
+            return start;
           }
-          const next = (snap.data().value ?? 0) + 1;
+          const next = Math.max((snap.data().value ?? 0) + 1, floor + 1);
           tx.update(ref, { value: next, updatedAt: sdk.firestore.serverTimestamp() });
           return next;
         });
-        return Repository.formatSku(value);
       } catch (error) {
         lastError = error;
         console.error(`[repo] SKU reservation attempt ${attempt + 1} failed`, error);
@@ -1250,7 +1463,7 @@ class Repository {
   }
 
   _provisionalSequence() {
-    const prefix = `INV-${new Date().getFullYear()}-`;
+    const prefix = Repository.skuPrefix();
     let highest = 0;
     for (const item of this.state.items) {
       if (typeof item.sku === 'string' && item.sku.startsWith(prefix)) {
@@ -1316,6 +1529,49 @@ class Repository {
     return Object.keys(changes.after).length ? changes : null;
   }
 
+  // ── plan capacity ──
+  //
+  // A plan's record limit is a property of the data, not of a button. The
+  // screens still ask early (`canAddItem`, the import preview) so the customer
+  // hears it before filling a form in; every path that makes a record live
+  // asks again at the write:
+  //
+  //   create · duplicate · restore from Trash · spreadsheet import · merge ·
+  //   device-to-cloud upload
+  //
+  // Editing, moving and trashing are never refused for capacity. A full
+  // backup restore is the one exception, on purpose: it puts back the
+  // customer's own data whatever the plan now allows, and the workspace is
+  // then simply over its limit until they trim it or upgrade.
+  //
+  // On the device the limit is checked inside the same transaction as the
+  // write. In the cloud it is checked against a fresh server count just
+  // before the commit; two devices taking the last slot in the same instant
+  // can both pass until the backend enforces it, which is deferred.
+
+  /** The live-record limit in force, or null when no plan limit applies. */
+  _liveLimit() {
+    const quota = quotaStatus();
+    if (!quota || quota.limit == null || quota.limit < 0) return null;
+    return quota.limit;
+  }
+
+  /**
+   * Refuses, before any side effect, an operation that would add `requested`
+   * live records past the plan.
+   * @throws {AppError} `plan/item-limit` with `{limit, used, remaining, requested}`
+   */
+  async assertItemCapacity(requested) {
+    const limit = this._liveLimit();
+    if (limit == null || !(requested > 0)) return;
+    const counts = await this.backend.countItems();
+    const counted = counts?.live ?? 0;
+    // On the device the store is the authority; in the cloud the server's
+    // usage counter is, checked against a fresh count of its own.
+    const used = this.session.mode === 'cloud' ? Math.max(quotaStatus()?.used ?? 0, counted) : counted;
+    if (used + requested > limit) throw capacityError({ limit, used, requested });
+  }
+
   // ── items ──
   async createItem(data) {
     this.assertCanWrite();
@@ -1323,7 +1579,11 @@ class Repository {
       userId: this.session.userId,
     });
     this.setSync(SyncState.SAVING);
-    await this.backend.create('items', item);
+    // Refused here, at the write, before the images are claimed or anything is
+    // logged — not only when the form opened, which may have been before
+    // another tab took the last slot.
+    await this.backend.create('items', item, { liveLimit: this._liveLimit() });
+    this._invalidateAggregates();
     // Claims the images this item uses. Until now they were unreferenced, which
     // is what lets an abandoned form be cleaned up automatically.
     await retainAll(this.session, item);
@@ -1390,8 +1650,9 @@ class Repository {
     this.assertCanWrite();
     const shown = this._shownVersions([id]).get(id);
     const item = await this._current(id);
+    // Out of the Trash is back into the plan's count.
     await this.backend.update('items', id, { deletedAt: null, deletedBy: null },
-      expectedVersion ?? shown ?? item.version);
+      expectedVersion ?? shown ?? item.version, { liveLimit: item.deletedAt ? this._liveLimit() : null });
     this._forgetItem(id);
     this._invalidateAggregates();
     await this.log(ACTIONS.ITEM_RESTORED, { itemId: id, itemName: item.name });
@@ -1427,10 +1688,13 @@ class Repository {
   async duplicateItem(id) {
     this.assertCanWrite();
     const source = await this._current(id);
+    // Asked before a SKU is reserved or anything is written; the create below
+    // asks again inside its own write.
+    await this.assertItemCapacity(1);
     const copy = normalizeItem({
       ...source,
       id: uid('itm'),
-      sku: await this.reserveSku(),
+      sku: await this.reserveUniqueSku(),
       barcode: '', // barcodes identify a physical object; a copy has none yet
       name: `${source.name} (نسخة)`,
       createdAt: null,
@@ -1442,7 +1706,9 @@ class Repository {
       version: 1,
     }, { userId: this.session.userId });
 
-    await this.backend.create('items', copy);
+    await this.backend.create('items', copy, { liveLimit: this._liveLimit() });
+    this._invalidateAggregates();
+    // Only a copy that exists claims its images.
     await retainAll(this.session, copy);
     await this.log(ACTIONS.ITEM_DUPLICATED, { itemId: copy.id, itemName: copy.name, sourceId: id });
     return copy;
@@ -1951,10 +2217,13 @@ class Repository {
       { userId: this.session.userId },
     ));
     this.setSync(SyncState.SAVING);
+    // A replayed chunk writes records that already exist; those cost no slot,
+    // and the backend counts only the ones it actually brings to life.
     await this.backend.runBatch(items.map((item) => ({
       type: 'set', collection: 'items', id: item.id, data: item, merge: false,
-    })));
+    })), { liveLimit: this._liveLimit() });
     this._invalidateAggregates();
+    this.invalidateSkuFloor();
     if (log) await this.log(ACTIONS.IMPORT_MERGED, { items: items.length });
     return { created: items.length };
   }
@@ -2044,10 +2313,18 @@ class Repository {
       .map((item) => item.id);
   }
 
-  async bulkWrite(operations) {
+  /**
+   * @param {{liveLimit?: number|null}} [options] a merge passes the plan's
+   *   limit; a full restore deliberately does not.
+   * @returns {Promise<{applied: number, skippedExisting: string[]}>}
+   */
+  async bulkWrite(operations, { liveLimit = null } = {}) {
     this.assertCanWrite();
     this.setSync(SyncState.SAVING);
-    await this.backend.runBatch(operations);
+    const result = await this.backend.runBatch(operations, { liveLimit });
+    this._invalidateAggregates();
+    this.invalidateSkuFloor();
+    return result || { applied: operations.length, skippedExisting: [] };
   }
 
   /**

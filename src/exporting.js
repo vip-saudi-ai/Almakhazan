@@ -179,19 +179,47 @@ export function exportJSON() {
   }
 }
 
-export function readJsonFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        resolve(JSON.parse(String(reader.result)));
-      } catch (error) {
-        reject(new AppError('الملف ليس JSON صالحاً', { code: 'import/parse', cause: error }));
-      }
-    };
-    reader.onerror = () => reject(new AppError('تعذّر قراءة الملف', { code: 'import/read' }));
-    reader.readAsText(file);
-  });
+/**
+ * Reads a JSON backup once, and says exactly which backup it is.
+ *
+ * The bytes are read one time. Their SHA-256 is the backup's identity — the
+ * same principle as a spreadsheet's: same bytes, same backup; any difference,
+ * a different one. That identity is what lets an interrupted restore be
+ * finished only by the file that started it. It used to be a hash of the
+ * record ids, and two backups of the same inventory taken a week apart share
+ * every id while differing in every value.
+ *
+ * The bytes are dropped as soon as they are decoded.
+ *
+ * @returns {Promise<{data: object, sourceFingerprint: string}>}
+ * @throws {AppError} `backup/fingerprint-unavailable` when the file cannot be
+ *   identified — nothing proceeds on a weaker identity — or `import/parse`
+ */
+export async function readBackupFile(file) {
+  let bytes;
+  try {
+    bytes = await file.arrayBuffer();
+  } catch (error) {
+    throw new AppError('تعذّر قراءة الملف', { code: 'import/read', cause: error });
+  }
+  let sourceFingerprint;
+  try {
+    if (!globalThis.crypto?.subtle?.digest) throw new Error('SubtleCrypto unavailable');
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    sourceFingerprint = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (error) {
+    console.error('[backup] fingerprint could not be computed', error);
+    throw new AppError('تعذّر التحقق من هوية ملف النسخة الاحتياطية. أعد المحاولة.', {
+      code: 'backup/fingerprint-unavailable', cause: error,
+    });
+  }
+  let data;
+  try {
+    data = JSON.parse(new TextDecoder().decode(bytes));
+  } catch (error) {
+    throw new AppError('الملف ليس JSON صالحاً', { code: 'import/parse', cause: error });
+  }
+  return { data, sourceFingerprint };
 }
 
 /**
@@ -224,12 +252,30 @@ export async function applyMerge(data) {
     }
   }
 
-  if (operations.length) await repo.bulkWrite(operations);
+  // Capacity for what will actually be added: the new live records, not the
+  // ones skipped as already present. The whole merge is refused rather than
+  // trimmed to fit — a merge that silently adds two of three is one the
+  // customer believes finished. The write checks again, atomically.
+  const newLive = operations.filter((op) => op.collection === 'items' && !op.data.deletedAt).length;
+  await repo.assertItemCapacity(newLive);
+
+  // What the write actually did. A record another device created between the
+  // check above and the commit is skipped there too — never overwritten — and
+  // counted here as skipped, not as added.
+  let added = 0;
+  if (operations.length) {
+    const result = await repo.bulkWrite(operations, { liveLimit: repo._liveLimit() });
+    const raced = new Set(result.skippedExisting || []);
+    for (const op of operations) {
+      if (raced.has(op.id)) skipped[op.collection] += 1;
+      else added += 1;
+    }
+  }
   await repo.log(ACTIONS.IMPORT_MERGED, {
-    added: operations.length,
+    added,
     skipped: Object.values(skipped).reduce((a, b) => a + b, 0),
   });
-  return { added: operations.length, skipped };
+  return { added, skipped };
 }
 
 /**

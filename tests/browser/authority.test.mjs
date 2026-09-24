@@ -967,7 +967,8 @@ async function open2(page, text) {
     const local = await import('/src/local-store.js');
     const restore = await import('/src/restore.js');
     const data = { items: [{ id: 'from-backup', name: 'من النسخة', quantity: 1, categoryId: 'uncategorized', images: [], createdAt: 1, updatedAt: 1, version: 1, deletedAt: null }], folders: [], categories: [], locations: [] };
-    const fp = await restore.backupFingerprint(data);
+    const { readBackupFile } = await import('/src/exporting.js');
+    const fp = (await readBackupFile(new File([JSON.stringify(data)], 'backup.json'))).sourceFingerprint;
     // What a tab killed mid-removal leaves behind.
     await local.setMeta('restoreJob', { id: 'rst-dead', status: 'removing', stage: 'remove', sourceFingerprint: fp, startedAt: 1 });
     globalThis.__backup = data;
@@ -984,7 +985,10 @@ async function open2(page, text) {
     try { await applyMerge({ items: [], folders: [], categories: [], locations: [] }); } catch (error) { mergeCode = error.code; }
     let otherCode = null;
     try {
-      await restore.restoreFromBackup({ items: [], folders: [], categories: [], locations: [] }, { saveBackup: () => {} });
+      const other = { items: [], folders: [], categories: [], locations: [] };
+      const { readBackupFile } = await import('/src/exporting.js');
+      const otherFp = (await readBackupFile(new File([JSON.stringify(other)], 'other.json'))).sourceFingerprint;
+      await restore.restoreFromBackup(other, { saveBackup: () => {}, sourceFingerprint: otherFp });
     } catch (error) { otherCode = error.code; }
     return { status: job.status, mergeCode, otherCode };
   });
@@ -998,7 +1002,9 @@ async function open2(page, text) {
     const restore = await import('/src/restore.js');
     const data = { items: [{ id: 'from-backup', name: 'من النسخة', quantity: 1, categoryId: 'uncategorized', images: [], createdAt: 1, updatedAt: 1, version: 1, deletedAt: null }], folders: [], categories: [], locations: [] };
     let saved = 0;
-    const result = await restore.restoreFromBackup(data, { saveBackup: () => { saved += 1; } });
+    const { readBackupFile } = await import('/src/exporting.js');
+    const { sourceFingerprint } = await readBackupFile(new File([JSON.stringify(data)], 'backup.json'));
+    const result = await restore.restoreFromBackup(data, { saveBackup: () => { saved += 1; }, sourceFingerprint });
     const job = await local.getMeta('restoreJob');
     return { status: job.status, resumed: job.resumed, saved, items: await local.count('items'), restored: result.restored };
   });

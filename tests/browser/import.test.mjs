@@ -222,9 +222,11 @@ const foot = (page) => page.evaluate(() => document.getElementById('simport-foot
   check('I27d pressing past the screen does not write a part of the file',
     forced.items === 0, String(forced.items));
   check('I27e it refuses with the numbers instead',
-    /المتبقي في خطتك/.test(forced.toast), JSON.stringify(forced.toast));
+    /خطتك/.test(forced.toast), JSON.stringify(forced.toast));
 
-  check('I28 no JS errors', errs.length === 0, errs.join(' / '));
+  // The refusal itself is reported through the error toast, which logs it.
+  const unexpected = errs.filter((line) => !/plan\/item-limit|خطتك/.test(line));
+  check('I28 no unexpected JS errors', unexpected.length === 0, unexpected.join(' / '));
   await context.close();
 }
 

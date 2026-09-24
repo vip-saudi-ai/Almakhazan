@@ -577,6 +577,64 @@ function updateValuationPreview() {
   preview.className = `field-hint${valuation ? '' : ' warn'}`;
 }
 
+// ── the images this form is holding ──
+//
+// An image uploaded into the form belongs to no record until the save lands,
+// so it is marked pending — the media reconciler leaves pending media alone.
+// The mark has to live exactly as long as the unsaved reference it protects:
+// released when the save lands (the record now holds the image), and released
+// — with the image reclaimed if nothing kept it — when the form is abandoned.
+// A mark that outlived its form kept a genuinely unreferenced file forever.
+//
+// Every path goes through these two. Each detaches the form's list before it
+// works, so running one twice, or one after the other, does nothing twice.
+
+function pendingMediaIds(images) {
+  return images.map((image) => image.mediaId || image.id).filter(Boolean);
+}
+
+/** The save landed: the record holds these images now. Nothing is discarded. */
+function releaseFormPendingMarkers() {
+  const pending = form.pendingImages;
+  form.pendingImages = [];
+  releasePending(pendingMediaIds(pending));
+}
+
+/**
+ * The form is being abandoned (closed, or replaced by a reload). Which of its
+ * images the record actually kept is asked of the store — not of the window,
+ * which may not hold the record at all — and the protection stays on until
+ * that answer is in. Then the marks go, and only images nothing kept are
+ * reclaimed; `discardUnreferenced` re-checks the count, so an image another
+ * record has since picked up survives.
+ *
+ * @returns {Promise<number>} how many images were reclaimed
+ */
+async function discardAbandonedFormMedia(itemId) {
+  const pending = form.pendingImages;
+  form.pendingImages = [];
+  if (!pending.length) return 0;
+  let saved;
+  try {
+    saved = await repository.getItem(itemId, { fresh: true });
+  } catch {
+    // Unknown: keep everything rather than guess. The reconciler's grace
+    // window collects anything genuinely orphaned later.
+    saved = { images: pending };
+  }
+  const abandoned = pending.filter(
+    (image) => !saved?.images?.some((kept) => kept.id === image.id),
+  );
+  releasePending(pendingMediaIds(pending));
+  if (!abandoned.length) return 0;
+  return discardUnreferenced(repository.session, abandoned);
+}
+
+/** For the tests: the media this form is holding as pending. */
+export function __formPendingForTest() {
+  return pendingMediaIds(form.pendingImages);
+}
+
 // ── open / save ──
 let openGeneration = 0;
 
@@ -611,6 +669,10 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
       return;
     }
   }
+
+  // A previous form's unsaved images are that form's to settle, not this
+  // one's to forget: settled against the record they were uploaded for.
+  if (form.pendingImages.length) void discardAbandonedFormMedia(form.itemId);
 
   form.itemId = item?.id || uid('itm');
   form.isNew = !item;
@@ -670,7 +732,7 @@ async function saveItem() {
       confirmLabel: 'توليد رمز جديد',
     });
     if (!proceed) return;
-    $('f-sku').value = await repository.reserveSku();
+    $('f-sku').value = await repository.reserveUniqueSku();
     return saveItem();
   }
 
@@ -688,8 +750,10 @@ async function saveItem() {
   // The field shows a provisional number so the form looks complete. If the
   // user left it untouched, take an authoritative one from the workspace
   // counter now — two devices saving at once must not land on the same SKU.
+  // The reserved number is the one written, so it is the one checked: the
+  // clash check above looked at the provisional placeholder.
   const resolvedSku = (form.isNew && (!sku || sku === form.provisionalSku))
-    ? await repository.reserveSku()
+    ? await repository.reserveUniqueSku()
     : sku;
 
   const payload = {
@@ -724,9 +788,10 @@ async function saveItem() {
         toast('تم التحديث', '✓');
       }
 
-      // Saved: the record now accounts for every file this session uploaded,
-      // so nothing here is orphaned and the close handler has nothing to do.
-      form.pendingImages = [];
+      // Saved, references counted: the record now holds every file this form
+      // uploaded. Released before the sheet closes, so the close handler
+      // finds nothing left to settle — and nothing is left marked pending.
+      releaseFormPendingMarkers();
       closeSheet('add');
     } catch (error) {
       if (error instanceof ConflictError) {
@@ -747,6 +812,10 @@ async function handleConflict(error) {
   });
 
   if (!keepMine) {
+    // Reloading throws this form's edit away — including any image uploaded
+    // into it, which the latest record does not hold. Settled first, before
+    // the new form replaces the list that knows about it.
+    await discardAbandonedFormMedia(form.itemId);
     await openItemForm({ itemId: form.itemId });
     toast('أُعيد تحميل النسخة الأحدث', '↻');
     return;
@@ -794,24 +863,7 @@ export function bindItemForm() {
   // is reclaimed. It ran only on the save path before, which is the one path
   // where there is nothing to reclaim.
   onSheetClose('add', () => {
-    const pending = form.pendingImages;
-    const itemId = form.itemId;
-    form.pendingImages = [];
-    if (!pending.length) return;
-    // Whether the record kept them is asked of the store, not of the window:
-    // an edited record deep in the inventory is not in the window at all, and
-    // reading "not in memory" as "not saved" would discard photographs that
-    // were saved a moment ago.
-    void repository.getItem(itemId, { fresh: true })
-      .catch(() => ({ images: pending }))
-      .then((saved) => {
-        const abandoned = pending.filter(
-          (image) => !saved?.images?.some((kept) => kept.id === image.id),
-        );
-        releasePending(pending.map((image) => image.mediaId || image.id));
-        if (!abandoned.length) return 0;
-        return discardUnreferenced(repository.session, abandoned);
-      })
+    void discardAbandonedFormMedia(form.itemId)
       .then((n) => { if (n) console.info(`[form] reclaimed ${n} unsaved image(s)`); });
   });
   $('f-valuation')?.addEventListener('input', updateValuationPreview);

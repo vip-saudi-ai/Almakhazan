@@ -10,7 +10,7 @@ import {
   signInWithEmail, signInWithGoogle, signOutUser,
 } from '../auth.js';
 import { FirebaseStatus, firebaseContext } from '../firebase.js';
-import { applyMerge, exportExcel, exportJSON, readJsonFile, saveBackupFile } from '../exporting.js';
+import { applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile } from '../exporting.js';
 import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
 } from '../restore.js';
@@ -509,13 +509,14 @@ async function startImport() {
     const file = input.files?.[0];
     if (!file) return;
     try {
-      const parsed = await readJsonFile(file);
+      // Read once: the bytes give the backup its identity, then its content.
+      const { data: parsed, sourceFingerprint } = await readBackupFile(file);
       const result = validateImport(parsed);
       if (!result.ok) {
         toast(result.errors[0] || 'ملف غير صالح', '✕');
         return;
       }
-      pendingImport = result;
+      pendingImport = { ...result, sourceFingerprint };
       showImportSummary(result, file.name);
     } catch (error) {
       toastError(error, 'تعذّر قراءة الملف');
@@ -579,6 +580,7 @@ async function runImport(mode) {
         toast(`أُضيف ${formatNumber(added)} سجل`, '✓');
       } else {
         const result = await restoreFromBackup(data, {
+          sourceFingerprint: pendingImport.sourceFingerprint,
           saveBackup: (text) => saveBackupFile(text, 'nazm_safety'),
           onProgress: ({ stage, done, total }) => {
             const label = stageLabel(stage);

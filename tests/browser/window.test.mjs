@@ -214,7 +214,7 @@ const repoState = (page) => page.evaluate(async () => {
     let backedUp = 0;
     const data = { items: [{ id: 'only', name: 'القطعة الوحيدة', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [], version: 1 }],
                    folders: [], categories: [], locations: [] };
-    await restoreFromBackup(data, {
+    await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint, 
       saveBackup: (text) => { backedUp = JSON.parse(text).items.length; },
     });
     const { getAll } = await import('/src/local-store.js');

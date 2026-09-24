@@ -40,7 +40,10 @@ async function resolve(itemId) {
   const mine = ++generation;
   let item = null;
   try {
-    item = await repository.getItem(itemId);
+    // Fresh: opening a record is a request to see it as it is now. A copy
+    // cached earlier in the session may have been changed by another tab or
+    // device since, and one keyed read is the whole cost of being sure.
+    item = await repository.getItem(itemId, { fresh: true });
   } catch (error) {
     if (mine === generation) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
     return { item: null, stale: mine !== generation };

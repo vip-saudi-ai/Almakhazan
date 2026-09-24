@@ -165,6 +165,14 @@ export async function uploadDeviceData({ onProgress } = {}) {
     local.getAll('categories'), local.getAll('locations'),
   ]);
 
+  // Room in the cloud workspace for what this device will add — asked before
+  // anything is uploaded or the run is recorded, not discovered at item 1,001
+  // of 3,000. Records already uploaded by an earlier run, or already in the
+  // workspace, cost nothing. The device's copy is never touched either way.
+  const toAdd = items.filter((item) => item?.id && !uploaded.has(item.id) && !item.deletedAt);
+  const present = await repository.backend.existingIds('items', toAdd.map((item) => item.id));
+  await repository.assertItemCapacity(toAdd.length - present.size);
+
   await local.setMeta(STATE_KEY, {
     ...state,
     status: UploadState.IN_PROGRESS,

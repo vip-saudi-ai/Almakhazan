@@ -889,18 +889,6 @@ async function run() {
     return;
   }
 
-  state.room = await importRoom();
-  const pending = Math.max(0, records.length - (state.job?.written || 0));
-  if (pending > state.room) {
-    // Blocked, not trimmed. An import that writes the part that fits and stops
-    // leaves an inventory that looks complete and is not.
-    toast(
-      `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(state.room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.`,
-      '⚠',
-    );
-    return;
-  }
-
   // One job, kept across a retry. A failed import used to leave the written
   // chunks behind and send the customer back to a button that would write
   // everything again — 400 duplicates, then the rest of the file.
@@ -920,6 +908,27 @@ async function run() {
     created: { categories: [], locations: [], folders: [] },
   };
   job.total = records.length;
+
+  // ── capacity, at the commit ──
+  //
+  // The preview said what fits; the plan may have filled up since. Asked
+  // again now, before the job is recorded, before any category is created and
+  // before the first record — and only for the records that will actually be
+  // new: on a resume, rows already written (including a chunk that landed
+  // without its progress being recorded, which a replay rewrites under the
+  // same ids) are looked up by id and cost nothing. Blocked, not trimmed: an
+  // import that writes the part that fits looks complete and is not.
+  try {
+    const remainingIds = records.slice(Math.max(0, job.written || 0))
+      .map((record) => record.id || importItemId(job.id, record.sourceLine));
+    const present = await repository.backend.existingIds('items', remainingIds);
+    await repository.assertItemCapacity(remainingIds.length - present.size);
+  } catch (error) {
+    state.room = await importRoom();
+    toastError(error, 'لا تتسع خطتك لهذا الملف');
+    return;
+  }
+
   state.job = job;
   markJobActive(job.id);
 

@@ -55,7 +55,7 @@ const names = (page) => page.evaluate(async () => {
   const result = await page.evaluate(async (data) => {
     const { restoreFromBackup } = await import('/src/restore.js');
     let saved = null;
-    await restoreFromBackup(data, { saveBackup: (text) => { saved = text; } });
+    await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint,  saveBackup: (text) => { saved = text; } });
     return { length: saved?.length ?? 0, parsed: saved ? JSON.parse(saved) : null };
   }, INCOMING);
 
@@ -78,7 +78,7 @@ const names = (page) => page.evaluate(async () => {
   const outcome = await page.evaluate(async (data) => {
     const { restoreFromBackup } = await import('/src/restore.js');
     try {
-      await restoreFromBackup(data, {
+      await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint, 
         saveBackup: () => { throw new Error('downloads blocked'); },
       });
       return { threw: false, message: '' };
@@ -115,7 +115,7 @@ const names = (page) => page.evaluate(async () => {
     };
     let threw = false;
     try {
-      await restoreFromBackup(data, { saveBackup: () => {} });
+      await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint,  saveBackup: () => {} });
     } catch { threw = true; }
     repository.bulkWrite = original;
     return { threw, names: repository.liveItems().map(i => i.name).sort() };
@@ -135,7 +135,7 @@ const names = (page) => page.evaluate(async () => {
   const stages = await page.evaluate(async (data) => {
     const { restoreFromBackup } = await import('/src/restore.js');
     const seen = [];
-    await restoreFromBackup(data, {
+    await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint, 
       saveBackup: () => {},
       onProgress: ({ stage }) => { if (seen[seen.length - 1] !== stage) seen.push(stage); },
     });
@@ -162,7 +162,7 @@ const names = (page) => page.evaluate(async () => {
       categories: repository.state.categories,
       locations: repository.state.locations,
     };
-    const result = await restoreFromBackup(data, { saveBackup: () => {} });
+    const result = await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint,  saveBackup: () => {} });
     return { result, names: repository.liveItems().map(i => i.name).sort(),
              categories: repository.state.categories.length };
   });

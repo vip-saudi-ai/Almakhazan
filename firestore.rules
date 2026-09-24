@@ -267,14 +267,17 @@ service cloud.firestore {
       }
 
       // ── sequence counters ──
-      // A client may take the next SKU in a transaction, but only by
-      // incrementing — it cannot rewrite or rewind the sequence.
+      // A client may take the next SKU in a transaction, only forwards — it
+      // cannot rewind the sequence. It may jump forward, because records
+      // imported or restored with higher generated SKUs than the counter has
+      // issued must move the counter past them, or the next SKU collides.
       match /counters/{counterId} {
         allow read: if isMember(workspaceId);
         allow create: if canWrite(workspaceId) && request.resource.data.value is int
                       && request.resource.data.value >= 0;
         allow update: if canWrite(workspaceId)
-                      && request.resource.data.value == resource.data.value + 1;
+                      && request.resource.data.value is int
+                      && request.resource.data.value > resource.data.value;
         allow delete: if false;
       }
 

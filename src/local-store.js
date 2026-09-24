@@ -325,6 +325,61 @@ export function uniqueKeys(storeName, indexName) {
   }));
 }
 
+/**
+ * The highest generated SKU sequence with this prefix (`INV-2026-`), read from
+ * the `sku` index backwards — the cost is the handful of keys at the top of
+ * the range, not the inventory.
+ *
+ * Generated sequences are zero-padded to six digits, so among six-digit keys
+ * string order is numeric order and the first one met walking backwards is
+ * the largest. Longer ones (past 999,999) sort among them, so every key met
+ * before that point is parsed too; custom SKUs sharing the prefix are skipped.
+ */
+export function maxSkuSequence(prefix) {
+  const pattern = new RegExp(`^${prefix.replace(/[-]/g, '\\-')}(\\d{6,})$`);
+  const range = IDBKeyRange.bound(`${prefix}000000`, `${prefix}999999\uffff`);
+  return run('items', 'readonly', (store) => new Promise((resolve, reject) => {
+    let highest = 0;
+    const cursorRequest = store.index('sku').openKeyCursor(range, 'prev');
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) { resolve(highest); return; }
+      const match = pattern.exec(String(cursor.key));
+      if (match) {
+        highest = Math.max(highest, Number(match[1]));
+        if (match[1].length === 6) { resolve(highest); return; }
+      }
+      cursor.continue();
+    };
+    cursorRequest.onerror = () => reject(storageError(cursorRequest.error));
+  }));
+}
+
+/**
+ * Take the next generated SKU sequence for a year: read, advance and write the
+ * counter in ONE readwrite transaction, so two tabs cannot take the same
+ * number. The counter holds the last sequence handed out; the result is the
+ * larger of it plus one and `floor` plus one — and that is what is stored, so
+ * a number returned is always a number the counter has already reached.
+ *
+ * The single year-less counter used before (`counter.sku`) is honoured once,
+ * as a floor, the first time a year's counter is created.
+ */
+export function reserveSkuSequence(year, floor = 0) {
+  const key = `counter.sku.${year}`;
+  return run('meta', 'readwrite', async (store) => {
+    const current = await req(store.get(key));
+    let last = current?.value;
+    if (last == null) {
+      const legacy = await req(store.get('counter.sku'));
+      last = Number(legacy?.value) || 0;
+    }
+    const next = Math.max(Number(last) || 0, Number(floor) || 0) + 1;
+    await req(store.put({ key, value: next }));
+    return next;
+  });
+}
+
 /** The first record matching an index value, without materialising the rest —
  *  what a uniqueness check actually needs. */
 export async function firstByIndex(storeName, indexName, value) {

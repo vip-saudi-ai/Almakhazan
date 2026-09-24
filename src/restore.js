@@ -51,6 +51,7 @@ const UNFINISHED = new Set([
 let activeRestoreId = null;
 
 export const RESTORE_BLOCKED_MESSAGE = 'توجد استعادة سابقة لم تكتمل. أكملها قبل بدء استعادة جديدة.';
+export const RESTORE_WRONG_FILE_MESSAGE = 'توجد استعادة سابقة لم تكتمل. اختر ملف الاستعادة نفسه لإكمالها.';
 
 async function saveJob(job) {
   try {
@@ -93,14 +94,6 @@ export async function assertNoUnfinishedRestore() {
   }
 }
 
-/** What a backup *is*: a hash of its content, not its file name. */
-export async function backupFingerprint(data) {
-  const bytes = new TextEncoder().encode(JSON.stringify(
-    Object.fromEntries(COLLECTIONS.map((name) => [name, (data[name] || []).map((r) => r.id).sort()])),
-  ));
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 export const RestoreStage = {
   BACKUP: 'backup',
@@ -157,21 +150,36 @@ export function buildSafetyBackup() {
 }
 
 /**
+ * A full restore puts the backup back whatever the plan now allows: this is
+ * the customer's own data, and it is not held behind a limit. If the result
+ * is over the plan, the workspace is simply over it — nothing new can be
+ * added until it is trimmed or upgraded, and everything else keeps working.
+ *
  * @param {object} data the parsed, validated backup being restored
  * @param {{onProgress?: (p: {stage: string, done: number, total: number}) => void,
- *          saveBackup: (text: string) => void}} options
+ *          saveBackup: (text: string) => void,
+ *          sourceFingerprint: string}} options
  *   saveBackup must throw if it cannot deliver the file to the customer.
+ *   sourceFingerprint is the SHA-256 of the backup file's exact bytes, from
+ *   `readBackupFile`. It is the restore's identity: an interrupted restore is
+ *   finished only by the file with the same bytes, never by another backup
+ *   of the same records.
  */
-export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup }) {
+export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup, sourceFingerprint }) {
   const repo = repository;
   repo.assertCanWrite();
+  if (!sourceFingerprint) {
+    // No identity, no restore job — and no restore.
+    throw new AppError('تعذّر التحقق من هوية ملف النسخة الاحتياطية. أعد المحاولة.', {
+      code: 'backup/fingerprint-unavailable',
+    });
+  }
 
-  // An unfinished restore of a *different* backup blocks this one. The same
-  // backup resumes it: see the note at the top of this file.
-  const sourceFingerprint = await backupFingerprint(data);
+  // An unfinished restore of a *different* file blocks this one. The same
+  // file resumes it: see the note at the top of this file.
   const previous = await unfinishedRestore();
   if (previous && previous.sourceFingerprint !== sourceFingerprint) {
-    throw new AppError(RESTORE_BLOCKED_MESSAGE, { code: 'restore/recovery-required' });
+    throw new AppError(RESTORE_WRONG_FILE_MESSAGE, { code: 'restore/recovery-required' });
   }
   const job = {
     id: previous?.id || `rst-${Date.now().toString(36)}`,
@@ -194,7 +202,6 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
 }
 
 async function runRestore(repo, data, job, { onProgress, saveBackup }) {
-  await saveJob(job);
 
   // ── 0. the whole inventory, before anything else ──
   // The app browses on a window of the newest records. A safety backup taken
@@ -212,6 +219,7 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   } catch (error) {
     // Not a warning. Without a backup this operation does not run at all.
     console.error('[restore] safety backup failed — aborting', error);
+
     throw new AppError(
       'تعذّر حفظ نسخة الأمان، ولم تُغيَّر أي بيانات. تأكد من السماح بالتنزيل ثم حاول مرة أخرى.',
       { code: 'restore/aborted', cause: error },
@@ -219,6 +227,10 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   }
   onProgress({ stage: RestoreStage.BACKUP, done: 1, total: 1 });
   job.safetyBackup = safety.counts;
+  // The job is recorded once the safety backup is in the customer's hands and
+  // before the first write — so a restore that stopped before changing
+  // anything leaves nothing that looks like one that stopped half way.
+  await saveJob(job);
 
   // ── 2. write the incoming records ──
   const writes = [];
