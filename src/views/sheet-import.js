@@ -27,6 +27,7 @@ import { ACTIONS } from '../config.js';
 import { repository } from '../repository.js';
 import { canImportRows, importLimit, quotaStatus } from '../subscription.js';
 import { AppError, $, el, formatDate, formatNumber, render, uid } from '../utils.js';
+import { onLanguageChange, t } from '../i18n.js';
 import { closeSheet, confirmAction, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
 import {
   JOB, ensureImportReady, findCompletedJob, findUnfinishedJob, importRecoveryState, markJobActive,
@@ -183,7 +184,7 @@ export async function startSpreadsheetImport() {
 async function fingerprint(file) {
   if (!globalThis.crypto?.subtle?.digest) {
     throw new AppError(
-      'تعذّر التحقق من هوية الملف في هذا المتصفح. أعد المحاولة أو استخدم متصفحاً مدعوماً.',
+      'simport.fingerprintUnavailable',
       { code: 'sheet/fingerprint-unavailable' },
     );
   }
@@ -195,7 +196,7 @@ async function fingerprint(file) {
     // cannot be safely resumed, and resuming the wrong file writes its numbers
     // under the other file's record ids.
     throw new AppError(
-      'تعذّر التحقق من هوية الملف في هذا المتصفح. أعد المحاولة أو استخدم متصفحاً مدعوماً.',
+      'simport.fingerprintUnavailable',
       { code: 'sheet/fingerprint-unavailable', cause: error },
     );
   }
@@ -224,7 +225,7 @@ async function rollback(job) {
   try {
     await persistJobCritical(job, JOB.ROLLING_BACK);
     state.step = 'running';
-    state.progress = { done: 0, total: job.written || 0, stage: 'جارٍ التراجع عن الاستيراد…' };
+    state.progress = { done: 0, total: job.written || 0, stage: 'simport.stage.rollback' };
     renderImport();
 
     const result = await repository.rollbackImport(job.id, job.created, {
@@ -232,7 +233,7 @@ async function rollback(job) {
         state.progress = {
           done: removed,
           total: Math.max(removed, job.written || 0),
-          stage: 'جارٍ التراجع عن الاستيراد…',
+          stage: 'simport.stage.rollback',
         };
         renderImport();
       },
@@ -314,10 +315,10 @@ export async function openSpreadsheetImport(file) {
       // customer should choose rather than stumble into.
       const done = previous ? null : await findCompletedJob(fileFingerprint);
       if (done && !(await confirmAction({
-        title: 'سبق استيراد هذا الملف',
-        message: `سبق استيراد هذا الملف بتاريخ ${formatDate(done.updatedAt)} (${formatNumber(done.written || 0)} قطعة). استيراده مرة أخرى يضيف نسخة ثانية من قطعه.`,
+        title: t('simport.alreadyTitle'),
+        message: t('simport.alreadyMessage', { date: formatDate(done.updatedAt), count: done.written || 0 }),
         icon: '⚠️',
-        confirmLabel: 'استيراده مرة أخرى',
+        confirmLabel: t('simport.importAgain'),
       }))) {
         releaseImportMemory();
         return;
@@ -332,7 +333,7 @@ export async function openSpreadsheetImport(file) {
     renderImport();
   } catch (error) {
     releaseImportMemory();
-    toastError(error, 'تعذّر قراءة الملف');
+    toastError(error, 'simport.readFailed');
   }
 }
 
@@ -419,26 +420,26 @@ function openRecoveryBlocked() {
 function renderBlocked(body, foot) {
   render(body, [
     el('div', { class: 'imp-warnings', role: 'alert' }, [
-      el('div', { class: 'imp-warn-title', text: 'يوجد استيراد سابق لم يكتمل التراجع عنه' }),
+      el('div', { class: 'imp-warn-title', text: t('simport.recoveryTitle') }),
       el('div', {
         class: 'imp-warn',
-        text: 'تعذّر إكمال التراجع عن استيراد سابق. أعد المحاولة قبل بدء استيراد جديد.',
+        text: t(RECOVERY_BLOCKED_MESSAGE),
       }),
       el('div', {
         class: 'imp-warn',
-        text: 'مخزونك متاح للتصفح كالمعتاد — الاستيراد وحده متوقف حتى يكتمل التراجع.',
+        text: t('simport.recoveryBrowse'),
       }),
     ]),
   ]);
   render(foot, [
     el('button', {
-      class: 'btn btn-s', type: 'button', text: 'إغلاق',
+      class: 'btn btn-s', type: 'button', text: t('common.close'),
       style: { flex: '1', padding: '12px' },
       onClick: () => closeImport(),
     }),
     el('button', {
       class: 'btn btn-p', type: 'button',
-      text: state.busy ? 'جارٍ إكمال التراجع…' : 'إعادة محاولة إكمال التراجع',
+      text: state.busy ? t('simport.recoveryBusy') : t('simport.recoveryRetry'),
       style: { flex: '2', padding: '12px' },
       disabled: state.busy ? true : undefined,
       onClick: () => {
@@ -447,10 +448,10 @@ function renderBlocked(body, foot) {
           const result = await runImportRecovery();
           if (result.ready) {
             closeImport();
-            toast('اكتمل التراجع عن الاستيراد السابق. يمكنك بدء استيراد جديد الآن.', '✓');
+            toast(t('simport.recoveryDone'), '✓');
             window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
           } else {
-            toast('تعذّر إكمال التراجع مرة أخرى. حاول لاحقاً.', '⚠');
+            toast(t('simport.recoveryFailedAgain'), '⚠');
           }
         });
       },
@@ -559,12 +560,17 @@ async function refreshSkuCheck() {
       const problem = conflict.type === 'existing'
         ? {
           line: conflict.key, field: 'sku', fatal: true, value: conflict.sku,
-          reason: `الرمز SKU مستخدم على قطعة أخرى: ${conflict.sku}${conflict.existingName ? ` («${conflict.existingName}»)` : ''}`,
+          // A getter, so the words follow the language and the conflict does not.
+          get reason() {
+            return conflict.existingName
+              ? t('simport.skuUsedByNamed', { sku: conflict.sku, name: conflict.existingName })
+              : t('sku.usedBy', { sku: conflict.sku });
+          },
           existingId: conflict.existingId, existingName: conflict.existingName,
         }
         : {
           line: conflict.key, field: 'sku', fatal: true, value: conflict.sku,
-          reason: `الرمز SKU مكرر داخل الملف: ${conflict.sku} (صف ${formatNumber(otherLine(conflict))})`,
+          get reason() { return t('simport.skuDuplicateLine', { sku: conflict.sku, line: otherLine(conflict) }); },
           duplicateLine: otherLine(conflict),
         };
       if (!blocked.has(conflict.key)) blocked.set(conflict.key, []);
@@ -601,14 +607,14 @@ function fileLine() {
   // total. And it names which limit was met: a plan allowance the customer can
   // lift, or a per-file ceiling they cannot but can work around.
   const rowText = totalKnown
-    ? `${formatNumber(totalRows)} صفّاً`
-    : `أول ${formatNumber(appliedLimit)} صفّ`;
+    ? t('simport.rows', { count: totalRows })
+    : t('simport.firstRows', { count: appliedLimit });
   const reason = limit.boundBy === 'plan'
-    ? `خطتك تسمح بـ${formatNumber(limit.plan)} صفّاً في الملف الواحد`
-    : `الحد ${formatNumber(limit.technical)} صفّاً في الملف الواحد — يمكنك استيراد ملفات إضافية`;
+    ? t('simport.planRowLimit', { count: limit.plan })
+    : t('simport.fileRowLimit', { count: limit.technical });
   return el('p', { class: 'sheet-note' }, [
-    el('b', { text: state.file.name }),
-    ` · ${sheetName} · ${rowText}`,
+    el('b', { text: state.file.name, dir: 'auto' }),
+    el('span', { dir: 'auto', text: ` · ${sheetName}` }), ` · ${rowText}`,
     truncated ? el('span', { class: 'imp-warn', text: ` — ${reason}` }) : null,
   ]);
 }
@@ -624,14 +630,14 @@ function renderMap(body, foot) {
     // reading "Ref" as a serial number and half as a SKU — so the way to
     // change it is to abandon this import and start another.
     state.mappingLocked ? el('div', { class: 'imp-warnings' }, [
-      el('div', { class: 'imp-warn-title', text: 'المطابقة مثبّتة' }),
+      el('div', { class: 'imp-warn-title', text: t('simport.mappingLocked') }),
       el('div', {
         class: 'imp-warn',
-        text: 'بدأت الكتابة بهذه المطابقة، فلا يمكن تغييرها الآن. لتغييرها، ألغِ هذا الاستيراد وابدأ استيراداً جديداً.',
+        text: t('simport.mappingLockedHint'),
       }),
     ]) : null,
-    el('p', { class: 'sheet-note', text: 'طابق أعمدة ملفك على حقول القطعة. ما تتركه «تجاهل» لن يُستورد.' }),
-    section('المطابقة', [el('div', { class: 'fsec' }, FIELDS.map((field) => el('div', { class: 'frow' }, [
+    el('p', { class: 'sheet-note', text: t('simport.mapIntro') }),
+    section(t('simport.mapping'), [el('div', { class: 'fsec' }, FIELDS.map((field) => el('div', { class: 'frow' }, [
       el('label', { for: `map-${field.key}`, text: field.label + (field.required ? ' *' : '') }),
       el('select', {
         id: `map-${field.key}`,
@@ -643,7 +649,7 @@ function renderMap(body, foot) {
           renderImport();
         },
       }, [
-        el('option', { value: IGNORE, text: 'تجاهل', selected: state.mapping[field.key] == null || undefined }),
+        el('option', { value: IGNORE, text: t('simport.ignore'), selected: state.mapping[field.key] == null || undefined }),
         ...headers.map((header, index) => el('option', {
           value: String(index), text: header,
           selected: state.mapping[field.key] === index || undefined,
@@ -651,15 +657,15 @@ function renderMap(body, foot) {
       ]),
     ])))]),
     ambiguousBlock(),
-    section('أول صفوف الملف', [previewTable()]),
-    nameMapped ? null : el('p', { class: 'imp-warn', text: 'الاسم حقل مطلوب — اختر العمود الذي يحمله.' }),
+    section(t('simport.previewRows'), [previewTable()]),
+    nameMapped ? null : el('p', { class: 'imp-warn', text: t('simport.nameRequired') }),
   ]);
 
   render(foot, [
-    el('button', { class: 'btn btn-s', type: 'button', text: 'إلغاء', style: { flex: '1', padding: '12px' },
+    el('button', { class: 'btn btn-s', type: 'button', text: t('common.cancel'), style: { flex: '1', padding: '12px' },
       onClick: () => closeImport() }),
     el('button', {
-      class: 'btn btn-p', type: 'button', text: 'معاينة', style: { flex: '2', padding: '12px' },
+      class: 'btn btn-p', type: 'button', text: t('simport.preview'), style: { flex: '2', padding: '12px' },
       disabled: nameMapped ? undefined : true,
       onClick: () => { state.step = 'confirm'; renderImport(); },
     }),
@@ -686,10 +692,10 @@ function ambiguousBlock() {
     .filter((column) => !answered.has(column.index));
   if (!columns.length) return null;
 
-  return section('أعمدة تحتاج توضيحاً', columns.map((column) => el('div', { class: 'imp-ask' }, [
+  return section(t('simport.ambiguousTitle'), columns.map((column) => el('div', { class: 'imp-ask' }, [
     el('div', { class: 'imp-ask-q' }, [
-      el('b', { text: column.header }),
-      el('span', { text: ' — ماذا يمثل؟' }),
+      el('b', { text: column.header, dir: 'auto' }),
+      el('span', { text: t('simport.whatIsIt') }),
     ]),
     el('div', { class: 'imp-ask-opts' }, column.options.map((option) => el('button', {
       class: 'chipbtn', type: 'button', text: option.label,
@@ -727,7 +733,7 @@ function renderConfirm(body, foot) {
         // Said once, not retried in a loop; pressing import checks again.
         state.skuCheckFailed = signature;
         console.error('[import] SKU check failed', error);
-        toastError(error, 'تعذّر التحقق من رموز SKU');
+        toastError(error, 'simport.skuCheckFailedToast');
       })
       .finally(() => { if (state.step === 'confirm') renderImport(); });
   }
@@ -766,49 +772,49 @@ function renderConfirm(body, foot) {
     // Three counts, because a row is one of three things and calling them all
     // "warnings" hides which ones are actually going to be left behind.
     el('div', { class: 'imp-stats' }, [
-      el('div', { class: 'imp-stat imp-ready' }, [el('b', { text: formatNumber(writable) }), ' قطعة ستُضاف']),
-      el('div', { class: 'imp-stat imp-warning' }, [el('b', { text: formatNumber(rowStatus.warning.length) }), ' صفّاً يحتاج مراجعة']),
-      el('div', { class: 'imp-stat imp-error' }, [el('b', { text: formatNumber(rowStatus.error.length) }), ' صفّاً لن يُستورد']),
-      el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(newCount) }), ' تصنيف/موقع/مجلد جديد']),
-      unknownColumns ? el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(unknownColumns) }), ' عموداً غير مستخدم']) : null,
+      el('div', { class: 'imp-stat imp-ready' }, stat('simport.stat.toAdd', writable)),
+      el('div', { class: 'imp-stat imp-warning' }, stat('simport.stat.review', rowStatus.warning.length)),
+      el('div', { class: 'imp-stat imp-error' }, stat('simport.stat.skipped', rowStatus.error.length)),
+      el('div', { class: 'imp-stat' }, stat('simport.stat.newTaxonomy', newCount)),
+      unknownColumns ? el('div', { class: 'imp-stat' }, stat('simport.stat.unusedColumns', unknownColumns)) : null,
     ]),
 
     overflow ? el('div', { class: 'imp-warnings' }, [
-      el('div', { class: 'imp-warn-title', text: 'لا تتسع خطتك لهذا الملف' }),
-      el('div', { class: 'imp-warn', text: `${formatNumber(pending)} قطعة ستُضاف، والمتبقي في خطتك ${formatNumber(room)}. ارفع الخطة أو احذف ما لم يعد يلزمك.` }),
-      el('div', { class: 'imp-warn', text: 'لن يُستورد جزء من الملف — الاستيراد الناقص يبدو مكتملاً وهو ليس كذلك.' }),
+      el('div', { class: 'imp-warn-title', text: t('simport.noRoom') }),
+      el('div', { class: 'imp-warn', text: t('simport.noRoomDetail', { count: pending, room }) }),
+      el('div', { class: 'imp-warn', text: t('simport.noPartial') }),
     ]) : null,
 
-    section('الحدود', [
+    section(t('simport.limits'), [
       el('div', { class: 'imp-stats' }, [
         el('div', { class: 'imp-stat' }, [
-          el('b', { text: limit.unlimitedPlan ? formatNumber(limit.technical) : formatNumber(limit.effective) }),
-          limit.boundBy === 'plan' ? ' صفّاً لكل ملف (خطتك)' : ' صفّاً لكل ملف (حد الملف)',
+          ...stat(limit.boundBy === 'plan' ? 'simport.stat.rowsPerFilePlan' : 'simport.stat.rowsPerFileTech',
+            limit.unlimitedPlan ? limit.technical : limit.effective),
         ]),
         el('div', { class: 'imp-stat' }, [
-          el('b', { text: room === Infinity ? 'بلا حد' : formatNumber(room) }),
-          ' قطعة متبقية في خطتك',
+          ...(room === Infinity
+            ? [el('b', { text: t('simport.unlimited') }), ` ${t('simport.stat.remainingLabel')}`]
+            : stat('simport.stat.remaining', room)),
         ]),
         el('div', { class: overflow ? 'imp-stat imp-error' : 'imp-stat imp-ready' }, [
-          el('b', { text: formatNumber(overflow ? 0 : pending) }),
-          ' قطعة ستُكتب الآن',
+          ...stat('simport.stat.writeNow', overflow ? 0 : pending),
         ]),
       ]),
     ]),
 
-    newCount ? section('سيُنشأ', [
-      ...taxonomyLine('تصنيفات', newTaxonomy.categories),
-      ...taxonomyLine('مواقع', newTaxonomy.locations),
-      ...taxonomyLine('مجلدات', newTaxonomy.folders),
+    newCount ? section(t('simport.willCreate'), [
+      ...taxonomyLine(t('simport.categories'), newTaxonomy.categories),
+      ...taxonomyLine(t('simport.locations'), newTaxonomy.locations),
+      ...taxonomyLine(t('simport.folders'), newTaxonomy.folders),
     ]) : null,
 
-    skuChecked ? null : el('div', { class: 'imp-warn', role: 'status', text: checkFailed ? 'تعذّر التحقق من رموز SKU. سيُعاد التحقق عند الاستيراد.' : 'جارٍ التحقق من رموز SKU…' }),
+    skuChecked ? null : el('div', { class: 'imp-warn', role: 'status', text: checkFailed ? t('simport.skuCheckFailed') : t('simport.skuChecking') }),
 
-    problems.length ? section(`تنبيهات (${formatNumber(problems.length)})`, [
+    problems.length ? section(t('simport.warnings', { count: problems.length }), [
       el('div', { class: 'imp-warnings' }, [
-        ...problems.slice(0, 12).map((p) => el('div', { class: 'imp-warn', text: `• صف ${formatNumber(p.line)}: ${p.reason}` })),
+        ...problems.slice(0, 12).map((p) => el('div', { class: 'imp-warn', text: `• ${t('simport.rowReason', { line: p.line, reason: p.reason })}`, dir: 'auto' })),
         problems.length > 12
-          ? el('div', { class: 'imp-warn', text: `• و${formatNumber(problems.length - 12)} تنبيهاً آخر` })
+          ? el('div', { class: 'imp-warn', text: `• ${t('simport.moreWarnings', { count: problems.length - 12 })}` })
           : null,
       ]),
     ]) : null,
@@ -817,22 +823,22 @@ function renderConfirm(body, foot) {
     // continuing cannot double anything, is the difference between pressing
     // the button again and giving up on the file.
     resuming ? el('div', { class: 'imp-warnings' }, [
-      el('div', { class: 'imp-warn-title', text: 'توقف الاستيراد في المنتصف' }),
+      el('div', { class: 'imp-warn-title', text: t('simport.stoppedTitle') }),
       el('div', {
         class: 'imp-warn',
-        text: 'وجد نَظْم استيراداً سابقاً توقف قبل اكتماله. يمكنك متابعة العملية من حيث توقفت.',
+        text: t('simport.stoppedFound'),
       }),
       el('div', {
         class: 'imp-warn',
-        text: `كُتبت ${formatNumber(state.job.written)} من ${formatNumber(state.job.total)} قطعة. المتابعة تكمل من حيث توقف — الصفوف المكتوبة تُكتب بنفس هويتها، فلا تتكرر.`,
+        text: t('simport.stoppedProgress', { done: state.job.written, count: state.job.total }),
       }),
       el('div', {
         class: 'imp-warn',
-        text: 'الإغلاق يُبقي ما كُتب كقطع حقيقية في المخزون. الإلغاء يحذف ما كتبه هذا الاستيراد وحده.',
+        text: t('simport.stoppedChoices'),
       }),
     ]) : null,
 
-    el('p', { class: 'sheet-note', text: 'الاستيراد يضيف فقط. لا يُعدّل قطعة موجودة ولا يحذف شيئاً.' }),
+    el('p', { class: 'sheet-note', text: t('simport.addOnly') }),
   ]);
 
   // Two different things a customer can mean by "stop", kept apart because
@@ -849,7 +855,7 @@ function renderConfirm(body, foot) {
     el('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' } }, [
       el('button', {
         class: 'btn btn-p', type: 'button',
-        text: `متابعة الاستيراد (${formatNumber(state.job.total - written)} متبقية)`,
+        text: t('simport.resume', { count: state.job.total - written }),
         style: { width: '100%', padding: '12px' },
         disabled: state.busy || !checkSettled ? true : undefined,
         onClick: () => { void guarded(run); },
@@ -857,7 +863,7 @@ function renderConfirm(body, foot) {
       el('div', { style: { display: 'flex', gap: '8px' } }, [
         el('button', {
           class: 'btn btn-s', type: 'button',
-          text: 'إغلاق والمتابعة لاحقاً',
+          text: t('simport.closeLater'),
           style: { flex: '1', padding: '12px' },
           disabled: state.busy ? true : undefined,
           onClick: () => {
@@ -868,9 +874,9 @@ function renderConfirm(body, foot) {
               // match it again.
               try {
                 await persistJobCritical(state.job, JOB.STOPPED);
-                toast(`حُفظ الاستيراد — ${formatNumber(written)} قطعة مكتوبة حتى الآن`, '💾');
+                toast(t('simport.saved', { count: written }), '💾');
               } catch (error) {
-                toastError(error, 'تعذّر حفظ حالة الاستيراد');
+                toastError(error, 'simport.saveFailed');
               }
               closeImport();
             });
@@ -879,8 +885,8 @@ function renderConfirm(body, foot) {
         el('button', {
           class: 'btn btn-d', type: 'button',
           text: written
-            ? `إلغاء الاستيراد وحذف ${formatNumber(written)} قطعة`
-            : 'إلغاء الاستيراد',
+            ? t('simport.cancelAndRemove', { count: written })
+            : t('simport.cancel'),
           style: { flex: '1', padding: '12px' },
           disabled: state.busy ? true : undefined,
           onClick: () => {
@@ -888,8 +894,7 @@ function renderConfirm(body, foot) {
             // loud rather than asking "are you sure?" about nothing in
             // particular.
             if (written && !confirm(
-              `سيُحذف ${formatNumber(written)} قطعة كتبها هذا الاستيراد، ولن تُنقل للمحذوفات.`
-              + '\nالقطع التي كانت موجودة قبل الاستيراد لن تتأثر.',
+              t('simport.cancelConfirm', { count: written }),
             )) return;
             void guarded(async () => {
               const job = state.job;
@@ -898,8 +903,8 @@ function renderConfirm(body, foot) {
                 closeImport();
                 toast(
                   result.removed
-                    ? `أُلغي الاستيراد — حُذفت ${formatNumber(result.removed)} قطعة`
-                    : 'أُلغي الاستيراد',
+                    ? t('simport.cancelledRemoved', { count: result.removed })
+                    : t('simport.cancelled'),
                   '↩',
                 );
                 window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
@@ -909,7 +914,7 @@ function renderConfirm(body, foot) {
                   // deleted: the job is still the stopped job it was.
                   state.step = 'confirm';
                   renderImport();
-                  toastError(error, 'تعذّر إلغاء الاستيراد');
+                  toastError(error, 'simport.cancelFailed');
                   return;
                 }
                 // Deleting began and did not finish. The job is at
@@ -920,7 +925,7 @@ function renderConfirm(body, foot) {
                 importRecoveryState.pendingRollbackJobs = [job.id];
                 console.error('[import] rollback failed part way; recovery is now required', error);
                 openRecoveryBlocked();
-                toastError(error, 'تعذّر إلغاء الاستيراد');
+                toastError(error, 'simport.cancelFailed');
               }
             });
           },
@@ -930,7 +935,7 @@ function renderConfirm(body, foot) {
   ] : [
     el('button', {
       class: 'btn btn-s', type: 'button',
-      text: 'رجوع',
+      text: t('common.back'),
       style: { flex: '1', padding: '12px' },
       onClick: () => {
         state.step = 'map';
@@ -939,7 +944,7 @@ function renderConfirm(body, foot) {
     }),
     el('button', {
       class: 'btn btn-p', type: 'button',
-      text: `استيراد ${formatNumber(writable)} قطعة`,
+      text: t('simport.importCount', { count: writable }),
       style: { flex: '2', padding: '12px' },
       disabled: writable && checkSettled && !overflow && !state.busy ? undefined : true,
       onClick: () => { void guarded(run); },
@@ -947,30 +952,39 @@ function renderConfirm(body, foot) {
   ]);
 }
 
+/** A count and its words, as a pair of nodes: the number bold, the words after. */
+function stat(key, count) {
+  const number = formatNumber(count);
+  const text = t(key, { count });
+  const at = text.indexOf(number);
+  if (at < 0) return [text];
+  return [text.slice(0, at), el('b', { text: number }), text.slice(at + number.length)].filter((part) => part !== '');
+}
+
 function taxonomyLine(label, names) {
   if (!names.length) return [];
-  const shown = names.slice(0, 8).join('، ');
-  return [el('div', { class: 'imp-warn', text: `• ${names.length} ${label}: ${shown}${names.length > 8 ? '…' : ''}` })];
+  const shown = names.slice(0, 8).join(t('common.listSeparator'));
+  return [el('div', { class: 'imp-warn', text: `• ${names.length} ${label}: ${shown}${names.length > 8 ? '…' : ''}`, dir: 'auto' })];
 }
 
 function renderRunning(body, foot) {
   const { done, total, stage } = state.progress || { done: 0, total: 0, stage: '' };
   // A cancellation is not something to interrupt: stopping half way through an
   // undo leaves exactly the mess the undo exists to clear.
-  const undoing = stage.includes('التراجع');
+  const undoing = stage === 'simport.stage.rollback';
 
   render(body, [
     fileLine(),
     el('div', { class: 'import-progress', role: 'status', 'aria-live': 'polite' }, [
-      el('div', { text: stage }),
-      el('div', { text: `${formatNumber(done)} من ${formatNumber(total)}` }),
+      el('div', { text: stage ? t(stage) : '' }),
+      el('div', { text: t('simport.progress', { done, total }) }),
     ]),
   ]);
 
   render(foot, undoing ? [] : [
     el('button', {
       class: 'btn btn-s', type: 'button',
-      text: state.stopRequested ? 'جارٍ الإيقاف…' : 'إيقاف',
+      text: state.stopRequested ? t('simport.stopping') : t('simport.stop'),
       style: { flex: '1', padding: '12px' },
       disabled: state.stopRequested ? true : undefined,
       // Not an abort. It stops at the end of the chunk being written, and what
@@ -979,7 +993,7 @@ function renderRunning(body, foot) {
       onClick: () => {
         state.stopRequested = true;
         renderImport();
-        toast('سيتوقف الاستيراد بعد إتمام الدفعة الحالية', '⏸');
+        toast(t('simport.stopAfterChunk'), '⏸');
       },
     }),
   ]);
@@ -1027,7 +1041,7 @@ async function run() {
   try {
     check = await refreshSkuCheck();
   } catch (error) {
-    toastError(error, 'تعذّر التحقق من رموز SKU');
+    toastError(error, 'simport.skuCheckFailedToast');
     return;
   }
   state.skuCheckFailed = null;
@@ -1035,7 +1049,7 @@ async function run() {
   if (unseen.length) {
     state.step = 'confirm';
     renderImport();
-    toast(`${formatNumber(unseen.length)} صفّاً لديه تعارض في رمز SKU. راجع التنبيهات قبل الاستيراد.`, '⚠');
+    toast(t('simport.skuConflictsFound', { count: unseen.length }), '⚠');
     return;
   }
 
@@ -1088,7 +1102,7 @@ async function run() {
     await repository.assertItemCapacity(remainingIds.length - present.size);
   } catch (error) {
     state.room = await importRoom();
-    toastError(error, 'لا تتسع خطتك لهذا الملف');
+    toastError(error, 'simport.noRoom');
     return;
   }
 
@@ -1096,7 +1110,7 @@ async function run() {
   markJobActive(job.id);
 
   state.step = 'running';
-  state.progress = { done: job.written || 0, total: records.length, stage: 'جارٍ التحضير…' };
+  state.progress = { done: job.written || 0, total: records.length, stage: 'simport.stage.preparing' };
   renderImport();
 
   try {
@@ -1121,7 +1135,7 @@ async function run() {
     // Matched by name against what exists, so a resumed import does not add a
     // second "ساعات" beside the first; and a name planned by an earlier
     // attempt keeps the id it was given then.
-    state.progress = { ...state.progress, stage: 'جارٍ إنشاء التصنيفات…' };
+    state.progress = { ...state.progress, stage: 'simport.stage.taxonomy' };
     renderImport();
     const created = { categories: {}, locations: {}, folders: {} };
     const planned = {
@@ -1184,7 +1198,7 @@ async function run() {
     // being recorded, that one chunk is written again — which changes
     // nothing, because the ids are the same.
     const start = Math.min(Math.max(0, job.written || 0), resolved.length);
-    state.progress = { done: start, total: resolved.length, stage: 'جارٍ كتابة القطع…' };
+    state.progress = { done: start, total: resolved.length, stage: 'simport.stage.writing' };
     renderImport();
 
     // ── 4. chunks: commit, then record the boundary, then the next ──
@@ -1217,7 +1231,7 @@ async function run() {
       state.progress = {
         done: job.written,
         total: resolved.length,
-        stage: 'جارٍ كتابة القطع…',
+        stage: 'simport.stage.writing',
       };
       renderImport();
 
@@ -1233,7 +1247,7 @@ async function run() {
         await logImport(ACTIONS.SPREADSHEET_IMPORT_STOPPED, job, { status: 'stopped' });
         state.step = 'confirm';
         renderImport();
-        toast(`أُوقف الاستيراد بعد ${formatNumber(job.written)} قطعة`, '⏸');
+        toast(t('simport.stoppedAfter', { count: job.written }), '⏸');
         return;
       }
     }
@@ -1242,7 +1256,7 @@ async function run() {
     const written = createdThisRun;
     await logImport(ACTIONS.SPREADSHEET_IMPORTED, job, { status: 'completed' });
     closeImport();
-    toast(`أُضيفت ${formatNumber(written)} قطعة`, '📥');
+    toast(t('simport.added', { count: written }), '📥');
     window.dispatchEvent(new CustomEvent('almakhzan:data-imported'));
   } catch (error) {
     await stopAfterFailure(job, error);
@@ -1272,14 +1286,14 @@ async function stopAfterFailure(job, error) {
       await persistJobCritical(job, JOB.STOPPED);
       state.step = 'confirm';
       if (importSheetOpen()) renderImport();
-      toastError(error, 'تعذّر الاستيراد');
+      toastError(error, 'simport.failed');
       return;
     } catch (persistError) {
       error = persistError;
     }
   }
   closeImport();
-  toastError(error, 'تعذّر الاستيراد');
+  toastError(error, 'simport.failed');
 }
 
 /**
@@ -1303,7 +1317,10 @@ async function logImport(action, job, extra = {}) {
     errors: rowStatus ? rowStatus.error.length : null,
     startedAt: job.startedAt,
     completedAt: Date.now(),
-    summary: `${formatNumber(job.createdRecords ?? job.written)} قطعة من ${job.fileName}`,
     ...extra,
   });
 }
+
+// A language switch redraws the step on screen from the state it holds — the
+// file, the mapping, the answers and the job are untouched.
+onLanguageChange(() => { if (importSheetOpen()) renderImport(); });

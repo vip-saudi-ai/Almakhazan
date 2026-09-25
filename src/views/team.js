@@ -12,7 +12,9 @@
 // limit so the refusal, when it comes, is never a surprise.
 
 import { icon } from '../icons.js';
-import { ROLE_LABELS, ROLES, roleAtLeast } from '../config.js';
+import { ROLES, roleAtLeast } from '../config.js';
+import { onLanguageChange, t } from '../i18n.js';
+import { roleLabel } from '../labels.js';
 import { currentSession } from '../auth.js';
 import { planUsage } from '../subscription.js';
 import {
@@ -46,7 +48,7 @@ const canAdmin = () => roleAtLeast(myRole(), ROLES.ADMIN);
 export function openTeamSheet() {
   const { workspaceId, local } = currentSession();
   if (local || !workspaceId) {
-    toast('الفريق يحتاج حساباً — هذا الجهاز يعمل بلا مزامنة', 'ℹ️');
+    toast(t('team.needsAccount'), 'ℹ️');
     return;
   }
 
@@ -120,20 +122,20 @@ function renderTeam() {
 
   render(body, [
     el('p', { class: 'sheet-note', text: limit == null
-      ? `${formatNumber(state.members.length)} عضو`
-      : `${formatNumber(used)} من ${formatNumber(limit)} مقعد مستخدم` }),
+      ? t('team.memberCount', { count: state.members.length })
+      : t('team.seatsUsed', { used, count: limit }) }),
 
-    section('الأعضاء', state.loading
-      ? [el('p', { class: 'sheet-note', text: 'جارٍ التحميل…' })]
+    section(t('team.members'), state.loading
+      ? [el('p', { class: 'sheet-note', text: t('common.loading') })]
       : state.members.map(memberRow)),
 
     canAdmin() ? inviteBlock(full, limit) : null,
     canAdmin() && state.invitations.length
-      ? section('دعوات معلّقة', state.invitations.map(inviteRow))
+      ? section(t('team.pending'), state.invitations.map(inviteRow))
       : null,
     canAdmin() ? null : el('p', {
       class: 'sheet-note',
-      text: 'دعوة الأعضاء وتغيير الأدوار تتطلب صلاحية مدير.',
+      text: t('team.adminOnly'),
     }),
   ]);
 }
@@ -147,69 +149,69 @@ function memberRow(member) {
   const editable = canAdmin() && !me && !isOwner;
 
   return el('div', { class: 'mem' }, [
-    el('div', { class: 'mem-av', text: (member.displayName || member.email || '؟').slice(0, 1), 'aria-hidden': 'true' }),
+    el('div', { class: 'mem-av', text: (member.displayName || member.email || '?').slice(0, 1), 'aria-hidden': 'true' }),
     el('div', { class: 'mem-id' }, [
-      el('div', { class: 'mem-name', text: (member.displayName || member.email || 'عضو') + (me ? ' (أنت)' : '') }),
+      el('div', { class: 'mem-name', text: (member.displayName || member.email || t('team.member')) + (me ? t('team.you') : ''), dir: 'auto' }),
       member.email ? el('div', { class: 'mem-mail', text: member.email }) : null,
     ]),
     editable
       ? el('select', {
-        class: 'mem-role', 'aria-label': `دور ${member.displayName || member.email || 'العضو'}`,
+        class: 'mem-role', 'aria-label': t('team.roleOf', { name: member.displayName || member.email || t('team.theMember') }),
         onChange: async (event) => {
           const role = event.target.value;
           if (role === '__remove') { event.target.value = member.role; await confirmRemove(member); return; }
           try {
             await changeRole(currentSession().workspaceId, member.uid, role);
-            toast('تغيّر الدور', '✓');
-          } catch (error) { toastError(error, 'تعذّر تغيير الدور'); renderTeam(); }
+            toast(t('team.roleChanged'), '✓');
+          } catch (error) { toastError(error, 'team.roleChangeFailed'); renderTeam(); }
         },
       }, [
         ...INVITABLE_ROLES.map((role) => el('option', {
-          value: role, text: ROLE_LABELS[role], selected: role === member.role || undefined,
+          value: role, text: roleLabel(role), selected: role === member.role || undefined,
         })),
-        el('option', { value: '__remove', text: 'إزالة من المساحة' }),
+        el('option', { value: '__remove', text: t('team.removeFromWorkspace') }),
       ])
-      : el('span', { class: 'mem-badge', text: ROLE_LABELS[member.role] || member.role }),
+      : el('span', { class: 'mem-badge', text: roleLabel(member.role) }),
   ]);
 }
 
 async function confirmRemove(member) {
   const confirmed = await confirmAction({
-    title: 'إزالة العضو؟',
-    message: `لن يعود ${member.displayName || member.email || 'هذا العضو'} يرى هذه المساحة. لا تُحذف أي قطعة.`,
+    title: t('team.removeTitle'),
+    message: t('team.removeMessage', { name: member.displayName || member.email || t('team.thisMember') }),
     icon: '⚠️',
-    confirmLabel: 'إزالة',
+    confirmLabel: t('team.remove'),
   });
   if (!confirmed) return;
   try {
     await removeMember(currentSession().workspaceId, member.uid);
-    toast('أُزيل العضو', '✓');
+    toast(t('team.removed'), '✓');
   } catch (error) {
-    toastError(error, 'تعذّرت الإزالة');
+    toastError(error, 'team.removeFailed');
   }
 }
 
 function inviteBlock(full, limit) {
-  return section('دعوة عضو', [
+  return section(t('team.invite'), [
     full
-      ? el('p', { class: 'sheet-note', text: `بلغت المقاعد حدّ خطتك (${formatNumber(limit)}). ارفع الخطة لإضافة عضو آخر.` })
+      ? el('p', { class: 'sheet-note', text: t('team.seatsFull', { count: limit }) })
       : el('div', {}, [
         el('div', { class: 'fsec' }, [
           el('div', { class: 'frow' }, [
-            el('label', { for: 'inv-email', text: 'البريد' }),
+            el('label', { for: 'inv-email', text: t('team.email') }),
             el('input', {
               id: 'inv-email', type: 'email', inputmode: 'email', dir: 'ltr',
               placeholder: 'name@example.com', autocomplete: 'email',
             }),
           ]),
           el('div', { class: 'frow' }, [
-            el('label', { for: 'inv-role', text: 'الدور' }),
+            el('label', { for: 'inv-role', text: t('team.role') }),
             el('select', { id: 'inv-role' }, INVITABLE_ROLES.map((role) => el('option', {
-              value: role, text: ROLE_LABELS[role], selected: role === ROLES.EDITOR || undefined,
+              value: role, text: roleLabel(role), selected: role === ROLES.EDITOR || undefined,
             }))),
           ]),
         ]),
-        el('button', { id: 'inv-send', class: 'btn btn-p', type: 'button', text: 'أنشئ رابط دعوة', onClick: send }),
+        el('button', { id: 'inv-send', class: 'btn btn-p', type: 'button', text: t('team.createLink'), onClick: send }),
       ]),
     state.fresh ? freshLink(state.fresh) : null,
   ]);
@@ -222,21 +224,21 @@ function inviteBlock(full, limit) {
  */
 function freshLink(fresh) {
   return el('div', { class: 'inv-fresh' }, [
-    el('div', { class: 'inv-fresh-hd', text: `رابط دعوة ${fresh.email}` }),
-    el('p', { class: 'sheet-note', text: `يعمل مرة واحدة، وينتهي خلال ${formatNumber(fresh.expiresInDays)} يوماً. أرسله بنفسك — لا يُعرض مرة أخرى.` }),
-    el('input', { class: 'inv-link', value: fresh.link, readonly: 'readonly', dir: 'ltr', 'aria-label': 'رابط الدعوة',
+    el('div', { class: 'inv-fresh-hd', text: t('team.linkFor', { email: fresh.email }) }),
+    el('p', { class: 'sheet-note', text: t('team.linkNote', { count: fresh.expiresInDays }) }),
+    el('input', { class: 'inv-link', value: fresh.link, readonly: 'readonly', dir: 'ltr', 'aria-label': t('team.inviteLink'),
       onClick: (event) => event.target.select() }),
     el('button', {
-      class: 'btn btn-p', type: 'button', text: 'انسخ الرابط',
+      class: 'btn btn-p', type: 'button', text: t('team.copyLink'),
       onClick: async () => {
         try {
           await navigator.clipboard.writeText(fresh.link);
-          toast('نُسخ الرابط', '📋');
+          toast(t('team.copied'), '📋');
         } catch {
           // A denied clipboard is not a failure worth an error: the field is
           // right there and selecting it does the same job.
           document.querySelector('.inv-link')?.select();
-          toast('حدّد الرابط وانسخه', 'ℹ️');
+          toast(t('team.copyManually'), 'ℹ️');
         }
       },
     }),
@@ -249,17 +251,17 @@ function inviteRow(invite) {
     el('div', { class: 'mem-av', text: '✉', 'aria-hidden': 'true' }),
     el('div', { class: 'mem-id' }, [
       el('div', { class: 'mem-name', text: invite.email }),
-      el('div', { class: 'mem-mail', text: `${ROLE_LABELS[invite.role] || invite.role} · تنتهي خلال ${formatNumber(days)} يوماً` }),
+      el('div', { class: 'mem-mail', text: `${roleLabel(invite.role)} · ${t('team.expiresIn', { count: days })}` }),
     ]),
     el('button', {
-      class: 'mem-revoke', type: 'button', text: 'إلغاء',
-      'aria-label': `إلغاء دعوة ${invite.email}`,
+      class: 'mem-revoke', type: 'button', text: t('common.cancel'),
+      'aria-label': t('team.revokeFor', { email: invite.email }),
       onClick: async () => {
         try {
           await revokeInvitation(invite.id);
-          toast('أُلغيت الدعوة', '✓');
+          toast(t('team.revoked'), '✓');
           await refreshInvitations(currentSession().workspaceId);
-        } catch (error) { toastError(error, 'تعذّر الإلغاء'); }
+        } catch (error) { toastError(error, 'team.revokeFailed'); }
       },
     }),
   ]);
@@ -271,25 +273,25 @@ async function send() {
   const role = $('inv-role')?.value || ROLES.EDITOR;
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    toast('أدخل بريداً إلكترونياً صحيحاً', '⚠');
+    toast(t('team.invalidEmail'), '⚠');
     $('inv-email')?.focus();
     return;
   }
   if (state.members.some((m) => (m.email || '').toLowerCase() === email)) {
-    toast('هذا البريد عضو بالفعل', 'ℹ️');
+    toast(t('team.alreadyMember'), 'ℹ️');
     return;
   }
 
   button.disabled = true;
   const label = button.textContent;
-  button.textContent = 'جارٍ الإنشاء…';
+  button.textContent = t('team.creating');
   try {
     const result = await inviteMember(currentSession().workspaceId, email, role);
     state.fresh = { email, ...result };
     $('inv-email').value = '';
     await refreshInvitations(currentSession().workspaceId);
   } catch (error) {
-    toastError(error, 'تعذّر إنشاء الدعوة');
+    toastError(error, 'team.inviteFailed');
   } finally {
     button.disabled = false;
     button.textContent = label;
@@ -302,26 +304,26 @@ async function send() {
 export async function openWorkspaceSheet() {
   const { user, workspaceId, local } = currentSession();
   if (local || !user) {
-    toast('المساحات تحتاج حساباً', 'ℹ️');
+    toast(t('team.workspacesNeedAccount'), 'ℹ️');
     return;
   }
 
   openSheet('ws');
-  render($('ws-body'), [el('p', { class: 'sheet-note', text: 'جارٍ التحميل…' })]);
+  render($('ws-body'), [el('p', { class: 'sheet-note', text: t('common.loading') })]);
 
   let list;
   try {
     list = await listWorkspaces(user.uid);
   } catch (error) {
-    toastError(error, 'تعذّر قراءة المساحات');
+    toastError(error, 'team.workspacesFailed');
     closeSheet('ws');
     return;
   }
 
   render($('ws-body'), [
     el('p', { class: 'sheet-note', text: list.workspaces.length > 1
-      ? 'اختر المساحة التي تريد فتحها.'
-      : 'أنت في مساحة واحدة. تظهر هنا كل مساحة تُدعى إليها.' }),
+      ? t('team.chooseWorkspace')
+      : t('team.singleWorkspace') }),
     ...list.workspaces.map((ws) => el('button', {
       class: 'srow srow-btn', type: 'button',
       'aria-current': ws.id === workspaceId ? 'true' : undefined,
@@ -329,8 +331,8 @@ export async function openWorkspaceSheet() {
     }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(37,99,255,.15)' }, text: '🗄', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: ws.name }),
-        el('div', { class: 'srowd', text: ROLE_LABELS[ws.role] || ws.role }),
+        el('div', { class: 'srowl', text: ws.name, dir: 'auto' }),
+        el('div', { class: 'srowd', text: roleLabel(ws.role) }),
       ]),
       ws.id === workspaceId
         ? el('div', { class: 'srowc', text: '✓', 'aria-hidden': 'true' })
@@ -349,6 +351,8 @@ async function switchTo(uid, ws) {
     // than trying to swap collections underneath a rendered inventory.
     window.dispatchEvent(new CustomEvent('almakhzan:workspace-changed', { detail: ws.id }));
   } catch (error) {
-    toastError(error, 'تعذّر تبديل المساحة');
+    toastError(error, 'team.switchFailed');
   }
 }
+
+onLanguageChange(() => { if ($('sh-team')?.classList.contains('open')) renderTeam(); });

@@ -10,6 +10,8 @@ import { BRAND } from '../brand.js';
 import { encodeQr } from '../qr.js';
 import { SYMBOL, symbolPaths } from './symbol-geometry.js';
 import { $, el, render } from '../utils.js';
+import { onLanguageChange, t } from '../i18n.js';
+import { locationName } from '../labels.js';
 import { closeSheet, openSheet, toast, toastError } from '../ui.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -24,7 +26,7 @@ function qrNode(text, size = 120) {
   svg.setAttribute('height', String(size));
   svg.setAttribute('class', 'qr');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `رمز ${text}`);
+  svg.setAttribute('aria-label', t('labels.codeOf', { code: text }));
   svg.setAttribute('shape-rendering', 'crispEdges');
 
   // The quiet zone is part of the symbol: without it a scanner may not find
@@ -84,7 +86,7 @@ function labelNode(item) {
   // read out, and a raw internal id is not that.
   const qrValue = item.sku || item.barcode || item.id;
   const humanCode = item.sku || item.barcode || `#${item.id.slice(-6).toUpperCase()}`;
-  const location = repository.location(item.locationId)?.name
+  const location = locationName(repository.location(item.locationId))
     || repository.folder(item.folderId)?.name
     || '';
 
@@ -92,9 +94,9 @@ function labelNode(item) {
     el('div', { class: 'label-qr' }, [qrNode(qrValue, 118)]),
     el('div', { class: 'label-body' }, [
       el('div', { class: 'label-brand' }, [markNode(15), el('span', { text: BRAND.name })]),
-      el('div', { class: 'label-name', text: item.name || '—' }),
-      el('div', { class: 'label-code', text: humanCode }),
-      state.withLocation && location ? el('div', { class: 'label-place', text: location }) : null,
+      el('div', { class: 'label-name', text: item.name || '—', dir: 'auto' }),
+      el('div', { class: 'label-code', text: humanCode, dir: 'ltr' }),
+      state.withLocation && location ? el('div', { class: 'label-place', text: location, dir: 'auto' }) : null,
     ]),
   ]);
 }
@@ -106,7 +108,7 @@ function renderLabels() {
   const items = state.items;
 
   if (!items.length) {
-    render(body, [el('p', { class: 'plan-note', text: 'لا توجد قطع مختارة.' })]);
+    render(body, [el('p', { class: 'plan-note', text: t('labels.none') })]);
     return;
   }
 
@@ -117,15 +119,15 @@ function renderLabels() {
   });
 
   render(body, [
-    el('p', { class: 'plan-note', text: 'الرمز يحمل رمز القطعة (SKU) — امسحه لتفتح القطعة مباشرة.' }),
+    el('p', { class: 'plan-note', text: t('labels.note') }),
     el('div', { class: 'label-opts' }, [
-      toggle('أبيض وأسود (طابعة حرارية)', 'mono'),
-      toggle('أظهر الموقع', 'withLocation'),
+      toggle(t('labels.mono'), 'mono'),
+      toggle(t('labels.withLocation'), 'withLocation'),
     ]),
     el('div', { class: `label-sheet${state.mono ? ' mono' : ''}`, id: 'label-sheet' }, items.map(labelNode)),
     el('button', {
       class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '14px' },
-      text: `طباعة ${items.length > 1 ? `${items.length} ملصقات` : 'الملصق'}`,
+      text: items.length > 1 ? t('labels.printMany', { count: items.length }) : t('labels.printOne'),
       onClick: () => print(),
     }),
   ]);
@@ -136,7 +138,7 @@ function print() {
     document.body.classList.add('printing-labels');
     window.print();
   } catch (error) {
-    toastError(error, 'تعذّر فتح الطباعة');
+    toastError(error, 'labels.printFailed');
   } finally {
     // Safari fires afterprint late; clearing on the next frame is enough and
     // does not depend on an event that may never arrive.
@@ -153,17 +155,17 @@ function print() {
  */
 export async function openLabels(itemIds) {
   const ids = itemIds.filter(Boolean);
-  if (!ids.length) { toast('اختر قطعة أولاً', '⚠'); return; }
+  if (!ids.length) { toast(t('labels.chooseFirst'), '⚠'); return; }
   let found;
   try {
     found = await repository.getItems(ids);
   } catch (error) {
-    toastError(error, 'تعذّر فتح القطع. حاول مرة أخرى.');
+    toastError(error, 'labels.openFailed');
     return;
   }
   state.itemIds = ids;
   state.items = found.items.filter((item) => !item.deletedAt);
-  if (found.missing.length) toast(`${found.missing.length} قطعة لم تعد موجودة`, '⚠');
+  if (found.missing.length) toast(t('labels.missing', { count: found.missing.length }), '⚠');
   renderLabels();
   openSheet('labels');
 }
@@ -171,3 +173,5 @@ export async function openLabels(itemIds) {
 export function closeLabels() {
   closeSheet('labels');
 }
+
+onLanguageChange(() => { if ($('sh-labels')?.classList.contains('open')) renderLabels(); });

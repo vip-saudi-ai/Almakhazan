@@ -1,6 +1,6 @@
 // App shell messages.
 
-export default {
+export const messages = {
   'invite.signInFirst': { ar: "سجّل الدخول بالبريد المدعوّ ثم افتح الرابط مرة أخرى", en: "Sign in with the invited email, then open the link again" },
   'invite.joined': { ar: "انضممت إلى المساحة", en: "You joined the workspace" },
   'invite.acceptFailed': { ar: "تعذّر قبول الدعوة", en: "Could not accept the invitation" },

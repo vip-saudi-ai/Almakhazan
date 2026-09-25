@@ -1,6 +1,6 @@
 // Settings, Trash and data messages.
 
-export default {
+export const messages = {
   'manage.editNamed': { ar: "تعديل {name}", en: "Edit {name}" },
   'manage.deleteNamed': { ar: "حذف {name}", en: "Delete {name}" },
   'manage.updated': { ar: "تم التحديث", en: "Updated" },

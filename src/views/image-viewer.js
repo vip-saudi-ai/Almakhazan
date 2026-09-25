@@ -20,6 +20,7 @@
 import { ImageTier, hasDistinctOriginal, imageSrc } from '../storage.js';
 import { $, el, formatNumber, render } from '../utils.js';
 import { icon } from '../icons.js';
+import { onLanguageChange, t } from '../i18n.js';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -138,14 +139,14 @@ function ensureRoot() {
     class: 'viewer',
     role: 'dialog',
     'aria-modal': 'true',
-    'aria-label': 'عرض الصورة',
+    'aria-label': t('viewer.label'), 'data-i18n-attr': 'aria-label:viewer.label',
     hidden: true,
   }, [
     el('div', { class: 'viewer-stagewrap', id: 'viewer-stages' }),
     el('div', { class: 'viewer-bar viewer-bar-top', id: 'viewer-top' }, [
       el('button', {
         id: 'viewer-close', class: 'viewer-btn', type: 'button',
-        'aria-label': 'إغلاق عرض الصورة',
+        'aria-label': t('viewer.close'), 'data-i18n-attr': 'aria-label:viewer.close',
         onClick: closeImageViewer,
       }, [icon('close')]),
       el('div', { class: 'viewer-count', id: 'viewer-count', role: 'status', 'aria-live': 'polite' }),
@@ -153,21 +154,21 @@ function ensureRoot() {
     ]),
     el('button', {
       class: 'viewer-nav viewer-prev', id: 'viewer-prev', type: 'button',
-      'aria-label': 'الصورة السابقة', onClick: () => step(-1),
-    }, [icon('back', { size: 26 })]),
+      'aria-label': t('viewer.previous'), 'data-i18n-attr': 'aria-label:viewer.previous', onClick: () => step(-1),
+    }, [icon('forward', { size: 26 })]),
     el('button', {
       class: 'viewer-nav viewer-next', id: 'viewer-next', type: 'button',
-      'aria-label': 'الصورة التالية', onClick: () => step(1),
-    }, [icon('forward', { size: 26 })]),
+      'aria-label': t('viewer.next'), 'data-i18n-attr': 'aria-label:viewer.next', onClick: () => step(1),
+    }, [icon('back', { size: 26 })]),
     el('div', { class: 'viewer-zoombar', id: 'viewer-zoom' }, [
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تصغير', onClick: () => zoomBy(1 / 1.5) }, [icon('minus')]),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': t('viewer.zoomOut'), 'data-i18n-attr': 'aria-label:viewer.zoomOut', onClick: () => zoomBy(1 / 1.5) }, [icon('minus')]),
       // Wrapped, not passed directly: a handler receives the event as its
       // first argument, and resetZoom's first argument is a stage index.
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'ملء الشاشة', onClick: () => resetZoom() }, [icon('expand')]),
-      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': 'تكبير', onClick: () => zoomBy(1.5) }, [icon('plus')]),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': t('viewer.fit'), 'data-i18n-attr': 'aria-label:viewer.fit', onClick: () => resetZoom() }, [icon('expand')]),
+      el('button', { class: 'viewer-btn', type: 'button', 'aria-label': t('viewer.zoomIn'), 'data-i18n-attr': 'aria-label:viewer.zoomIn', onClick: () => zoomBy(1.5) }, [icon('plus')]),
     ]),
     el('div', { class: 'viewer-loading', id: 'viewer-loading', role: 'status', hidden: true },
-      [el('span', { class: 'boot-spin', 'aria-hidden': 'true' }), el('span', { text: 'جارٍ تحميل الصورة الأصلية…' })]),
+      [el('span', { class: 'boot-spin', 'aria-hidden': 'true' }), el('span', { text: t('viewer.loadingOriginal'), 'data-i18n': 'viewer.loadingOriginal' })]),
   ]);
 
   document.body.appendChild(root);
@@ -177,6 +178,10 @@ function ensureRoot() {
 
 // ── stages ─────────────────────────────────────────────────────────────────
 
+function imageAlt(i) {
+  return `${state.title ? state.title + ' — ' : ''}${t('viewer.position', { n: i + 1, total: state.images.length })}`;
+}
+
 function buildStages() {
   const wrap = $('viewer-stages');
   state.stages = new Map();
@@ -184,7 +189,7 @@ function buildStages() {
   render(wrap, state.images.map((image, i) => {
     const img = el('img', {
       class: 'viewer-img',
-      alt: `${state.title ? state.title + ' — ' : ''}الصورة ${formatNumber(i + 1)} من ${formatNumber(state.images.length)}`,
+      alt: imageAlt(i),
       draggable: 'false',
       decoding: 'async',
     });
@@ -273,8 +278,8 @@ function update() {
   if (count) {
     count.textContent = total > 1 ? `${formatNumber(state.index + 1)} / ${formatNumber(total)}` : '';
     count.setAttribute('aria-label', total > 1
-      ? `الصورة ${formatNumber(state.index + 1)} من ${formatNumber(total)}${state.title ? ' — ' + state.title : ''}`
-      : state.title || 'الصورة');
+      ? `${t('viewer.position', { n: state.index + 1, total })}${state.title ? ' — ' + state.title : ''}`
+      : state.title || t('viewer.image'));
   }
 
   const prev = $('viewer-prev');
@@ -303,7 +308,7 @@ function renderActions() {
   render(host, [
     el('button', {
       class: 'viewer-btn', type: 'button',
-      'aria-label': 'إجراءات الصورة',
+      'aria-label': t('viewer.actions'),
       'aria-expanded': 'false',
       onClick: (event) => {
         event.stopPropagation();
@@ -633,3 +638,14 @@ export function reflowViewer() {
   if (st) { clampPan(st); applyTransform(); }
   update();
 }
+
+// The viewer's fixed controls carry data-i18n keys and are re-translated with
+// the rest of the document; what is worked out per image is redone here. The
+// slide direction follows the new `dir` through update().
+onLanguageChange(() => {
+  if (!state.open) return;
+  $('viewer-stages')?.querySelectorAll('.viewer-img').forEach((img, i) => { img.alt = imageAlt(i); });
+  $('viewer-menu')?.remove();
+  renderActions();
+  update();
+});

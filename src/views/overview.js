@@ -1,7 +1,9 @@
 // Dashboard. Record counts and quantity totals are reported separately, and
 // valuations are never summed across currencies.
 
-import { ACTION_LABELS, CHART_COLORS, CONDITIONS, CONDITION_COLORS, CURRENCY_LABELS } from '../config.js';
+import { CHART_COLORS, CONDITIONS, CONDITION_COLORS } from '../config.js';
+import { t } from '../i18n.js';
+import { actionLabel, activityDetail, categoryName, conditionLabel, currencySymbol } from '../labels.js';
 import { repository } from '../repository.js';
 import { totalsByCurrency } from '../money.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
@@ -52,7 +54,7 @@ export function renderOverview() {
 
   const items = repository.liveItems();
   if (!items.length) {
-    render(scroll, [emptyState('📊', 'لا توجد بيانات بعد', 'أضف قطعاً للجرد لرؤية الإحصائيات')]);
+    render(scroll, [emptyState('📊', t('overview.emptyTitle'), t('overview.emptySub'))]);
     return;
   }
 
@@ -67,36 +69,36 @@ export function renderOverview() {
 
   // ── KPIs ──
   blocks.push(el('div', { class: 'ov-kpi-grid' }, [
-    kpi('📦', formatNumber(items.length), 'عدد السجلات',
-      `${repository.state.folders.length} مجلد · ${categories} تصنيف`, 'var(--blue)'),
-    kpi('🔢', formatNumber(totalQuantity), 'إجمالي الكميات',
-      `متوسط ${(totalQuantity / items.length).toFixed(1)} لكل سجل`, 'var(--purple)'),
+    kpi('📦', formatNumber(items.length), t('overview.records'),
+      `${t('overview.folders', { count: repository.state.folders.length })} · ${t('overview.categories', { count: categories })}`, 'var(--blue)'),
+    kpi('🔢', formatNumber(totalQuantity), t('overview.totalQuantity'),
+      t('overview.average', { value: formatNumber(totalQuantity / items.length, { maximumFractionDigits: 1, minimumFractionDigits: 1 }) }), 'var(--purple)'),
     // One tile cannot hold three currencies, and picking the biggest and
     // calling it "the total" would be the lie this whole module avoids. The
     // tile names its own currency and says how many others there are; the
     // breakdown below is the real answer.
     kpi('💰',
-      primaryTotal ? `${formatCompact(primaryTotal.total)} ${CURRENCY_LABELS[primaryTotal.currency]}` : '—',
-      totals.length > 1 ? `التقييم بـ${CURRENCY_LABELS[primaryTotal.currency]}` : 'إجمالي التقييم',
+      primaryTotal ? `${formatCompact(primaryTotal.total)} ${currencySymbol(primaryTotal.currency)}` : '—',
+      totals.length > 1 ? t('overview.valuationIn', { currency: currencySymbol(primaryTotal.currency) }) : t('overview.totalValuation'),
       totals.length > 1
-        ? `و${formatNumber(totals.length - 1)} عملة أخرى — التفصيل أدناه`
-        : `${formatNumber(valued)} سجل مُقيَّم`, 'var(--green)'),
-    kpi('✦', formatNumber(analyzed), 'مُحلّلة بصرياً',
-      `${Math.round((analyzed / items.length) * 100)}% من السجلات`, 'var(--teal)'),
+        ? t('overview.otherCurrencies', { count: totals.length - 1 })
+        : t('overview.valuedRecords', { count: valued }), 'var(--green)'),
+    kpi('✦', formatNumber(analyzed), t('overview.analyzed'),
+      t('overview.percentOfRecords', { percent: formatNumber(analyzed / items.length, { style: 'percent' }) }), 'var(--teal)'),
   ]));
 
   // ── valuation by currency ──
   if (totals.length) {
-    blocks.push(section('التقييم حسب العملة', [
+    blocks.push(section(t('overview.byCurrency'), [
       el('div', { class: 'gl-s ov-card' }, totals.map((entry) => el('div', { class: 'ov-cur-row' }, [
         el('div', { class: 'ov-cur-code' }, [
-          el('span', { class: 'ov-cur-sym', text: CURRENCY_LABELS[entry.currency] || entry.currency }),
+          el('span', { class: 'ov-cur-sym', text: currencySymbol(entry.currency) }),
           el('span', { text: entry.currency }),
         ]),
-        el('div', { class: 'ov-cur-meta', text: `${formatNumber(entry.count)} سجل` }),
+        el('div', { class: 'ov-cur-meta', text: t('overview.recordCount', { count: entry.count }) }),
         el('div', { class: 'ov-cur-total', text: formatCompact(entry.total) }),
       ]))),
-      el('div', { class: 'ov-note', text: 'المجاميع منفصلة لكل عملة — لا يجري أي تحويل تلقائي بين العملات.' }),
+      el('div', { class: 'ov-note', text: t('overview.currencyNote') }),
     ]));
   }
 
@@ -107,15 +109,15 @@ export function renderOverview() {
   const unspecified = items.filter((i) => !i.condition).length;
 
   if (conditionCounts.length || unspecified) {
-    blocks.push(section('توزيع الحالة', [
+    blocks.push(section(t('overview.conditions'), [
       el('div', { class: 'ov-cond-grid' }, [
         ...conditionCounts.map((entry) => el('div', { class: 'ov-cond-pill' }, [
           el('div', { class: 'ov-cond-val', style: { color: CONDITION_COLORS[entry.condition] }, text: formatNumber(entry.count) }),
-          el('div', { class: 'ov-cond-lbl', text: entry.condition }),
+          el('div', { class: 'ov-cond-lbl', text: conditionLabel(entry.condition) }),
         ])),
         unspecified ? el('div', { class: 'ov-cond-pill' }, [
           el('div', { class: 'ov-cond-val', style: { color: 'var(--tt)' }, text: formatNumber(unspecified) }),
-          el('div', { class: 'ov-cond-lbl', text: 'غير محدد' }),
+          el('div', { class: 'ov-cond-lbl', text: t('overview.unspecified') }),
         ]) : null,
       ]),
     ]));
@@ -130,9 +132,9 @@ export function renderOverview() {
 
   if (categoryStats.length) {
     const max = categoryStats[0].count;
-    blocks.push(section('السجلات حسب التصنيف', [
+    blocks.push(section(t('overview.byCategory'), [
       el('div', { class: 'gl-s ov-card' }, categoryStats.map((entry, index) => barRow(
-        `${entry.category.icon} ${entry.category.name}`,
+        `${entry.category.icon} ${categoryName(entry.category)}`,
         entry.count, max, CHART_COLORS[index % CHART_COLORS.length],
       ))),
     ]));
@@ -146,14 +148,14 @@ export function renderOverview() {
 
   if (folderStats.length) {
     const max = folderStats[0].count;
-    blocks.push(section('السجلات حسب المجلد', [
+    blocks.push(section(t('overview.byFolder'), [
       el('div', { class: 'gl-s ov-card' }, folderStats.map((entry) => el('button', {
         class: 'ov-fld-row', type: 'button',
         onClick: () => { goTab('home'); enterFolder(entry.folder.id); },
       }, [
         el('div', { class: 'ov-fld-ico', style: { background: `${entry.folder.color || '#007AFF'}22` }, text: entry.folder.icon, 'aria-hidden': 'true' }),
         el('div', { class: 'ov-fld-info' }, [
-          el('div', { class: 'ov-fld-name', text: entry.folder.name }),
+          el('div', { class: 'ov-fld-name', text: entry.folder.name, dir: 'auto' }),
           el('div', { class: 'ov-fld-bar-wrap' }, [
             el('div', { class: 'ov-fld-bar-fill', style: { width: `${Math.round((entry.count / max) * 100)}%`, background: entry.folder.color || '#007AFF' } }),
           ]),
@@ -172,15 +174,15 @@ export function renderOverview() {
     const medals = ['🥇', '🥈', '🥉'];
     const rankClasses = ['gold', 'silver', 'bronze'];
 
-    blocks.push(section(`أعلى السجلات تقييماً (${primaryTotal.currency})`, [
+    blocks.push(section(t('overview.topValued', { currency: primaryTotal.currency }), [
       el('div', { class: 'ov-list-card' }, ranked.map((item, index) => el('button', {
         class: 'ov-item-row', type: 'button', onClick: () => openDetail(item.id),
       }, [
         el('div', { class: `ov-rank ${rankClasses[index] || ''}`, text: medals[index] || String(index + 1) }),
         itemThumbNode(item),
         el('div', { style: { flex: '1', minWidth: '0' } }, [
-          el('div', { class: 'ov-act-name', text: item.name || '—' }),
-          el('div', { class: 'ov-act-meta', text: repository.category(item.categoryId).name }),
+          el('div', { class: 'ov-act-name', text: item.name || '—', dir: 'auto' }),
+          el('div', { class: 'ov-act-meta', text: categoryName(repository.category(item.categoryId)), dir: 'auto' }),
         ]),
         el('div', { style: { fontSize: '13px', fontWeight: '700', color: 'var(--green)', flexShrink: '0' }, text: formatValuation(item.valuation, { compact: true }) }),
       ]))),
@@ -196,24 +198,24 @@ export function renderOverview() {
       ? withGlobal.reduce((s, i) => s + i.aiData.globalScore, 0) / withGlobal.length
       : null;
 
-    blocks.push(section('ملخص التحليل البصري', [
+    blocks.push(section(t('overview.aiSummary'), [
       el('div', { class: 'ov-kpi-grid' }, [
-        kpi('🏠', `${avgLocal.toFixed(1)}/10`, 'متوسط السوق المحلي', `${formatNumber(withLocal.length)} سجل`, 'var(--teal)'),
-        avgGlobal !== null ? kpi('🌍', `${avgGlobal.toFixed(1)}/10`, 'متوسط السوق العالمي', `${formatNumber(withGlobal.length)} سجل`, 'var(--purple)') : null,
+        kpi('🏠', `${formatNumber(avgLocal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.localAverage'), t('overview.recordCount', { count: withLocal.length }), 'var(--teal)'),
+        avgGlobal !== null ? kpi('🌍', `${formatNumber(avgGlobal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.globalAverage'), t('overview.recordCount', { count: withGlobal.length }), 'var(--purple)') : null,
       ]),
-      el('div', { class: 'ov-note', text: 'تقديرات أولية من مساعد نَظْم، لا تُغني عن التقييم المعتمد.' }),
+      el('div', { class: 'ov-note', text: t('overview.aiNote') }),
     ]));
   }
 
   // ── activity log ──
   const activity = repository.state.activity.slice(0, 8);
   if (activity.length) {
-    blocks.push(section('آخر النشاطات', [
+    blocks.push(section(t('overview.recentActivity'), [
       el('div', { class: 'gl-s ov-card ov-act-card' }, activity.map((entry) => el('div', { class: 'ov-act-row' }, [
         el('div', { class: 'ov-act-ico', text: actionIcon(entry.action), 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1', minWidth: '0' } }, [
-          el('div', { class: 'ov-act-name', text: ACTION_LABELS[entry.action] || entry.action }),
-          el('div', { class: 'ov-act-meta', text: entry.summary || entry.itemName || entry.folderName || entry.categoryName || '—' }),
+          el('div', { class: 'ov-act-name', text: actionLabel(entry.action) }),
+          el('div', { class: 'ov-act-meta', text: activityDetail(entry), dir: 'auto' }),
         ]),
         el('div', { style: { fontSize: '11px', color: 'var(--tt)', flexShrink: '0' }, text: timeAgo(entry.timestamp) }),
       ]))),

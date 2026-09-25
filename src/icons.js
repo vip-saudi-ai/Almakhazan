@@ -89,6 +89,9 @@ export const ICON_NAMES = Object.keys(PATHS);
  *   that sits inside a labelled control, which is most of them — a duplicated
  *   name is worse than none.
  */
+/** Icons that point along the reading direction. */
+const DIRECTIONAL = new Set(['back', 'forward']);
+
 export function icon(name, { size = 20, title = '', className = '', stroke = 1.8 } = {}) {
   const path = PATHS[name];
   if (!path) {
@@ -105,7 +108,10 @@ export function icon(name, { size = 20, title = '', className = '', stroke = 1.8
   svg.setAttribute('stroke-width', String(stroke));
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', `nz-icon${className ? ' ' + className : ''}`);
+  // Arrows are drawn for right-to-left reading; `nz-dir` lets one CSS rule
+  // mirror every one of them in left-to-right, and nothing else.
+  const directional = DIRECTIONAL.has(name) ? ' nz-dir' : '';
+  svg.setAttribute('class', `nz-icon${directional}${className ? ' ' + className : ''}`);
   // An icon beside a label is decoration; an icon alone is the label.
   if (title) {
     svg.setAttribute('role', 'img');

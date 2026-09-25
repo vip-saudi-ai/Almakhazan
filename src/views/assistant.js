@@ -15,6 +15,7 @@ import { repository } from '../repository.js';
 import { BRAND, assistantTitle } from '../brand.js';
 import { askInventory, capabilities, suggestions } from '../ask.js';
 import { onLanguageChange, t } from '../i18n.js';
+import { locationName } from '../labels.js';
 import { formatAmount } from '../money.js';
 import { cleanupTasks, inventoryHealth } from '../health.js';
 import { $, el, formatNumber, render } from '../utils.js';
@@ -147,7 +148,7 @@ function resultCard(item) {
     thumb.textContent = '📦';
   }
 
-  const location = repository.location(item.locationId)?.name
+  const location = locationName(repository.location(item.locationId))
     || repository.folder(item.folderId)?.name
     || t('assistant.noLocation');
 

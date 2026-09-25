@@ -1,6 +1,6 @@
 // Static screen messages.
 
-export default {
+export const messages = {
   'item.deleteTitle': { ar: "حذف القطعة؟", en: "Delete item?" },
   'item.quickPreview': { ar: "معاينة سريعة", en: "Quick preview" },
   'item.moveToFolder': { ar: "نقل إلى مجلد", en: "Move to folder" },

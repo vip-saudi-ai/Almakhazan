@@ -36,12 +36,6 @@ export const SCHEMA_VERSION = 2;
 export const PAGE_SIZE = 20;
 
 export const ROLES = { OWNER: 'owner', ADMIN: 'admin', EDITOR: 'editor', VIEWER: 'viewer' };
-export const ROLE_LABELS = {
-  owner: 'مالك',
-  admin: 'مدير',
-  editor: 'محرر',
-  viewer: 'مشاهد',
-};
 const ROLE_RANK = { viewer: 0, editor: 1, admin: 2, owner: 3 };
 
 export function roleAtLeast(role, minimum) {
@@ -68,9 +62,6 @@ export const CONDITION_COLORS = {
  * CHF. Any valid code is stored and shown as itself.
  */
 export const CURRENCIES = ['SAR', 'USD', 'EUR', 'GBP'];
-
-/** Where the local convention differs from what Intl would print. */
-export const CURRENCY_LABELS = { SAR: 'ر.س', USD: '$', EUR: '€', GBP: '£' };
 
 /**
  * ISO 4217, active codes plus the withdrawn ones still found in real records.
@@ -189,34 +180,6 @@ export const ACTIONS = {
   ITEMS_BULK_DELETED: 'ITEMS_BULK_DELETED',
   MIGRATION_COMPLETED: 'MIGRATION_COMPLETED',
   WORKSPACE_CLEARED: 'WORKSPACE_CLEARED',
-};
-
-export const ACTION_LABELS = {
-  ITEM_CREATED: 'أُضيفت قطعة',
-  ITEM_UPDATED: 'عُدّلت قطعة',
-  ITEM_DELETED: 'نُقلت قطعة للمحذوفات',
-  ITEM_RESTORED: 'استُعيدت قطعة',
-  ITEM_PURGED: 'حُذفت قطعة نهائياً',
-  ITEM_DUPLICATED: 'نُسخت قطعة',
-  ITEM_MOVED: 'نُقلت قطعة',
-  AI_ANALYZED: 'تحليل بمساعد نَظْم',
-  FOLDER_CREATED: 'أُنشئ مجلد',
-  FOLDER_UPDATED: 'عُدّل مجلد',
-  FOLDER_DELETED: 'حُذف مجلد',
-  CATEGORY_CREATED: 'أُضيف تصنيف',
-  CATEGORY_UPDATED: 'عُدّل تصنيف',
-  CATEGORY_DELETED: 'حُذف تصنيف',
-  LOCATION_CREATED: 'أُضيف موقع',
-  LOCATION_DELETED: 'حُذف موقع',
-  IMPORT_MERGED: 'دمج نسخة بيانات',
-  IMPORT_RESTORED: 'استعادة نسخة',
-  IMPORT_ROLLED_BACK: 'تراجع عن استيراد',
-  SPREADSHEET_IMPORTED: 'استيراد جدول',
-  SPREADSHEET_IMPORT_STOPPED: 'توقف استيراد جدول',
-  ITEMS_BULK_UPDATED: 'تعديل جماعي',
-  ITEMS_BULK_DELETED: 'حذف جماعي',
-  MIGRATION_COMPLETED: 'اكتملت الترقية',
-  WORKSPACE_CLEARED: 'مسح البيانات',
 };
 
 export const DEFAULT_CATEGORIES = [

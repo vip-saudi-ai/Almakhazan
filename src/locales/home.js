@@ -1,6 +1,6 @@
 // Inventory screen messages.
 
-export default {
+export const messages = {
   'home.readFailed': { ar: "تعذّر قراءة المخزون", en: "Could not read the inventory" },
   'home.statShowAllForRatio': { ar: "اعرض الكل لحساب النِّسب", en: "Show all to calculate ratios" },
   'home.statStart': { ar: "ابدأ بأول قطعة", en: "Start with your first item" },

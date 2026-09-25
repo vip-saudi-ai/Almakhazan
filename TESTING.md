@@ -10,6 +10,7 @@ npm run test:unit                  # pure logic — no browser, no emulator
 npx http-server -p 8123 -c-1 &     # the browser suites need the app served
 npm run test:browser
 npm run test:rules                 # Firestore rules, in the emulator
+npm run audit:i18n                 # translation key parity and hard-coded text
 ```
 
 `npm test` runs the unit and rules suites. The browser suites are separate
@@ -46,6 +47,8 @@ already set in this environment.
 | `import.test.mjs` | one CSV carrying every mess a real export has — a semicolon separator, a blank row, a nameless row, Arabic-Indic digits, a quantity written as a word, a condition that is not one of ours, a quoted comma, two taxonomy names that do not exist — and the property that nothing is invented to make it look clean: every unreadable cell is named with its row number *in the file*, the new categories are declared before they are created, a file larger than the plan is refused before a single write, and a real `.xlsx` (shared strings, dates, gaps, entities) reads back correctly |
 | `viewer.test.mjs` | an image is a button that says it opens; the viewer is dark in *both* themes, opens at fit, contains rather than crops, and zooms toward the pointer rather than the centre; arrows move in the direction the gallery runs in RTL; Escape closes the viewer and not the sheet beneath it; focus returns to the image that opened it; an unsaved image opens too; and clearing the controls never clears the way out |
 | `responsive.test.mjs` | twelve viewports — 320, 375, 390, 430, 768, 820, 1024, 1280, 1440, 1920, a landscape phone and the 195px that browser zoom at 200% leaves of a phone — each asserting no horizontal overflow, a grid column count inside the range that class should produce, navigation as a bar or a rail as intended, and that no control has left the screen |
+| `sku-race.test.mjs` | the property is not "the form warns about a duplicate SKU" but "two tabs cannot both commit one": create against create, edit against edit, restore against create and import against a manual save, each raced from two tabs past every precheck, with exactly one winner; a duplicate inside one batch is refused, a swap in one batch is allowed, a trashed record's SKU can be reused, an `ifAbsent`-skipped record reserves nothing, and the quota check and the SKU check share one transaction |
+| `i18n.test.mjs` | Arabic by default, English persisted across a reload, `lang`/`dir` switched at run time; no Arabic left on the main screens, the form, the detail, the plans, the import and the gate in English (customer text aside); prices unchanged; a switch loses nothing — a half-filled form, the import mapping, the search and its results, a selection, an open detail; one SKU conflict code with the right message in each language; nothing stored changes; the Settings and gate switches are keyboard-operable radio groups; no overflow at 320 / 390 / 430 / tablet / desktop in either direction |
 
 ### Rules — `tests/rules/*.test.mjs`, in the emulator
 

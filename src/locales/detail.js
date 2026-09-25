@@ -1,6 +1,6 @@
 // Item detail messages.
 
-export default {
+export const messages = {
   'detail.viewFull': { ar: "عرض صورة {name} بملء الشاشة", en: "View the photo of {name} full screen" },
   'detail.morePhotos': { ar: "صور إضافية", en: "More photos" },
   'detail.photoOf': { ar: "عرض الصورة {index} من {total}", en: "View photo {index} of {total}" },

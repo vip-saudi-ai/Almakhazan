@@ -1,6 +1,6 @@
 // Spreadsheet import messages.
 
-export default {
+export const messages = {
   'importField.name': { ar: "الاسم", en: "Name" },
   'importField.quantity': { ar: "الكمية", en: "Quantity" },
   'importField.unit': { ar: "الوحدة", en: "Unit" },

@@ -58,7 +58,7 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
 
   await page.route('**/src/ai.js', r => r.fulfill({ contentType: 'text/javascript', body: `
     export const AiAvailability = { READY: 'ready', OFFLINE: 'offline', UNAVAILABLE: 'unavailable' };
-    export const AI_STATUS_LABELS = { ready: 'متصل', offline: 'غير متصل', unavailable: 'غير مهيأ' };
+    export function aiStatusLabel(state) { return ({ ready: 'متصل', offline: 'غير متصل', unavailable: 'غير مهيأ' })[state] || ''; }
     export function aiAvailability() { return 'ready'; }
     window.__aiCalls = [];
     export async function analyzeItem(args) {
@@ -67,11 +67,11 @@ async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = fa
       return ${JSON.stringify(analysis)};
     }
     export function isAnalysisStale() { return false; }
-    export const AI_DISCLAIMER = 'تقدير أولي لا يُعد توثيقاً معتمداً.';
-    export const ASSISTANT_NAME = 'مساعد المخزن';
+    export const aiDisclaimer = () => 'تقدير أولي لا يُعد توثيقاً معتمداً.';
+    export const assistantName = () => 'مساعد المخزن';
     export const ASSISTANT_MARK = '✦';
-    export const AI_TITLE = 'مساعد المخزن';
-    export const AI_SUBTITLE = 'تقدير أولي';
+    export const aiSubtitle = () => 'تقدير أولي';
+    export const FUNCTIONS_REGION = 'me-central2';
   ` }));
 
   await page.route('**/src/subscription.js', r => r.fulfill({

@@ -90,7 +90,7 @@ workspaces/{workspaceId}/items/{itemId}/original/{mediaId}.{ext}
 workspaces/{workspaceId}/items/{itemId}/thumbnails/{mediaId}.jpg
 ```
 
-## Three invariants worth stating plainly
+## Four invariants worth stating plainly
 
 **Tenancy is derived, never supplied.** A `workspaceId` in a request is only a
 lookup key. Both Firestore and Storage rules resolve
@@ -103,11 +103,40 @@ and usage counters are unwritable by any client at any role. The only writer is
 the billing webhook, which verifies a signature and claims each event id before
 applying it. A successful checkout redirect grants nothing.
 
+**Live SKUs are unique at commit time.** On the device, every write that
+touches items — create, update, restore, batch, atomic batch — validates the
+final SKU of each affected record inside the same IndexedDB transaction that
+writes it (`assertLiveSkusInStore` in `src/repository.js`). The index stays
+non-unique because trashed records keep their SKUs. The screen's precheck is UX
+only. In the cloud, the recommended equivalent is a `skuClaims/{hash}`
+document written in the same Firestore transaction (see
+PRODUCTION-CHECKLIST.md).
+
 **Files are owned by media assets, not by items.** An item holds a `mediaId`.
 Duplicating an item raises that asset's reference count; removing an image or
 purging an item lowers it. Bytes are deleted only by the backend sweeper, only
 at zero, and only after re-verifying against the items collection.
 `tests/rules/media-refcount.test.mjs` walks the duplicate-then-delete case.
+
+## Language
+
+Arabic (`ar`, RTL, the default) and English (`en`, LTR). `src/i18n.js` holds
+the current language, `t(key, params)`, `pick({ar, en})`, and the `Intl`
+number/date/relative formatters; the messages live in `src/locales/*.js`, one
+entry per key with both languages side by side, plural forms chosen by
+`Intl.PluralRules`. Static markup declares its text with `data-i18n` and
+`data-i18n-attr`; `data-i18n-js` marks a placeholder its view overwrites.
+
+Language is presentation. Nothing stored changes with it: conditions, units and
+seeded categories are stored as stable values and labelled by `src/labels.js`;
+activity entries keep facts (counts, file names), never sentences; errors carry
+a code and a message key, translated when shown (`describeError`). A switch
+calls every `onLanguageChange` listener, and each view redraws from the state
+it already holds — no reload, no refetch, no lost input. The early `lang`/`dir`
+is set by `src/boot-guard.js`, since the CSP forbids inline scripts.
+
+`npm run audit:i18n` checks key parity, plural completeness and placeholders,
+and classifies every line of Arabic outside the catalogue.
 
 ## Entitlements
 

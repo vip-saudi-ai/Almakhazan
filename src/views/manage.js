@@ -733,7 +733,17 @@ function renderLanguagePanel() {
       'aria-checked': String(lang === current),
       lang,
       dir: lang === 'ar' ? 'rtl' : 'ltr',
+      // One tab stop for the group, arrows move between the options — the
+      // radio-group pattern a screen reader announces as one.
+      tabindex: lang === current ? '0' : '-1',
       onClick: () => setLanguage(lang),
+      onKeydown: (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        event.preventDefault();
+        const next = LANGUAGES[(LANGUAGES.indexOf(current) + 1) % LANGUAGES.length];
+        setLanguage(next);
+        $('language-panel')?.querySelector(`[lang="${next}"]`)?.focus();
+      },
     }, [
       el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', text: t(`language.${lang}`) })]),
       lang === current ? el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('check', { size: 18 })]) : null,

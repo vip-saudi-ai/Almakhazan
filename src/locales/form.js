@@ -1,6 +1,6 @@
 // Item form messages.
 
-export default {
+export const messages = {
   'form.notSet': { ar: "غير محدد", en: "Not set" },
   'form.photo': { ar: "صورة", en: "Photo" },
   'form.thePhoto': { ar: "الصورة", en: "the photo" },

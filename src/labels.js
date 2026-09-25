@@ -70,3 +70,36 @@ export function locationName(location) {
   if (DEFAULT_LOCATION_NAME.get(location.id) === location.name) return t(`location.${location.id}`);
   return location.name || '';
 }
+
+/**
+ * The line under an activity entry, worked out from the entry's recorded
+ * facts — counts, a file name, an item's name — so the log itself holds no
+ * sentence in any language and reads correctly in whichever one is chosen.
+ * An older entry that stored a sentence (`summary`) still shows it.
+ */
+export function activityDetail(entry) {
+  if (!entry) return '';
+  switch (entry.action) {
+    case 'SPREADSHEET_IMPORTED':
+    case 'SPREADSHEET_IMPORT_STOPPED':
+      if (entry.fileName != null) {
+        return t('activity.importSummary', { count: entry.writtenRows ?? entry.processedRows ?? 0, file: entry.fileName });
+      }
+      break;
+    case 'ITEMS_BULK_UPDATED':
+    case 'ITEMS_BULK_DELETED':
+      if (entry.count != null) return t('count.items', { count: entry.count });
+      break;
+    case 'IMPORT_MERGED':
+      if (entry.added != null || entry.items != null) return t('count.items', { count: entry.added ?? entry.items });
+      break;
+    case 'IMPORT_ROLLED_BACK':
+    case 'IMPORT_RESTORED':
+    case 'MIGRATION_COMPLETED':
+      if (entry.items != null) return t('count.items', { count: entry.items });
+      break;
+    default:
+      break;
+  }
+  return entry.itemName || entry.folderName || entry.categoryName || entry.locationName || entry.summary || '—';
+}

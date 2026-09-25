@@ -62,8 +62,8 @@
   <div class="del-bg" id="del-bg"></div>
   <div class="del-card">
     <div class="del-ico" id="del-ico" aria-hidden="true">🗑</div>
-    <div class="del-title" id="del-title">حذف القطعة؟</div>
-    <div class="del-sub" id="del-sub">لا يمكن التراجع عن هذا الإجراء.</div>
+    <div class="del-title" id="del-title" data-i18n-js>حذف القطعة؟</div>
+    <div class="del-sub" id="del-sub" data-i18n-js>لا يمكن التراجع عن هذا الإجراء.</div>
     <div class="del-phrase-wrap" id="del-phrase-wrap" style="display:none">
       <label class="del-phrase-label" id="del-phrase-label" for="del-phrase"></label>
       <input class="del-phrase" id="del-phrase" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -123,7 +123,7 @@
         <span class="fsact-btn-ico" aria-hidden="true" data-icon="sort"></span>
         <span class="fsact-sort-col">
           <span class="fsact-btn-lbl" data-i18n="sort.title">ترتيب حسب</span>
-          <span class="fsact-sort-val" id="sort-label">الأحدث</span>
+          <span class="fsact-sort-val" id="sort-label" data-i18n-js>الأحدث</span>
         </span>
       </button>
     </div>
@@ -153,7 +153,7 @@
       <div class="cpills" id="hpills" role="group" aria-label="تصفية حسب التصنيف" data-i18n-attr="aria-label:home.filterByCategory"></div>
 
       <div class="shdr">
-        <h2 class="stitle" id="htitle">القطع</h2>
+        <h2 class="stitle" id="htitle" data-i18n-js>القطع</h2>
         <div class="shdr-acts">
           <span class="tag tb" id="hcount" style="font-size:12px">0</span>
           <button class="ibtn gls view-toggle" id="tg" type="button" aria-label="عرض شبكي" aria-pressed="true" data-icon="grid" data-icon-size="17" data-i18n-attr="aria-label:home.gridView"></button>
@@ -166,8 +166,8 @@
 
       <div class="empty" id="hempty" style="display:none">
         <div class="emico" id="hempty-ico" aria-hidden="true"></div>
-        <div class="emtitle" id="hempty-title">لا توجد قطع بعد.</div>
-        <div class="emsub" id="hempty-sub">ابدأ بتصوير أول قطعة، وسيساعدك نَظْم في توثيقها.</div>
+        <div class="emtitle" id="hempty-title" data-i18n-js>لا توجد قطع بعد.</div>
+        <div class="emsub" id="hempty-sub" data-i18n-js>ابدأ بتصوير أول قطعة، وسيساعدك نَظْم في توثيقها.</div>
         <button class="btn btn-p empty-cta" id="add-first-item" type="button" data-i18n="home.addFirst">إضافة أول قطعة</button>
       </div>
 
@@ -247,10 +247,10 @@
 <div class="ov" id="ov-add"></div>
 <div class="sh" id="sh-add" tabindex="-1" aria-labelledby="addtitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="addtitle">إضافة قطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="addtitle" data-i18n-js>إضافة قطعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
-      <div class="fstitle"><span data-i18n="form.photos">الصور</span> <span class="fstitle-sub" id="img-count">لا توجد صور</span></div>
+      <div class="fstitle"><span data-i18n="form.photos">الصور</span> <span class="fstitle-sub" id="img-count" data-i18n-js>لا توجد صور</span></div>
       <div class="capture-prompt" id="capture-prompt" style="display:none"></div>
       <div class="img-strip" id="img-strip"></div>
       <div class="img-progress" id="img-progress" style="display:none">
@@ -272,7 +272,7 @@
 
     <div id="ai-section" style="display:none">
       <div class="aipanel">
-        <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label">مساعد نَظْم</span></div>
+        <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label" data-i18n-js>مساعد نَظْم</span></div>
         <div class="aibody">
           <div id="aicontent"><div class="aiph" data-i18n="ai.addPhotoFirst">أضف صورة ثم اضغط تحليل</div></div>
           <button class="btn btn-ai" id="aibtn" type="button" disabled style="margin-top:10px" data-i18n="ai.analyzeButton">✦ حلّل بمساعد نَظْم</button>
@@ -336,7 +336,7 @@
 <div class="ov" id="ov-det"></div>
 <div class="sh" id="sh-det" tabindex="-1" aria-labelledby="dettitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="dettitle">تفاصيل</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="dettitle" data-i18n-js>تفاصيل</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="detbody"></div>
   <div class="shfoot">
     <button class="btn btn-d" id="detdel" type="button" style="flex:1;padding:12px" data-i18n="common.delete">حذف</button>
@@ -350,7 +350,7 @@
 <div class="ov" id="ov-qp"></div>
 <div class="sh" id="sh-qp" tabindex="-1" aria-labelledby="qptitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="qptitle">معاينة سريعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="qptitle" data-i18n-js>معاينة سريعة</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll" id="qpbody"></div>
   <div class="shfoot"><button class="btn btn-p" id="qp-open" type="button" style="flex:1;padding:12px" data-i18n="preview.openDetails">فتح التفاصيل</button></div>
 </div>
@@ -359,7 +359,7 @@
 <div class="ov" id="ov-fld"></div>
 <div class="sh" id="sh-fld" tabindex="-1" aria-labelledby="fldshtitle">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="fldshtitle">مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="fldshtitle" data-i18n-js>مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
       <div class="frow"><label for="fld-name" data-i18n="field.name">الاسم</label><input id="fld-name" placeholder="مثال: مجموعة الجد" data-i18n-attr="placeholder:folder.namePlaceholder"></div>
@@ -388,7 +388,7 @@
 <div class="ov" id="ov-cat"></div>
 <div class="sh" id="sh-cat" tabindex="-1" aria-labelledby="cat-sheet-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title">تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title" data-i18n-js>تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec"><div class="frow"><label for="cat-name" data-i18n="field.name">الاسم</label><input id="cat-name" placeholder="مثال: لوحات زيتية" data-i18n-attr="placeholder:category.namePlaceholder"></div></div>
     <div class="fstitle" data-i18n="field.icon">الأيقونة</div>
@@ -401,7 +401,7 @@
 <div class="ov" id="ov-reassign"></div>
 <div class="sh" id="sh-reassign" tabindex="-1" aria-labelledby="reassign-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="reassign-title">حذف التصنيف</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="reassign-title" data-i18n-js>حذف التصنيف</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <p class="sheet-note" id="reassign-message"></p>
     <div class="fsec"><div class="frow"><label for="reassign-target" data-i18n="category.reassignTarget">الوجهة</label><select id="reassign-target"></select></div></div>
@@ -512,7 +512,7 @@
 <div class="ov" id="ov-bulk"></div>
 <div class="sh" id="sh-bulk" tabindex="-1" aria-labelledby="bulk-title">
   <div class="shhnd" aria-hidden="true"></div>
-  <div class="shhdr"><h2 class="shtitle" id="bulk-title">اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shhdr"><h2 class="shtitle" id="bulk-title" data-i18n-js>اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll"><div class="sgroup" id="bulk-options"></div></div>
 </div>
 
@@ -531,7 +531,7 @@
   <div class="shhdr"><h2 class="shtitle" id="scan-title" data-i18n="scan.title">مسح الباركود</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="scan-frame"><video id="scan-video" class="scan-video" muted playsinline></video><div class="scan-guide" aria-hidden="true"></div></div>
-    <p class="scan-hint" id="scan-hint">وجّه الكاميرا نحو الباركود أو رمز QR</p>
+    <p class="scan-hint" id="scan-hint" data-i18n-js>وجّه الكاميرا نحو الباركود أو رمز QR</p>
   </div>
 </div>
 

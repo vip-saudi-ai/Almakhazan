@@ -1,6 +1,6 @@
 // Assistant messages.
 
-export default {
+export const messages = {
   'ask.titleNoImages': { ar: "قطع بدون صور", en: "Items without photos" },
   'ask.titleNoCategory': { ar: "قطع بدون تصنيف", en: "Items without a category" },
   'ask.titleNoLocation': { ar: "قطع بدون موقع", en: "Items without a location" },

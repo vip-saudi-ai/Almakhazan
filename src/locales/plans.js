@@ -1,6 +1,6 @@
 // Plans and quota messages.
 
-export default {
+export const messages = {
   'plan.phraseFree': { ar: "الخطة المجانية", en: "the free plan" },
   'plan.phrase': { ar: "خطة {name}", en: "the {name} plan" },
   'quota.readOnly': { ar: "مساحتك للقراءة فقط حالياً — جدّد الاشتراك لاستئناف التعديل.", en: "Your workspace is read-only right now — renew your subscription to keep editing." },
@@ -27,4 +27,21 @@ export default {
   'usage.images': { ar: "الصور", en: "Images" },
   'usage.storageSpace': { ar: "مساحة الصور", en: "Image storage" },
   'usage.members': { ar: "الأعضاء", en: "Members" },
+  'planUi.membersCustom': { ar: "أعضاء حسب الاتفاق", en: "Members by agreement" },
+  'planUi.members': { ar: { one: "عضو واحد", two: "عضوان", few: "{count} أعضاء", many: "{count} عضواً", other: "{count} عضو" }, en: { one: "{count} member", other: "{count} members" } },
+  'planUi.customLimits': { ar: "حدود مخصصة", en: "Custom limits" },
+  'planUi.billingCycle': { ar: "دورة الفوترة", en: "Billing cycle" },
+  'planUi.monthly': { ar: "شهري", en: "Monthly" },
+  'planUi.yearly': { ar: "سنوي", en: "Yearly" },
+  'planUi.free': { ar: "مجاناً", en: "Free" },
+  'planUi.perYear': { ar: "ريال / سنة", en: "SAR / year" },
+  'planUi.perMonth': { ar: "ريال / شهر", en: "SAR / month" },
+  'planUi.storageCustom': { ar: "تخزين حسب الاتفاق", en: "Storage by agreement" },
+  'planUi.storageFor': { ar: "{size} للصور", en: "{size} for photos" },
+  'planUi.current': { ar: "خطتك الحالية", en: "Your current plan" },
+  'planUi.contact': { ar: "تواصل معنا", en: "Contact us" },
+  'planUi.choose': { ar: "اختر {name}", en: "Choose {name}" },
+  'planUi.dataSafe': { ar: "بياناتك تبقى كما هي في كل الأحوال — تغيير الخطة لا يحذف أي قطعة.", en: "Your data stays as it is either way — changing plans never deletes an item." },
+  'planUi.enterpriseContact': { ar: "راسلنا على {email} لترتيب خطة المؤسسات", en: "Email us at {email} to arrange an Enterprise plan" },
+  'planUi.paymentPending': { ar: "الدفع الإلكتروني قيد التفعيل — راسلنا لتفعيل خطتك يدوياً", en: "Online payment is coming soon — email us to activate your plan manually" },
 };

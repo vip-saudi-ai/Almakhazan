@@ -1,6 +1,6 @@
 // Error messages.
 
-export default {
+export const messages = {
   'error.repo/conflict': { ar: "عُدّلت هذه القطعة على جهاز آخر", en: "This item was changed on another device" },
   'error.plan/item-limit.remaining': { ar: "يتبقى في خطتك {remaining} قطعة فقط، بينما تتطلب العملية إضافة {requested} قطعة.", en: { one: "Your plan has room for only {remaining} more item, and this needs {requested}.", other: "Your plan has room for only {remaining} more items, and this needs {requested}." } },
   'error.plan/item-limit.full': { ar: "اكتمل حد خطتك ({limit} قطعة). احذف ما لم يعد يلزمك أو ارفع الخطة لإضافة المزيد.", en: "Your plan is full ({limit} items). Delete what you no longer need or upgrade to add more." },

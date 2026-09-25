@@ -157,7 +157,7 @@ function renderImages() {
             title: $('f-name')?.value || '',
             actions: [
               {
-                label: t('form.makePrimary'),
+                get label() { return t('form.makePrimary'); },
                 onSelect: (selected) => { form.primaryImageId = selected.id; renderImages(); refreshAiPanel(); },
               },
             ],

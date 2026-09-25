@@ -3,7 +3,7 @@
 // categories and locations). Stored values never change with the language —
 // these are only how they are shown.
 
-export default {
+export const messages = {
   'app.documentTitle': { ar: 'نَظْم — الجرد الذكي للمقتنيات والأصول', en: 'NAZM — Smart Inventory for Collections and Assets' },
   'app.metaDescription': { ar: 'وثّق ونظّم مقتنياتك ومخزونك وأصولك بذكاء.', en: 'Document and organize your collections, inventory and assets intelligently.' },
   'app.brand': { ar: 'نَظْم', en: 'NAZM' },
@@ -41,6 +41,7 @@ export default {
   'common.working': { ar: 'جارٍ التنفيذ…', en: 'Working…' },
   'common.saving': { ar: 'جارٍ الحفظ…', en: 'Saving…' },
   'common.item': { ar: 'قطعة', en: 'Item' },
+  'common.listSeparator': { ar: '، ', en: ', ' },
   'common.unknownError': { ar: 'حدث خطأ', en: 'Something went wrong' },
   'common.noEmail': { ar: 'بلا بريد', en: 'No email' },
 
