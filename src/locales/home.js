@@ -70,6 +70,6 @@ export const messages = {
   'page.next': { ar: "الصفحة التالية", en: "Next page" },
   'page.number': { ar: "صفحة {page}", en: "Page {page}" },
   'folder.edit': { ar: "تعديل المجلد", en: "Edit folder" },
-  'nav.backToInventory': { ar: "‹ المخزون", en: "‹ Inventory" },
+  'nav.backToInventory': { ar: "المخزون", en: "Inventory" },
   'sync.labelShort': { ar: "حالة المزامنة", en: "Sync status" },
 };

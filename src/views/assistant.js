@@ -310,7 +310,9 @@ function duplicatesScreen(health) {
   const groups = (health.duplicates || []).filter((group) => !dismissed.has(group.key));
   return [
     el('div', { class: 'asec-nav' }, [
-      el('button', { class: 'nback', type: 'button', text: t('assistant.back'), onClick: () => { state.screen = 'home'; renderAssistant(); } }),
+      el('button', { class: 'nback', type: 'button', onClick: () => { state.screen = 'home'; renderAssistant(); } }, [
+        icon('nav-back', { size: 18 }), el('span', { text: t('assistant.back') }),
+      ]),
     ]),
     el('section', { class: 'asec gl' }, [
       el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.rowDuplicates') })]),

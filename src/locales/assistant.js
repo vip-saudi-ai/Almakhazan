@@ -68,7 +68,7 @@ export const messages = {
   'assistant.cleanupSub': { ar: "مرتّبة حسب أثرها على جودة التوثيق.", en: "Ordered by their effect on documentation quality." },
   'assistant.highPriority': { ar: "أولوية عالية", en: "High priority" },
   'assistant.points': { ar: { other: "+{count} نقطة" }, en: { one: "+{count} point", other: "+{count} points" } },
-  'assistant.back': { ar: "‹ المساعد", en: "‹ Assistant" },
+  'assistant.back': { ar: "المساعد", en: "Assistant" },
   'assistant.dupSub': { ar: "راجع التشابه بنفسك — لا يُدمج أي سجل تلقائياً.", en: "Review the similarity yourself — no record is ever merged automatically." },
   'assistant.dupNone': { ar: "لا توجد تكرارات محتملة.", en: "No possible duplicates." },
   'assistant.dupNoneSub': { ar: "لم نجد سجلين يتطابقان في الرقم التسلسلي أو الباركود أو الرمز أو الاسم.", en: "No two records share a serial number, barcode, SKU or name." },

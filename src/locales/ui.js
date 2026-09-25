@@ -29,7 +29,7 @@ export const messages = {
   'home.listView': { ar: "عرض قائمة", en: "List view" },
   'home.pagination': { ar: "تنقل بين الصفحات", en: "Pages" },
   'nav.overview': { ar: "نظرة عامة", en: "Overview" },
-  'nav.backToSettings': { ar: "‹ الإعدادات", en: "‹ Settings" },
+  'nav.backToSettings': { ar: "الإعدادات", en: "Settings" },
   'nav.categories': { ar: "التصنيفات", en: "Categories" },
   'nav.settings': { ar: "الإعدادات", en: "Settings" },
   'nav.inventory': { ar: "المخزون", en: "Inventory" },

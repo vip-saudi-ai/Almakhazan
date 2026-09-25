@@ -476,6 +476,123 @@ function __realInitializeFirebase() {`);
   await ctx.close();
 }
 
+// ── direction lives in the layout, not in the words (final RTL/LTR pass) ──
+{
+  const ctx = await context();
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await ready(page);
+  const { itemId, folderId } = await page.evaluate(async () => {
+    const { repository } = await import('/src/repository.js');
+    const folder = await repository.saveFolder({ name: 'Archive' });
+    const item = await repository.createItem({ name: 'Brass lamp', quantity: 1 });
+    return { itemId: item.id, folderId: folder.id };
+  });
+  await page.waitForFunction(async (id) => {
+    const { repository } = await import('/src/repository.js');
+    return repository.state.folders.some((f) => f.id === id);
+  }, folderId, { timeout: 10000 });
+
+  // The action sheet's rows follow the reading direction.
+  const actionSheet = async () => {
+    await page.evaluate(async (id) => (await import('/src/views/home.js')).openContextMenu(id), itemId);
+    await page.waitForTimeout(400);
+    const result = await page.evaluate(() => {
+      const button = document.querySelector('.ctx-as-btn');
+      const label = button?.querySelector('.ctx-as-lbl');
+      const icon = button?.querySelector('.ctx-as-ico');
+      const b = button.getBoundingClientRect(); const l = label.getBoundingClientRect(); const i = icon.getBoundingClientRect();
+      return {
+        align: getComputedStyle(button).textAlign,
+        direction: getComputedStyle(button).direction,
+        iconSide: i.left < l.left ? 'left' : 'right',
+        labelNearStart: document.documentElement.dir === 'rtl' ? b.right - l.right < 80 : l.left - b.left < 80,
+        cancelAlign: getComputedStyle(document.querySelector('.ctx-as-cancel-btn')).textAlign,
+      };
+    });
+    await page.evaluate(async () => (await import('/src/views/home.js')).closeContextMenu());
+    await page.waitForTimeout(250);
+    return result;
+  };
+  const arSheet = await actionSheet();
+  check('LR1 Arabic action sheet: rows start at the right, the icon leading on the right, Cancel still centred',
+    arSheet.align === 'start' && arSheet.direction === 'rtl' && arSheet.iconSide === 'right' && arSheet.labelNearStart && arSheet.cancelAlign === 'center',
+    JSON.stringify(arSheet));
+  await setLanguage(page, 'en');
+  const enSheet = await actionSheet();
+  check('LR2 English action sheet: rows start at the left, the icon leading on the left, Cancel still centred',
+    enSheet.align === 'start' && enSheet.direction === 'ltr' && enSheet.iconSide === 'left' && enSheet.labelNearStart && enSheet.cancelAlign === 'center',
+    JSON.stringify(enSheet));
+
+  // A back button is an icon and a word, and the icon turns with the page.
+  const backButton = (selector) => page.evaluate((selector) => {
+    const button = document.querySelector(selector);
+    if (!button || button.offsetParent === null) return null;
+    const svg = button.querySelector('svg');
+    const path = svg.querySelector('path').getAttribute('d');
+    const matrix = new DOMMatrix(getComputedStyle(svg).transform);
+    // The path is drawn pointing right (">"); a mirrored matrix turns it left.
+    const points = matrix.a < 0 ? 'left' : 'right';
+    const text = button.textContent.trim();
+    return {
+      points, text, hidden: svg.getAttribute('aria-hidden'), path,
+      glyph: /[\u2039\u203A\u2190\u2192]/.test(button.textContent),
+      name: (button.getAttribute('aria-label') || button.innerText).trim(),
+    };
+  }, selector);
+
+  await page.evaluate(async (id) => (await import('/src/views/home.js')).enterFolder(id), folderId);
+  await page.waitForSelector('#v-home .nback', { state: 'visible', timeout: 10000 });
+  const folderEn = await backButton('#v-home .nback');
+  check('LR3 English: the folder back button points left, reads "Inventory", has no arrow character, icon hidden',
+    folderEn && folderEn.points === 'left' && folderEn.text === 'Inventory' && folderEn.name === 'Inventory' && !folderEn.glyph && folderEn.hidden === 'true',
+    JSON.stringify(folderEn));
+  const selection = await page.evaluate(async () => (await import('/src/views/home.js')).view.folderId);
+  await setLanguage(page, 'ar');
+  await page.waitForTimeout(400);
+  const folderAr = await backButton('#v-home .nback');
+  const stillIn = await page.evaluate(async () => (await import('/src/views/home.js')).view.folderId);
+  check('LR4 switching to Arabic with the folder open: the chevron turns right, the label is Arabic, the folder stays open',
+    folderAr && folderAr.points === 'right' && folderAr.text === 'المخزون' && !folderAr.glyph && stillIn === selection && stillIn === folderId,
+    JSON.stringify({ folderAr, stillIn }));
+  await page.evaluate(async () => (await import('/src/views/home.js')).exitFolder());
+
+  // The static one (Categories → Settings) and the assistant's.
+  await page.evaluate(async () => (await import('/src/navigation.js')).goTab('cats'));
+  await page.waitForTimeout(300);
+  const catsAr = await backButton('#cats-back');
+  await setLanguage(page, 'en');
+  await page.waitForTimeout(300);
+  const catsEn = await backButton('#cats-back');
+  check('LR5 Categories back button: right + "الإعدادات" in Arabic, left + "Settings" in English',
+    catsAr?.points === 'right' && catsAr.text === 'الإعدادات' && catsEn?.points === 'left' && catsEn.text === 'Settings' && !catsEn.glyph,
+    JSON.stringify({ catsAr, catsEn }));
+
+  await page.evaluate(async () => (await import('/src/navigation.js')).goTab('ai'));
+  await page.waitForTimeout(300);
+  await page.click('.qa:nth-child(2)');
+  await page.waitForTimeout(300);
+  const aiEn = await backButton('#v-ai .nback');
+  await setLanguage(page, 'ar');
+  await page.waitForTimeout(300);
+  const aiAr = await backButton('#v-ai .nback');
+  check('LR6 Assistant back button: left + "Assistant" in English, right + "المساعد" in Arabic, same screen kept',
+    aiEn?.points === 'left' && aiEn.text === 'Assistant' && aiAr?.points === 'right' && aiAr.text === 'المساعد',
+    JSON.stringify({ aiEn, aiAr }));
+
+  // Arrows turn; nothing else does.
+  const unflipped = await page.evaluate(() => [...document.querySelectorAll('svg.nz-icon:not(.nz-dir)')]
+    .filter((svg) => new DOMMatrix(getComputedStyle(svg).transform).a < 0).length);
+  await setLanguage(page, 'en');
+  await page.waitForTimeout(200);
+  const unflippedEn = await page.evaluate(() => [...document.querySelectorAll('svg.nz-icon:not(.nz-dir)')]
+    .filter((svg) => new DOMMatrix(getComputedStyle(svg).transform).a < 0).length);
+  check('LR7 no non-directional icon is mirrored in either language', unflipped === 0 && unflippedEn === 0, JSON.stringify({ unflipped, unflippedEn }));
+  check('LR8 no errors', errs.length === 0, errs.slice(0, 3).join(' | '));
+  await ctx.close();
+}
+
 await browser.close();
 for (const line of pass) console.log(`  ✓ ${line}`);
 for (const line of fail) console.log(`  ✗ ${line}`);

@@ -37,6 +37,9 @@ const PATHS = {
   close: 'M6 6l12 12M18 6L6 18',
   back: 'M15 5l-7 7 7 7',
   forward: 'M9 5l7 7-7 7',
+  // The chevron of a back button: toward where the reader came from — right
+  // in Arabic, left in English (the LTR mirror below does the turning).
+  'nav-back': 'M9 5l7 7-7 7',
   up: 'M12 19V5M5 12l7-7 7 7',
   down: 'M12 5v14M19 12l-7 7-7-7',
   plus: 'M12 5v14M5 12h14',
@@ -90,7 +93,7 @@ export const ICON_NAMES = Object.keys(PATHS);
  *   name is worse than none.
  */
 /** Icons that point along the reading direction. */
-const DIRECTIONAL = new Set(['back', 'forward']);
+const DIRECTIONAL = new Set(['back', 'forward', 'nav-back']);
 
 export function icon(name, { size = 20, title = '', className = '', stroke = 1.8 } = {}) {
   const path = PATHS[name];

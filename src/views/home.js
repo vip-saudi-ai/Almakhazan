@@ -90,7 +90,13 @@ export function enterFolder(id) {
     view.folderId = id;
     view.page = 1;
     view.categoryPill = 'all';
-  }).then(() => $('hscroll')?.scrollTo(0, 0));
+  }).then(() => {
+    // The list is repainted by the answer; the chrome — the back button, the
+    // folder title bar, the stats row — belongs to the folder, not the answer,
+    // and is drawn from view.folderId (put back if the narrowing was refused).
+    renderChrome();
+    $('hscroll')?.scrollTo(0, 0);
+  });
 }
 
 export function exitFolder() {
@@ -1126,7 +1132,9 @@ function renderNavBar(folder) {
 
   if (folder) {
     render(bar, [
-      el('button', { class: 'nback', type: 'button', text: t('nav.backToInventory'), onClick: exitFolder }),
+      el('button', { class: 'nback', type: 'button', onClick: exitFolder }, [
+        icon('nav-back', { size: 18 }), el('span', { text: t('nav.backToInventory') }),
+      ]),
       actions,
     ]);
   } else {
