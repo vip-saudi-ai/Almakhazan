@@ -9,11 +9,13 @@
 // pointed at rather than the middle, panning a zoomed image never turns into
 // a page change, and a keyboard can do all of it.
 
+import { autoChooseLanguage } from './language-gate.mjs';
 const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
 const browser = await chromium.launch();
+autoChooseLanguage(browser);
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 

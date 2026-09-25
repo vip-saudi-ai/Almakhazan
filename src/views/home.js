@@ -29,9 +29,12 @@ import { onLanguageChange, t } from '../i18n.js';
 import { categoryName, conditionLabel, locationName, unitLabel } from '../labels.js';
 
 // A language switch redraws the sheets this screen owns if they are open —
-// from the state they already show, so a half-set filter is not lost.
+// from what their controls show *now*, not from what was last applied, so a
+// half-set filter survives. Nothing is applied and no query runs: the draft
+// stays a draft until the customer presses Apply. (The sort sheet has no
+// draft — a tap applies — so redrawing it from the view is exact.)
 onLanguageChange(() => {
-  if (isSheetOpen('filter')) openFilterSheet();
+  if (isSheetOpen('filter')) paintFilterSheet(captureFilterDraft());
   if (isSheetOpen('sort')) openSortSheet();
 });
 
@@ -253,7 +256,7 @@ function folderCard(folder, counts) {
       }),
     ]),
     el('div', { class: 'fld-card-name', dir: 'auto', text: folder.name }),
-    folder.description ? el('div', { class: 'fld-card-count', text: folder.description }) : null,
+    folder.description ? el('div', { class: 'fld-card-count', dir: 'auto', text: folder.description }) : null,
   ]);
 }
 
@@ -771,10 +774,10 @@ async function bulkExport() {
 async function bulkDelete() {
   const ids = selectedIds();
   const confirmed = await confirmAction({
-    title: t('bulk.trashTitle', { count: ids.length }),
-    message: t('bulk.trashMessage'),
+    titleKey: 'bulk.trashTitle', titleParams: { count: ids.length },
+    messageKey: 'bulk.trashMessage',
     icon: '🗑',
-    confirmLabel: t('bulk.trashConfirm'),
+    confirmLabelKey: 'bulk.trashConfirm',
   });
   if (!confirmed) return;
   await withBulkLock(async () => {
@@ -795,7 +798,7 @@ function pickOne(title, options, onPick) {
     class: 'srow srow-btn', type: 'button',
     onClick: () => { closeSheet('bulk'); setTimeout(() => onPick(option.value), 200); },
   }, [
-    el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', text: option.label })]),
+    el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', dir: 'auto', text: option.label })]),
     el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
   ])));
   openSheet('bulk');
@@ -1142,34 +1145,65 @@ function renderNavBar(folder) {
 }
 
 // ── filter + sort sheets ──
+
+/** Every control in the filter sheet, and the field of `view.filters` it edits. */
+const FILTER_CONTROLS = [
+  ['condition', 'fp-cond'],
+  ['folderId', 'fp-folder'],
+  ['locationId', 'fp-loc'],
+  ['ai', 'fp-ai'],
+  ['valuation', 'fp-price'],
+  ['currency', 'fp-currency'],
+];
+
+/**
+ * What the filter sheet's controls hold right now — applied or not. Values are
+ * the stable ids and codes the options carry, never their labels, so a folder
+ * or location is found again by id whatever language draws its name.
+ */
+function captureFilterDraft() {
+  const draft = { ...view.filters };
+  for (const [key, id] of FILTER_CONTROLS) {
+    const node = $(id);
+    if (node) draft[key] = node.value || '';
+  }
+  return draft;
+}
+
 export function openFilterSheet() {
+  paintFilterSheet(view.filters);
+  openSheet('filter');
+}
+
+/** Draws the filter controls showing `values`. Draws only: applies nothing. */
+function paintFilterSheet(values) {
   optionList($('fp-cond'), [
     { value: '', label: t('common.all') },
     ...CONDITIONS.map((c) => ({ value: c, label: conditionLabel(c) })),
-  ], view.filters.condition);
+  ], values.condition);
 
   optionList($('fp-folder'), [
     { value: '', label: t('common.all') },
     { value: '__root__', label: `📦 ${t('home.mainInventory')}` },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
-  ], view.filters.folderId);
+  ], values.folderId);
 
   optionList($('fp-loc'), [
     { value: '', label: t('common.all') },
     ...repository.state.locations.map((l) => ({ value: l.id, label: locationName(l) })),
-  ], view.filters.locationId);
+  ], values.locationId);
 
   optionList($('fp-ai'), [
     { value: '', label: t('common.all') },
     { value: 'yes', label: t('filter.analyzedOnly') },
     { value: 'no', label: t('filter.notAnalyzed') },
-  ], view.filters.ai);
+  ], values.ai);
 
   optionList($('fp-price'), [
     { value: '', label: t('common.all') },
     { value: 'yes', label: t('filter.hasValuation') },
     { value: 'no', label: t('filter.noValuation') },
-  ], view.filters.valuation);
+  ], values.valuation);
 
   // Offered only when there is more than one currency to choose between: on a
   // single-currency inventory — most of them — the control is a question with
@@ -1185,17 +1219,18 @@ export function openFilterSheet() {
       optionList($('fp-currency'), [
         { value: '', label: t('filter.allCurrencies') },
         ...present.map((code) => ({ value: code, label: `${currencySymbol(code)} ${code}` })),
-      ], view.filters.currency);
+      ], values.currency);
     }
   };
   paint(currenciesPresent(repository.liveItems()));
   void repository.currenciesPresent().then((present) => {
     if (!present) return;
-    const selected = view.filters.currency;
+    // Whatever the control holds when the answer arrives — the customer may
+    // have picked a currency meanwhile.
+    const selected = $('fp-currency')?.value || values.currency;
+    values = { ...values, currency: selected };
     paint(selected && !present.includes(selected) ? [...present, selected] : present);
   });
-
-  openSheet('filter');
 }
 
 export function applyFilterControls() {
@@ -1203,15 +1238,7 @@ export function applyFilterControls() {
 }
 
 function applyFilterControlsNow() {
-  view.filters = {
-    condition: $('fp-cond')?.value || '',
-    folderId: $('fp-folder')?.value || '',
-    locationId: $('fp-loc')?.value || '',
-    categoryId: '',
-    ai: $('fp-ai')?.value || '',
-    valuation: $('fp-price')?.value || '',
-    currency: $('fp-currency')?.value || '',
-  };
+  view.filters = { ...captureFilterDraft(), categoryId: '' };
   resetPage();
   syncFilterControls();
 }

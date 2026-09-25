@@ -63,6 +63,7 @@ function askBlock() {
       id: 'ask-input',
       class: 'ask-input',
       type: 'search',
+      dir: 'auto',
       value: state.question,
       // Not "ask anything": the engine answers a known set of questions, and
       // promising more than that is how a useful feature earns distrust.

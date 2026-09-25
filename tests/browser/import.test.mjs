@@ -17,8 +17,10 @@ const { chromium } = await import('playwright')
 
 const BASE = 'http://127.0.0.1:8123';
 import { planStub } from './plan-stub.mjs';
+import { autoChooseLanguage } from './language-gate.mjs';
 
 const browser = await chromium.launch();
+autoChooseLanguage(browser);
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 

@@ -320,7 +320,7 @@ export async function openMoveSheet(itemId, { version } = {}) {
         'aria-hidden': 'true',
       }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'mv-name', text: target.name }),
+        el('div', { class: 'mv-name', dir: 'auto', text: target.name }),
         count == null ? null : el('div', { class: 'mv-sub', text: t('count.items', { count }) }),
       ]),
       isCurrent ? el('div', { style: { color: 'var(--blue)', fontSize: '18px', fontWeight: '700' }, text: '✓' }) : null,
@@ -334,10 +334,10 @@ export async function deleteItemFlow(itemId, { version } = {}) {
   const { item } = await resolve(itemId);
   if (!item) return;
   const confirmed = await confirmAction({
-    title: t('detail.trashTitle', { name: item.name }),
-    message: t('detail.trashMessage'),
+    titleKey: 'detail.trashTitle', titleParams: { name: item.name },
+    messageKey: 'detail.trashMessage',
     icon: '🗑',
-    confirmLabel: t('bulk.trashConfirm'),
+    confirmLabelKey: 'bulk.trashConfirm',
   });
   if (!confirmed) return;
 

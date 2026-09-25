@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="lang-pending">
 <head>
 <meta charset="UTF-8">
 <!-- user-scalable / maximum-scale intentionally omitted so zoom stays available -->
@@ -28,7 +28,7 @@
 <meta property="og:image" content="public/brand/social/og-default.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<title>نَظْم — الجرد الذكي للمقتنيات والأصول</title>
+<title>NAZM | نَظْم</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="public/icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="public/icons/favicon-32.png" sizes="32x32">
@@ -40,6 +40,37 @@
 <link rel="stylesheet" href="styles/layout.css">
 </head>
 <body>
+<!-- The language gate: the first screen on every launch. Static, so it is
+     painted on the first frame; driven by src/boot-guard.js (a classic
+     script), so a choice works even before — or without — the app's modules.
+     Bilingual on purpose: a visitor must be able to find their language
+     without reading the other one. The text is filled from the i18n
+     dictionary (data-i18n-in="lang:key"); what is written here is only what
+     shows for the instant before the modules load. -->
+<section class="lang-gate" id="lang-gate" aria-labelledby="lg-title">
+  <div class="lg-panel">
+    <div class="lg-brand">
+      <svg class="lg-symbol" viewBox="0 0 96 96" width="64" height="64" aria-hidden="true" focusable="false"><defs><linearGradient id="lg-gradient" x1="8" y1="4" x2="88" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2563FF"/><stop offset="0.55" stop-color="#6366F1"/><stop offset="1" stop-color="#93C5FD"/></linearGradient></defs><rect x="4.75" y="4.75" width="86.5" height="86.5" rx="25" fill="none" stroke="url(#lg-gradient)" stroke-width="9.5"/><path d="M26.50 96.00 L26.50 33.50 A6.50 7.50 0 0 1 39.21 29.29 L75.00 82.01 L75.00 96.00 L66.37 96.00 L39.50 56.43 L39.50 96.00 Z" fill="url(#lg-gradient)"/></svg>
+      <p class="lg-names"><span lang="en" dir="ltr" data-i18n-in="en:languageGate.brand">NAZM</span><span class="lg-dot" aria-hidden="true">·</span><span lang="ar" dir="rtl" data-i18n-in="ar:languageGate.brand">نَظْم</span></p>
+    </div>
+    <h1 class="lg-title" id="lg-title">
+      <span class="lg-title-line" lang="en" dir="ltr" data-i18n-in="en:languageGate.title">Choose your language</span>
+      <span class="lg-title-line" lang="ar" dir="rtl" data-i18n-in="ar:languageGate.title">اختر اللغة</span>
+    </h1>
+    <div class="lg-options" role="group" aria-labelledby="lg-title">
+      <button class="lg-option" type="button" data-language="ar" lang="ar" dir="rtl">
+        <span class="lg-option-name" data-i18n-in="ar:languageGate.arabic">العربية</span>
+        <span class="lg-option-check" aria-hidden="true">✓</span>
+        <span class="lg-sr" id="lg-prev-ar" data-i18n-in="ar:languageGate.previous" hidden>اختيارك السابق</span>
+      </button>
+      <button class="lg-option" type="button" data-language="en" lang="en" dir="ltr">
+        <span class="lg-option-name" data-i18n-in="en:languageGate.english">English</span>
+        <span class="lg-option-check" aria-hidden="true">✓</span>
+        <span class="lg-sr" id="lg-prev-en" data-i18n-in="en:languageGate.previous" hidden>Your previous choice</span>
+      </button>
+    </div>
+  </div>
+</section>
 <div class="bg"><div class="orb o1"></div><div class="orb o2"></div></div>
 
 <div class="boot" id="boot">
@@ -66,11 +97,11 @@
     <div class="del-sub" id="del-sub" data-i18n-js>لا يمكن التراجع عن هذا الإجراء.</div>
     <div class="del-phrase-wrap" id="del-phrase-wrap" style="display:none">
       <label class="del-phrase-label" id="del-phrase-label" for="del-phrase"></label>
-      <input class="del-phrase" id="del-phrase" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input class="del-phrase" id="del-phrase" dir="auto" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
     <div class="del-actions">
       <button class="btn btn-s" id="del-cancel-btn" type="button" data-i18n="common.cancel">إلغاء</button>
-      <button class="btn btn-d del-go" id="del-confirm-btn" type="button" data-i18n="common.delete">حذف</button>
+      <button class="btn btn-d del-go" id="del-confirm-btn" type="button" data-i18n-js>حذف</button>
     </div>
   </div>
 </div>
@@ -107,7 +138,7 @@
       <div class="sbar gl" style="flex:1">
         <span class="sico" aria-hidden="true">⌕</span>
         <label class="visually-hidden" for="hsearch" data-i18n="search.label">بحث في المخزون</label>
-        <input id="hsearch" type="search" placeholder="بحث في المخزون…" autocomplete="off" data-i18n-attr="placeholder:search.placeholder">
+        <input id="hsearch" dir="auto" type="search" placeholder="بحث في المخزون…" autocomplete="off" data-i18n-attr="placeholder:search.placeholder">
         <button class="sclear" id="sclear" type="button" aria-label="مسح البحث" data-i18n-attr="aria-label:search.clear"><span aria-hidden="true" data-icon="close" data-icon-size="12"></span></button>
       </div>
       <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود" data-icon="scan" data-i18n-attr="aria-label:scan.title"></button>
@@ -282,13 +313,13 @@
 
     <div class="fsec">
       <div class="fstitle" data-i18n="form.infoSection">معلومات القطعة</div>
-      <div class="frow"><label for="f-name" data-i18n="field.name">الاسم</label><input id="f-name" placeholder="اسم القطعة" data-i18n-attr="placeholder:form.namePlaceholder"></div>
-      <div class="frow"><label for="f-sku" data-i18n="field.sku">الرمز SKU</label><input id="f-sku" placeholder="تلقائي" data-i18n-attr="placeholder:form.automatic"></div>
+      <div class="frow"><label for="f-name" data-i18n="field.name">الاسم</label><input id="f-name" dir="auto" placeholder="اسم القطعة" data-i18n-attr="placeholder:form.namePlaceholder"></div>
+      <div class="frow"><label for="f-sku" data-i18n="field.sku">الرمز SKU</label><input id="f-sku" dir="ltr" placeholder="تلقائي" data-i18n-attr="placeholder:form.automatic"></div>
       <!-- Not inputmode="numeric": a barcode is a string. Code 128 and QR carry
            letters and punctuation, and a numeric keypad made those unenterable
            on a phone. `autocapitalize`/`autocorrect` are off for the same
            reason a serial number is: the device must not improve it. -->
-      <div class="frow"><label for="f-barcode" data-i18n="field.barcode">الباركود</label><input id="f-barcode" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود" data-i18n-attr="aria-label:scan.title"><span aria-hidden="true" data-icon="scan"></span></button></div>
+      <div class="frow"><label for="f-barcode" data-i18n="field.barcode">الباركود</label><input id="f-barcode" dir="ltr" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود" data-i18n-attr="aria-label:scan.title"><span aria-hidden="true" data-icon="scan"></span></button></div>
     </div>
 
     <div class="fsec">
@@ -307,13 +338,13 @@
       </div>
       <div class="field-hint" id="f-qty-hint"></div>
       <div class="frow"><label for="f-cond" data-i18n="field.condition">الحالة</label><select id="f-cond"></select></div>
-      <div class="frow"><label for="f-brand" data-i18n="field.brand">البراند</label><input id="f-brand" placeholder="اسم البراند / الصانع" data-i18n-attr="placeholder:form.brandPlaceholder"></div>
+      <div class="frow"><label for="f-brand" data-i18n="field.brand">البراند</label><input id="f-brand" dir="auto" placeholder="اسم البراند / الصانع" data-i18n-attr="placeholder:form.brandPlaceholder"></div>
       <!-- The numbers stamped on the object. These are what an insurer, a
            police report or an auction catalogue asks for, and they are kept
            exactly as typed — "0042" is not 42. -->
-      <div class="frow"><label for="f-serial" data-i18n="field.serialNumber">الرقم التسلسلي</label><input id="f-serial" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"></div>
-      <div class="frow"><label for="f-model" data-i18n="field.modelNumber">رقم الموديل</label><input id="f-model" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"></div>
-      <div class="frow"><label for="f-ref" data-i18n="field.referenceNumber">الرقم المرجعي</label><input id="f-ref" placeholder="مرجعك الخاص، أو رقم البوليصة" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:form.referencePlaceholder"></div>
+      <div class="frow"><label for="f-serial" data-i18n="field.serialNumber">الرقم التسلسلي</label><input id="f-serial" dir="ltr" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"></div>
+      <div class="frow"><label for="f-model" data-i18n="field.modelNumber">رقم الموديل</label><input id="f-model" dir="ltr" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"></div>
+      <div class="frow"><label for="f-ref" data-i18n="field.referenceNumber">الرقم المرجعي</label><input id="f-ref" dir="ltr" placeholder="مرجعك الخاص، أو رقم البوليصة" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:form.referencePlaceholder"></div>
       <div class="frow">
         <label for="f-valuation" data-i18n="field.valuation">التقييم</label>
         <input id="f-valuation" inputmode="decimal" placeholder="5000 أو 5000-8000" data-i18n-attr="placeholder:form.valuationPlaceholder">
@@ -323,7 +354,7 @@
     </div>
 
     <div class="fsec" id="desc-manual-sec">
-      <div class="frow frowv"><label for="f-desc" data-i18n="field.descriptionNotes">الوصف / الملاحظات</label><textarea id="f-desc" placeholder="أي تفاصيل إضافية..." data-i18n-attr="placeholder:form.descriptionPlaceholder"></textarea></div>
+      <div class="frow frowv"><label for="f-desc" data-i18n="field.descriptionNotes">الوصف / الملاحظات</label><textarea id="f-desc" dir="auto" placeholder="أي تفاصيل إضافية..." data-i18n-attr="placeholder:form.descriptionPlaceholder"></textarea></div>
     </div>
   </div>
   <div class="shfoot">
@@ -362,8 +393,8 @@
   <div class="shhdr"><h2 class="shtitle" id="fldshtitle" data-i18n-js>مجلد جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec">
-      <div class="frow"><label for="fld-name" data-i18n="field.name">الاسم</label><input id="fld-name" placeholder="مثال: مجموعة الجد" data-i18n-attr="placeholder:folder.namePlaceholder"></div>
-      <div class="frow"><label for="fld-desc" data-i18n="field.description">الوصف</label><input id="fld-desc" placeholder="اختياري" data-i18n-attr="placeholder:common.optional"></div>
+      <div class="frow"><label for="fld-name" data-i18n="field.name">الاسم</label><input id="fld-name" dir="auto" placeholder="مثال: مجموعة الجد" data-i18n-attr="placeholder:folder.namePlaceholder"></div>
+      <div class="frow"><label for="fld-desc" data-i18n="field.description">الوصف</label><input id="fld-desc" dir="auto" placeholder="اختياري" data-i18n-attr="placeholder:common.optional"></div>
     </div>
     <div class="fstitle" data-i18n="field.icon">الأيقونة</div>
     <div class="pick-row" id="fldiclist" role="group" aria-label="أيقونة المجلد" data-i18n-attr="aria-label:folder.icon"></div>
@@ -390,7 +421,7 @@
   <div class="shhnd" aria-hidden="true"></div>
   <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title" data-i18n-js>تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
-    <div class="fsec"><div class="frow"><label for="cat-name" data-i18n="field.name">الاسم</label><input id="cat-name" placeholder="مثال: لوحات زيتية" data-i18n-attr="placeholder:category.namePlaceholder"></div></div>
+    <div class="fsec"><div class="frow"><label for="cat-name" data-i18n="field.name">الاسم</label><input id="cat-name" dir="auto" placeholder="مثال: لوحات زيتية" data-i18n-attr="placeholder:category.namePlaceholder"></div></div>
     <div class="fstitle" data-i18n="field.icon">الأيقونة</div>
     <div class="pick-row" id="caticolist" role="group" aria-label="أيقونة التصنيف" data-i18n-attr="aria-label:category.icon"></div>
   </div>
@@ -421,7 +452,7 @@
     <div class="fsec">
       <div class="frow">
         <label for="loc-name" data-i18n="location.new">موقع جديد</label>
-        <input id="loc-name" placeholder="مثال: الرف C" data-i18n-attr="placeholder:location.namePlaceholder">
+        <input id="loc-name" dir="auto" placeholder="مثال: الرف C" data-i18n-attr="placeholder:location.namePlaceholder">
         <button class="btn btn-p" id="loc-add" type="button" style="width:80px;flex-shrink:0;padding:8px" data-i18n="common.add">إضافة</button>
       </div>
     </div>

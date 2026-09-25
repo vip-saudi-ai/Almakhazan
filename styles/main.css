@@ -1297,3 +1297,69 @@ html:not([dir="rtl"]) .nz-dir{transform:scaleX(-1)}
 /* While a bulk write is committing, the action bar stops taking taps. The
    lock is in the handler — this is the part the customer can see. */
 body.bulk-busy .selbar-acts{opacity:.5;pointer-events:none}
+
+/* ── Bidirectional text entry ──
+   Customer prose (names, brands, descriptions, folder/category/location
+   names, search) carries dir="auto": Arabic typed in the English interface
+   runs right to left, English typed in the Arabic interface left to right.
+   An empty field has no text to decide from, and dir="auto" would then fall
+   back to left-to-right — so while the placeholder shows, the field follows
+   the interface instead, and the caret starts where the reader expects it.
+   Identifiers (SKU, barcode, serial, model, reference), email and password
+   are dir="ltr": they are read character by character and must never be
+   reordered. Their placeholder is ordinary interface text, so it too follows
+   the interface. Nothing here touches the stored characters. */
+html[dir="rtl"] :is(input, textarea)[dir="auto"]:placeholder-shown,
+html[dir="rtl"] input[dir="ltr"]:placeholder-shown { direction: rtl; }
+html[dir="ltr"] :is(input, textarea)[dir="auto"]:placeholder-shown { direction: ltr; }
+input[dir="ltr"]:not(:placeholder-shown) { unicode-bidi: isolate; }
+
+/* ── Language gate ──
+   The first screen on every launch. Until a language is chosen the page
+   carries `lang-pending`: the app shell, the boot overlay and the welcome gate
+   are not drawn (and not in the accessibility tree), so nothing flashes
+   underneath in the wrong language. Semantic tokens only, so light, dark and
+   the system theme all follow. Its own direction is fixed per element — the
+   Arabic option is right-to-left and the English one left-to-right whatever
+   the page's direction happens to be. */
+html.lang-pending .app,
+html.lang-pending .tbar,
+html.lang-pending .boot,
+html.lang-pending .gate,
+html.lang-pending .tstack { visibility: hidden; }
+html:not(.lang-pending) .lang-gate { display: none; }
+
+.lang-gate{position:fixed;inset:0;z-index:100;display:flex;overflow-y:auto;
+  background:var(--app-bg);color:var(--tp);font-family:var(--font);
+  padding:calc(env(safe-area-inset-top, 0px) + 24px) 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  animation:lg-in .18s ease-out}
+.lg-panel{margin:auto;width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.lg-brand{display:flex;flex-direction:column;align-items:center;gap:12px}
+.lg-symbol{display:block;width:64px;height:64px}
+.lg-names{margin:0;display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;letter-spacing:.02em;color:var(--tp)}
+.lg-dot{color:var(--tt)}
+.lg-title{margin:0;display:flex;flex-direction:column;gap:6px;font-weight:600;line-height:1.35}
+.lg-title-line{display:block;font-size:17px;color:var(--ts)}
+.lg-options{width:100%;display:flex;flex-direction:column;gap:12px}
+.lg-option{position:relative;width:100%;min-height:64px;display:flex;align-items:center;justify-content:center;
+  padding:14px 52px;border-radius:18px;border:1.5px solid var(--border-quiet);
+  background:var(--surface-card);color:var(--tp);font:inherit;font-size:20px;font-weight:700;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:border-color .12s,background-color .12s,transform .12s}
+.lg-option:hover{border-color:var(--brand)}
+.lg-option:active{transform:scale(.985)}
+.lg-option:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.lg-option.is-previous{border-color:var(--brand);background:var(--surface-raised)}
+.lg-option-check{position:absolute;inset-inline-end:20px;top:50%;transform:translateY(-50%);
+  font-size:16px;color:var(--brand);opacity:0}
+.lg-option.is-previous .lg-option-check{opacity:1}
+@media (min-width:768px){
+  .lg-panel{max-width:440px;gap:32px}
+  .lg-options{flex-direction:row}
+  .lg-option{min-height:88px;padding-inline:40px}
+}
+@keyframes lg-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .lang-gate{animation:none}
+  .lg-option{transition:none}
+  .lg-option:active{transform:none}
+}

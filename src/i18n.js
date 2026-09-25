@@ -125,6 +125,16 @@ export function t(key, params) {
 }
 
 /**
+ * The message for `key` in a named language, whatever the current one is —
+ * for the few places that show both languages at once (the language gate).
+ * No plurals, no parameters: those places show fixed words.
+ */
+export function translateIn(lang, key) {
+  const value = lookup(key, lang) ?? lookup(key, DEFAULT_LANGUAGE);
+  return typeof value === 'string' ? value : key;
+}
+
+/**
  * Data that carries its own translations — the plans, `{ ar, en }` — in the
  * current language, falling back to Arabic. Anything else is returned as is.
  */
@@ -205,11 +215,16 @@ export function applyDocumentLocale(root = globalThis.document) {
  * Static markup declares its text by key:
  *   data-i18n="key"                     → textContent
  *   data-i18n-attr="placeholder:key; aria-label:key; title:key"
+ *   data-i18n-in="en:key"               → textContent, always in that language
  */
 export function translateDom(root = globalThis.document) {
   if (!root?.querySelectorAll) return;
   for (const node of root.querySelectorAll('[data-i18n]')) {
     node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of root.querySelectorAll('[data-i18n-in]')) {
+    const [lang, key] = node.dataset.i18nIn.split(':');
+    if (LANGUAGES.includes(lang) && key) node.textContent = translateIn(lang, key);
   }
   for (const node of root.querySelectorAll('[data-i18n-attr]')) {
     for (const pair of node.dataset.i18nAttr.split(';')) {

@@ -13,12 +13,14 @@
 // directions.
 
 import { planStub } from './plan-stub.mjs';
+import { autoChooseLanguage } from './language-gate.mjs';
 
 const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
 
 const BASE = 'http://127.0.0.1:8123';
 const browser = await chromium.launch();
+autoChooseLanguage(browser);
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 const QUIET = /gstatic|ERR_|net::|firebase/;
@@ -94,11 +96,10 @@ let { page, errs } = await openPage(context);
   const title = await page.title();
   check('I3 the document title follows the language', !ARABIC.test(title), title);
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 30000 });
-  const early = await page.evaluate(() => document.documentElement.getAttribute('data-boot-lang') || document.documentElement.lang);
-  const after = await docLocale(page);
-  check('I4 the choice survives a reload', after.lang === 'en' && after.dir === 'ltr' && early === 'en', JSON.stringify({ ...after, early }));
+  // Every launch now starts at the language gate (language-gate.test.mjs
+  // covers it); what a reload keeps is the stored choice the gate highlights.
+  const stored = await page.evaluate(() => localStorage.getItem('nazm.language'));
+  check('I4 the choice is stored for the next launch', stored === 'en', String(stored));
 }
 
 // ── no Arabic left on the main screens in English (§118) ─────────────────

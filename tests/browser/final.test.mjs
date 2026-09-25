@@ -9,6 +9,7 @@
 
 import { mkdirSync } from 'node:fs';
 import { planStub } from './plan-stub.mjs';
+import { autoChooseLanguage } from './language-gate.mjs';
 
 const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
@@ -16,6 +17,7 @@ const { chromium } = await import('playwright')
 const BASE = 'http://127.0.0.1:8123';
 const SHOTS = process.env.SHOTS_DIR || '';
 const browser = await chromium.launch();
+autoChooseLanguage(browser);
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 const QUIET = /gstatic|ERR_|net::|firebase/;

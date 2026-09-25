@@ -90,7 +90,12 @@ function verificationScreen() {
 function field(id, label, type, placeholder, autocomplete) {
   return el('label', { class: 'gate-field', for: id }, [
     el('span', { class: 'gate-field-label', text: label }),
-    el('input', { id, type, placeholder, autocomplete, class: 'gate-input' }),
+    // A name is written in whatever language its owner writes it in; an email
+    // address and a password are machine strings and read left to right.
+    el('input', {
+      id, type, placeholder, autocomplete, class: 'gate-input',
+      dir: type === 'email' || type === 'password' ? 'ltr' : 'auto',
+    }),
   ]);
 }
 

@@ -177,10 +177,10 @@ function memberRow(member) {
 
 async function confirmRemove(member) {
   const confirmed = await confirmAction({
-    title: t('team.removeTitle'),
-    message: t('team.removeMessage', { name: member.displayName || member.email || t('team.thisMember') }),
+    titleKey: 'team.removeTitle',
+    message: () => t('team.removeMessage', { name: member.displayName || member.email || t('team.thisMember') }),
     icon: '⚠️',
-    confirmLabel: t('team.remove'),
+    confirmLabelKey: 'team.remove',
   });
   if (!confirmed) return;
   try {

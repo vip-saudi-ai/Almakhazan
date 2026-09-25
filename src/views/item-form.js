@@ -256,10 +256,10 @@ async function removeImage(imageId) {
   const image = form.images.find((i) => i.id === imageId);
   if (!image) return;
   const confirmed = await confirmAction({
-    title: t('form.removePhotoTitle'),
-    message: t('form.removePhotoMessage'),
+    titleKey: 'form.removePhotoTitle',
+    messageKey: 'form.removePhotoMessage',
     icon: '🖼',
-    confirmLabel: t('form.remove'),
+    confirmLabelKey: 'form.remove',
   });
   if (!confirmed) return;
 
@@ -766,10 +766,10 @@ async function saveItem() {
   const skuClash = await repository.skuConflict(sku, form.isNew ? null : form.itemId);
   if (skuClash) {
     const proceed = await confirmAction({
-      title: t('form.skuTakenTitle'),
-      message: t('form.skuTakenMessage', { sku, name: skuClash.name }),
+      titleKey: 'form.skuTakenTitle',
+      messageKey: 'form.skuTakenMessage', messageParams: { sku, name: skuClash.name },
       icon: '🔖',
-      confirmLabel: t('form.generateSku'),
+      confirmLabelKey: 'form.generateSku',
     });
     if (!proceed) return;
     $('f-sku').value = await repository.reserveUniqueSku();
@@ -779,10 +779,10 @@ async function saveItem() {
   const barcodeClash = barcode ? await repository.barcodeConflict(barcode, form.isNew ? null : form.itemId) : null;
   if (barcodeClash) {
     const proceed = await confirmAction({
-      title: t('form.barcodeTakenTitle'),
-      message: t('form.barcodeTakenMessage', { barcode, name: barcodeClash.name }),
+      titleKey: 'form.barcodeTakenTitle',
+      messageKey: 'form.barcodeTakenMessage', messageParams: { barcode, name: barcodeClash.name },
       icon: '⚠️',
-      confirmLabel: t('form.saveAnyway'),
+      confirmLabelKey: 'form.saveAnyway',
     });
     if (!proceed) return;
   }
@@ -845,10 +845,10 @@ async function saveItem() {
 
 async function handleConflict(error) {
   const keepMine = await confirmAction({
-    title: t('sync.conflict'),
-    message: t('form.conflictMessage'),
+    titleKey: 'sync.conflict',
+    messageKey: 'form.conflictMessage',
     icon: '⚠️',
-    confirmLabel: t('form.overwrite'),
+    confirmLabelKey: 'form.overwrite',
   });
 
   if (!keepMine) {

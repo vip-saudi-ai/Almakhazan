@@ -15,7 +15,7 @@ import { markInterruptedRestore } from './restore.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
-import { applyDocumentLocale, onLanguageChange, t } from './i18n.js';
+import { applyDocumentLocale, onLanguageChange, setLanguage, t } from './i18n.js';
 import { goTab, registerTab, renderActiveTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
 import { hydrateIcons } from './icons.js';
@@ -43,8 +43,31 @@ const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 
 // can distinguish "scripts never started" from "startup stalled".
 window.__almakhzanStarted = true;
 
+/**
+ * The language the customer picked on the language gate — the first screen of
+ * every launch (index.html #lang-gate, handled by src/boot-guard.js so it works
+ * before this module has even loaded). Resolves at once if the choice was made
+ * while the modules were still loading.
+ */
+function languageChosen() {
+  if (window.__nazmLanguageChoice) return Promise.resolve(window.__nazmLanguageChoice);
+  return new Promise((resolve) => {
+    window.addEventListener('nazm:language-chosen', (event) => resolve(event.detail), { once: true });
+  });
+}
+
 // ── boot ──
 async function boot() {
+  // Connecting to the cloud shows nothing, so it starts while the customer is
+  // still choosing. Everything that shows something — the boot screen, the
+  // welcome gate, a restore warning, the upload offer — waits for the choice,
+  // so it appears in the chosen language and direction.
+  const firebaseReady = initializeFirebase();
+
+  const lang = await languageChosen();
+  setLanguage(lang);
+  // setLanguage() does nothing when the language is unchanged; the document
+  // still needs its translated title, description and static text.
   applyDocumentLocale();
   showBootState(t('boot.starting'));
 
@@ -55,7 +78,7 @@ async function boot() {
     3000,
   );
   showBootState(t('boot.connecting'));
-  const firebase = await initializeFirebase();
+  const firebase = await firebaseReady;
   clearTimeout(slowNotice);
 
   showBootState(t('boot.account'));
@@ -260,10 +283,10 @@ async function offerLocalUpload() {
 
   const resuming = state.status === UploadState.FAILED || state.status === UploadState.IN_PROGRESS;
   const confirmed = await confirmAction({
-    title: t(resuming ? 'upload.resumeTitle' : 'upload.title'),
-    message: t('upload.message', { items: t('count.items', { count: summary.items }), images: t('count.images', { count: summary.images }) }),
+    titleKey: resuming ? 'upload.resumeTitle' : 'upload.title',
+    message: () => t('upload.message', { items: t('count.items', { count: summary.items }), images: t('count.images', { count: summary.images }) }),
     icon: '☁️',
-    confirmLabel: t(resuming ? 'upload.resume' : 'upload.confirm'),
+    confirmLabelKey: resuming ? 'upload.resume' : 'upload.confirm',
   });
   if (!confirmed) return;
 
@@ -348,7 +371,9 @@ function initializeUI() {
   onLanguageChange(() => {
     $('sort-label').textContent = t(`sort.${homeView.sortMode}`);
     renderSyncIndicator();
-    syncFilterControls();
+    // Not syncFilterControls(): that writes the *applied* filters back into
+    // the sheet's controls, and a sheet open mid-edit would lose its draft.
+    // The badge carries a number, which no language changes.
     renderActiveTab();
   });
 

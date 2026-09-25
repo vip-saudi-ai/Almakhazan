@@ -169,4 +169,9 @@ export const messages = {
   'language.ar': { ar: 'العربية', en: 'العربية' },
   'language.en': { ar: 'English', en: 'English' },
   'language.switch': { ar: 'تغيير اللغة', en: 'Change language' },
+  'languageGate.brand': { ar: "نَظْم", en: "NAZM" },
+  'languageGate.title': { ar: "اختر اللغة", en: "Choose your language" },
+  'languageGate.arabic': { ar: "العربية", en: "العربية" },
+  'languageGate.english': { ar: "English", en: "English" },
+  'languageGate.previous': { ar: "اختيارك السابق", en: "Your previous choice" },
 };

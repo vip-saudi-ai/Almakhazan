@@ -315,10 +315,11 @@ export async function openSpreadsheetImport(file) {
       // customer should choose rather than stumble into.
       const done = previous ? null : await findCompletedJob(fileFingerprint);
       if (done && !(await confirmAction({
-        title: t('simport.alreadyTitle'),
-        message: t('simport.alreadyMessage', { date: formatDate(done.updatedAt), count: done.written || 0 }),
+        titleKey: 'simport.alreadyTitle',
+        // A function, so the date is formatted in whichever language is on screen.
+        message: () => t('simport.alreadyMessage', { date: formatDate(done.updatedAt), count: done.written || 0 }),
         icon: '⚠️',
-        confirmLabel: t('simport.importAgain'),
+        confirmLabelKey: 'simport.importAgain',
       }))) {
         releaseImportMemory();
         return;

@@ -159,11 +159,23 @@ readable.
 ## Boot sequence
 
 ```
-initializeFirebase()      → ready | offline | unavailable | unconfigured
+language gate             → العربية | English   (every launch; nothing else is shown)
+  initializeFirebase()    → started in the background while the gate waits
+setLanguage(choice)       → lang, dir, title, static text
 initializeAuthentication()→ session (or signed-out)
 loadApplicationData()     → repository.start(cloud | local)
-initializeUI()
+initializeUI()            → home, or the welcome screen for a new cloud visitor
 ```
+
+The language gate (`#lang-gate` in index.html) is the first screen of every
+launch. It is static markup handled by the classic `src/boot-guard.js`, so it
+paints on the first frame and a choice works even before the modules load;
+`html.lang-pending` keeps the app shell, boot overlay and welcome screen out of
+sight (and out of the accessibility tree) until then. The stored choice
+(`nazm.language`) is only highlighted, never used to skip the gate. Nothing
+that speaks to the customer — the welcome screen, a restore warning, the
+upload offer, an error — is shown before the choice, so all of it appears in
+the chosen language. Switching later in Settings never brings the gate back.
 
 Every step is time-boxed. A slow CDN, a captive portal or an origin where
 Firebase cannot run (`file://`) resolves to local mode rather than a spinner

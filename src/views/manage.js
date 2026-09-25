@@ -151,10 +151,11 @@ async function deleteCategoryFlow(categoryId) {
 
   if (!usage) {
     const confirmed = await confirmAction({
-      title: t('category.deleteConfirm', { name: categoryName(category) }),
-      message: t('category.deleteEmpty'),
+      // categoryName() localises a seeded category, so it is asked again on a switch.
+      title: () => t('category.deleteConfirm', { name: categoryName(category) }),
+      messageKey: 'category.deleteEmpty',
       icon: '◈',
-      confirmLabel: t('common.delete'),
+      confirmLabelKey: 'common.delete',
     });
     if (!confirmed) return;
     try {
@@ -282,12 +283,10 @@ async function deleteFolderFlow() {
   const count = await repository.countItemsReferencing('folderId', folder.id);
 
   const confirmed = await confirmAction({
-    title: t('folder.deleteConfirm', { name: folder.name }),
-    message: count
-      ? t('folder.deleteMessage', { count })
-      : t('folder.empty'),
+    titleKey: 'folder.deleteConfirm', titleParams: { name: folder.name },
+    messageKey: count ? 'folder.deleteMessage' : 'folder.empty', messageParams: { count },
     icon: '📁',
-    confirmLabel: t('folder.delete'),
+    confirmLabelKey: 'folder.delete',
   });
   if (!confirmed) return;
 
@@ -305,12 +304,6 @@ async function deleteFolderFlow() {
 export function openLocationsSheet() {
   renderLocations();
   openSheet('loc');
-}
-
-/** "N قطعة", or an honest phrase when the number is not known. */
-async function describeCount() {
-  const counts = await repository.recordCounts();
-  return counts ? t('count.items', { count: counts.live }) : t('manage.everything');
 }
 
 function renderLocations() {
@@ -335,10 +328,10 @@ function renderLocations() {
             // off the loaded window.
             const exact = await repository.countItemsReferencing('locationId', location.id);
             const confirmed = await confirmAction({
-              title: t('location.deleteConfirm', { name: locationName(location) }),
-              message: exact ? t('location.deleteMessage', { count: exact }) : t('location.deleteEmpty'),
+              title: () => t('location.deleteConfirm', { name: locationName(location) }),
+              messageKey: exact ? 'location.deleteMessage' : 'location.deleteEmpty', messageParams: { count: exact },
               icon: '📍',
-              confirmLabel: t('common.delete'),
+              confirmLabelKey: 'common.delete',
             });
             if (!confirmed) return;
             try {
@@ -461,7 +454,7 @@ async function renderTrash() {
     return el('div', { class: 'litem trash-row' }, [
       thumb,
       el('div', { class: 'linfo' }, [
-        el('div', { class: 'lname', text: item.name || '—' }),
+        el('div', { class: 'lname', dir: 'auto', text: item.name || '—' }),
         el('div', { class: 'lsub', text: t('trash.deletedOn', { date: formatDate(item.deletedAt) }) }),
       ]),
       el('div', { class: 'trash-acts' }, [
@@ -482,10 +475,10 @@ async function renderTrash() {
           class: 'btn btn-d trash-btn', type: 'button', text: t('trash.purge'),
           onClick: async () => {
             const confirmed = await confirmAction({
-              title: t('trash.purgeTitle', { name: item.name }),
-              message: t('confirm.cannotUndo'),
+              titleKey: 'trash.purgeTitle', titleParams: { name: item.name },
+              messageKey: 'confirm.cannotUndo',
               icon: '⚠️',
-              confirmLabel: t('trash.purgeConfirm'),
+              confirmLabelKey: 'trash.purgeConfirm',
               requirePhrase: t('confirm.phraseDelete'),
             });
             if (!confirmed) return;
@@ -510,13 +503,13 @@ async function renderTrash() {
  * the only way forward offered is to edit the record and choose another.
  */
 async function resolveRestoreConflict(item, error) {
-  const message = t('trash.skuUsedBy', { sku: error.sku, name: error.conflictName || t('trash.anotherItem') });
+  const conflictMessage = () => t('trash.skuUsedBy', { sku: error.sku, name: error.conflictName || t('trash.anotherItem') });
   if (error.generated) {
     const renew = await confirmAction({
-      title: t('error.item/sku-conflict'),
-      message: `${message} ${t('trash.skuRenewHint')}`,
+      titleKey: 'error.item/sku-conflict',
+      message: () => `${conflictMessage()} ${t('trash.skuRenewHint')}`,
       icon: '🔖',
-      confirmLabel: t('trash.skuRenew'),
+      confirmLabelKey: 'trash.skuRenew',
     });
     if (!renew) return;
     try {
@@ -529,10 +522,10 @@ async function resolveRestoreConflict(item, error) {
     return;
   }
   const edit = await confirmAction({
-    title: t('error.item/sku-conflict'),
-    message: `${message} ${t('trash.skuEditHint')}`,
+    titleKey: 'error.item/sku-conflict',
+    message: () => `${conflictMessage()} ${t('trash.skuEditHint')}`,
     icon: '🔖',
-    confirmLabel: t('trash.editItem'),
+    confirmLabelKey: 'trash.editItem',
   });
   if (edit) {
     closeSheet('trash');
@@ -605,11 +598,12 @@ async function runImport(mode) {
   const data = pendingImport.data;
 
   if (mode === 'restore') {
+    const counts = await repository.recordCounts();
     const confirmed = await confirmAction({
-      title: t('backup.replaceTitle'),
-      message: t('backup.replaceMessage', { current: await describeCount() }),
+      titleKey: 'backup.replaceTitle',
+      message: () => t('backup.replaceMessage', { current: counts ? t('count.items', { count: counts.live }) : t('manage.everything') }),
       icon: '⚠️',
-      confirmLabel: t('backup.replace'),
+      confirmLabelKey: 'backup.replace',
       requirePhrase: t('confirm.phraseReplace'),
     });
     if (!confirmed) return;
@@ -690,10 +684,10 @@ export async function runFullJsonExport() {
     if (!restorable) {
       // Said now, not on the day the file is needed.
       void confirmAction({
-        title: t('export.oversizeTitle'),
-        message: t('export.oversizeMessage', { size: Math.ceil(bytes / 1048576), limit: MAX_BACKUP_FILE_BYTES / 1048576 }),
+        titleKey: 'export.oversizeTitle',
+        messageKey: 'export.oversizeMessage', messageParams: { size: Math.ceil(bytes / 1048576), limit: MAX_BACKUP_FILE_BYTES / 1048576 },
         icon: '⚠️',
-        confirmLabel: t('common.ok'),
+        confirmLabelKey: 'common.ok',
       });
       return true;
     }
@@ -784,11 +778,11 @@ function renderAuthPanel() {
       el('div', { class: 'auth-intro', text: t('auth.intro') }),
       el('div', { class: 'frow' }, [
         el('label', { for: 'auth-email', text: t('auth.email') }),
-        el('input', { id: 'auth-email', type: 'email', autocomplete: 'email', placeholder: 'name@example.com' }),
+        el('input', { id: 'auth-email', type: 'email', dir: 'ltr', autocomplete: 'email', placeholder: 'name@example.com' }),
       ]),
       el('div', { class: 'frow' }, [
         el('label', { for: 'auth-password', text: t('auth.password') }),
-        el('input', { id: 'auth-password', type: 'password', autocomplete: 'current-password', placeholder: '••••••••' }),
+        el('input', { id: 'auth-password', type: 'password', dir: 'ltr', autocomplete: 'current-password', placeholder: '••••••••' }),
       ]),
       el('div', { class: 'auth-actions' }, [
         el('button', {
@@ -825,7 +819,7 @@ function renderAuthPanel() {
     el('div', { class: 'srow' }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(52,199,89,.15)' }, text: '👤', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: session.user.displayName }),
+        el('div', { class: 'srowl', dir: 'auto', text: session.user.displayName }),
         el('div', { class: 'srowd', text: `${session.user.email || t('common.noEmail')} · ${roleLabel(session.role)}` }),
       ]),
     ]),
@@ -1097,12 +1091,12 @@ function renderDataPanel() {
         const items = (await repository.recordCounts())?.live ?? null;
         const folders = repository.state.folders.length;
         const confirmed = await confirmAction({
-          title: t('danger.clearTitle'),
-          message: items == null
+          titleKey: 'danger.clearTitle',
+          message: () => (items == null
             ? t('danger.clearMessageAll', { folders: t('count.folders', { count: folders }) })
-            : t('danger.clearMessage', { items: t('count.items', { count: items }), folders: t('count.folders', { count: folders }) }),
+            : t('danger.clearMessage', { items: t('count.items', { count: items }), folders: t('count.folders', { count: folders }) })),
           icon: '⚠️',
-          confirmLabel: t('danger.clearConfirm'),
+          confirmLabelKey: 'danger.clearConfirm',
           requirePhrase: t('confirm.phraseDeleteAll'),
         });
         if (!confirmed) return;

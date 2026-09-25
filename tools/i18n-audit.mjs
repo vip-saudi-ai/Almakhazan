@@ -85,6 +85,7 @@ for (const path of sources) {
   }
 }
 for (const m of html.matchAll(/data-i18n="([^"]+)"/g)) note(used, m[1], 'index.html');
+for (const m of html.matchAll(/data-i18n-in="(?:ar|en):([^"]+)"/g)) note(used, m[1], 'index.html');
 for (const m of html.matchAll(/data-i18n-attr="([^"]+)"/g)) {
   for (const part of m[1].split(';')) {
     const key = part.split(':')[1]?.trim();
@@ -100,6 +101,9 @@ const referenced = new Set();
 for (const key of Object.keys(MESSAGES)) {
   if (allSource.includes(`'${key}'`) || allSource.includes(`"${key}"`) || allSource.includes(`\`${key}\``)) referenced.add(key);
 }
+// Keys named in markup attributes (data-i18n, data-i18n-attr, data-i18n-in)
+// are used too, though never written as a quoted literal.
+for (const key of used.keys()) referenced.add(key);
 const dynamicPrefixes = [...dynamic.keys()];
 const unknownKeys = [...used].filter(([key]) => !(key in MESSAGES)).map(([key, where]) => `${key} — ${where}`);
 const unusedKeys = Object.keys(MESSAGES).filter((key) => !referenced.has(key)
@@ -169,7 +173,8 @@ html.split('\n').forEach((line, index) => {
   for (const m of stripped.matchAll(/<([a-z0-9-]+)([^>]*)>([^<]*[\u0600-\u06FF][^<]*)</gi)) {
     // data-i18n: translated by the document; data-i18n-js: a placeholder the
     // owning view overwrites before it is ever shown.
-    if (/data-i18n(-js)?[=\s>]/.test(m[2] + '>')) continue;
+    // data-i18n-in: a fixed-language text (the bilingual language gate).
+    if (/data-i18n(-js|-in)?[=\s>]/.test(m[2] + '>')) continue;
     if (/^(title|option)$/i.test(m[1]) && /data-i18n/.test(m[2])) continue;
     if (m[1].toLowerCase() === 'title') continue;
     htmlLeaks.push(`index.html:${index + 1}: text — ${m[3].trim().slice(0, 80)}`);

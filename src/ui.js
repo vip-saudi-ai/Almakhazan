@@ -4,7 +4,7 @@
 // Escape, and hand focus back to whatever opened them.
 
 import { handleViewerKey } from './views/image-viewer.js';
-import { t } from './i18n.js';
+import { onLanguageChange, t } from './i18n.js';
 import { $, appendChildren, describeError, el } from './utils.js';
 
 // ── toasts ──
@@ -139,6 +139,8 @@ export function bindSheetDismiss(name) {
 
 // ── destructive confirmation ──
 let confirmResolve = null;
+/** The open confirmation's descriptor, so a language switch can redraw it. */
+let currentConfirmation = null;
 
 /**
  * @param {{title: string, message: string, icon?: string, confirmLabel?: string,
@@ -152,14 +154,15 @@ export function confirmAction(options) {
   const button = $('del-confirm-btn');
   if (!dialog) return Promise.resolve(false);
 
-  $('del-title').textContent = options.title;
-  $('del-sub').textContent = options.message;
-  $('del-ico').textContent = options.icon || '🗑';
-  button.textContent = options.confirmLabel || t('common.delete');
-
+  // The phrase is fixed for as long as this dialog is open: a language
+  // switch half way through typing it must not move the goalposts. Only the
+  // instruction around it is re-translated.
   const phrase = options.requirePhrase || '';
+  currentConfirmation = { options, phrase };
+  paintConfirmation();
+
+  $('del-ico').textContent = options.icon || '🗑';
   wrap.style.display = phrase ? '' : 'none';
-  $('del-phrase-label').textContent = phrase ? t('confirm.typeToConfirm', { phrase }) : '';
   input.value = '';
   button.disabled = Boolean(phrase);
 
@@ -176,10 +179,40 @@ export function confirmAction(options) {
       dialog.classList.remove('open');
       dialog.setAttribute('aria-hidden', 'true');
       confirmResolve = null;
+      currentConfirmation = null;
       resolve(result);
     };
   });
 }
+
+/**
+ * The dialog's words, from its descriptor. Each of title, message and
+ * confirmLabel may be given as
+ *   - a key and params  (`titleKey`, `titleParams`)  — re-translated on a switch
+ *   - a function        (`title: () => …`)           — re-run on a switch
+ *   - a plain string    (`title: '…'`)               — shown as given
+ * Customer text belongs in params, where it is inserted as it is.
+ */
+function confirmText(options, name) {
+  const value = options[name];
+  if (typeof value === 'function') return value();
+  const key = options[`${name}Key`];
+  if (key) return t(key, options[`${name}Params`]);
+  return value ?? '';
+}
+
+function paintConfirmation() {
+  if (!currentConfirmation) return;
+  const { options, phrase } = currentConfirmation;
+  $('del-title').textContent = confirmText(options, 'title');
+  $('del-sub').textContent = confirmText(options, 'message');
+  $('del-confirm-btn').textContent = confirmText(options, 'confirmLabel') || t('common.delete');
+  $('del-phrase-label').textContent = phrase ? t('confirm.typeToConfirm', { phrase }) : '';
+}
+
+// Registered once, for whichever confirmation is open: a switch redraws it in
+// place — the promise, the typed phrase and the focus are left alone.
+onLanguageChange(() => paintConfirmation());
 
 export function resolveConfirm(result) {
   confirmResolve?.(result);
