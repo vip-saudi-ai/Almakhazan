@@ -110,15 +110,24 @@ refused. Closing it needs backend enforcement (a server-side write path or a
 rule that checks the usage counter transactionally). That is deliberately not
 built in the client, which is not the subscription authority.
 
-**Live SKU uniqueness is an application invariant, not a database one.**
-Add, edit, Trash restore, spreadsheet import, JSON merge and device→cloud
-upload all ask one engine (`findSkuConflicts` / `skuConflict`) before writing,
-and the spreadsheet import asks again at the commit. None of it is inside the
-write transaction, and the `sku` index is deliberately not unique (the Trash
-may hold a SKU a live record reuses; older data may already contain
-duplicates). Two devices writing the same new SKU in the same instant can
-both pass. The dev integrity check (`src/integrity.js`) reports duplicate live
-SKUs; nothing repairs them automatically.
+**Live SKU uniqueness: guaranteed on the device, prechecked in the cloud.**
+On the device (IndexedDB) the rule is enforced inside the write transaction
+(`assertLiveSkusInStore` in `src/repository.js`): create, edit, restore from
+the Trash and every batch (import chunks, merge, bulk edits) check the final
+state of every record they touch against the `sku` index in the same
+transaction, so two tabs cannot both commit the same live SKU. The `sku`
+index stays non-unique on purpose (the Trash may hold a SKU a live record
+reuses; older data may already hold duplicates).
+
+In the cloud there are only prechecks (`skuConflict`, `findSkuConflicts`) —
+queries cannot run inside a Firestore client transaction — so two devices
+writing the same new SKU in the same instant can both pass. The recommended
+fix: a claim document per SKU, `skuClaims/<hash of normalized SKU>` holding
+the owning item id, created or moved in the same transaction as the item
+write (and released when the item goes to the Trash), with a rule that a
+claim can be created only when absent. The dev integrity check
+(`src/integrity.js`) reports duplicate live SKUs; nothing repairs them
+automatically.
 
 **Generated SKU counters in the cloud** are per year (`counters/sku-<year>`),
 reserved in a Firestore transaction. The rule allows a forward jump so the

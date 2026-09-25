@@ -105,6 +105,80 @@ async function assertLiveRoom(itemsStore, limit, adds) {
   if (used + adds > limit) throw capacityError({ limit, used, requested: adds });
 }
 
+/**
+ * The live-SKU invariant, enforced inside the IndexedDB transaction that
+ * writes: after the commit, no two live records share a non-empty SKU.
+ *
+ * `affected` is every item record the transaction touches, each with its
+ * FINAL state (`null` when the transaction deletes it). Checking final states
+ * rather than one write at a time is what lets an atomic batch swap two SKUs
+ * (A→B, B→A), and what catches two new records in the same batch claiming the
+ * same SKU before either exists in the index.
+ *
+ *   · among the affected records: two live finals with the same SKU → conflict
+ *   · against the rest of the store: a record whose final live SKU is newly
+ *     claimed (new record, restored from the Trash, or SKU changed) is looked
+ *     up in the `sku` index — in THIS transaction, so nothing can commit in
+ *     between — and any live record not itself affected is a conflict.
+ *
+ * A record that keeps the live SKU it already had is not looked up: it owns
+ * it already, and a bulk move of five thousand records costs no index reads.
+ * Trashed records never block. Values are compared through `normalizeSku`,
+ * the same definition every precheck uses. The prechecks
+ * (`skuConflict`, `findSkuConflicts`) are for the screen; this is the guarantee.
+ *
+ * @param {IDBObjectStore} itemsStore  the items store of the active transaction
+ * @param {Array<{id: string, before: object|null, after: object|null}>} affected
+ * @throws {AppError} `repo/sku-conflict` with `{sku, id, existingId, existingName}`
+ */
+async function assertLiveSkusInStore(itemsStore, affected) {
+  const affectedIds = new Set(affected.map((entry) => entry.id));
+  const owners = new Map();
+  const toLookUp = [];
+  for (const { id, before, after } of affected) {
+    if (!after || after.deletedAt) continue;
+    const sku = normalizeSku(after.sku);
+    if (!sku) continue;
+    const other = owners.get(sku);
+    if (other && other !== id) throw skuConflictError({ sku, id, existingId: other });
+    owners.set(sku, id);
+    const alreadyOwned = before && !before.deletedAt && normalizeSku(before.sku) === sku;
+    if (!alreadyOwned) toLookUp.push({ id, sku, raw: after.sku });
+  }
+  if (!toLookUp.length) return;
+  const index = itemsStore.index('sku');
+  const found = await Promise.all(toLookUp.map(async (entry) => {
+    const keys = entry.raw && entry.raw !== entry.sku ? [entry.sku, entry.raw] : [entry.sku];
+    const rows = (await Promise.all(keys.map((key) => local.request(index.getAll(IDBKeyRange.only(key)))))).flat();
+    return { entry, rows };
+  }));
+  for (const { entry, rows } of found) {
+    const clash = rows.find((row) => !row.deletedAt && !affectedIds.has(row.id));
+    if (clash) throw skuConflictError({ sku: entry.sku, id: entry.id, existingId: clash.id, existingName: clash.name });
+  }
+}
+
+function skuConflictError({ sku, id, existingId, existingName = '' }) {
+  return new AppError('الرمز SKU مستخدم على قطعة أخرى.', {
+    code: 'repo/sku-conflict', sku, id, existingId, existingName,
+  });
+}
+
+/**
+ * Each item record's state before and after a batch, keyed by id — the last
+ * operation on an id decides its final state, as it would in the store.
+ */
+function finalItemStates(plan) {
+  const byId = new Map();
+  for (const { op, existing } of plan) {
+    if (op.collection !== 'items' || (op.type !== 'set' && op.type !== 'delete')) continue;
+    const entry = byId.get(op.id) || { id: op.id, before: existing || null, after: existing || null };
+    entry.after = op.type === 'delete' ? null : { ...(op.merge !== false ? entry.after : null), ...op.data, id: op.id };
+    byId.set(op.id, entry);
+  }
+  return [...byId.values()];
+}
+
 /** Keyed reads per transaction or per round of requests. Bounded, so a
  *  selection of five thousand is fifty short reads, not one unbounded fan-out. */
 const KEYED_BATCH = 100;
@@ -624,13 +698,17 @@ export class LocalBackend {
 
   async create(name, record, { liveLimit = null } = {}) {
     const row = { ...record, createdAt: record.createdAt || Date.now(), updatedAt: Date.now(), version: 1 };
-    if (liveLimit == null || name !== 'items') {
+    if (name !== 'items') {
       await local.put(name, row);
     } else {
-      // The count and the write in one transaction: see `assertLiveRoom`.
+      // Capacity, SKU and the write in one transaction: nothing can commit
+      // between the checks and the put, and a refusal writes nothing.
       await local.transaction(name, 'readwrite', async (stores) => {
-        await assertLiveRoom(stores[name], liveLimit, 1);
-        await local.request(stores[name].put(row));
+        const store = stores[name];
+        if (liveLimit != null) await assertLiveRoom(store, liveLimit, 1);
+        const before = (await local.request(store.get(row.id))) || null;
+        await assertLiveSkusInStore(store, [{ id: row.id, before, after: row }]);
+        await local.request(store.put(row));
       });
     }
     await this._notify(name);
@@ -650,13 +728,16 @@ export class LocalBackend {
       if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
         throw new ConflictError(current);
       }
+      const next = { ...current, ...patch, updatedAt: Date.now(), version: (current.version ?? 1) + 1 };
       // A record coming back out of the Trash takes a live slot again.
-      if (liveLimit != null && current.deletedAt && !{ ...current, ...patch }.deletedAt) {
+      if (liveLimit != null && current.deletedAt && !next.deletedAt) {
         await assertLiveRoom(store, liveLimit, 1);
       }
-      await local.request(store.put({
-        ...current, ...patch, updatedAt: Date.now(), version: (current.version ?? 1) + 1,
-      }));
+      // An edit that changes the SKU, or a restore, claims it here — against
+      // whatever another tab committed a moment ago. Leaving for the Trash
+      // claims nothing.
+      if (name === 'items') await assertLiveSkusInStore(store, [{ id, before: current, after: next }]);
+      await local.request(store.put(next));
     });
     await this._notify(name);
   }
@@ -759,13 +840,18 @@ export class LocalBackend {
       const plan = [];
       for (const op of operations) {
         const store = stores[op.collection];
-        if (op.type === 'delete') { plan.push({ op }); continue; }
+        if (op.type === 'delete') {
+          plan.push({ op, existing: op.collection === 'items' ? await local.request(store.get(op.id)) : null });
+          continue;
+        }
         if (op.type !== 'set') continue;
+        // Items are always read: the SKU guard needs what each record was.
         const needsCurrent = op.merge !== false || op.expectedVersion != null || op.bumpVersion || op.ifAbsent
-          || (liveLimit != null && op.collection === 'items');
+          || op.collection === 'items';
         const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
         // A write that must never replace a record: read in this transaction,
-        // so nothing can appear between the check and the put.
+        // so nothing can appear between the check and the put. A skipped
+        // record claims nothing: its stored SKU is already its own.
         if (op.ifAbsent && existing) { skippedExisting.push(op.id); continue; }
         if (op.expectedVersion != null) {
           if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
@@ -786,6 +872,8 @@ export class LocalBackend {
         }
         if (adds) await assertLiveRoom(stores.items, liveLimit, adds);
       }
+
+      if (stores.items) await assertLiveSkusInStore(stores.items, finalItemStates(plan));
 
       // ── phase two: write ──
       for (const { op, existing } of plan) {
@@ -829,8 +917,8 @@ export class LocalBackend {
       const current = [];
       for (const op of operations) {
         const store = stores[op.collection];
-        const needsCurrent = op.type === 'set'
-          && (op.merge !== false || op.expectedVersion != null || op.bumpVersion);
+        const needsCurrent = op.collection === 'items'
+          || (op.type === 'set' && (op.merge !== false || op.expectedVersion != null || op.bumpVersion));
         const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
 
         if (op.expectedVersion != null) {
@@ -838,6 +926,11 @@ export class LocalBackend {
           if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
         }
         current.push(existing);
+      }
+
+      // The final state of every item the batch touches, checked as a whole.
+      if (stores.items) {
+        await assertLiveSkusInStore(stores.items, finalItemStates(operations.map((op, index) => ({ op, existing: current[index] }))));
       }
 
       // Phase two: write. Every check has passed.
@@ -1591,6 +1684,12 @@ class Repository {
   }
 
   /**
+   * The SKU prechecks (`skuConflict`, `findSkuConflicts`) are for the screen:
+   * they let the customer see a conflict before pressing save. On the device
+   * they are not the guarantee — the write transaction is (see
+   * `assertLiveSkusInStore`), so a tab that passed the check a moment before
+   * another tab committed the same SKU is still refused at its commit.
+   *
    * The SKU conflicts of a set of records about to become live — the batched
    * form of `skuConflict`, with the same rules, for the paths that create
    * many records at once (spreadsheet import, JSON merge).
