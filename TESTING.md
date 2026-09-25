@@ -121,7 +121,7 @@ and landscape, Arabic and English:
 | The billing webhook is tested against no live provider | no provider is connected yet (BILLING.md) |
 | The local-to-cloud image migration is reviewed, not run against a real bucket | it rewrites references; a bug loses photos |
 | App Check is not enabled | `enforceAppCheck: false` until a site key exists |
-| `recovery.test.mjs` stops at its continue-later step (`L3`) with "execution context was destroyed" although the page does not navigate | pre-existing — identical on the commit before the mobile pass; the steps before it pass |
+| `recovery.test.mjs` (step `L3`) and `authority.test.mjs` (section 9) intermittently stop with "execution context was destroyed" in an `evaluate` that opens the spreadsheet import with a `File`, although the page does not navigate | pre-existing — identical on the commit before the mobile pass; the steps before it pass |
 | No load test | server-side pagination lands first; testing the current shape would only measure a design that is being replaced |
 
 ## Adding a test
