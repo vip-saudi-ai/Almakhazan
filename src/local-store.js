@@ -113,7 +113,7 @@ function open() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
-      reject(new AppError('المتصفح لا يدعم التخزين المحلي', { code: 'idb/unsupported' }));
+      reject(new AppError('error.idb/unsupported', { code: 'idb/unsupported' }));
       return;
     }
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -142,10 +142,10 @@ function open() {
       };
       resolve(db);
     };
-    request.onerror = () => reject(new AppError('تعذّر فتح التخزين المحلي', {
+    request.onerror = () => reject(new AppError('error.idb/open', {
       code: 'idb/open-failed', cause: request.error,
     }));
-    request.onblocked = () => reject(new AppError('التخزين المحلي مشغول في تبويب آخر', {
+    request.onblocked = () => reject(new AppError('error.idb/blocked', {
       code: 'idb/blocked',
     }));
   });
@@ -155,13 +155,13 @@ function open() {
 /** A full quota is the common failure here, and it needs its own advice. */
 function storageError(cause, aborted = false) {
   if (cause?.name === 'QuotaExceededError') {
-    return new AppError('مساحة التخزين على هذا الجهاز ممتلئة — احذف صوراً أو سجّل الدخول للحفظ سحابياً', {
+    return new AppError('error.idb/quota', {
       code: 'idb/quota', cause,
     });
   }
   return new AppError(
-    aborted ? 'أُلغيت عملية التخزين المحلي' : `فشل الحفظ المحلي${cause?.name ? ` (${cause.name})` : ''}`,
-    { code: aborted ? 'idb/tx-aborted' : 'idb/tx-failed', cause },
+    aborted ? 'error.idb/tx-aborted' : 'error.idb/tx-failed',
+    { code: aborted ? 'idb/tx-aborted' : 'idb/tx-failed', cause, detail: cause?.name ? ` (${cause.name})` : '' },
   );
 }
 
@@ -410,7 +410,7 @@ export function reserveSkuSequence(year, floor = 0) {
     }
     const next = Math.max(last, Number(floor) || 0) + 1;
     if (next > GENERATED_SKU_MAX) {
-      throw new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+      throw new AppError('error.repo/sku-exhausted', { code: 'repo/sku-exhausted' });
     }
     await req(meta.put({ key, value: next }));
     return next;

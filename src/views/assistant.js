@@ -12,8 +12,9 @@
 
 import { icon } from '../icons.js';
 import { repository } from '../repository.js';
-import { BRAND } from '../brand.js';
-import { CAPABILITIES, SUGGESTIONS, askInventory } from '../ask.js';
+import { BRAND, assistantTitle } from '../brand.js';
+import { askInventory, capabilities, suggestions } from '../ask.js';
+import { onLanguageChange, t } from '../i18n.js';
 import { formatAmount } from '../money.js';
 import { cleanupTasks, inventoryHealth } from '../health.js';
 import { $, el, formatNumber, render } from '../utils.js';
@@ -64,14 +65,14 @@ function askBlock() {
       value: state.question,
       // Not "ask anything": the engine answers a known set of questions, and
       // promising more than that is how a useful feature earns distrust.
-      placeholder: 'اسأل عن مواقع القطع، حالتها، صورها، تصنيفاتها وتقييماتها…',
-      'aria-label': `اسأل ${BRAND.name}`,
+      placeholder: t('assistant.askPlaceholder'),
+      'aria-label': t('assistant.askTitle', { name: BRAND.name }),
       enterkeyhint: 'search',
     }),
-    el('button', { class: 'ask-go', type: 'submit', text: '↵', 'aria-label': 'اسأل' }),
+    el('button', { class: 'ask-go', type: 'submit', text: '↵', 'aria-label': t('assistant.askGo') }),
   ]);
 
-  const chips = el('div', { class: 'ask-chips' }, SUGGESTIONS.map((suggestion) => el('button', {
+  const chips = el('div', { class: 'ask-chips' }, suggestions().map((suggestion) => el('button', {
     class: 'ask-chip', type: 'button', text: suggestion,
     onClick: () => runQuestion(suggestion),
   })));
@@ -79,7 +80,7 @@ function askBlock() {
   return el('section', { class: 'asec gl' }, [
     el('div', { class: 'asec-head' }, [
       el('span', { class: 'asec-mark', text: '✦', 'aria-hidden': 'true' }),
-      el('h2', { class: 'asec-title', text: `اسأل ${BRAND.name}` }),
+      el('h2', { class: 'asec-title', text: t('assistant.askTitle', { name: BRAND.name }) }),
     ]),
     form,
     result ? answerBlock(result) : chips,
@@ -90,7 +91,7 @@ function answerBlock(result) {
   if (!result.understood) {
     return el('div', { class: 'ask-answer' }, [
       el('p', { class: 'ask-text', text: result.answer }),
-      el('div', { class: 'ask-caps' }, (result.capabilities || CAPABILITIES).map((cap) => el('button', {
+      el('div', { class: 'ask-caps' }, (result.capabilities || capabilities()).map((cap) => el('button', {
         class: 'ask-cap', type: 'button',
         onClick: () => runQuestion(cap.example),
       }, [
@@ -119,9 +120,9 @@ function answerBlock(result) {
     // A total is a list of totals. One per currency, each labelled — never a
     // single figure standing for several.
     result.kind === 'sum' && result.totals?.length
-      ? el('div', { class: 'ask-totals' }, result.totals.map((t) => el('div', { class: 'ask-total' }, [
-        el('div', { class: 'ask-total-val', text: formatAmount(t.total, t.currency) }),
-        el('div', { class: 'ask-total-sub', text: `${formatNumber(t.count)} قطعة` }),
+      ? el('div', { class: 'ask-totals' }, result.totals.map((total) => el('div', { class: 'ask-total' }, [
+        el('div', { class: 'ask-total-val', text: formatAmount(total.total, total.currency) }),
+        el('div', { class: 'ask-total-sub', text: t('count.items', { count: total.count }) }),
       ])))
       : null,
     el('p', { class: 'ask-text', text: result.answer }),
@@ -129,7 +130,7 @@ function answerBlock(result) {
     shown.length ? el('div', { class: 'ask-results' }, shown.map(resultCard)) : null,
     result.items.length > shown.length ? el('button', {
       class: 'ask-more', type: 'button',
-      text: `عرض كل النتائج (${formatNumber(result.items.length)})`,
+      text: t('assistant.showAll', { count: result.items.length }),
       onClick: () => showAll(result),
     }) : null,
   ]);
@@ -148,7 +149,7 @@ function resultCard(item) {
 
   const location = repository.location(item.locationId)?.name
     || repository.folder(item.folderId)?.name
-    || 'بلا موقع';
+    || t('assistant.noLocation');
 
   return el('button', {
     class: 'ask-result', type: 'button',
@@ -156,8 +157,8 @@ function resultCard(item) {
   }, [
     thumb,
     el('div', { class: 'ask-result-body' }, [
-      el('div', { class: 'ask-result-name', text: item.name || '—' }),
-      el('div', { class: 'ask-result-meta', text: location }),
+      el('div', { class: 'ask-result-name', text: item.name || '—', dir: 'auto' }),
+      el('div', { class: 'ask-result-meta', text: location, dir: 'auto' }),
     ]),
     item.valuation ? el('div', { class: 'ask-result-val', text: formatValuation(item.valuation, { compact: true }) }) : null,
     el('span', { class: 'ask-result-go', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
@@ -167,7 +168,7 @@ function resultCard(item) {
 /** Hands the answer to the inventory screen, which is built to show lists. */
 function showAll(result) {
   applyAssistantFilter({
-    label: result.title || 'نتائج المساعد',
+    label: result.title || t('assistant.results'),
     ids: result.items.map((item) => item.id),
   });
 }
@@ -181,7 +182,7 @@ function gauge(score, band) {
   svg.setAttribute('viewBox', '0 0 128 128');
   svg.setAttribute('class', 'health-gauge');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `درجة صحة المخزون ${score} من 100`);
+  svg.setAttribute('aria-label', t('assistant.gaugeLabel', { score }));
 
   const track = document.createElementNS(NS, 'circle');
   const value = document.createElementNS(NS, 'circle');
@@ -220,26 +221,26 @@ function signalRow(label, value, tone) {
 function healthBlock(health) {
   if (health.empty) {
     return el('section', { class: 'asec gl' }, [
-      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: 'صحة مخزونك' })]),
-      emptyState('◷', 'لا توجد قطع بعد.', 'أضف أول قطعة وستظهر درجة التوثيق هنا.'),
+      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.healthTitle') })]),
+      emptyState('◷', t('health.band.empty'), t('assistant.healthEmptySub')),
     ]);
   }
 
   const counts = health.counts;
   const rows = [
-    signalRow('موثّق بالصور', `${health.signals[0].percent}%`, health.signals[0].percent >= 80 ? 'ok' : 'warn'),
-    signalRow('محدد الموقع', `${health.signals[1].percent}%`, health.signals[1].percent >= 80 ? 'ok' : 'warn'),
-    counts.missingCategory ? signalRow('بدون تصنيف', formatNumber(counts.missingCategory), 'warn') : null,
-    counts.duplicates ? signalRow('تكرارات محتملة', formatNumber(counts.duplicateGroups), 'warn') : null,
-    counts.stale ? signalRow('لم تُراجع منذ سنة', formatNumber(counts.stale), 'warn') : null,
+    signalRow(t('health.signal.images'), `${health.signals[0].percent}%`, health.signals[0].percent >= 80 ? 'ok' : 'warn'),
+    signalRow(t('health.signal.location'), `${health.signals[1].percent}%`, health.signals[1].percent >= 80 ? 'ok' : 'warn'),
+    counts.missingCategory ? signalRow(t('assistant.rowNoCategory'), formatNumber(counts.missingCategory), 'warn') : null,
+    counts.duplicates ? signalRow(t('assistant.rowDuplicates'), formatNumber(counts.duplicateGroups), 'warn') : null,
+    counts.stale ? signalRow(t('assistant.rowStale'), formatNumber(counts.stale), 'warn') : null,
   ].filter(Boolean);
 
   return el('section', { class: 'asec gl' }, [
     el('div', { class: 'asec-head' }, [
-      el('h2', { class: 'asec-title', text: 'صحة مخزونك' }),
+      el('h2', { class: 'asec-title', text: t('assistant.healthTitle') }),
       el('button', {
-        class: 'asec-help', type: 'button', text: '؟', 'aria-label': 'كيف تُحسب الدرجة',
-        onClick: () => toast('الدرجة: 30% صور · 20% موقع · 15% تصنيف · 15% حالة · 10% حداثة المراجعة · 10% اكتمال البيانات', 'ℹ'),
+        class: 'asec-help', type: 'button', text: t('assistant.helpMark'), 'aria-label': t('assistant.howScored'),
+        onClick: () => toast(t('assistant.scoreFormula'), 'ℹ'),
       }),
     ]),
     gauge(health.score, health.band),
@@ -251,22 +252,22 @@ function healthBlock(health) {
 // ── cleanup ────────────────────────────────────────────────────────────────
 const ACTIONS = {
   'review-missing-images': (health) => applyAssistantFilter({
-    label: 'قطع بدون صور',
+    label: t('ask.titleNoImages'),
     ids: repository.liveItems().filter((i) => !i.images?.length).map((i) => i.id),
   }),
   'review-missing-category': () => applyAssistantFilter({
-    label: 'قطع بدون تصنيف',
+    label: t('ask.titleNoCategory'),
     ids: repository.liveItems().filter((i) => !i.categoryId || i.categoryId === 'uncategorized').map((i) => i.id),
   }),
   'review-missing-location': () => applyAssistantFilter({
-    label: 'قطع بدون موقع',
+    label: t('ask.titleNoLocation'),
     ids: repository.liveItems().filter((i) => !i.locationId).map((i) => i.id),
   }),
   'review-stale': () => {
     const year = 365 * 24 * 60 * 60 * 1000;
     const now = Date.now();
     applyAssistantFilter({
-      label: 'قطع لم تُراجع منذ سنة',
+      label: t('ask.titleStale'),
       ids: repository.liveItems().filter((i) => now - (i.updatedAt ?? 0) > year).map((i) => i.id),
     });
   },
@@ -277,22 +278,22 @@ function cleanupBlock(health) {
   const tasks = cleanupTasks(health);
   if (!tasks.length) {
     return el('section', { class: 'asec gl' }, [
-      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: 'اقتراحات التحسين' })]),
-      el('p', { class: 'ask-text', text: 'لا شيء عاجل — توثيقك في حالة جيدة.' }),
+      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.cleanupTitle') })]),
+      el('p', { class: 'ask-text', text: t('assistant.cleanupNone') }),
     ]);
   }
 
   return el('section', { class: 'asec gl' }, [
     el('div', { class: 'asec-head' }, [
-      el('h2', { class: 'asec-title', text: 'اقتراحات التحسين' }),
+      el('h2', { class: 'asec-title', text: t('assistant.cleanupTitle') }),
     ]),
-    el('p', { class: 'asec-sub', text: 'مرتّبة حسب أثرها على جودة التوثيق.' }),
+    el('p', { class: 'asec-sub', text: t('assistant.cleanupSub') }),
     el('div', { class: 'task-list' }, tasks.map((task) => el('div', { class: `task ${task.priority}` }, [
-      task.priority === 'high' ? el('div', { class: 'task-flag', text: 'أولوية عالية' }) : null,
+      task.priority === 'high' ? el('div', { class: 'task-flag', text: t('assistant.highPriority') }) : null,
       el('div', { class: 'task-title', text: task.title }),
       el('div', { class: 'task-detail', text: task.detail }),
       el('div', { class: 'task-foot' }, [
-        task.gain ? el('span', { class: 'task-gain', text: `+${task.gain} نقطة` }) : null,
+        task.gain ? el('span', { class: 'task-gain', text: t('assistant.points', { count: task.gain }) }) : null,
         el('button', {
           class: 'btn btn-s task-cta', type: 'button', text: task.cta,
           onClick: () => ACTIONS[task.action]?.(health),
@@ -307,14 +308,14 @@ function duplicatesScreen(health) {
   const groups = (health.duplicates || []).filter((group) => !dismissed.has(group.key));
   return [
     el('div', { class: 'asec-nav' }, [
-      el('button', { class: 'nback', type: 'button', text: '‹ المساعد', onClick: () => { state.screen = 'home'; renderAssistant(); } }),
+      el('button', { class: 'nback', type: 'button', text: t('assistant.back'), onClick: () => { state.screen = 'home'; renderAssistant(); } }),
     ]),
     el('section', { class: 'asec gl' }, [
-      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: 'تكرارات محتملة' })]),
-      el('p', { class: 'asec-sub', text: 'راجع التشابه بنفسك — لا يُدمج أي سجل تلقائياً.' }),
+      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.rowDuplicates') })]),
+      el('p', { class: 'asec-sub', text: t('assistant.dupSub') }),
       groups.length
         ? el('div', { class: 'dup-list' }, groups.map(duplicateGroup))
-        : emptyState('✓', 'لا توجد تكرارات محتملة.', 'لم نجد سجلين يتطابقان في الرقم التسلسلي أو الباركود أو الرمز أو الاسم.'),
+        : emptyState('✓', t('assistant.dupNone'), t('assistant.dupNoneSub')),
     ]),
   ];
 }
@@ -341,20 +342,20 @@ function duplicateGroup(group) {
       el('span', { class: 'dup-reason', text: group.reason }),
     ]),
     el('div', { class: 'dup-pair' }, [
-      duplicateSide(first, 'الأولى'),
-      second ? duplicateSide(second, 'الثانية') : null,
+      duplicateSide(first, t('assistant.dupFirst')),
+      second ? duplicateSide(second, t('assistant.dupSecond')) : null,
     ]),
     rest.length ? el('div', { class: 'dup-rest' }, rest.map(resultCard)) : null,
     el('div', { class: 'dup-acts' }, [
-      el('button', { class: 'chipbtn', type: 'button', text: 'فتح الأولى', onClick: () => openDetail(first.id) }),
-      second ? el('button', { class: 'chipbtn', type: 'button', text: 'فتح الثانية', onClick: () => openDetail(second.id) }) : null,
+      el('button', { class: 'chipbtn', type: 'button', text: t('assistant.openFirst'), onClick: () => openDetail(first.id) }),
+      second ? el('button', { class: 'chipbtn', type: 'button', text: t('assistant.openSecond'), onClick: () => openDetail(second.id) }) : null,
       second ? el('button', {
-        class: 'chipbtn', type: 'button', text: 'زيادة الكمية',
-        title: 'افتح الأولى لتعديل كميتها — لا يُدمج أي سجل تلقائياً',
+        class: 'chipbtn', type: 'button', text: t('assistant.addQuantity'),
+        title: t('assistant.addQuantityHint'),
         onClick: () => openItemForm({ itemId: first.id }),
       }) : null,
       el('button', {
-        class: 'chipbtn', type: 'button', text: 'الإبقاء كقطعتين منفصلتين',
+        class: 'chipbtn', type: 'button', text: t('assistant.keepSeparate'),
         onClick: () => { dismissed.add(group.key); renderAssistant(); },
       }),
     ]),
@@ -383,9 +384,9 @@ function quickActions() {
   ]);
 
   return el('div', { class: 'qa-row' }, [
-    action('image', 'أضف قطعة بالصورة', () => openItemForm({})),
-    action('duplicate', 'اكتشف التكرارات', () => { state.screen = 'duplicates'; renderAssistant(); }),
-    action('eye', 'القطع بلا صور', () => ACTIONS['review-missing-images']()),
+    action('image', t('assistant.qaPhoto'), () => openItemForm({})),
+    action('duplicate', t('assistant.qaDuplicates'), () => { state.screen = 'duplicates'; renderAssistant(); }),
+    action('eye', t('assistant.qaNoPhotos'), () => ACTIONS['review-missing-images']()),
   ]);
 }
 
@@ -415,7 +416,17 @@ export function bindAssistant() {
   render(bar, [
     el('div', { class: 'ntitle ntitle-brand' }, [
       symbolNode(26, { className: 'nazm-mark ntitle-mark' }),
-      `مساعد ${BRAND.name}`,
+      assistantTitle(),
     ]),
   ]);
 }
+
+// Language is presentation: the question stays as typed, and the answer is
+// worked out again so its words — not its items — follow the language.
+onLanguageChange(() => {
+  bindAssistant();
+  if (state.result) {
+    state.result = askInventory(state.question, { items: repository.liveItems(), lookups: lookups() });
+  }
+  if ($('ai-scroll')?.childElementCount) renderAssistant();
+});

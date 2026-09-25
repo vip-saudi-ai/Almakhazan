@@ -7,7 +7,7 @@
 import { ROLES } from './config.js';
 import { FirebaseStatus, firebaseContext, initializeFirebase, watchConnectivity } from './firebase.js';
 import { currentSession, initializeAuthentication, onSessionChange, refreshWorkspace } from './auth.js';
-import { SYNC_LABELS, SyncState, repository } from './repository.js';
+import { SyncState, repository } from './repository.js';
 import { useQueryAdapter } from './query.js';
 import { runImportRecovery } from './import-jobs.js';
 import { reconcileOccasionally } from './media.js';
@@ -15,6 +15,7 @@ import { markInterruptedRestore } from './restore.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
+import { applyDocumentLocale, onLanguageChange, t } from './i18n.js';
 import { goTab, registerTab, renderActiveTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
 import { hydrateIcons } from './icons.js';
@@ -44,22 +45,23 @@ window.__almakhzanStarted = true;
 
 // ── boot ──
 async function boot() {
-  showBootState('جارٍ التشغيل…');
+  applyDocumentLocale();
+  showBootState(t('boot.starting'));
 
   // Each step can take a few seconds on a slow connection, so the boot screen
   // says what it is waiting for rather than showing a silent spinner.
   const slowNotice = setTimeout(
-    () => showBootState('الاتصال بطيء — سيبدأ التطبيق محلياً إن تعذّر'),
+    () => showBootState(t('boot.slow')),
     3000,
   );
-  showBootState('جارٍ الاتصال بالخدمة السحابية…');
+  showBootState(t('boot.connecting'));
   const firebase = await initializeFirebase();
   clearTimeout(slowNotice);
 
-  showBootState('جارٍ التحقق من الحساب…');
+  showBootState(t('boot.account'));
   const session = await initializeAuthentication();
 
-  showBootState('جارٍ تحميل البيانات…');
+  showBootState(t('boot.loading'));
   await loadApplicationData(firebase, session);
 
   initializeUI();
@@ -123,15 +125,15 @@ async function redeemInvitation({ inviteId, token }) {
     // Signing in first is not optional: the membership is written for a
     // specific account. Holding the token in memory across a sign-in would
     // mean guessing which account it was meant for.
-    toast('سجّل الدخول بالبريد المدعوّ ثم افتح الرابط مرة أخرى', '✉️', { assertive: true });
+    toast(t('invite.signInFirst'), '✉️', { assertive: true });
     return;
   }
   try {
     await acceptInvitation(inviteId, token);
     await refreshWorkspace();
-    toast('انضممت إلى المساحة', '✓');
+    toast(t('invite.joined'), '✓');
   } catch (error) {
-    toastError(error, 'تعذّر قبول الدعوة');
+    toastError(error, 'invite.acceptFailed');
   }
 }
 
@@ -140,7 +142,7 @@ async function reopenWorkspace() {
   try {
     await refreshWorkspace();
   } catch (error) {
-    toastError(error, 'تعذّر فتح المساحة');
+    toastError(error, 'workspace.openFailed');
   }
 }
 
@@ -226,7 +228,7 @@ async function loadApplicationData(firebase, session) {
     }
   } catch (error) {
     console.error('[app] data load failed', error);
-    toastError(error, 'تعذّر تحميل البيانات');
+    toastError(error, 'boot.loadFailed');
   }
 }
 
@@ -258,10 +260,10 @@ async function offerLocalUpload() {
 
   const resuming = state.status === UploadState.FAILED || state.status === UploadState.IN_PROGRESS;
   const confirmed = await confirmAction({
-    title: resuming ? 'استئناف رفع بيانات هذا الجهاز؟' : 'رفع بيانات هذا الجهاز؟',
-    message: `${formatNumber(summary.items)} قطعة و${formatNumber(summary.images)} صورة محفوظة على هذا الجهاز. سترفع الصور إلى حسابك، ولن تُحذف النسخة المحلية.`,
+    title: t(resuming ? 'upload.resumeTitle' : 'upload.title'),
+    message: t('upload.message', { items: t('count.items', { count: summary.items }), images: t('count.images', { count: summary.images }) }),
     icon: '☁️',
-    confirmLabel: resuming ? 'استئناف' : 'رفع البيانات',
+    confirmLabel: t(resuming ? 'upload.resume' : 'upload.confirm'),
   });
   if (!confirmed) return;
 
@@ -277,12 +279,12 @@ async function offerLocalUpload() {
         }
       },
     });
-    toast(`رُفعت ${formatNumber(result.items)} قطعة و${formatNumber(result.images)} صورة`, '☁');
+    toast(t('upload.done', { items: t('count.items', { count: result.items }), images: t('count.images', { count: result.images }) }), '☁');
     if (result.imageFailures.length) {
-      toast(`${formatNumber(result.imageFailures.length)} صورة لم تُرفع — نسختها المحلية باقية`, '⚠');
+      toast(t('upload.imageFailures', { count: result.imageFailures.length }), '⚠');
     }
   } catch (error) {
-    toastError(error, 'تعذّر رفع بيانات الجهاز');
+    toastError(error, 'upload.failed');
   }
 }
 
@@ -338,7 +340,17 @@ function initializeUI() {
 
   syncFilterControls();
   setGridMode(homeView.grid);
-  $('sort-label').textContent = { newest: 'الأحدث', oldest: 'الأقدم', 'name-az': 'الاسم أ-ي', 'name-za': 'الاسم ي-أ', 'value-high': 'التقييم ↓', 'value-low': 'التقييم ↑' }[homeView.sortMode];
+  $('sort-label').textContent = t(`sort.${homeView.sortMode}`);
+
+  // Language is presentation: switching it redraws what is on screen from
+  // the state already held — no reload, no refetch, no re-parse. Each view
+  // with an open sheet listens for the same change and redraws its own.
+  onLanguageChange(() => {
+    $('sort-label').textContent = t(`sort.${homeView.sortMode}`);
+    renderSyncIndicator();
+    syncFilterControls();
+    renderActiveTab();
+  });
 
   $('boot')?.remove();
   document.body.classList.add('ready');
@@ -430,10 +442,11 @@ function renderSyncIndicator() {
     loading: '#aaa', synced: '#34C759', saving: '#FF9500',
     offline: '#FF9500', local: '#8E8E93', error: '#FF3B30', conflict: '#FF3B30',
   };
-  const { status, message } = repository.sync;
+  const { status, message, messageKey } = repository.sync;
   dot.style.background = colors[status] || '#aaa';
-  dot.title = message || SYNC_LABELS[status] || '';
-  dot.setAttribute('aria-label', `حالة المزامنة: ${message || status}`);
+  const label = message || t(messageKey || `sync.${status}`);
+  dot.title = label;
+  dot.setAttribute('aria-label', t('sync.label', { status: label }));
 }
 
 window.addEventListener('almakhzan:sync-refresh', renderSyncIndicator);
@@ -454,16 +467,16 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 
 boot().catch((error) => {
   console.error('[app] boot failed', error);
-  showBootState('تعذّر تشغيل التطبيق — حدّث الصفحة');
+  showBootState(t('boot.failedRefresh'));
   const boot = $('boot');
   if (boot) {
     render(boot, [
       el('div', { class: 'boot-error' }, [
         el('div', { style: { fontSize: '40px' }, text: '⚠️' }),
-        el('div', { class: 'boot-error-title', text: 'تعذّر تشغيل التطبيق' }),
-        el('div', { class: 'boot-error-msg', text: error?.message || 'خطأ غير متوقع' }),
+        el('div', { class: 'boot-error-title', text: t('boot.failed') }),
+        el('div', { class: 'boot-error-msg', text: error?.message || t('common.unknownError') }),
         el('button', {
-          class: 'btn btn-p', type: 'button', text: 'إعادة المحاولة',
+          class: 'btn btn-p', type: 'button', text: t('common.retry'),
           onClick: () => window.location.reload(),
         }),
       ]),

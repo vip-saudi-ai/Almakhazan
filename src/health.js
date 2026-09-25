@@ -11,6 +11,7 @@
 
 import { UNCATEGORIZED_ID } from './config.js';
 import { findDuplicateGroups } from './duplicates.js';
+import { t } from './i18n.js';
 
 export const WEIGHTS = Object.freeze({
   images: 0.30,
@@ -38,14 +39,7 @@ const has = {
     && Boolean(item.valuation || item.sku || item.barcode || item.description),
 };
 
-const LABELS = {
-  images: 'موثّق بالصور',
-  location: 'محدد الموقع',
-  category: 'مصنّف',
-  condition: 'حالته مسجّلة',
-  recency: 'روجع خلال سنة',
-  integrity: 'بياناته مكتملة',
-};
+/** Each signal is shown as the `health.signal.<key>` message. */
 
 /**
  * Four bands, four different words.
@@ -57,10 +51,8 @@ const LABELS = {
  * The thresholds and the weights are untouched; this is wording.
  */
 function band(score) {
-  if (score >= 90) return { key: 'excellent', label: 'ممتاز — مخزونك موثّق بشكل جيد.' };
-  if (score >= 75) return { key: 'good', label: 'جيد جداً — بقيت بعض التحسينات.' };
-  if (score >= 50) return { key: 'fair', label: 'جيد — هناك ما يستحق التحسين.' };
-  return { key: 'weak', label: 'يحتاج تحسيناً — ابدأ بالصور والمواقع.' };
+  const key = score >= 90 ? 'excellent' : score >= 75 ? 'good' : score >= 50 ? 'fair' : 'weak';
+  return { key, label: t(`health.band.${key}`) };
 }
 
 /**
@@ -72,7 +64,7 @@ export function inventoryHealth(items, { now = Date.now() } = {}) {
   if (!total) {
     return {
       score: 0,
-      band: { key: 'empty', label: 'لا توجد قطع بعد.' },
+      band: { key: 'empty', label: t('health.band.empty') },
       signals: [],
       counts: { total: 0, missingImages: 0, missingLocation: 0, missingCategory: 0, stale: 0, duplicates: 0 },
       empty: true,
@@ -93,7 +85,7 @@ export function inventoryHealth(items, { now = Date.now() } = {}) {
 
   const signals = Object.entries(WEIGHTS).map(([key, weight]) => ({
     key,
-    label: LABELS[key],
+    label: t(`health.signal.${key}`),
     weight,
     met: met[key],
     missing: total - met[key],
@@ -134,55 +126,55 @@ export function cleanupTasks(health, { valuableFrom = 10000 } = {}) {
   if (counts.missingImages) {
     tasks.push({
       id: 'images',
-      title: `${counts.missingImages} قطعة بدون صورة`,
-      detail: 'الصورة أهم دليل توثيق، ووزنها الأكبر في الدرجة.',
+      title: t('health.task.images', { count: counts.missingImages }),
+      detail: t('health.task.imagesDetail'),
       gain: points('images', counts.missingImages),
       action: 'review-missing-images',
-      cta: 'مراجعة القطع',
+      cta: t('health.cta.review'),
       priority: 'high',
     });
   }
   if (counts.duplicates) {
     tasks.push({
       id: 'duplicates',
-      title: `${counts.duplicateGroups} تكرار محتمل`,
-      detail: 'راجع التشابه قبل دمج أي سجل — الدمج لا يتم تلقائياً.',
+      title: t('health.task.duplicates', { count: counts.duplicateGroups }),
+      detail: t('health.task.duplicatesDetail'),
       gain: 0,
       action: 'review-duplicates',
-      cta: 'عرض التكرارات',
+      cta: t('health.cta.duplicates'),
       priority: counts.duplicateGroups > 4 ? 'high' : 'normal',
     });
   }
   if (counts.missingCategory) {
     tasks.push({
       id: 'category',
-      title: `${counts.missingCategory} قطعة بدون تصنيف`,
-      detail: 'التصنيف يجعل البحث والتقارير أدق.',
+      title: t('health.task.category', { count: counts.missingCategory }),
+      detail: t('health.task.categoryDetail'),
       gain: points('category', counts.missingCategory),
       action: 'review-missing-category',
-      cta: 'مراجعة الاقتراحات',
+      cta: t('health.cta.suggestions'),
       priority: 'normal',
     });
   }
   if (counts.missingLocation) {
     tasks.push({
       id: 'location',
-      title: `${counts.missingLocation} قطعة بدون موقع`,
-      detail: 'الموقع هو ما يجعل الجرد قابلاً للاستخدام فعلياً.',
+      title: t('health.task.location', { count: counts.missingLocation }),
+      detail: t('health.task.locationDetail'),
       gain: points('location', counts.missingLocation),
       action: 'review-missing-location',
-      cta: 'مراجعة القطع',
+      cta: t('health.cta.review'),
       priority: 'normal',
     });
   }
   if (counts.stale) {
     tasks.push({
       id: 'stale',
-      title: `${counts.stale} قطعة لم تُراجع منذ سنة`,
-      detail: 'مراجعة سريعة تُبقي القيم والحالة قريبة من الواقع.',
+      title: t('health.task.stale', { count: counts.stale }),
+      detail: t('health.task.staleDetail'),
       gain: points('recency', counts.stale),
       action: 'review-stale',
-      cta: 'عرض القطع',
+      cta: t('health.cta.show'),
       priority: 'low',
     });
   }

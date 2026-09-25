@@ -7,8 +7,9 @@
 import { ACTIONS, APP_VERSION, SCHEMA_VERSION } from './config.js';
 import { assertNoUnfinishedRestore } from './restore.js';
 import { repository } from './repository.js';
-import { ACTION_LABELS } from './config.js';
 import { AppError, toDate } from './utils.js';
+import { t } from './i18n.js';
+import { actionLabel } from './labels.js';
 import { formatValuation, valuationMidpoint } from './validation.js';
 import { buildWorkbook } from './xlsx-writer.js';
 
@@ -35,7 +36,7 @@ function stamp() {
  */
 export function saveBackupFile(text, prefix = 'nazm_backup') {
   if (typeof text !== 'string' || text.length < 2) {
-    throw new AppError('نسخة الأمان فارغة', { code: 'export/empty' });
+    throw new AppError('error.export/empty', { code: 'export/empty' });
   }
   const blob = new Blob([text], { type: 'application/json' });
   download(blob, `${prefix}_${stamp()}.json`);
@@ -46,17 +47,21 @@ export function exportExcel() {
   // An export is a statement about the whole inventory. If only a window is
   // loaded this refuses loudly rather than writing a short file that looks
   // complete. Callers load first — see `withFullInventory`.
-  repo.assertItemsComplete('التصدير');
+  repo.assertItemsComplete('partial.export');
   const items = repo.liveItems();
 
   const itemRows = [[
-    'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
-    'الكمية', 'الوحدة', 'الحالة', 'البراند',
-    'الرقم التسلسلي', 'رقم الموديل', 'الرقم المرجعي',
-    'أدنى تقييم', 'أعلى تقييم', 'العملة', 'مصدر التقييم',
-    'تقييم محلي (نَظْم)', 'تقييم عالمي (نَظْم)',
-    'أدنى تقدير (نَظْم)', 'أعلى تقدير (نَظْم)',
-    'وصف من نَظْم', 'الوصف', 'تاريخ الإضافة', 'آخر تحديث',
+    // Headings in the language on screen; the values are the records' own.
+    // The spreadsheet import recognises both languages' headings.
+    ...[
+      'field.sku', 'field.barcode', 'field.name', 'field.category', 'field.folder', 'field.location',
+      'field.quantity', 'field.unit', 'field.condition', 'field.brand',
+      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber',
+      'export.minValuation', 'export.maxValuation', 'field.currency', 'export.valuationSource',
+      'export.aiLocalScore', 'export.aiGlobalScore',
+      'export.aiMinEstimate', 'export.aiMaxEstimate',
+      'export.aiDescription', 'field.description', 'export.createdAt', 'export.updatedAt',
+    ].map((key) => t(key)),
   ]];
 
   for (const item of items) {
@@ -90,13 +95,13 @@ export function exportExcel() {
     ]);
   }
 
-  const sheets = [{ name: 'الجرد', rows: itemRows }];
+  const sheets = [{ name: t('export.sheetInventory'), rows: itemRows }];
 
   if (repo.state.folders.length) {
     sheets.push({
-      name: 'المجلدات',
+      name: t('export.sheetFolders'),
       rows: [
-        ['المجلد', 'الوصف', 'عدد القطع', 'إجمالي الكمية', 'تاريخ الإنشاء'],
+        ['field.folder', 'field.description', 'export.itemCount', 'home.statQuantity', 'export.folderCreated'].map((key) => t(key)),
         ...repo.state.folders.map((folder) => {
           const inFolder = items.filter((i) => i.folderId === folder.id);
           return [
@@ -113,9 +118,9 @@ export function exportExcel() {
 
   if (repo.state.categories.length) {
     sheets.push({
-      name: 'التصنيفات',
+      name: t('export.sheetCategories'),
       rows: [
-        ['التصنيف', 'عدد القطع', 'إجمالي الكمية'],
+        ['field.category', 'export.itemCount', 'home.statQuantity'].map((key) => t(key)),
         ...repo.state.categories.map((category) => {
           const inCategory = items.filter((i) => i.categoryId === category.id);
           return [
@@ -130,12 +135,12 @@ export function exportExcel() {
 
   if (repo.state.activity.length) {
     sheets.push({
-      name: 'سجل النشاط',
+      name: t('export.sheetActivity'),
       rows: [
-        ['التاريخ', 'الإجراء', 'القطعة', 'المستخدم'],
+        ['export.date', 'export.action', 'common.item', 'export.user'].map((key) => t(key)),
         ...repo.state.activity.map((entry) => [
           toDate(entry.timestamp),
-          ACTION_LABELS[entry.action] || entry.action,
+          actionLabel(entry.action),
           entry.itemName || entry.folderName || entry.categoryName || '',
           entry.userName || entry.userId || '',
         ]),
@@ -144,10 +149,10 @@ export function exportExcel() {
   }
 
   try {
-    download(buildWorkbook(sheets), `نظم_${stamp()}.xlsx`);
+    download(buildWorkbook(sheets), `${t('export.filePrefix')}_${stamp()}.xlsx`);
   } catch (error) {
     console.error('[export] Excel export failed', error);
-    throw new AppError('فشل تصدير Excel', { cause: error });
+    throw new AppError('error.export/excel', { code: 'export/excel', cause: error });
   }
 }
 
@@ -161,7 +166,7 @@ export function exportExcel() {
  */
 export function exportJSON() {
   const repo = repository;
-  repo.assertItemsComplete('النسخة الاحتياطية');
+  repo.assertItemsComplete('partial.backup');
   const payload = {
     schemaVersion: SCHEMA_VERSION,
     appVersion: APP_VERSION,
@@ -170,8 +175,8 @@ export function exportJSON() {
     imagesIncluded: false,
     // What this file is not, said in the file itself.
     note: repo.session.mode === 'cloud'
-      ? 'بيانات القطع فقط — ملفات الصور تبقى في التخزين السحابي ولا يتضمنها هذا الملف.'
-      : 'بيانات القطع فقط — ملفات الصور محفوظة على الجهاز ولا يتضمنها هذا الملف.',
+      ? t('export.noteCloud')
+      : t('export.noteDevice'),
     workspaceId: repo.session.workspaceId,
     items: repo.state.items,
     folders: repo.state.folders,
@@ -185,15 +190,14 @@ export function exportJSON() {
     console.error('[export] JSON export failed', error);
     // Past what the browser can hold as one text: said as that, not as a
     // generic failure.
-    throw new AppError(error instanceof RangeError
-      ? 'البيانات أكبر من أن يكتبها المتصفح في ملف JSON واحد. استخدم تصدير Excel.'
-      : 'فشل إنشاء النسخة الاحتياطية', { code: error instanceof RangeError ? 'export/too-large' : 'export/failed', cause: error });
+    throw new AppError(error instanceof RangeError ? 'error.export/too-large' : 'error.export/failed',
+      { code: error instanceof RangeError ? 'export/too-large' : 'export/failed', cause: error });
   }
   try {
     download(blob, `nazm_backup_${stamp()}.json`);
   } catch (error) {
     console.error('[export] JSON export failed', error);
-    throw new AppError('فشل إنشاء النسخة الاحتياطية', { cause: error });
+    throw new AppError('error.export/failed', { code: 'export/failed', cause: error });
   }
   return { bytes: blob.size, restorable: blob.size <= MAX_BACKUP_FILE_BYTES };
 }
@@ -232,18 +236,18 @@ export const MAX_BACKUP_FILE_BYTES = 256 * 1024 * 1024;
  */
 export function validateBackupFileMetadata(file) {
   if (!file || typeof file.size !== 'number') {
-    throw new AppError('لم يُختر ملف بيانات.', { code: 'backup/no-file' });
+    throw new AppError('error.backup/no-file', { code: 'backup/no-file' });
   }
   if (!(file.size > 0)) {
-    throw new AppError('ملف البيانات فارغ.', { code: 'backup/empty-file' });
+    throw new AppError('error.backup/empty-file', { code: 'backup/empty-file' });
   }
   if (file.size > MAX_BACKUP_FILE_BYTES) {
-    throw new AppError('حجم ملف البيانات أكبر من الحد المسموح.', {
+    throw new AppError('error.backup/file-too-large', {
       code: 'backup/file-too-large', size: file.size, max: MAX_BACKUP_FILE_BYTES,
     });
   }
   if (!/\.json$/i.test(String(file.name || ''))) {
-    throw new AppError('الملف ليس ملف بيانات JSON.', { code: 'backup/not-json' });
+    throw new AppError('error.backup/not-json', { code: 'backup/not-json' });
   }
 }
 
@@ -271,7 +275,7 @@ export async function readBackupFile(file) {
   try {
     bytes = await file.arrayBuffer();
   } catch (error) {
-    throw new AppError('تعذّر قراءة الملف', { code: 'import/read', cause: error });
+    throw new AppError('error.import/read', { code: 'import/read', cause: error });
   }
   let sourceFingerprint;
   try {
@@ -280,7 +284,7 @@ export async function readBackupFile(file) {
     sourceFingerprint = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
   } catch (error) {
     console.error('[backup] fingerprint could not be computed', error);
-    throw new AppError('تعذّر التحقق من هوية ملف النسخة الاحتياطية. أعد المحاولة.', {
+    throw new AppError('error.backup/fingerprint-unavailable', {
       code: 'backup/fingerprint-unavailable', cause: error,
     });
   }
@@ -288,7 +292,7 @@ export async function readBackupFile(file) {
   try {
     data = JSON.parse(new TextDecoder().decode(bytes));
   } catch (error) {
-    throw new AppError('الملف ليس JSON صالحاً', { code: 'import/parse', cause: error });
+    throw new AppError('error.import/parse', { code: 'import/parse', cause: error });
   }
   // The decoded object is what continues; the raw bytes go now.
   bytes = null;
@@ -334,7 +338,7 @@ export async function applyMerge(data) {
   const conflicts = await repo.findSkuConflicts(newItems.map((op) => ({ key: op.id, id: op.id, sku: op.data.sku })));
   if (conflicts.length) {
     const names = new Map(newItems.map((op) => [op.id, op.data.name || '']));
-    throw new AppError('يتضمن ملف البيانات رموز SKU مكررة أو مستخدمة مسبقاً. صحّح التعارضات ثم أعد المحاولة.', {
+    throw new AppError('error.import/sku-conflict', {
       code: 'import/sku-conflict',
       conflicts: conflicts.map((c) => ({
         sku: c.sku,
@@ -376,14 +380,16 @@ export async function applyMerge(data) {
  * full export, so a selection and a backup open the same way.
  */
 export function exportSelection(items) {
-  if (!items?.length) throw new AppError('لا توجد قطع مختارة', { code: 'export/empty-selection' });
+  if (!items?.length) throw new AppError('error.export/empty-selection', { code: 'export/empty-selection' });
   const repo = repository;
 
   const rows = [[
-    'الرمز', 'الباركود', 'الاسم', 'التصنيف', 'المجلد', 'الموقع',
-    'الكمية', 'الوحدة', 'الحالة', 'البراند',
-    'الرقم التسلسلي', 'رقم الموديل', 'الرقم المرجعي',
-    'أدنى تقييم', 'أعلى تقييم', 'العملة', 'الوصف', 'آخر تحديث',
+    ...[
+      'field.sku', 'field.barcode', 'field.name', 'field.category', 'field.folder', 'field.location',
+      'field.quantity', 'field.unit', 'field.condition', 'field.brand',
+      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber',
+      'export.minValuation', 'export.maxValuation', 'field.currency', 'field.description', 'export.updatedAt',
+    ].map((key) => t(key)),
   ]];
   for (const item of items) {
     rows.push([
@@ -409,17 +415,17 @@ export function exportSelection(items) {
   }
 
   try {
-    download(buildWorkbook([{ name: 'المحدد', rows }]), `نظم_محدد_${stamp()}.xlsx`);
+    download(buildWorkbook([{ name: t('export.sheetSelection'), rows }]), `${t('export.filePrefix')}_${t('export.selectionSuffix')}_${stamp()}.xlsx`);
   } catch (error) {
     console.error('[export] selection export failed', error);
-    throw new AppError('فشل تصدير المحدد', { cause: error });
+    throw new AppError('error.export/selection', { code: 'export/selection', cause: error });
   }
 }
 
 /** Summary line used in the import confirmation sheet. */
 export function describeValuation(item) {
   if (!item.valuation) return '—';
-  return `${formatValuation(item.valuation)} (وسط ${valuationMidpoint(item.valuation)})`;
+  return t('export.valuationWithMid', { valuation: formatValuation(item.valuation), mid: String(valuationMidpoint(item.valuation)) });
 }
 
 /** Up to five other records carrying the same SKU — enough to find them,

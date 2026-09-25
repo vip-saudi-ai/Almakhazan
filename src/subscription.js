@@ -15,6 +15,7 @@ import { MAX_ROWS } from './spreadsheet.js';
 import { firebaseContext } from './firebase.js';
 import { LocalModePolicy, localModePolicy } from './config.js';
 import * as local from './local-store.js';
+import { t } from './i18n.js';
 
 const state = {
   mode: 'local',
@@ -163,7 +164,7 @@ export function canAddItem() {
 
 /** Whether the assistant may run — credits, freeze and plan all considered. */
 export function canUseAssistant() {
-  if (state.mode !== 'cloud' || !state.entitlement) return { allowed: false, reason: 'plan/local', message: 'مساعد نَظْم يتطلب حساباً' };
+  if (state.mode !== 'cloud' || !state.entitlement) return { allowed: false, reason: 'plan/local', message: t('ai.needsAccount') };
   return checkUseAI({ entitlement: state.entitlement, usage: state.usage });
 }
 
@@ -200,7 +201,7 @@ export function canImportRows(rows) {
       ? { allowed: true }
       : {
         allowed: false,
-        message: `يمكن استيراد حتى ${MAX_ROWS.toLocaleString('en-US')} صفّاً في الملف الواحد. يمكنك استيراد ملفات إضافية.`,
+        message: t('quota.importRowsFile', { limit: MAX_ROWS }),
       };
   }
   return checkImportRows({ entitlement: state.entitlement }, rows, MAX_ROWS);
@@ -254,7 +255,7 @@ export function planUsage() {
 }
 
 export function assistantLabel() {
-  if (state.mode !== 'cloud' || !state.entitlement) return { included: false, label: 'يتطلب حساباً' };
+  if (state.mode !== 'cloud' || !state.entitlement) return { included: false, label: t('ai.needsAccountShort') };
   return assistantPresentation({ entitlement: state.entitlement });
 }
 

@@ -16,7 +16,8 @@
 
 import { valuationMidpoint } from './validation.js';
 
-import { CURRENCY_LABELS } from './config.js';
+import { currencySymbol as localizedSymbol } from './labels.js';
+import { t } from './i18n.js';
 
 /**
  * How to write one currency.
@@ -34,7 +35,7 @@ import { CURRENCY_LABELS } from './config.js';
  */
 export function currencySymbol(code) {
   if (!code) return '';
-  return CURRENCY_LABELS[code] || code;
+  return localizedSymbol(code);
 }
 
 export function formatAmount(amount, currency, { compact = false } = {}) {
@@ -76,7 +77,7 @@ export function currenciesPresent(items) {
 
 /** "SAR 120,000 · USD 8,500" — never one number standing for both. */
 export function describeTotals(totals, { compact = false } = {}) {
-  if (!totals.length) return 'لا توجد تقديرات سعرية بعد.';
+  if (!totals.length) return t('money.noValuations');
   return totals.map((t) => formatAmount(t.total, t.currency, { compact })).join(' · ');
 }
 

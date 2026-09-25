@@ -16,6 +16,7 @@ import { firebaseContext, isCloudEnabled } from './firebase.js';
 import * as local from './local-store.js';
 import { repository } from './repository.js';
 import { AppError, sha256Hex, uid } from './utils.js';
+import { t } from './i18n.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation, parseValuationText,
 } from './validation.js';
@@ -221,7 +222,7 @@ export async function runMigration({ onProgress } = {}) {
 
     // 1 — back up the source before touching anything.
     if (!state.backedUp) {
-      report('backup', 0, 1, 'إنشاء نسخة احتياطية…');
+      report('backup', 0, 1, t('migration.progressBackup'));
       await local.setMeta(BACKUP_KEY, {
         source: legacy.source,
         capturedAt: Date.now(),
@@ -235,7 +236,7 @@ export async function runMigration({ onProgress } = {}) {
     const sourceCounts = countRecords(source);
 
     // 2 — taxonomy first, so item references resolve.
-    report('taxonomy', 0, 1, 'ترحيل التصنيفات والمجلدات…');
+    report('taxonomy', 0, 1, t('migration.progressTaxonomy'));
     const taxonomyOps = [
       ...(source.categories || []).map((c) => {
         const record = normalizeCategory(c);
@@ -257,7 +258,7 @@ export async function runMigration({ onProgress } = {}) {
     let done = migratedIds.size;
     for (const legacyItem of legacyItems) {
       if (!legacyItem?.id || migratedIds.has(legacyItem.id)) continue;
-      report('items', done, legacyItems.length, `ترحيل القطع… ${done}/${legacyItems.length}`);
+      report('items', done, legacyItems.length, t('migration.progressItems', { done, total: legacyItems.length }));
 
       const item = convertItem(legacyItem, userId);
 
@@ -287,11 +288,11 @@ export async function runMigration({ onProgress } = {}) {
     }
 
     // 4 — verify before declaring success.
-    report('verify', legacyItems.length, legacyItems.length, 'التحقق من اكتمال الترحيل…');
+    report('verify', legacyItems.length, legacyItems.length, t('migration.progressVerify'));
     const expected = sourceCounts.items;
     const actual = migratedIds.size;
     if (actual < expected) {
-      throw new AppError(`اكتمل ترحيل ${actual} من ${expected} قطعة فقط`, { code: 'migration/incomplete' });
+      throw new AppError('error.migration/incomplete', { code: 'migration/incomplete', actual, expected });
     }
 
     const result = {
@@ -307,7 +308,7 @@ export async function runMigration({ onProgress } = {}) {
     await repository.log(ACTIONS.MIGRATION_COMPLETED, {
       source: legacy.source, items: actual, imageFailures: result.counts.imageFailures,
     });
-    report('done', expected, expected, 'اكتمل الترحيل');
+    report('done', expected, expected, t('migration.progressDone'));
     return result;
   } catch (error) {
     console.error('[migration] failed', error);
@@ -318,7 +319,7 @@ export async function runMigration({ onProgress } = {}) {
       failedAt: Date.now(),
       error: error.message,
     });
-    throw error instanceof AppError ? error : new AppError('فشل الترحيل', { cause: error });
+    throw error instanceof AppError ? error : new AppError('error.migration/failed', { code: 'migration/failed', cause: error });
   }
 }
 

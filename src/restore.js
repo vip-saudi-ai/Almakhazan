@@ -30,6 +30,7 @@ import { ACTIONS, SCHEMA_VERSION } from './config.js';
 import * as local from './local-store.js';
 import { repository } from './repository.js';
 import { AppError } from './utils.js';
+import { t } from './i18n.js';
 
 // ── the restore job ──
 
@@ -50,15 +51,16 @@ const UNFINISHED = new Set([
 /** A restore running in this page right now — not an interrupted one. */
 let activeRestoreId = null;
 
-export const RESTORE_BLOCKED_MESSAGE = 'توجد استعادة سابقة لم تكتمل. أكملها قبل بدء استعادة جديدة.';
-export const RESTORE_WRONG_FILE_MESSAGE = 'توجد استعادة سابقة لم تكتمل. اختر ملف الاستعادة نفسه لإكمالها.';
+/** Message keys (i18n.js): the screens say them in the current language. */
+export const RESTORE_BLOCKED_MESSAGE = 'restore.blocked';
+export const RESTORE_WRONG_FILE_MESSAGE = 'restore.wrongFile';
 
 async function saveJob(job) {
   try {
     await local.setMeta(JOB_KEY, { ...job, updatedAt: Date.now() });
   } catch (error) {
     // The job is what makes an interruption visible. Without it, stop.
-    throw new AppError('تعذّر حفظ حالة الاستعادة، ولم تُغيَّر أي بيانات بعدها. حاول مرة أخرى.', {
+    throw new AppError('error.restore/state-unsaved', {
       code: 'restore/state-unsaved', cause: error,
     });
   }
@@ -102,15 +104,8 @@ export const RestoreStage = {
   DONE: 'done',
 };
 
-const STAGE_LABELS = {
-  backup: 'جارٍ أخذ نسخة أمان…',
-  write: 'جارٍ كتابة السجلات…',
-  remove: 'جارٍ إزالة السجلات القديمة…',
-  done: 'اكتملت الاستعادة',
-};
-
 export function stageLabel(stage) {
-  return STAGE_LABELS[stage] || '';
+  return stage && Object.values(RestoreStage).includes(stage) ? t(`restore.stage.${stage}`) : '';
 }
 
 const COLLECTIONS = ['categories', 'locations', 'folders', 'items'];
@@ -140,7 +135,7 @@ export function buildSafetyBackup() {
   // file is not a copy of this workspace and must not be relied on.
   for (const name of COLLECTIONS) {
     if ((parsed[name] || []).length !== repo.state[name].length) {
-      throw new AppError('تعذّر التحقق من نسخة الأمان — أُلغيت الاستعادة', {
+      throw new AppError('error.restore/backup-unverified', {
         code: 'restore/backup-unverified',
       });
     }
@@ -170,7 +165,7 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
   repo.assertCanWrite();
   if (!sourceFingerprint) {
     // No identity, no restore job — and no restore.
-    throw new AppError('تعذّر التحقق من هوية ملف النسخة الاحتياطية. أعد المحاولة.', {
+    throw new AppError('error.backup/fingerprint-unavailable', {
       code: 'backup/fingerprint-unavailable',
     });
   }
@@ -208,7 +203,7 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   // from a window backs up a fraction, and step 3 would then remove records
   // the backup never held. Load everything, and refuse if that fails.
   await repo.completeItems();
-  repo.assertItemsComplete('الاستعادة');
+  repo.assertItemsComplete('partial.restore');
 
   // ── 1. safety backup ──
   onProgress({ stage: RestoreStage.BACKUP, done: 0, total: 1 });
@@ -221,7 +216,7 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
     console.error('[restore] safety backup failed — aborting', error);
 
     throw new AppError(
-      'تعذّر حفظ نسخة الأمان، ولم تُغيَّر أي بيانات. تأكد من السماح بالتنزيل ثم حاول مرة أخرى.',
+      'error.restore/aborted',
       { code: 'restore/aborted', cause: error },
     );
   }

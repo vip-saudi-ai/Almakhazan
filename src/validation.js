@@ -2,10 +2,12 @@
 // an import file, or the AI passes through here before it is stored or rendered.
 
 import {
-  CONDITIONS, CURRENCY_LABELS, INTEGER_UNITS, SCHEMA_VERSION, TEXT_LIMITS,
+  CONDITIONS, INTEGER_UNITS, SCHEMA_VERSION, TEXT_LIMITS,
   UNCATEGORIZED_ID, VALUATION_SOURCES, VALUATION_TYPES, normalizeCurrencyCode,
 } from './config.js';
 import { normalizeDigits, parseNumber, toMillis, uid } from './utils.js';
+import { t } from './i18n.js';
+import { currencySymbol } from './labels.js';
 
 export function cleanText(value, maxLength = 500) {
   if (value == null) return '';
@@ -131,7 +133,7 @@ export function formatValuation(valuation, { compact = false } = {}) {
   const fmt = (n) => (compact && n >= 1000
     ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
     : new Intl.NumberFormat('en-US').format(n));
-  const symbol = CURRENCY_LABELS[valuation.currency] || valuation.currency;
+  const symbol = currencySymbol(valuation.currency);
   const body = valuation.min === valuation.max
     ? fmt(valuation.min)
     : `${fmt(valuation.min)} – ${fmt(valuation.max)}`;
@@ -145,11 +147,11 @@ export function formatValuation(valuation, { compact = false } = {}) {
 export function validateQuantity(input, unit) {
   if (input === '' || input == null) return { ok: true, value: 1 };
   const n = parseNumber(input);
-  if (n === null) return { ok: false, error: 'الكمية يجب أن تكون رقماً' };
-  if (!Number.isFinite(n)) return { ok: false, error: 'الكمية غير صالحة' };
-  if (n < 0) return { ok: false, error: 'الكمية لا يمكن أن تكون سالبة' };
+  if (n === null) return { ok: false, error: t('validation.quantityNumber') };
+  if (!Number.isFinite(n)) return { ok: false, error: t('validation.quantityInvalid') };
+  if (n < 0) return { ok: false, error: t('validation.quantityNegative') };
   if (unit && INTEGER_UNITS.has(unit) && !Number.isInteger(n)) {
-    return { ok: false, error: `الوحدة "${unit}" لا تقبل كسوراً` };
+    return { ok: false, error: t('validation.unitWhole', { unit }) };
   }
   return { ok: true, value: n };
 }
@@ -351,20 +353,20 @@ export function validateImport(parsed) {
   const warnings = [];
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return { ok: false, errors: ['الملف لا يحتوي على بنية صحيحة'], warnings, data: null };
+    return { ok: false, errors: [t('backup.invalidStructure')], warnings, data: null };
   }
 
   const version = parsed.schemaVersion ?? 1;
   if (!Number.isInteger(version) || version < 1) {
-    errors.push('إصدار المخطط غير صالح');
+    errors.push(t('backup.invalidSchema'));
   } else if (version > SCHEMA_VERSION) {
-    errors.push(`الملف من إصدار أحدث (${version}) من إصدار التطبيق (${SCHEMA_VERSION})`);
+    errors.push(t('backup.newerSchema', { version: String(version), current: String(SCHEMA_VERSION) }));
   }
 
   const asArray = (value, label) => {
     if (value == null) return [];
     if (!Array.isArray(value)) {
-      errors.push(`الحقل "${label}" يجب أن يكون قائمة`);
+      errors.push(t('backup.fieldNotList', { label }));
       return [];
     }
     return value;
@@ -377,7 +379,7 @@ export function validateImport(parsed) {
 
   if (errors.length) return { ok: false, errors, warnings, data: null };
   if (!rawItems.length && !rawFolders.length && !rawCategories.length && !rawLocations.length) {
-    return { ok: false, errors: ['الملف لا يحتوي على أي بيانات'], warnings, data: null };
+    return { ok: false, errors: [t('backup.empty')], warnings, data: null };
   }
 
   const categories = rawCategories.map(normalizeCategory).filter((c) => c.name);
@@ -392,23 +394,23 @@ export function validateImport(parsed) {
   const items = [];
   for (const raw of rawItems) {
     if (!raw || typeof raw !== 'object') {
-      warnings.push('تم تجاهل سجل غير صالح');
+      warnings.push(t('backup.skippedInvalid'));
       continue;
     }
     const item = normalizeItem(raw);
     if (!item.name) {
-      warnings.push('تم تجاهل قطعة بلا اسم');
+      warnings.push(t('backup.skippedNameless'));
       continue;
     }
     // Base64 payloads from old exports are not carried into the new model.
     if (typeof raw.img === 'string' && raw.img.startsWith('data:')) droppedImages += 1;
 
     if (item.folderId && !folderIds.has(item.folderId)) {
-      warnings.push(`القطعة "${item.name}": المجلد غير موجود، أُعيدت للجرد الرئيسي`);
+      warnings.push(t('backup.missingFolder', { name: item.name }));
       item.folderId = null;
     }
     if (item.categoryId !== UNCATEGORIZED_ID && !categoryIds.has(item.categoryId)) {
-      warnings.push(`القطعة "${item.name}": التصنيف غير موجود`);
+      warnings.push(t('backup.missingCategory', { name: item.name }));
       item.categoryId = UNCATEGORIZED_ID;
     }
     if (item.locationId && !locationIds.has(item.locationId)) {
@@ -418,10 +420,10 @@ export function validateImport(parsed) {
   }
 
   if (droppedImages) {
-    warnings.push(`${droppedImages} صورة مضمّنة في الملف لم تُستورد — الصور تُخزَّن الآن في Firebase Storage`);
+    warnings.push(t('backup.droppedImages', { count: droppedImages }));
   }
   if (!items.length && !folders.length && !categories.length && !locations.length) {
-    return { ok: false, errors: ['لم ينجح التحقق من أي سجل في الملف'], warnings, data: null };
+    return { ok: false, errors: [t('backup.nothingValid')], warnings, data: null };
   }
 
   return {

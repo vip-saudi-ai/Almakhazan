@@ -96,14 +96,8 @@ export function applyFilters(items, filters) {
   return out;
 }
 
-export const SORT_MODES = {
-  newest: 'الأحدث',
-  oldest: 'الأقدم',
-  'name-az': 'الاسم أ-ي',
-  'name-za': 'الاسم ي-أ',
-  'value-high': 'التقييم ↓',
-  'value-low': 'التقييم ↑',
-};
+/** The sort orders, by stable id; their labels are the `sort.<mode>` messages. */
+export const SORT_MODES = ['newest', 'oldest', 'name-az', 'name-za', 'value-high', 'value-low'];
 
 const collator = new Intl.Collator('ar', { numeric: true, sensitivity: 'base' });
 

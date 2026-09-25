@@ -4,7 +4,8 @@
 // Escape, and hand focus back to whatever opened them.
 
 import { handleViewerKey } from './views/image-viewer.js';
-import { $, appendChildren, el } from './utils.js';
+import { t } from './i18n.js';
+import { $, appendChildren, describeError, el } from './utils.js';
 
 // ── toasts ──
 export function toast(message, icon = '✓', { assertive = false } = {}) {
@@ -19,9 +20,14 @@ export function toast(message, icon = '✓', { assertive = false } = {}) {
   setTimeout(() => node.remove(), 2600);
 }
 
-export function toastError(error, fallback = 'حدث خطأ') {
+/**
+ * An error, told to the customer in the current language. `fallback` is a
+ * message key for when the error carries nothing the customer can use — a
+ * browser exception, say — so its internals are never what they read.
+ */
+export function toastError(error, fallback = 'common.unknownError') {
   console.error(error);
-  toast(error?.message || fallback, '✕', { assertive: true });
+  toast(describeError(error, fallback), '✕', { assertive: true });
 }
 
 // ── sheets ──
@@ -149,11 +155,11 @@ export function confirmAction(options) {
   $('del-title').textContent = options.title;
   $('del-sub').textContent = options.message;
   $('del-ico').textContent = options.icon || '🗑';
-  button.textContent = options.confirmLabel || 'حذف';
+  button.textContent = options.confirmLabel || t('common.delete');
 
   const phrase = options.requirePhrase || '';
   wrap.style.display = phrase ? '' : 'none';
-  $('del-phrase-label').textContent = phrase ? `اكتب "${phrase}" للتأكيد` : '';
+  $('del-phrase-label').textContent = phrase ? t('confirm.typeToConfirm', { phrase }) : '';
   input.value = '';
   button.disabled = Boolean(phrase);
 
@@ -191,7 +197,7 @@ export function detailRow(label, value) {
   if (value == null || value === '' || value === '—') return null;
   return el('div', { class: 'dfrow' }, [
     el('div', { class: 'dflbl', text: label }),
-    el('div', { class: 'dfval', text: value }),
+    el('div', { class: 'dfval', dir: 'auto', text: value }),
   ]);
 }
 

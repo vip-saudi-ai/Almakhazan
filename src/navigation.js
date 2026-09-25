@@ -5,6 +5,7 @@ import { withFullInventory } from './inventory-load.js';
 import { repository } from './repository.js';
 import { cancelItemOpens } from './views/detail.js';
 import { $ } from './utils.js';
+import { t } from './i18n.js';
 
 // 'cats' keeps a view but no longer a tab: categories are managed from
 // Settings, and the tab bar belongs to the four screens a customer lives in.
@@ -69,7 +70,7 @@ export function goTab(name) {
     // Nothing is drawn from a fraction: the screen appears once the numbers on
     // it are the real ones. If the load fails, go back rather than show a
     // total that is wrong.
-    void withFullInventory('جارٍ قراءة المخزون كاملاً…').then((ok) => {
+    void withFullInventory(t('load.readingAll')).then((ok) => {
       if (ok) render();
       else if (activeTab() === name) goTab('home');
     });

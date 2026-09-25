@@ -217,7 +217,7 @@ class LocalMediaStore {
 }
 
 export function mediaStore(session) {
-  if (!session?.workspaceId) throw new AppError('لا يوجد مخزن نشط', { code: 'media/no-workspace' });
+  if (!session?.workspaceId) throw new AppError('error.media/no-workspace', { code: 'media/no-workspace' });
   return session.mode === 'cloud' ? new CloudMediaStore(session.workspaceId) : new LocalMediaStore();
 }
 

@@ -22,6 +22,7 @@ import {
   GENERATED_SKU_MAX, formatGeneratedSku, generatedSkuPrefix, parseGeneratedSku,
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
+import { t } from './i18n.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation, normalizeSku,
 } from './validation.js';
@@ -36,19 +37,11 @@ export const SyncState = {
   CONFLICT: 'conflict',
 };
 
-export const SYNC_LABELS = {
-  loading: 'جارٍ التحميل…',
-  synced: 'محفوظ ☁',
-  saving: 'جارٍ الحفظ…',
-  offline: 'غير متصل — محفوظ محلياً',
-  local: 'محلي على هذا الجهاز',
-  error: 'فشل المزامنة',
-  conflict: 'تعارض في التعديل',
-};
+/** Sync statuses are shown through the `sync.<status>` messages (i18n.js). */
 
 export class ConflictError extends AppError {
   constructor(current) {
-    super('عُدّلت هذه القطعة على جهاز آخر', { code: 'repo/conflict' });
+    super('error.repo/conflict', { code: 'repo/conflict' });
     this.name = 'ConflictError';
     this.current = current;
   }
@@ -81,12 +74,10 @@ const ATOMIC_BULK_MAX = 1000;
  */
 export function capacityError({ limit, used, requested }) {
   const remaining = Math.max(0, limit - used);
-  const n = (value) => Number(value).toLocaleString('en-US');
   return new AppError(
-    remaining > 0
-      ? `يتبقى في خطتك ${n(remaining)} قطعة فقط، بينما تتطلب العملية إضافة ${n(requested)} قطعة.`
-      : `اكتمل حد خطتك (${n(limit)} قطعة). احذف ما لم يعد يلزمك أو ارفع الخطة لإضافة المزيد.`,
-    { code: 'plan/item-limit', limit, used, remaining, requested },
+    remaining > 0 ? 'error.plan/item-limit.remaining' : 'error.plan/item-limit.full',
+    // `count` chooses the plural form of the message.
+    { code: 'plan/item-limit', limit, used, remaining, requested, count: remaining },
   );
 }
 
@@ -159,7 +150,7 @@ async function assertLiveSkusInStore(itemsStore, affected) {
 }
 
 function skuConflictError({ sku, id, existingId, existingName = '' }) {
-  return new AppError('الرمز SKU مستخدم على قطعة أخرى.', {
+  return new AppError('error.repo/sku-conflict', {
     code: 'repo/sku-conflict', sku, id, existingId, existingName,
   });
 }
@@ -334,7 +325,7 @@ export class FirestoreBackend {
     }
     await this.fs.runTransaction(this.db, async (tx) => {
       const snap = await tx.get(ref);
-      if (!snap.exists()) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+      if (!snap.exists()) throw new AppError('error.repo/missing', { code: 'repo/missing' });
       const current = snap.data();
       if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
         throw new ConflictError({ id, ...current });
@@ -584,7 +575,7 @@ export class FirestoreBackend {
           // earlier check is still seen here — and left exactly as it is.
           if (op.ifAbsent && snap.exists()) { attempt.skipped.push(op.id); return; }
           if (op.expectedVersion != null) {
-            if (!snap.exists()) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+            if (!snap.exists()) throw new AppError('error.repo/missing', { code: 'repo/missing' });
             const current = snap.data();
             if ((current.version ?? 1) !== op.expectedVersion) {
               throw new ConflictError({ id: op.id, ...current });
@@ -724,7 +715,7 @@ export class LocalBackend {
     await local.transaction(name, 'readwrite', async (stores) => {
       const store = stores[name];
       const current = await local.request(store.get(id));
-      if (!current) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+      if (!current) throw new AppError('error.repo/missing', { code: 'repo/missing' });
       if (expectedVersion != null && (current.version ?? 1) !== expectedVersion) {
         throw new ConflictError(current);
       }
@@ -854,7 +845,7 @@ export class LocalBackend {
         // record claims nothing: its stored SKU is already its own.
         if (op.ifAbsent && existing) { skippedExisting.push(op.id); continue; }
         if (op.expectedVersion != null) {
-          if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+          if (!existing) throw new AppError('error.repo/missing', { code: 'repo/missing' });
           if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
         }
         plan.push({ op, existing });
@@ -922,7 +913,7 @@ export class LocalBackend {
         const existing = needsCurrent ? await local.request(store.get(op.id)) : null;
 
         if (op.expectedVersion != null) {
-          if (!existing) throw new AppError('السجل لم يعد موجوداً', { code: 'repo/missing' });
+          if (!existing) throw new AppError('error.repo/missing', { code: 'repo/missing' });
           if ((existing.version ?? 1) !== op.expectedVersion) throw new ConflictError(existing);
         }
         current.push(existing);
@@ -1037,7 +1028,7 @@ export class LocalBackend {
 class Repository {
   constructor() {
     this.state = { items: [], folders: [], categories: [], locations: [], activity: [] };
-    this.sync = { status: SyncState.LOADING, message: SYNC_LABELS.loading, error: null };
+    this.sync = { status: SyncState.LOADING, message: null, error: null };
     this.session = { userId: null, role: ROLES.OWNER, workspaceId: null, mode: 'local' };
     this.listeners = new Set();
     this.unsubscribers = [];
@@ -1084,7 +1075,7 @@ class Repository {
   }
 
   setSync(status, extra = {}) {
-    this.sync = { status, message: SYNC_LABELS[status] || status, error: null, ...extra };
+    this.sync = { status, message: null, messageKey: null, error: null, ...extra };
     this.emit();
   }
 
@@ -1094,13 +1085,13 @@ class Repository {
 
   assertCanWrite() {
     if (!this.canWrite()) {
-      throw new AppError('صلاحيتك للعرض فقط', { code: 'repo/forbidden' });
+      throw new AppError('error.repo/forbidden.viewer', { code: 'repo/forbidden' });
     }
   }
 
   assertCanAdmin() {
     if (!roleAtLeast(this.session.role, ROLES.ADMIN)) {
-      throw new AppError('هذا الإجراء يتطلب صلاحية مدير', { code: 'repo/forbidden' });
+      throw new AppError('error.repo/forbidden.admin', { code: 'repo/forbidden' });
     }
   }
 
@@ -1169,7 +1160,7 @@ class Repository {
         };
         const onFailure = (error) => {
           console.error(`[repo] listener failed for ${name}`, error);
-          this.setSync(SyncState.ERROR, { error, message: this._listenerMessage(error) });
+          this.setSync(SyncState.ERROR, { error, messageKey: this._listenerMessage(error) });
           settle(name);
         };
         const unsubscribe = name === 'items'
@@ -1190,8 +1181,8 @@ class Repository {
   }
 
   _listenerMessage(error) {
-    if (error?.code === 'permission-denied') return 'لا تملك صلاحية قراءة هذه البيانات';
-    return SYNC_LABELS.error;
+    if (error?.code === 'permission-denied') return 'sync.permissionDenied';
+    return 'sync.error';
   }
 
   _normalizeRows(name, rows) {
@@ -1389,7 +1380,7 @@ class Repository {
     try {
       row = await this.backend.get('items', id);
     } catch (error) {
-      throw new AppError('تعذّر فتح القطعة. حاول مرة أخرى.', { code: 'item/load-failed', cause: error });
+      throw new AppError('error.item/load-failed', { code: 'item/load-failed', cause: error });
     }
     if (!row) { this._forgetItem(id); return null; }
     const item = normalizeItem(row);
@@ -1415,7 +1406,7 @@ class Repository {
       try {
         rows = await this.backend.getMany('items', toFetch);
       } catch (error) {
-        throw new AppError('تعذّر قراءة القطع المحددة. حاول مرة أخرى.', { code: 'item/load-failed', cause: error });
+        throw new AppError('error.item/load-failed.many', { code: 'item/load-failed', cause: error });
       }
       for (const row of rows) {
         const item = normalizeItem(row);
@@ -1455,13 +1446,13 @@ class Repository {
   /** The item a mutation starts from: read now, from the store. */
   async _current(id) {
     const item = await this.getItem(id, { fresh: true });
-    if (!item) throw new AppError('لم تعد هذه القطعة موجودة.', { code: 'item/not-found' });
+    if (!item) throw new AppError('error.item/not-found', { code: 'item/not-found' });
     return item;
   }
   folder(id) { return id ? this.state.folders.find((f) => f.id === id) || null : null; }
   category(id) {
-    if (!id || id === UNCATEGORIZED_ID) return { id: UNCATEGORIZED_ID, name: 'غير مصنّف', icon: '📦' };
-    return this.state.categories.find((c) => c.id === id) || { id, name: 'تصنيف محذوف', icon: '❓' };
+    if (!id || id === UNCATEGORIZED_ID) return { id: UNCATEGORIZED_ID, name: t('category.uncategorized'), icon: '📦' };
+    return this.state.categories.find((c) => c.id === id) || { id, name: t('category.deleted'), icon: '❓' };
   }
   location(id) { return id ? this.state.locations.find((l) => l.id === id) || null : null; }
 
@@ -1556,7 +1547,7 @@ class Repository {
       if (!(await this.skuConflict(sku))) return sku;
       this.invalidateSkuFloor();
     }
-    throw new AppError('تعذّر حجز رمز فريد للقطعة. حاول مرة أخرى.', { code: 'repo/sku-unavailable' });
+    throw new AppError('error.repo/sku-unavailable', { code: 'repo/sku-unavailable' });
   }
 
   /**
@@ -1582,7 +1573,7 @@ class Repository {
     const ref = counters(`sku-${year}`);
     const legacyRef = counters('sku');
     const markerRef = counters(LEGACY_SKU_MARKER);
-    const exhausted = () => new AppError('تعذّر إنشاء رمز تلقائي جديد لهذه السنة.', { code: 'repo/sku-exhausted' });
+    const exhausted = () => new AppError('error.repo/sku-exhausted', { code: 'repo/sku-exhausted' });
 
     // Contention between devices is the expected failure here, and it is
     // transient — so retry. What must never happen is falling back to a
@@ -1629,7 +1620,7 @@ class Repository {
       }
     }
 
-    throw new AppError('تعذّر حجز رمز للقطعة — تحقق من الاتصال وحاول مرة أخرى', {
+    throw new AppError('error.repo/sku-unavailable.cloud', {
       code: 'repo/sku-unavailable',
       cause: lastError,
     });
@@ -1930,7 +1921,7 @@ class Repository {
       if (clash) {
         const generated = Boolean(parseGeneratedSku(item.sku));
         if (!(newSku && generated)) {
-          throw new AppError('لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.', {
+          throw new AppError('error.item/sku-conflict', {
             code: 'item/sku-conflict', sku: item.sku, conflictId: clash.id, conflictName: clash.name, generated,
           });
         }
@@ -1988,7 +1979,7 @@ class Repository {
       id: uid('itm'),
       sku: await this.reserveUniqueSku(),
       barcode: '', // barcodes identify a physical object; a copy has none yet
-      name: `${source.name} (نسخة)`,
+      name: t('item.copyName', { name: source.name }),
       createdAt: null,
       updatedAt: null,
       createdBy: this.session.userId,
@@ -2215,7 +2206,7 @@ class Repository {
     const category = this.state.categories.find((c) => c.id === id);
     const affected = await this.itemsReferencing('categoryId', id);
     if (affected.length && strategy === 'reassign' && !targetId) {
-      throw new AppError('اختر التصنيف البديل', { code: 'repo/needs-target' });
+      throw new AppError('error.repo/needs-target', { code: 'repo/needs-target' });
     }
     const newCategory = strategy === 'reassign' ? targetId : UNCATEGORIZED_ID;
     await this._runRelational([
@@ -2273,7 +2264,7 @@ class Repository {
     const allowed = new Set(['folderId', 'categoryId', 'locationId', 'condition', 'unit']);
     for (const key of Object.keys(patch)) {
       if (!allowed.has(key)) {
-        throw new AppError('حقل غير مسموح بتعديله جماعياً', { code: 'repo/bulk-field' });
+        throw new AppError('error.repo/bulk-field', { code: 'repo/bulk-field' });
       }
     }
 
@@ -2298,7 +2289,7 @@ class Repository {
 
     this.setSync(SyncState.SAVING);
     const { applied, atomic } = await this._runBulk(operations, {
-      what: 'التعديل الجماعي',
+      what: t('bulk.whatUpdate'),
       action: ACTIONS.ITEMS_BULK_UPDATED,
       operation: bulkOperationName(patch),
       meta: { fields: Object.keys(patch) },
@@ -2376,8 +2367,8 @@ class Repository {
       } catch (error) {
         if (error instanceof ConflictError) {
           throw new AppError(
-            `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
-            { code: 'repo/bulk-conflict', cause: error, requested, applied: 0, atomic: true },
+            'error.repo/bulk-conflict',
+            { code: 'repo/bulk-conflict', what, cause: error, requested, applied: 0, atomic: true },
           );
         }
         throw error;
@@ -2397,8 +2388,8 @@ class Repository {
       if (!applied) {
         if (!conflict) throw error;
         throw new AppError(
-          `تعذّر إكمال ${what} لأن بعض القطع تغيّرت منذ فتح القائمة. لم يتم تطبيق أي تغيير. حدّث القائمة وحاول مرة أخرى.`,
-          { code: 'repo/bulk-conflict', cause: error, requested, applied: 0, atomic: false },
+          'error.repo/bulk-conflict',
+          { code: 'repo/bulk-conflict', what, cause: error, requested, applied: 0, atomic: false },
         );
       }
 
@@ -2419,12 +2410,9 @@ class Repository {
       } catch (logError) {
         console.error('[repo] the partial bulk change could not be logged', logError);
       }
-      const n = applied.toLocaleString('en-US');
       throw new AppError(
-        conflict
-          ? `تعذّر إكمال ${what}: طُبّق التغيير على ${n} قطعة ثم تغيّرت قطعة أخرى منذ فتح القائمة. حدّث القائمة وأكمل الباقي.`
-          : `تعذّر إكمال ${what}: طُبّق التغيير على ${n} قطعة ثم توقف. حدّث القائمة وأكمل الباقي.`,
-        { code: 'repo/bulk-partial', cause: error, ...partial },
+        conflict ? 'error.repo/bulk-partial.conflict' : 'error.repo/bulk-partial',
+        { code: 'repo/bulk-partial', what, cause: error, ...partial, count: applied },
       );
     }
   }
@@ -2451,7 +2439,7 @@ class Repository {
         deletedAt: this.backend.serverTime,
         deletedBy: this.session.userId,
       },
-    })), { what: 'الحذف الجماعي', action: ACTIONS.ITEMS_BULK_DELETED, operation: 'trash' });
+    })), { what: t('bulk.whatDelete'), action: ACTIONS.ITEMS_BULK_DELETED, operation: 'trash' });
     this._invalidateAggregates();
     await this.log(ACTIONS.ITEMS_BULK_DELETED, {
       requested: items.length, count: applied, applied, atomic, status: 'complete', operation: 'trash',
@@ -2634,9 +2622,10 @@ class Repository {
    * Throws unless the whole inventory is loaded. Anything that reads or
    * removes "everything" is silently wrong on a window, so it says so instead.
    */
-  assertItemsComplete(what = 'هذه العملية') {
+  /** @param {string} [whatKey] a message key naming the operation */
+  assertItemsComplete(whatKey = 'partial.thisOperation') {
     if (!this.itemsComplete) {
-      throw new AppError(`${what} تحتاج المخزون كاملاً، ولم يكتمل تحميله`, { code: 'repo/partial' });
+      throw new AppError('error.repo/partial', { code: 'repo/partial', what: t(whatKey) });
     }
   }
 
@@ -2646,7 +2635,7 @@ class Repository {
     // Every item — not every loaded item. On a window this would delete the
     // newest 200 and leave the rest behind, reporting success.
     await this.completeItems();
-    this.assertItemsComplete('مسح المخزون');
+    this.assertItemsComplete('partial.clearInventory');
     const operations = [
       ...this.state.items.map((i) => ({ type: 'delete', collection: 'items', id: i.id })),
       ...this.state.folders.map((f) => ({ type: 'delete', collection: 'folders', id: f.id })),

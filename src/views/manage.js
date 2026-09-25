@@ -2,9 +2,11 @@
 
 import { icon } from '../icons.js';
 import {
-  APP_VERSION, CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, ROLE_LABELS, SCHEMA_VERSION, UNCATEGORIZED_ID,
+  APP_VERSION, CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, SCHEMA_VERSION, UNCATEGORIZED_ID,
 } from '../config.js';
-import { AI_STATUS_LABELS, aiAvailability } from '../ai.js';
+import { aiAvailability, aiStatusLabel } from '../ai.js';
+import { LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
+import { categoryName, locationName, roleLabel } from '../labels.js';
 import {
   currentSession, listMembers, registerWithEmail, sendPasswordReset,
   signInWithEmail, signInWithGoogle, signOutUser,
@@ -32,7 +34,7 @@ import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { primaryImage, validateImport } from '../validation.js';
 import {
-  closeSheet, confirmAction, emptyState, flashSuccess, openSheet, optionList, toast, toastError, withBusy,
+  closeSheet, confirmAction, emptyState, flashSuccess, isSheetOpen, openSheet, optionList, toast, toastError, withBusy,
 } from '../ui.js';
 import { renderHome, view as homeView } from './home.js';
 import { goTab } from '../navigation.js';
@@ -47,15 +49,15 @@ import { goTab } from '../navigation.js';
  * and, at the moment it matters, true. Nodes that have since been re-rendered
  * away simply are not found, and nothing happens.
  */
-function applyExactCounts(root, group, suffix = 'قطعة') {
+function applyExactCounts(root, group) {
   if (!root) return;
   repository.taxonomyCounts().then((counts) => {
     for (const [id, n] of counts[group]) {
       const node = root.querySelector(`[data-count-for="${CSS.escape(id)}"]`);
-      if (node) node.textContent = `${formatNumber(n)} ${suffix}`;
+      if (node) node.textContent = t('count.items', { count: n });
       const labelled = root.querySelector(`[data-count-label="${CSS.escape(id)}"]`);
       if (labelled) {
-        labelled.setAttribute('aria-label', `${labelled.dataset.countName}، ${formatNumber(n)} ${suffix}`);
+        labelled.setAttribute('aria-label', t('home.folderAria', { name: labelled.dataset.countName, items: t('count.items', { count: n }) }));
       }
     }
   });
@@ -78,22 +80,22 @@ export function renderCategories() {
       return el('div', { class: 'catcell' }, [
         el('button', {
           class: 'catcell-main', type: 'button',
-          'aria-label': `${category.name}، ${formatNumber(count)} قطعة`,
+          'aria-label': t('home.folderAria', { name: categoryName(category), items: t('count.items', { count }) }),
           'data-count-label': category.id,
-          'data-count-name': category.name,
+          'data-count-name': categoryName(category),
           onClick: () => { filterHomeByCategory(category.id); },
         }, [
           el('div', { class: 'catcico', text: category.icon, 'aria-hidden': 'true' }),
-          el('div', { class: 'catcname', text: category.name }),
-          el('div', { class: 'catccount', 'data-count-for': category.id, text: `${formatNumber(count)} قطعة` }),
+          el('div', { class: 'catcname', dir: 'auto', text: categoryName(category) }),
+          el('div', { class: 'catccount', 'data-count-for': category.id, text: t('count.items', { count }) }),
         ]),
         repository.canWrite() ? el('div', { class: 'catcell-acts' }, [
           el('button', {
-            class: 'catcell-act', type: 'button', 'aria-label': `تعديل ${category.name}`,
+            class: 'catcell-act', type: 'button', 'aria-label': t('manage.editNamed', { name: categoryName(category) }),
             onClick: () => openCategorySheet(category.id),
           }, [icon('edit', { size: 15 })]),
           el('button', {
-            class: 'catcell-act danger', type: 'button', 'aria-label': `حذف ${category.name}`,
+            class: 'catcell-act danger', type: 'button', 'aria-label': t('manage.deleteNamed', { name: categoryName(category) }),
             onClick: () => deleteCategoryFlow(category.id),
           }, [icon('trash', { size: 15 })]),
         ]) : null,
@@ -103,7 +105,7 @@ export function renderCategories() {
       class: 'catcell catcell-add', type: 'button', onClick: () => openCategorySheet(),
     }, [
       el('div', { class: 'catcico' }, [icon('plus', { size: 20 })]),
-      el('div', { class: 'catcname', text: 'تصنيف جديد' }),
+      el('div', { class: 'catcname', text: t('category.newTitle') }),
     ]) : null,
   ]);
   applyExactCounts(grid, 'categories');
@@ -123,7 +125,7 @@ export function openCategorySheet(categoryId = null) {
   const category = categoryId ? repository.state.categories.find((c) => c.id === categoryId) : null;
   selectedCategoryIcon = category?.icon || '📦';
 
-  setText('cat-sheet-title', category ? 'تعديل التصنيف' : 'تصنيف جديد');
+  setText('cat-sheet-title', category ? t('category.editTitle') : t('category.newTitle'));
   $('cat-name').value = category?.name || '';
   renderIconPicker($('caticolist'), CAT_ICONS, selectedCategoryIcon, (icon) => {
     selectedCategoryIcon = icon;
@@ -133,13 +135,13 @@ export function openCategorySheet(categoryId = null) {
 
 async function saveCategory() {
   const name = $('cat-name').value.trim();
-  if (!name) { toast('أدخل اسم التصنيف', '⚠'); return; }
+  if (!name) { toast(t('category.nameRequired'), '⚠'); return; }
   try {
     await repository.saveCategory({ id: editingCategoryId || undefined, name, icon: selectedCategoryIcon });
-    toast(editingCategoryId ? 'تم التحديث' : 'تمت الإضافة', '✓');
+    toast(editingCategoryId ? t('manage.updated') : t('manage.added'), '✓');
     closeSheet('cat');
   } catch (error) {
-    toastError(error, 'تعذّر حفظ التصنيف');
+    toastError(error, 'category.saveFailed');
   }
 }
 
@@ -149,17 +151,17 @@ async function deleteCategoryFlow(categoryId) {
 
   if (!usage) {
     const confirmed = await confirmAction({
-      title: `حذف تصنيف "${category.name}"؟`,
-      message: 'لا توجد قطع مرتبطة بهذا التصنيف.',
+      title: t('category.deleteConfirm', { name: categoryName(category) }),
+      message: t('category.deleteEmpty'),
       icon: '◈',
-      confirmLabel: 'حذف',
+      confirmLabel: t('common.delete'),
     });
     if (!confirmed) return;
     try {
       await repository.deleteCategory(categoryId, 'uncategorize');
-      toast('حُذف التصنيف', '✓');
+      toast(t('category.deletedToast'), '✓');
     } catch (error) {
-      toastError(error, 'تعذّر حذف التصنيف');
+      toastError(error, 'category.deleteFailed');
     }
     return;
   }
@@ -167,12 +169,12 @@ async function deleteCategoryFlow(categoryId) {
   // Referential integrity: the user chooses where the affected items go.
   const alternatives = repository.state.categories.filter((c) => c.id !== categoryId);
   optionList($('reassign-target'), [
-    { value: '__uncategorized__', label: '📦 نقلها إلى "غير مصنّف"' },
-    ...alternatives.map((c) => ({ value: c.id, label: `↳ ${c.icon} ${c.name}` })),
+    { value: '__uncategorized__', label: `📦 ${t('category.moveToUncategorized', { name: t('category.uncategorized') })}` },
+    ...alternatives.map((c) => ({ value: c.id, label: `↳ ${c.icon} ${categoryName(c)}` })),
   ], '__uncategorized__');
 
-  setText('reassign-title', `حذف "${category.name}"`);
-  setText('reassign-message', `${formatNumber(usage)} قطعة مرتبطة بهذا التصنيف. اختر وجهتها قبل الحذف.`);
+  setText('reassign-title', t('category.reassignTitle', { name: categoryName(category) }));
+  setText('reassign-message', t('category.reassignMessage', { count: usage }));
 
   $('reassign-confirm').onclick = async () => {
     const target = $('reassign-target').value;
@@ -183,9 +185,9 @@ async function deleteCategoryFlow(categoryId) {
         target === '__uncategorized__' ? null : target,
       );
       closeSheet('reassign');
-      toast(`حُذف التصنيف ونُقلت ${formatNumber(moved)} قطعة`, '✓');
+      toast(t('category.deletedMoved', { count: moved }), '✓');
     } catch (error) {
-      toastError(error, 'تعذّر حذف التصنيف');
+      toastError(error, 'category.deleteFailed');
     }
   };
   openSheet('reassign');
@@ -198,7 +200,7 @@ function renderIconPicker(container, icons, selected, onPick) {
     class: `icon-pick${icon === selected ? ' on' : ''}`,
     type: 'button',
     text: icon,
-    'aria-label': `أيقونة ${icon}`,
+    'aria-label': t('manage.iconNamed', { icon }),
     'aria-pressed': String(icon === selected),
     onClick: (event) => {
       onPick(icon);
@@ -218,7 +220,7 @@ function renderColorPicker(container, colors, selected, onPick) {
     class: `color-pick${color === selected ? ' on' : ''}`,
     type: 'button',
     style: { background: color },
-    'aria-label': `لون ${color}`,
+    'aria-label': t('manage.colorNamed', { color }),
     'aria-pressed': String(color === selected),
     onClick: (event) => {
       onPick(color);
@@ -238,14 +240,14 @@ let selectedFolderIcon = '🗂';
 let selectedFolderColor = '#007AFF';
 
 export function openFolderSheet(folderId = null) {
-  if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
+  if (!repository.canWrite()) { toast(t('error.repo/forbidden.viewer'), '🔒'); return; }
   editingFolderId = folderId;
   const folder = folderId ? repository.folder(folderId) : null;
 
   selectedFolderIcon = folder?.icon || '🗂';
   selectedFolderColor = folder?.color || '#007AFF';
 
-  setText('fldshtitle', folder ? 'تعديل المجلد' : 'مجلد جديد');
+  setText('fldshtitle', folder ? t('folder.edit') : t('folder.newTitle'));
   $('fld-name').value = folder?.name || '';
   $('fld-desc').value = folder?.description || '';
   $('flddelbtn').style.display = folder ? '' : 'none';
@@ -258,7 +260,7 @@ export function openFolderSheet(folderId = null) {
 
 async function saveFolder() {
   const name = $('fld-name').value.trim();
-  if (!name) { toast('أدخل اسم المجلد', '⚠'); return; }
+  if (!name) { toast(t('folder.nameRequired'), '⚠'); return; }
   try {
     await repository.saveFolder({
       id: editingFolderId || undefined,
@@ -267,10 +269,10 @@ async function saveFolder() {
       icon: selectedFolderIcon,
       color: selectedFolderColor,
     });
-    toast(editingFolderId ? 'تم تحديث المجلد' : 'تم إنشاء المجلد', '🗂');
+    toast(editingFolderId ? t('folder.updated') : t('folder.created'), '🗂');
     closeSheet('fld');
   } catch (error) {
-    toastError(error, 'تعذّر حفظ المجلد');
+    toastError(error, 'folder.saveFailed');
   }
 }
 
@@ -280,12 +282,12 @@ async function deleteFolderFlow() {
   const count = await repository.countItemsReferencing('folderId', folder.id);
 
   const confirmed = await confirmAction({
-    title: `حذف مجلد "${folder.name}"؟`,
+    title: t('folder.deleteConfirm', { name: folder.name }),
     message: count
-      ? `${formatNumber(count)} قطعة ستعود إلى الجرد الرئيسي (لن تُحذف).`
-      : 'المجلد فارغ.',
+      ? t('folder.deleteMessage', { count })
+      : t('folder.empty'),
     icon: '📁',
-    confirmLabel: 'حذف المجلد',
+    confirmLabel: t('folder.delete'),
   });
   if (!confirmed) return;
 
@@ -293,9 +295,9 @@ async function deleteFolderFlow() {
     const moved = await repository.deleteFolder(folder.id);
     closeSheet('fld');
     flashSuccess();
-    toast(moved ? `حُذف المجلد وعادت ${formatNumber(moved)} قطعة للجرد` : 'حُذف المجلد', '🗑');
+    toast(moved ? t('folder.deletedMoved', { count: moved }) : t('folder.deleted'), '🗑');
   } catch (error) {
-    toastError(error, 'تعذّر حذف المجلد');
+    toastError(error, 'folder.deleteFailed');
   }
 }
 
@@ -308,7 +310,7 @@ export function openLocationsSheet() {
 /** "N قطعة", or an honest phrase when the number is not known. */
 async function describeCount() {
   const counts = await repository.recordCounts();
-  return counts ? `${formatNumber(counts.live)} قطعة` : 'كل ما في مخزونك';
+  return counts ? t('count.items', { count: counts.live }) : t('manage.everything');
 }
 
 function renderLocations() {
@@ -321,37 +323,37 @@ function renderLocations() {
       return el('div', { class: 'srow' }, [
         el('div', { class: 'srowiw', text: '📍', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
-          el('div', { class: 'srowl', text: location.name }),
-          el('div', { class: 'srowd', 'data-count-for': location.id, text: `${formatNumber(count)} قطعة` }),
+          el('div', { class: 'srowl', dir: 'auto', text: locationName(location) }),
+          el('div', { class: 'srowd', 'data-count-for': location.id, text: t('count.items', { count }) }),
         ]),
         repository.canWrite() ? el('button', {
           class: 'catcell-act danger', type: 'button',
-          'aria-label': `حذف ${location.name}`,
+          'aria-label': t('manage.deleteNamed', { name: locationName(location) }),
           onClick: async () => {
             // The number in a destructive confirmation is the number of records
             // the deletion will rewrite — asked of the backend, never counted
             // off the loaded window.
             const exact = await repository.countItemsReferencing('locationId', location.id);
             const confirmed = await confirmAction({
-              title: `حذف موقع "${location.name}"؟`,
-              message: exact ? `${formatNumber(exact)} قطعة ستصبح بلا موقع محدد.` : 'لا توجد قطع في هذا الموقع.',
+              title: t('location.deleteConfirm', { name: locationName(location) }),
+              message: exact ? t('location.deleteMessage', { count: exact }) : t('location.deleteEmpty'),
               icon: '📍',
-              confirmLabel: 'حذف',
+              confirmLabel: t('common.delete'),
             });
             if (!confirmed) return;
             try {
               await repository.deleteLocation(location.id);
               renderLocations();
-              toast('حُذف الموقع', '✓');
+              toast(t('location.deleted'), '✓');
             } catch (error) {
-              toastError(error, 'تعذّر حذف الموقع');
+              toastError(error, 'location.deleteFailed');
             }
           },
         }, [icon('trash', { size: 15 })]) : null,
       ]);
     }),
     !repository.state.locations.length ? el('div', { class: 'srow' }, [
-      el('div', { class: 'srowd', text: 'لا توجد مواقع' }),
+      el('div', { class: 'srowd', text: t('location.none') }),
     ]) : null,
   ]);
   applyExactCounts(list, 'locations');
@@ -360,14 +362,14 @@ function renderLocations() {
 async function addLocation() {
   const input = $('loc-name');
   const name = input.value.trim();
-  if (!name) { toast('أدخل اسم الموقع', '⚠'); return; }
+  if (!name) { toast(t('location.nameRequired'), '⚠'); return; }
   try {
     await repository.saveLocation({ name });
     input.value = '';
     renderLocations();
-    toast('أُضيف الموقع', '📍');
+    toast(t('location.added'), '📍');
   } catch (error) {
-    toastError(error, 'تعذّر إضافة الموقع');
+    toastError(error, 'location.addFailed');
   }
 }
 
@@ -402,13 +404,13 @@ async function renderTrash() {
   const list = $('trash-list');
   if (!list) return;
   const ticket = ++trashView.ticket;
-  if (!list.childElementCount) render(list, [el('div', { class: 'srowd', text: 'جارٍ القراءة…' })]);
+  if (!list.childElementCount) render(list, [el('div', { class: 'srowd', text: t('common.loading') })]);
 
   let result;
   try {
     result = await queryInventory({ trashed: true, sort: 'newest', page: trashView.page, perPage: TRASH_PAGE }, {
       // Only the cloud adapter, which answers from what it holds, needs this.
-      ensure: () => withFullInventory('جارٍ قراءة المحذوفات…'),
+      ensure: () => withFullInventory(t('trash.reading')),
     });
   } catch (error) {
     console.error('[trash] could not be read', error);
@@ -417,29 +419,29 @@ async function renderTrash() {
   // A restore on page 3 followed quickly by a purge: only the newest read paints.
   if (ticket !== trashView.ticket) return;
   if (!result?.answerable) {
-    render(list, [emptyState('🗑', 'تعذّر قراءة المحذوفات', 'حاول مرة أخرى')]);
+    render(list, [emptyState('🗑', t('trash.readFailed'), t('common.retry'))]);
     return;
   }
   trashView.page = result.page;
   const trashed = result.rows;
 
   if (!trashed.length) {
-    render(list, [emptyState('🗑', 'سلة المحذوفات فارغة', 'القطع المحذوفة تظهر هنا ويمكن استعادتها')]);
+    render(list, [emptyState('🗑', t('trash.emptyTitle'), t('trash.emptySub'))]);
     return;
   }
 
   const pages = result.totalPages;
-  const pager = pages && pages > 1 ? el('nav', { class: 'trash-pager', 'aria-label': 'صفحات المحذوفات',
+  const pager = pages && pages > 1 ? el('nav', { class: 'trash-pager', 'aria-label': t('trash.pages'),
     style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '12px 4px' } }, [
     el('button', {
-      class: 'btn btn-g', type: 'button', text: 'السابقة',
+      class: 'btn btn-g', type: 'button', text: t('common.previous'),
       disabled: trashView.page <= 1 || undefined,
       onClick: () => { trashView.page -= 1; void renderTrash(); },
     }),
     el('span', { class: 'lsub', 'aria-live': 'polite',
-      text: `صفحة ${formatNumber(trashView.page)} من ${formatNumber(pages)} · ${formatNumber(result.total)} قطعة` }),
+      text: t('trash.pageOf', { page: trashView.page, pages, items: t('count.items', { count: result.total }) }) }),
     el('button', {
-      class: 'btn btn-g', type: 'button', text: 'التالية',
+      class: 'btn btn-g', type: 'button', text: t('common.next'),
       disabled: trashView.page >= pages || undefined,
       onClick: () => { trashView.page += 1; void renderTrash(); },
     }),
@@ -460,7 +462,7 @@ async function renderTrash() {
       thumb,
       el('div', { class: 'linfo' }, [
         el('div', { class: 'lname', text: item.name || '—' }),
-        el('div', { class: 'lsub', text: `حُذفت ${formatDate(item.deletedAt)}` }),
+        el('div', { class: 'lsub', text: t('trash.deletedOn', { date: formatDate(item.deletedAt) }) }),
       ]),
       el('div', { class: 'trash-acts' }, [
         el('button', {
@@ -469,30 +471,30 @@ async function renderTrash() {
             try {
               await repository.restoreItem(item.id);
               void renderTrash();
-              toast('استُعيدت القطعة', '↩');
+              toast(t('trash.restored'), '↩');
             } catch (error) {
               if (error?.code === 'item/sku-conflict') { await resolveRestoreConflict(item, error); return; }
-              toastError(error, 'تعذّر استعادة القطعة');
+              toastError(error, 'trash.restoreFailed');
             }
           },
-        }, [el('span', { class: 'ico-inline', 'aria-hidden': 'true' }, [icon('restore', { size: 16 })]), 'استعادة']),
+        }, [el('span', { class: 'ico-inline', 'aria-hidden': 'true' }, [icon('restore', { size: 16 })]), t('trash.restore')]),
         el('button', {
-          class: 'btn btn-d trash-btn', type: 'button', text: 'حذف نهائي',
+          class: 'btn btn-d trash-btn', type: 'button', text: t('trash.purge'),
           onClick: async () => {
             const confirmed = await confirmAction({
-              title: `حذف "${item.name}" نهائياً؟`,
-              message: 'لا يمكن التراجع عن هذا الإجراء.',
+              title: t('trash.purgeTitle', { name: item.name }),
+              message: t('confirm.cannotUndo'),
               icon: '⚠️',
-              confirmLabel: 'حذف نهائياً',
-              requirePhrase: 'حذف',
+              confirmLabel: t('trash.purgeConfirm'),
+              requirePhrase: t('confirm.phraseDelete'),
             });
             if (!confirmed) return;
             try {
               await repository.purgeItem(item.id);
               void renderTrash();
-              toast('حُذفت نهائياً', '🗑');
+              toast(t('trash.purged'), '🗑');
             } catch (error) {
-              toastError(error, 'تعذّر الحذف النهائي');
+              toastError(error, 'trash.purgeFailed');
             }
           },
         }),
@@ -508,29 +510,29 @@ async function renderTrash() {
  * the only way forward offered is to edit the record and choose another.
  */
 async function resolveRestoreConflict(item, error) {
-  const message = `الرمز "${error.sku}" مستخدم على "${error.conflictName || 'قطعة أخرى'}".`;
+  const message = t('trash.skuUsedBy', { sku: error.sku, name: error.conflictName || t('trash.anotherItem') });
   if (error.generated) {
     const renew = await confirmAction({
-      title: 'لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.',
-      message: `${message} يمكن إعطاؤها رمزاً جديداً واستعادتها.`,
+      title: t('error.item/sku-conflict'),
+      message: `${message} ${t('trash.skuRenewHint')}`,
       icon: '🔖',
-      confirmLabel: 'إنشاء رمز جديد واستعادة',
+      confirmLabel: t('trash.skuRenew'),
     });
     if (!renew) return;
     try {
       const { sku } = await repository.restoreItem(item.id, undefined, { newSku: true });
       void renderTrash();
-      toast(`استُعيدت القطعة برمز ${sku}`, '↩');
+      toast(t('trash.restoredWithSku', { sku }), '↩');
     } catch (retryError) {
-      toastError(retryError, 'تعذّر استعادة القطعة');
+      toastError(retryError, 'trash.restoreFailed');
     }
     return;
   }
   const edit = await confirmAction({
-    title: 'لا يمكن استعادة القطعة لأن الرمز SKU مستخدم على قطعة أخرى.',
-    message: `${message} عدّل رمز إحدى القطعتين ثم أعد المحاولة.`,
+    title: t('error.item/sku-conflict'),
+    message: `${message} ${t('trash.skuEditHint')}`,
     icon: '🔖',
-    confirmLabel: 'تعديل القطعة',
+    confirmLabel: t('trash.editItem'),
   });
   if (edit) {
     closeSheet('trash');
@@ -553,13 +555,13 @@ async function startImport() {
       const { data: parsed, sourceFingerprint } = await readBackupFile(file);
       const result = validateImport(parsed);
       if (!result.ok) {
-        toast(result.errors[0] || 'ملف غير صالح', '✕');
+        toast(result.errors[0] || t('backup.invalidFile'), '✕');
         return;
       }
       pendingImport = { ...result, sourceFingerprint };
       showImportSummary(result, file.name);
     } catch (error) {
-      toastError(error, 'تعذّر قراءة الملف');
+      toastError(error, 'error.import/read');
     }
   };
   input.click();
@@ -568,10 +570,10 @@ async function startImport() {
 function showImportSummary(result, filename) {
   setText('import-file', filename);
   render($('import-stats'), [
-    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.items) }), ' قطعة']),
-    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.folders) }), ' مجلد']),
-    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.categories) }), ' تصنيف']),
-    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.locations) }), ' موقع']),
+    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.items) }), ` ${t('backup.statItems', { count: result.stats.items })}`]),
+    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.folders) }), ` ${t('backup.statFolders', { count: result.stats.folders })}`]),
+    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.categories) }), ` ${t('backup.statCategories', { count: result.stats.categories })}`]),
+    el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.locations) }), ` ${t('backup.statLocations', { count: result.stats.locations })}`]),
   ]);
 
   const warnings = $('import-warnings');
@@ -580,15 +582,15 @@ function showImportSummary(result, filename) {
   void unfinishedRestore().then((job) => {
     if (!job) return;
     warnings.style.display = '';
-    warnings.prepend(el('div', { class: 'imp-warn', text: 'اختر ملف الاستعادة نفسه ثم «استبدال» لإكمالها.' }));
-    warnings.prepend(el('div', { class: 'imp-warn-title', role: 'alert', text: RESTORE_BLOCKED_MESSAGE }));
+    warnings.prepend(el('div', { class: 'imp-warn', text: t('backup.chooseSameFile') }));
+    warnings.prepend(el('div', { class: 'imp-warn-title', role: 'alert', text: t(RESTORE_BLOCKED_MESSAGE) }));
   });
   if (result.warnings.length) {
     warnings.style.display = '';
     render(warnings, [
-      el('div', { class: 'imp-warn-title', text: `${result.warnings.length} تنبيه` }),
+      el('div', { class: 'imp-warn-title', text: t('count.warnings', { count: result.warnings.length }) }),
       ...result.warnings.slice(0, 8).map((warning) => el('div', { class: 'imp-warn', text: `• ${warning}` })),
-      result.warnings.length > 8 ? el('div', { class: 'imp-warn', text: `• و${result.warnings.length - 8} تنبيهاً آخر` }) : null,
+      result.warnings.length > 8 ? el('div', { class: 'imp-warn', text: t('backup.moreWarnings', { count: result.warnings.length - 8 }) }) : null,
     ]);
   } else {
     warnings.style.display = 'none';
@@ -604,20 +606,20 @@ async function runImport(mode) {
 
   if (mode === 'restore') {
     const confirmed = await confirmAction({
-      title: 'استبدال كل البيانات الحالية؟',
-      message: `سيُستبدل المخزون الحالي (${await describeCount()}) بمحتوى الملف. تُؤخذ نسخة أمان تلقائياً قبل أي تغيير، وإن تعذّر حفظها تتوقف العملية.`,
+      title: t('backup.replaceTitle'),
+      message: t('backup.replaceMessage', { current: await describeCount() }),
       icon: '⚠️',
-      confirmLabel: 'استبدال',
-      requirePhrase: 'استبدال',
+      confirmLabel: t('backup.replace'),
+      requirePhrase: t('confirm.phraseReplace'),
     });
     if (!confirmed) return;
   }
 
-  await withBusy($(mode === 'merge' ? 'import-merge' : 'import-restore'), 'جارٍ التنفيذ…', async () => {
+  await withBusy($(mode === 'merge' ? 'import-merge' : 'import-restore'), t('common.working'), async () => {
     try {
       if (mode === 'merge') {
         const { added } = await applyMerge(data);
-        toast(`أُضيف ${formatNumber(added)} سجل`, '✓');
+        toast(t('backup.merged', { count: added }), '✓');
       } else {
         const result = await restoreFromBackup(data, {
           sourceFingerprint: pendingImport.sourceFingerprint,
@@ -629,7 +631,7 @@ async function runImport(mode) {
               : `${label} ${formatNumber(done)} / ${formatNumber(total)}`);
           },
         });
-        toast(`استُعيد ${formatNumber(result.restored)} سجل`, '✓');
+        toast(t('backup.restored', { count: result.restored }), '✓');
       }
       pendingImport = null;
       setText('import-progress', '');
@@ -638,7 +640,7 @@ async function runImport(mode) {
     } catch (error) {
       setText('import-progress', '');
       if (error?.code === 'import/sku-conflict') showMergeSkuConflicts(error.conflicts || []);
-      toastError(error, 'فشل الاستيراد');
+      toastError(error, 'backup.importFailed');
     }
   });
 }
@@ -651,13 +653,13 @@ function showMergeSkuConflicts(conflicts) {
   const warnings = $('import-warnings');
   if (!warnings) return;
   const line = (c) => (c.type === 'existing'
-    ? `• «${c.incomingName || 'قطعة'}»: الرمز SKU مستخدم على قطعة أخرى: ${c.sku}${c.existingName ? ` («${c.existingName}»)` : ''}`
-    : `• «${c.incomingName || 'قطعة'}»: الرمز SKU مكرر داخل الملف: ${c.sku}`);
+    ? `• «${c.incomingName || t('common.item')}»: ${t('sku.usedBy', { sku: c.sku })}${c.existingName ? ` («${c.existingName}»)` : ''}`
+    : `• «${c.incomingName || t('common.item')}»: ${t('sku.duplicateInFile', { sku: c.sku })}`);
   warnings.style.display = '';
   render(warnings, [
-    el('div', { class: 'imp-warn-title', role: 'alert', text: `لم يُدمج شيء — ${formatNumber(conflicts.length)} تعارضاً في رموز SKU` }),
+    el('div', { class: 'imp-warn-title', role: 'alert', text: t('backup.mergeSkuConflicts', { count: conflicts.length }) }),
     ...conflicts.slice(0, 8).map((c) => el('div', { class: 'imp-warn', text: line(c) })),
-    conflicts.length > 8 ? el('div', { class: 'imp-warn', text: `• و${formatNumber(conflicts.length - 8)} تعارضاً آخر` }) : null,
+    conflicts.length > 8 ? el('div', { class: 'imp-warn', text: t('backup.moreConflicts', { count: conflicts.length - 8 }) }) : null,
   ]);
 }
 
@@ -670,48 +672,83 @@ function showMergeSkuConflicts(conflicts) {
 // directly against the window and fail with "the inventory is incomplete".
 
 export async function runFullExcelExport() {
-  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً للتصدير…'))) return false;
+  if (!(await withFullInventory(t('export.reading')))) return false;
   try {
     exportExcel();
-    toast('تم التصدير', '📊');
+    toast(t('export.done'), '📊');
     return true;
   } catch (error) {
-    toastError(error, 'فشل تصدير Excel');
+    toastError(error, 'error.export/excel');
     return false;
   }
 }
 
 export async function runFullJsonExport() {
-  if (!(await withFullInventory('جارٍ قراءة المخزون كاملاً للتصدير…'))) return false;
+  if (!(await withFullInventory(t('export.reading')))) return false;
   try {
     const { bytes, restorable } = exportJSON();
     if (!restorable) {
       // Said now, not on the day the file is needed.
       void confirmAction({
-        title: 'نُزّل الملف، لكنه أكبر من حد الاستعادة',
-        message: `حجم الملف ${formatNumber(Math.ceil(bytes / 1048576))} ميغابايت، والحد الذي يستعيده نَظْم في المتصفح ${formatNumber(MAX_BACKUP_FILE_BYTES / 1048576)} ميغابايت. احتفظ بتصدير Excel أيضاً.`,
+        title: t('export.oversizeTitle'),
+        message: t('export.oversizeMessage', { size: Math.ceil(bytes / 1048576), limit: MAX_BACKUP_FILE_BYTES / 1048576 }),
         icon: '⚠️',
-        confirmLabel: 'فهمت',
+        confirmLabel: t('common.ok'),
       });
       return true;
     }
-    toast('تم تصدير البيانات — بدون ملفات الصور', '💾');
+    toast(t('export.jsonDone'), '💾');
     return true;
   } catch (error) {
-    toastError(error, 'فشل تصدير البيانات');
+    toastError(error, 'error.export/failed');
     return false;
   }
 }
 
 // ── settings ──
 export function renderSettings() {
+  renderLanguagePanel();
   renderAuthPanel();
   renderPlanPanel();
   renderAiPanel();
   renderDataPanel();
   renderMigrationPanel();
-  setText('app-version', `الجرد الذكي للمقتنيات والأصول — v${APP_VERSION} · مخطط ${SCHEMA_VERSION}`);
+  setText('app-version', t('app.versionLine', { version: APP_VERSION, schema: String(SCHEMA_VERSION) }));
 }
+
+/**
+ * Language, as a radio group: the choice is announced with its state, the
+ * current one carries a visible check, and switching redraws the screens in
+ * place — nothing is reloaded, and no data is touched.
+ */
+function renderLanguagePanel() {
+  const panel = $('language-panel');
+  if (!panel) return;
+  const current = getLanguage();
+  render(panel, [
+    el('div', { class: 'lang-group', role: 'radiogroup', 'aria-labelledby': 'language-heading' }, LANGUAGES.map((lang) => el('button', {
+      class: `srow srow-btn lang-option${lang === current ? ' on' : ''}`,
+      type: 'button',
+      role: 'radio',
+      'aria-checked': String(lang === current),
+      lang,
+      dir: lang === 'ar' ? 'rtl' : 'ltr',
+      onClick: () => setLanguage(lang),
+    }, [
+      el('div', { style: { flex: '1' } }, [el('div', { class: 'srowl', text: t(`language.${lang}`) })]),
+      lang === current ? el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('check', { size: 18 })]) : null,
+    ]))),
+  ]);
+}
+
+// Settings, the open sheets it owns, and the category and location lists,
+// redrawn in the new language from what they already hold.
+onLanguageChange(() => {
+  if ($('v-set')?.classList.contains('active')) renderSettings();
+  if (isSheetOpen('trash')) void renderTrash();
+  if (isSheetOpen('loc')) renderLocations();
+  if (isSheetOpen('import') && pendingImport) showImportSummary(pendingImport, $('import-file')?.textContent || '');
+});
 
 function renderAuthPanel() {
   const panel = $('auth-panel');
@@ -724,8 +761,8 @@ function renderAuthPanel() {
       el('div', { class: 'srow' }, [
         el('div', { class: 'srowiw', style: { background: 'rgba(255,149,0,.15)' }, text: '📴', 'aria-hidden': 'true' }),
         el('div', [
-          el('div', { class: 'srowl', text: 'وضع محلي' }),
-          el('div', { class: 'srowd', text: 'البيانات محفوظة على هذا الجهاز فقط — لا مزامنة ولا نسخ سحابي' }),
+          el('div', { class: 'srowl', text: t('settings.localMode') }),
+          el('div', { class: 'srowd', text: t('settings.localModeSub') }),
         ]),
       ]),
     ]);
@@ -734,37 +771,37 @@ function renderAuthPanel() {
 
   if (!session.user) {
     render(panel, [
-      el('div', { class: 'auth-intro', text: 'سجّل الدخول لمزامنة مقتنياتك بين أجهزتك وتفعيل التعرّف على الصور.' }),
+      el('div', { class: 'auth-intro', text: t('auth.intro') }),
       el('div', { class: 'frow' }, [
-        el('label', { for: 'auth-email', text: 'البريد' }),
+        el('label', { for: 'auth-email', text: t('auth.email') }),
         el('input', { id: 'auth-email', type: 'email', autocomplete: 'email', placeholder: 'name@example.com' }),
       ]),
       el('div', { class: 'frow' }, [
-        el('label', { for: 'auth-password', text: 'كلمة المرور' }),
+        el('label', { for: 'auth-password', text: t('auth.password') }),
         el('input', { id: 'auth-password', type: 'password', autocomplete: 'current-password', placeholder: '••••••••' }),
       ]),
       el('div', { class: 'auth-actions' }, [
         el('button', {
-          class: 'btn btn-p', type: 'button', text: 'دخول', id: 'auth-signin',
+          class: 'btn btn-p', type: 'button', text: t('auth.signIn'), id: 'auth-signin',
           onClick: (event) => authAction(event.currentTarget, () => signInWithEmail($('auth-email').value.trim(), $('auth-password').value)),
         }),
         el('button', {
-          class: 'btn btn-s', type: 'button', text: 'حساب جديد',
+          class: 'btn btn-s', type: 'button', text: t('auth.register'),
           onClick: (event) => authAction(event.currentTarget, () => registerWithEmail($('auth-email').value.trim(), $('auth-password').value)),
         }),
       ]),
       el('button', {
-        class: 'btn btn-s auth-google', type: 'button', text: 'الدخول بحساب Google',
+        class: 'btn btn-s auth-google', type: 'button', text: t('auth.google'),
         onClick: (event) => authAction(event.currentTarget, signInWithGoogle),
       }),
       el('button', {
-        class: 'auth-link', type: 'button', text: 'نسيت كلمة المرور؟',
+        class: 'auth-link', type: 'button', text: t('auth.forgot'),
         onClick: async () => {
           const email = $('auth-email').value.trim();
-          if (!email) { toast('أدخل بريدك أولاً', '⚠'); return; }
+          if (!email) { toast(t('auth.emailFirst'), '⚠'); return; }
           try {
             await sendPasswordReset(email);
-            toast('أُرسل رابط إعادة التعيين', '✉');
+            toast(t('auth.resetSent'), '✉');
           } catch (error) {
             toastError(error);
           }
@@ -779,21 +816,21 @@ function renderAuthPanel() {
       el('div', { class: 'srowiw', style: { background: 'rgba(52,199,89,.15)' }, text: '👤', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
         el('div', { class: 'srowl', text: session.user.displayName }),
-        el('div', { class: 'srowd', text: `${session.user.email || 'بلا بريد'} · ${ROLE_LABELS[session.role] || session.role}` }),
+        el('div', { class: 'srowd', text: `${session.user.email || t('common.noEmail')} · ${roleLabel(session.role)}` }),
       ]),
     ]),
     el('button', {
-      class: 'btn btn-d', type: 'button', text: 'تسجيل الخروج', style: { width: '100%', marginTop: '10px' },
+      class: 'btn btn-d', type: 'button', text: t('auth.signOut'), style: { width: '100%', marginTop: '10px' },
       onClick: (event) => authAction(event.currentTarget, signOutUser),
     }),
     el('button', {
-      class: 'auth-link', type: 'button', text: 'عرض أعضاء مساحة العمل',
+      class: 'auth-link', type: 'button', text: t('auth.showMembers'),
       onClick: async () => {
         try {
           const members = await listMembers(session.workspaceId);
-          toast(`${formatNumber(members.length)} عضو`, '👥');
+          toast(t('auth.memberCount', { count: members.length }), '👥');
         } catch (error) {
-          toastError(error, 'تعذّر جلب الأعضاء');
+          toastError(error, 'auth.membersFailed');
         }
       },
     }),
@@ -811,15 +848,8 @@ function authAction(button, action) {
 }
 
 // ── plan & subscription ────────────────────────────────────────────────────
-const STATUS_LABELS = {
-  free: 'الخطة المجانية',
-  trialing: 'فترة تجريبية',
-  active: 'اشتراك نشط',
-  past_due: 'دفعة متأخرة',
-  canceled: 'اشتراك ملغى',
-  inactive: 'اشتراك متوقف',
-  local: 'هذا الجهاز فقط',
-};
+/** A subscription status, as the `planStatus.<status>` message. */
+const statusLabel = (status) => t(`planStatus.${status}`);
 
 /**
  * Shows the plan the server says is in force, and what is left of it. The
@@ -837,13 +867,13 @@ export function renderPlanPanel() {
     // backed up anywhere else.
     const quota = quotaStatus();
     const text = status === 'local-free'
-      ? `بلا حساب: على هذا الجهاز فقط، بحدود الخطة المجانية (${formatNumber(quota?.limit ?? 0)} قطعة). البيانات غير متزامنة ولا نسخة لها خارج الجهاز. أنشئ حساباً لمزامنة مخزنك.`
-      : 'نسخة تجريبية على هذا الجهاز: بلا حدود خطة. البيانات غير متزامنة ولا نسخة لها خارج الجهاز.';
+      ? t('settings.localFree', { limit: quota?.limit ?? 0 })
+      : t('settings.localDev');
     render(panel, [
       el('div', { class: 'srow', style: { cursor: 'default' } }, [
         el('div', { class: 'srowiw', style: { background: 'rgba(142,142,147,.15)' }, text: '📱', 'aria-hidden': 'true' }),
         el('div', { style: { flex: '1' } }, [
-          el('div', { class: 'srowl', text: 'هذا الجهاز فقط' }),
+          el('div', { class: 'srowl', text: t('planStatus.local') }),
           el('div', { class: 'srowd', text }),
         ]),
       ]),
@@ -867,15 +897,15 @@ export function renderPlanPanel() {
     // The headline: which plan, and how much of its main allowance is gone.
     el('div', { class: 'plan-head' }, [
       el('div', { class: 'plan-head-top' }, [
-        el('span', { class: 'plan-pill', text: plan.id === 'free' ? 'الخطة المجانية' : `خطة ${plan.name.ar}` }),
+        el('span', { class: 'plan-pill', text: plan.id === 'free' ? t('planStatus.free') : t('plan.pill', { name: pick(plan.name) }) }),
         // The pill already says "free"; repeating it as a status says nothing.
-        status === 'free' ? null : el('span', { class: 'plan-status', text: STATUS_LABELS[status] || status }),
+        status === 'free' ? null : el('span', { class: 'plan-status', text: statusLabel(status) }),
       ]),
       headline ? el('div', { class: 'plan-count' }, [
         el('span', { class: 'plan-count-used', text: formatNumber(headline.used) }),
         el('span', {
           class: 'plan-count-of',
-          text: headline.limit === UNLIMITED ? 'قطعة' : `/ ${formatNumber(headline.limit)} قطعة`,
+          text: headline.limit === UNLIMITED ? t('plan.itemsUnit') : `/ ${t('count.items', { count: headline.limit })}`,
         }),
       ]) : null,
       headline && headline.limit !== UNLIMITED ? el('div', { class: 'usage-track' }, [
@@ -886,14 +916,14 @@ export function renderPlanPanel() {
 
     // Then the dimensions that are not the headline, one row each.
     el('div', { class: 'plan-meters' }, [
-      meterRow('التخزين', byKey.storage),
-      meterRow('مساعد نَظْم', byKey.ai, assistant.included ? 'مشمول' : null),
-      meterRow('أعضاء الفريق', byKey.members),
+      meterRow(t('plan.storage'), byKey.storage),
+      meterRow(t('ai.assistantName'), byKey.ai, assistant.included ? t('plan.included') : null),
+      meterRow(t('plan.teamMembers'), byKey.members),
     ].filter(Boolean)),
 
     el('button', {
       class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '12px' },
-      text: plan.id === 'free' ? 'عرض الباقات' : 'تغيير الخطة',
+      text: plan.id === 'free' ? t('home.showPlans') : t('plan.change'),
       onClick: () => openPlansSheet(),
     }),
   ]);
@@ -913,7 +943,7 @@ function meterRow(label, row, includedLabel = null) {
       ? [el('span', { class: 'plan-meter-included', text: includedLabel })]
       : [
         el('span', { text: row.format(row.used) }),
-        el('span', { class: 'plan-meter-of', text: unlimited ? ' · بلا حد' : ` / ${row.format(row.limit)}` }),
+        el('span', { class: 'plan-meter-of', text: unlimited ? ` · ${t('plan.unlimited')}` : ` / ${row.format(row.limit)}` }),
       ]),
   ]);
 }
@@ -929,12 +959,12 @@ function renderAiPanel() {
     el('div', { class: 'srow', style: { cursor: 'default' } }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(102,126,234,.15)' }, text: '✦', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: '✦ مساعد نَظْم' }),
-        el('div', { class: 'srowd', text: 'يُنفَّذ على الخادم — لا يُخزَّن أي مفتاح في المتصفح' }),
+        el('div', { class: 'srowl', text: t('settings.assistant') }),
+        el('div', { class: 'srowd', text: t('settings.assistantSub') }),
       ]),
       el('span', { class: 'ai-status' }, [
         el('span', { class: 'ai-status-dot', style: { background: colors[availability] } }),
-        el('span', { text: AI_STATUS_LABELS[availability] }),
+        el('span', { text: aiStatusLabel(availability) }),
       ]),
     ]),
   ]);
@@ -943,9 +973,9 @@ function renderAiPanel() {
 const MB = 1024 * 1024;
 
 function humanBytes(bytes) {
-  if (bytes >= 1024 * MB) return `${(bytes / 1024 / MB).toFixed(1)} غيغابايت`;
-  if (bytes >= MB) return `${Math.round(bytes / MB)} ميغابايت`;
-  return `${Math.max(1, Math.round(bytes / 1024))} كيلوبايت`;
+  if (bytes >= 1024 * MB) return t('bytes.gb', { value: (bytes / 1024 / MB).toFixed(1) });
+  if (bytes >= MB) return t('bytes.mb', { value: String(Math.round(bytes / MB)) });
+  return t('bytes.kb', { value: String(Math.max(1, Math.round(bytes / 1024))) });
 }
 
 /**
@@ -961,21 +991,21 @@ async function describeDeviceStorage() {
   if (!note) return;
   const cloud = Boolean(currentSession().user) && !currentSession().local;
   const safety = cloud
-    ? 'نسخة سحابية موجودة أيضاً.'
-    : 'هذه النسخة الوحيدة — نزّل نسخة احتياطية بين حين وآخر.';
+    ? t('storage.cloudCopy')
+    : t('storage.onlyCopy');
 
   try {
     const estimate = await storageEstimate();
     if (!estimate) {
-      note.textContent = `لا يكشف هذا المتصفح عن المساحة المتاحة. ${safety}`;
+      note.textContent = `${t('storage.unknown')} ${safety}`;
       return;
     }
     const used = humanBytes(estimate.usage);
     const free = humanBytes(estimate.remaining);
     const tight = estimate.ratio > 0.85;
     note.textContent = tight
-      ? `مستخدم ${used}، والمتبقي ${free} فقط — احذف صوراً أو صدّر نسخة قبل أن تمتلئ. ${safety}`
-      : `مستخدم ${used}، والمتبقي نحو ${free}. ${safety}`;
+      ? `${t('storage.tight', { used, free })} ${safety}`
+      : `${t('storage.usage', { used, free })} ${safety}`;
   } catch (error) {
     console.error('[settings] storage estimate failed', error);
     note.textContent = safety;
@@ -1007,26 +1037,26 @@ function renderDataPanel() {
 
   render(panel, [
     // Categories lost their tab to the assistant; they live here now.
-    row('◈', 'rgba(99,102,241,.15)', 'التصنيفات والمواقع', 'تنظيم التصنيفات والمواقع المستخدمة في المخزون', () => goTab('cats')),
+    row('◈', 'rgba(99,102,241,.15)', t('settings.taxonomy'), t('settings.taxonomySub'), () => goTab('cats')),
     // Device-only mode has no members and no other workspace to move to, so
     // these are absent rather than present and refusing.
-    cloudSession ? row('👥', 'rgba(37,99,255,.15)', 'الفريق', 'الأعضاء وأدوارهم، ودعوة من يعمل معك', openTeamSheet) : null,
-    cloudSession ? row('🗄', 'rgba(147,197,253,.25)', 'المساحات', 'تنقّل بين المساحات التي تنتمي إليها', () => { void openWorkspaceSheet(); }) : null,
-    row('📊', 'rgba(52,199,89,.15)', 'تصدير Excel', 'جرد كامل بقيم رقمية وتواريخ حقيقية', () => { void runFullExcelExport(); }),
+    cloudSession ? row('👥', 'rgba(37,99,255,.15)', t('team.title'), t('settings.teamSub'), openTeamSheet) : null,
+    cloudSession ? row('🗄', 'rgba(147,197,253,.25)', t('workspace.title'), t('settings.workspacesSub'), () => { void openWorkspaceSheet(); }) : null,
+    row('📊', 'rgba(52,199,89,.15)', t('export.excel'), t('settings.excelSub'), () => { void runFullExcelExport(); }),
     // Honest about what the file holds. It is the records, never the image
     // files: on a device-only workspace those stay on the device, and on a
     // cloud workspace they stay in cloud storage.
     repository.session.mode === 'cloud'
-      ? row('💾', 'rgba(0,122,255,.15)', 'نسخة بيانات JSON', 'بيانات القطع فقط — ملفات الصور تبقى في التخزين السحابي ولا يتضمنها الملف', () => { void runFullJsonExport(); })
-      : row('💾', 'rgba(0,122,255,.15)', 'تصدير بيانات JSON', 'يشمل بيانات القطع فقط، ولا يتضمن ملفات الصور.', () => { void runFullJsonExport(); }),
-    row('📄', 'rgba(255,149,0,.15)', 'استيراد من Excel أو CSV', 'طابق الأعمدة بنفسك، وشاهد ما سيُكتب قبل كتابته', () => { void startSpreadsheetImport(); }),
-    row('📥', 'rgba(255,149,0,.15)', 'استيراد نسخة JSON', 'دمج أو استبدال، مع تحقق كامل قبل التنفيذ', startImport),
+      ? row('💾', 'rgba(0,122,255,.15)', t('settings.jsonCloud'), t('settings.jsonCloudSub'), () => { void runFullJsonExport(); })
+      : row('💾', 'rgba(0,122,255,.15)', t('settings.jsonLocal'), t('settings.jsonLocalSub'), () => { void runFullJsonExport(); }),
+    row('📄', 'rgba(255,149,0,.15)', t('import.fromSpreadsheet'), t('settings.sheetSub'), () => { void startSpreadsheetImport(); }),
+    row('📥', 'rgba(255,149,0,.15)', t('import.jsonBackup'), t('settings.jsonImportSub'), startImport),
     // The count comes from the index that holds exactly the deleted records,
     // so it is exact and costs nothing — and it fills in a moment after the
     // row is drawn rather than making Settings wait for it.
-    row('🗑', 'rgba(142,142,147,.15)', 'سلة المحذوفات',
-      'القطع المحذوفة، قابلة للاستعادة', openTrashSheet, 'trash-count'),
-    row('📍', 'rgba(175,82,222,.15)', 'المواقع', `${formatNumber(repository.state.locations.length)} موقع`, openLocationsSheet),
+    row('🗑', 'rgba(142,142,147,.15)', t('trash.title'),
+      t('settings.trashSub'), openTrashSheet, 'trash-count'),
+    row('📍', 'rgba(175,82,222,.15)', t('location.title'), t('count.locations', { count: repository.state.locations.length }), openLocationsSheet),
     // What this app is using of the device, and whether the browser has agreed
     // not to evict it. On a device-only inventory that is not a cache
     // statistic: it is the difference between "your records are here" and
@@ -1034,8 +1064,8 @@ function renderDataPanel() {
     el('div', { class: 'srow', id: 'storage-row' }, [
       el('div', { class: 'srowiw', style: { background: 'rgba(142,142,147,.15)' }, text: '💽', 'aria-hidden': 'true' }),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', text: 'مساحة الجهاز' }),
-        el('div', { class: 'srowd', id: 'storage-note', text: 'جارٍ القياس…' }),
+        el('div', { class: 'srowl', text: t('storage.title') }),
+        el('div', { class: 'srowd', id: 'storage-note', text: t('storage.measuring') }),
       ]),
     ]),
   ]);
@@ -1043,7 +1073,7 @@ function renderDataPanel() {
   void describeDeviceStorage();
   void repository.recordCounts().then((counts) => {
     const node = $('trash-count');
-    if (node && counts) node.textContent = `${formatNumber(counts.trashed)} قطعة`;
+    if (node && counts) node.textContent = t('count.items', { count: counts.trashed });
   });
 
   const danger = $('danger-panel');
@@ -1057,29 +1087,29 @@ function renderDataPanel() {
         const items = (await repository.recordCounts())?.live ?? null;
         const folders = repository.state.folders.length;
         const confirmed = await confirmAction({
-          title: 'حذف كل القطع والمجلدات؟',
+          title: t('danger.clearTitle'),
           message: items == null
-            ? `سيُحذف كل ما في المخزون و${formatNumber(folders)} مجلد نهائياً. التصنيفات والمواقع لن تُحذف. نزّل نسخة احتياطية أولاً.`
-            : `سيُحذف ${formatNumber(items)} قطعة و${formatNumber(folders)} مجلد نهائياً. التصنيفات والمواقع لن تُحذف. نزّل نسخة احتياطية أولاً.`,
+            ? t('danger.clearMessageAll', { folders: t('count.folders', { count: folders }) })
+            : t('danger.clearMessage', { items: t('count.items', { count: items }), folders: t('count.folders', { count: folders }) }),
           icon: '⚠️',
-          confirmLabel: 'حذف الكل',
-          requirePhrase: 'حذف الكل',
+          confirmLabel: t('danger.clearConfirm'),
+          requirePhrase: t('confirm.phraseDeleteAll'),
         });
         if (!confirmed) return;
         try {
           await repository.clearInventory();
           flashSuccess();
-          toast('حُذفت القطع والمجلدات', '🗑');
+          toast(t('danger.cleared'), '🗑');
           renderHome();
         } catch (error) {
-          toastError(error, 'تعذّر الحذف');
+          toastError(error, 'bulk.deleteFailed');
         }
       },
     }, [
       el('div', { class: 'srowiw', style: { background: 'var(--danger-soft)' }, 'aria-hidden': 'true' }, [icon('trash')]),
       el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', style: { color: 'var(--red)' }, text: 'حذف كل القطع والمجلدات' }),
-        el('div', { class: 'srowd', text: 'التصنيفات والمواقع تبقى كما هي' }),
+        el('div', { class: 'srowl', style: { color: 'var(--red)' }, text: t('danger.clearRow') }),
+        el('div', { class: 'srowd', text: t('danger.clearRowSub') }),
       ]),
     ]),
   ]);
@@ -1113,8 +1143,8 @@ async function renderMigrationPanel() {
       el('div', { class: 'srow', style: { cursor: 'default' } }, [
         el('div', { class: 'srowiw', style: { background: 'rgba(52,199,89,.15)' }, text: '✓', 'aria-hidden': 'true' }),
         el('div', [
-          el('div', { class: 'srowl', text: 'اكتملت ترقية البيانات' }),
-          el('div', { class: 'srowd', text: `${formatNumber(status.counts?.actual || 0)} قطعة · ${formatDate(status.completedAt)}` }),
+          el('div', { class: 'srowl', text: t('migration.completed') }),
+          el('div', { class: 'srowd', text: `${t('count.items', { count: status.counts?.actual || 0 })} · ${formatDate(status.completedAt)}` }),
         ]),
       ]),
     ]);
@@ -1123,15 +1153,15 @@ async function renderMigrationPanel() {
 
   render(panel, [
     el('div', { class: 'migrate-card' }, [
-      el('div', { class: 'migrate-title', text: '⬆ بيانات من الإصدار السابق' }),
-      el('div', { class: 'migrate-sub', text: `وُجدت ${formatNumber(status.counts?.items || 0)} قطعة في "${status.source}". ستُنقل إلى البنية الجديدة، وتُرفع الصور المضمّنة إلى التخزين، مع نسخة احتياطية قبل البدء. البيانات القديمة تبقى كما هي.` }),
+      el('div', { class: 'migrate-title', text: t('migration.title') }),
+      el('div', { class: 'migrate-sub', text: t('migration.found', { items: t('count.items', { count: status.counts?.items || 0 }), source: status.source }) }),
       el('div', { class: 'migrate-progress', id: 'migrate-progress', style: { display: 'none' } }, [
         el('div', { class: 'migrate-bar' }, [el('div', { class: 'migrate-bar-fill', id: 'migrate-bar-fill' })]),
         el('div', { class: 'migrate-label', id: 'migrate-label' }),
       ]),
       el('button', {
         class: 'btn btn-p', id: 'migrate-btn', type: 'button', style: { width: '100%' },
-        text: status.status === MigrationState.FAILED ? 'إعادة محاولة الترقية' : 'ابدأ الترقية',
+        text: status.status === MigrationState.FAILED ? t('migration.retry') : t('migration.start'),
         onClick: (event) => startMigration(event.currentTarget),
       }),
     ]),
@@ -1142,7 +1172,7 @@ async function startMigration(button) {
   const progress = $('migrate-progress');
   progress.style.display = '';
 
-  await withBusy(button, 'جارٍ الترقية…', async () => {
+  await withBusy(button, t('migration.running'), async () => {
     try {
       const result = await runMigration({
         onProgress: ({ done, total, message }) => {
@@ -1151,14 +1181,14 @@ async function startMigration(button) {
           setText('migrate-label', message);
         },
       });
-      toast(`اكتملت الترقية — ${formatNumber(result.counts.actual)} قطعة`, '✓');
+      toast(t('migration.done', { items: t('count.items', { count: result.counts.actual }) }), '✓');
       if (result.counts.imageFailures) {
-        toast(`${formatNumber(result.counts.imageFailures)} صورة لم تُرحَّل`, '⚠');
+        toast(t('migration.imageFailures', { count: result.counts.imageFailures }), '⚠');
       }
       renderMigrationPanel();
       renderHome();
     } catch (error) {
-      toastError(error, 'فشلت الترقية');
+      toastError(error, 'error.migration/failed');
       renderMigrationPanel();
     }
   });

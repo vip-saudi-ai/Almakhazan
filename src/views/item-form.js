@@ -1,7 +1,9 @@
 // Add / edit sheet: fields, multi-image management, AI analysis, save.
 
 import { icon } from '../icons.js';
-import { AI_DISCLAIMER, AI_SUBTITLE, AI_TITLE, ASSISTANT_NAME, AiAvailability, aiAvailability, analyzeItem } from '../ai.js';
+import { AiAvailability, aiAvailability, aiDisclaimer, aiSubtitle, analyzeItem, assistantName } from '../ai.js';
+import { onLanguageChange, t } from '../i18n.js';
+import { categoryName, conditionLabel, locationName, unitGroupLabel, unitLabel } from '../labels.js';
 import {
   CONDITIONS, CURRENCIES, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
 } from '../config.js';
@@ -16,7 +18,9 @@ import { $, el, render, setText, uid } from '../utils.js';
 import {
   formatValuation, normalizeValuation, parseValuationText, validateQuantity,
 } from '../validation.js';
-import { closeSheet, confirmAction, onSheetClose, openSheet, optionList, toast, toastError, withBusy } from '../ui.js';
+import {
+  closeSheet, confirmAction, isSheetOpen, onSheetClose, openSheet, optionList, toast, toastError, withBusy,
+} from '../ui.js';
 import { discardUnreferenced, markPending, releasePending } from '../media.js';
 
 const form = {
@@ -45,23 +49,23 @@ const form = {
 // ── field helpers ──
 function fillSelects(item) {
   optionList($('f-cat'), [
-    ...repository.state.categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` })),
-    { value: UNCATEGORIZED_ID, label: '📦 غير مصنّف' },
+    ...repository.state.categories.map((c) => ({ value: c.id, label: `${c.icon} ${categoryName(c)}` })),
+    { value: UNCATEGORIZED_ID, label: `📦 ${t('category.uncategorized')}` },
   ], item?.categoryId || repository.state.categories[0]?.id || UNCATEGORIZED_ID);
 
   optionList($('f-folder'), [
-    { value: '', label: '— الجرد الرئيسي —' },
+    { value: '', label: `— ${t('home.mainInventory')} —` },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
   ], item?.folderId || '');
 
   optionList($('f-loc'), [
-    { value: '', label: '— غير محدد —' },
-    ...repository.state.locations.map((l) => ({ value: l.id, label: l.name })),
+    { value: '', label: `— ${t('form.notSet')} —` },
+    ...repository.state.locations.map((l) => ({ value: l.id, label: locationName(l) })),
   ], item?.locationId || '');
 
   optionList($('f-cond'), [
-    { value: '', label: 'غير محدد' },
-    ...CONDITIONS.map((c) => ({ value: c, label: c })),
+    { value: '', label: t('form.notSet') },
+    ...CONDITIONS.map((c) => ({ value: c, label: conditionLabel(c) })),
   ], item?.condition || '');
 
   // The picker offers the common currencies, plus whatever this record is
@@ -76,12 +80,48 @@ function fillSelects(item) {
   const unitSelect = $('f-unit');
   unitSelect.replaceChildren();
   for (const [group, units] of Object.entries(UNITS)) {
-    const optgroup = el('optgroup', { label: group });
-    for (const unit of units) optgroup.append(el('option', { value: unit, text: unit }));
+    const optgroup = el('optgroup', { label: unitGroupLabel(group) });
+    // The stored value is the unit's own (Arabic) abbreviation; only the
+    // label follows the language.
+    for (const unit of units) optgroup.append(el('option', { value: unit, text: unitLabel(unit) }));
     unitSelect.append(optgroup);
   }
   unitSelect.value = item?.unit || 'قطعة';
 }
+
+/**
+ * The open form in the language just chosen. The labels are static markup
+ * (translated by i18n.js); what is redrawn here is the dynamic part — option
+ * labels, photos, suggestions, the assistant panel — and every value the
+ * customer has typed or chosen is read back first and put back after.
+ */
+function relocalizeForm() {
+  const keep = {
+    categoryId: $('f-cat').value,
+    folderId: $('f-folder').value,
+    locationId: $('f-loc').value,
+    condition: $('f-cond').value,
+    unit: $('f-unit').value,
+    currency: $('f-currency').value,
+  };
+  fillSelects({ ...keep, valuation: keep.currency ? { currency: keep.currency } : null });
+  $('f-cat').value = keep.categoryId;
+  $('f-folder').value = keep.folderId;
+  $('f-loc').value = keep.locationId;
+  $('f-cond').value = keep.condition;
+  $('f-unit').value = keep.unit;
+  $('f-currency').value = keep.currency;
+  setText('addtitle', form.isNew ? t('form.addTitle') : t('form.editTitle'));
+  renderImages();
+  renderCapturePrompt();
+  renderSuggestions();
+  refreshAiPanel();
+  updateValuationPreview();
+}
+
+onLanguageChange(() => {
+  if (isSheetOpen('add')) relocalizeForm();
+});
 
 function setDescriptionMode(mode) {
   form.descriptionMode = mode;
@@ -101,7 +141,7 @@ function renderImages() {
 
   render(strip, [
     ...form.images.map((image) => {
-      const img = el('img', { alt: image.originalFilename || 'صورة', loading: 'lazy', decoding: 'async' });
+      const img = el('img', { alt: image.originalFilename || t('form.photo'), loading: 'lazy', decoding: 'async' });
       bindImageSrc(img, image, { tier: ImageTier.THUMB });
       const isPrimary = image.id === form.primaryImageId;
 
@@ -110,36 +150,36 @@ function renderImages() {
         // most want to check before committing to it, so it opens too.
         el('button', {
           class: 'img-open img-cell-open', type: 'button',
-          'aria-label': `عرض ${image.originalFilename || 'الصورة'} بملء الشاشة`,
+          'aria-label': t('form.viewFull', { name: image.originalFilename || t('form.thePhoto') }),
           onClick: () => openImageViewer({
             images: form.images,
             index: form.images.findIndex((i) => i.id === image.id),
             title: $('f-name')?.value || '',
             actions: [
               {
-                label: 'اجعلها الصورة الرئيسية',
+                label: t('form.makePrimary'),
                 onSelect: (selected) => { form.primaryImageId = selected.id; renderImages(); refreshAiPanel(); },
               },
             ],
           }),
         }, [img]),
-        isPrimary ? el('span', { class: 'img-primary-tag', text: 'رئيسية' }) : null,
+        isPrimary ? el('span', { class: 'img-primary-tag', text: t('form.primary') }) : null,
         el('div', { class: 'img-cell-acts' }, [
           !isPrimary ? el('button', {
-            class: 'img-act', type: 'button', title: 'اجعلها الصورة الرئيسية',
-            'aria-label': 'اجعلها الصورة الرئيسية',
+            class: 'img-act', type: 'button', title: t('form.makePrimary'),
+            'aria-label': t('form.makePrimary'),
             onClick: () => { form.primaryImageId = image.id; renderImages(); refreshAiPanel(); },
           }, [icon('star', { size: 14 })]) : null,
           el('button', {
-            class: 'img-act', type: 'button', title: 'نقل لليمين', 'aria-label': 'نقل الصورة لليمين',
+            class: 'img-act', type: 'button', title: t('form.moveEarlier'), 'aria-label': t('form.moveEarlierAria'),
             onClick: () => moveImage(image.id, -1),
           }, [icon('forward', { size: 14 })]),
           el('button', {
-            class: 'img-act', type: 'button', title: 'نقل لليسار', 'aria-label': 'نقل الصورة لليسار',
+            class: 'img-act', type: 'button', title: t('form.moveLater'), 'aria-label': t('form.moveLaterAria'),
             onClick: () => moveImage(image.id, 1),
           }, [icon('back', { size: 14 })]),
           el('button', {
-            class: 'img-act danger', type: 'button', title: 'حذف الصورة', 'aria-label': 'حذف الصورة',
+            class: 'img-act danger', type: 'button', title: t('form.removePhoto'), 'aria-label': t('form.removePhoto'),
             onClick: () => removeImage(image.id),
           }, [icon('close', { size: 14 })]),
         ]),
@@ -148,18 +188,18 @@ function renderImages() {
     // While the capture prompt is up it is the only way in; two invitations to
     // add the same first photo is one too many.
     form.images.length < IMAGE_LIMITS.maxPerItem && !(form.isNew && !form.images.length) ? el('button', {
-      class: 'img-cell img-add', type: 'button', 'aria-label': 'إضافة صورة',
+      class: 'img-cell img-add', type: 'button', 'aria-label': t('form.addPhoto'),
       onClick: () => $('imgInput').click(),
     }, [
       el('span', { class: 'ipicotext', text: '📷', 'aria-hidden': 'true' }),
-      el('span', { class: 'iptxt', text: form.images.length ? 'إضافة صورة' : 'أضف صورة' }),
-      el('span', { class: 'ipsub', text: 'كل الصيغ' }),
+      el('span', { class: 'iptxt', text: form.images.length ? t('form.addPhoto') : t('form.addAPhoto') }),
+      el('span', { class: 'ipsub', text: t('form.anyFormat') }),
     ]) : null,
   ]);
 
   setText('img-count', form.images.length
-    ? `${form.images.length} / ${IMAGE_LIMITS.maxPerItem} صورة`
-    : 'لا توجد صور');
+    ? t('form.photoCount', { count: form.images.length, max: IMAGE_LIMITS.maxPerItem })
+    : t('form.noPhotos'));
 
   renderCapturePrompt();
 }
@@ -186,17 +226,17 @@ function renderCapturePrompt() {
       onClick: () => $('camInput').click(),
     }, [
       el('span', { class: 'capture-ico' }, [icon('image', { size: 30 })]),
-      el('span', { class: 'capture-label', text: 'صوّر القطعة' }),
-      el('span', { class: 'capture-sub', text: `ودع ${ASSISTANT_NAME} يقترح بياناتها` }),
+      el('span', { class: 'capture-label', text: t('form.capture') }),
+      el('span', { class: 'capture-sub', text: t('form.captureSub', { name: assistantName() }) }),
     ]),
     el('div', { class: 'capture-alt' }, [
       el('button', {
-        class: 'capture-link', type: 'button', text: 'اختر من المعرض',
+        class: 'capture-link', type: 'button', text: t('form.fromGallery'),
         onClick: () => $('imgInput').click(),
       }),
       el('span', { class: 'capture-sep', text: '·', 'aria-hidden': 'true' }),
       el('button', {
-        class: 'capture-link', type: 'button', text: 'إدخال يدوي',
+        class: 'capture-link', type: 'button', text: t('form.manualEntry'),
         onClick: () => { $('capture-prompt').style.display = 'none'; $('f-name')?.focus(); },
       }),
     ]),
@@ -216,10 +256,10 @@ async function removeImage(imageId) {
   const image = form.images.find((i) => i.id === imageId);
   if (!image) return;
   const confirmed = await confirmAction({
-    title: 'إزالة الصورة من هذه القطعة؟',
-    message: 'لن تتأثر أي قطعة أخرى تستخدم نفس الصورة.',
+    title: t('form.removePhotoTitle'),
+    message: t('form.removePhotoMessage'),
     icon: '🖼',
-    confirmLabel: 'إزالة',
+    confirmLabel: t('form.remove'),
   });
   if (!confirmed) return;
 
@@ -235,7 +275,7 @@ async function removeImage(imageId) {
 async function handleFiles(fileList) {
   const files = [...fileList].slice(0, IMAGE_LIMITS.maxPerItem - form.images.length);
   if (!files.length) {
-    toast(`الحد الأقصى ${IMAGE_LIMITS.maxPerItem} صور`, '⚠');
+    toast(t('form.maxPhotos', { max: IMAGE_LIMITS.maxPerItem }), '⚠');
     return;
   }
 
@@ -243,9 +283,9 @@ async function handleFiles(fileList) {
   progress.style.display = '';
 
   const STAGES = {
-    prepare: 'جارٍ تجهيز الصورة…',
-    upload: 'جارٍ الرفع…',
-    save: 'جارٍ الحفظ…',
+    prepare: t('form.stagePrepare'),
+    upload: t('form.stageUpload'),
+    save: t('common.saving'),
   };
 
   for (const [index, file] of files.entries()) {
@@ -269,7 +309,7 @@ async function handleFiles(fileList) {
       form.primaryImageId ||= image.id;
       renderImages();
     } catch (error) {
-      toastError(error, 'فشل رفع الصورة');
+      toastError(error, 'error.image/upload');
     }
   }
 
@@ -300,7 +340,7 @@ async function maybeAutoAnalyze() {
   box.style.display = '';
   render(box, [el('div', { class: 'suggest-working' }, [
     el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
-    el('span', { text: 'مساعد نَظْم يقرأ الصورة…' }),
+    el('span', { text: t('form.aiReading') }),
   ])]);
 
   try {
@@ -336,32 +376,32 @@ function suggestionsFrom(aiData) {
   const rows = [];
 
   if (aiData.suggestedName) {
-    rows.push({ key: 'name', label: 'الاسم', value: aiData.suggestedName, apply: () => { $('f-name').value = aiData.suggestedName; } });
+    rows.push({ key: 'name', label: t('field.name'), value: aiData.suggestedName, apply: () => { $('f-name').value = aiData.suggestedName; } });
   }
 
   if (aiData.suggestedCategory) {
     const category = repository.state.categories.find((c) => c.name === aiData.suggestedCategory);
     if (category) {
       rows.push({
-        key: 'category', label: 'التصنيف', value: `${category.icon || ''} ${category.name}`.trim(),
+        key: 'category', label: t('field.category'), value: `${category.icon || ''} ${categoryName(category)}`.trim(),
         apply: () => { $('f-cat').value = category.id; },
       });
     }
   }
 
   if (aiData.brand) {
-    rows.push({ key: 'brand', label: 'العلامة', value: aiData.brand, apply: () => { $('f-brand').value = aiData.brand; } });
+    rows.push({ key: 'brand', label: t('field.brand'), value: aiData.brand, apply: () => { $('f-brand').value = aiData.brand; } });
   }
 
   if (aiData.condition) {
-    rows.push({ key: 'condition', label: 'الحالة', value: aiData.condition, apply: () => { $('f-cond').value = aiData.condition; } });
+    rows.push({ key: 'condition', label: t('field.condition'), value: conditionLabel(aiData.condition), apply: () => { $('f-cond').value = aiData.condition; } });
   }
 
   if (aiData.suggestedValuation) {
     const { min, max, currency } = aiData.suggestedValuation;
     rows.push({
       key: 'valuation',
-      label: 'تقدير أولي',
+      label: t('ai.subtitle'),
       value: formatValuation(aiData.suggestedValuation, { compact: true }),
       apply: () => {
         const text = min === max ? String(min) : `${min}-${max}`;
@@ -377,7 +417,7 @@ function suggestionsFrom(aiData) {
     const asBarcode = BARCODE_SHAPE.test(aiData.visibleText);
     rows.push({
       key: 'text',
-      label: asBarcode ? 'رقم مقروء من الصورة' : 'نص مقروء من الصورة',
+      label: asBarcode ? t('form.readNumber') : t('form.readText'),
       value: aiData.visibleText,
       apply: () => {
         if (asBarcode) { $('f-barcode').value = aiData.visibleText; return; }
@@ -396,10 +436,10 @@ function suggestionsFrom(aiData) {
  * when the evidence is thin it asks for the photo that would settle it.
  */
 const EVIDENCE = [
-  { match: /ساع|watch/i, ask: 'هل تستطيع تصوير الرقم المرجعي داخل الغطاء؟ يرفع دقة التقدير كثيراً.' },
-  { match: /لوح|فن|art|paint/i, ask: 'أضف صورة التوقيع وظهر اللوحة — هناك تُقرأ المعلومات المهمة.' },
-  { match: /معد|جهاز|آل|equip|tool/i, ask: 'صوّر لوحة البيانات والرقم التسلسلي إن وُجدا.' },
-  { match: /مجوهر|ذهب|ألماس|jewel/i, ask: 'صوّر الدمغة أو الختم إن وُجد — يحدد العيار والمنشأ.' },
+  { match: /ساع|watch/i, ask: 'form.evidenceWatch' },
+  { match: /لوح|فن|art|paint/i, ask: 'form.evidenceArt' },
+  { match: /معد|جهاز|آل|equip|tool/i, ask: 'form.evidenceEquipment' },
+  { match: /مجوهر|ذهب|ألماس|jewel/i, ask: 'form.evidenceJewelry' },
 ];
 
 function followUpPrompt() {
@@ -411,7 +451,7 @@ function followUpPrompt() {
 
   const category = repository.category($('f-cat').value)?.name || '';
   const hint = EVIDENCE.find((entry) => entry.match.test(`${category} ${ai.suggestedName || ''}`));
-  const ask = hint?.ask || 'أضف صورة ثانية من زاوية مختلفة لتحسين التوثيق.';
+  const ask = t(hint?.ask || 'form.evidenceDefault');
 
   return el('div', { class: 'suggest-ask', role: 'note' }, [
     el('span', { class: 'suggest-ask-mark' }, [icon('clock', { size: 15 })]),
@@ -434,12 +474,12 @@ function renderSuggestions() {
   render(box, [
     el('div', { class: 'suggest-head' }, [
       el('span', { class: 'suggest-mark', text: '✦', 'aria-hidden': 'true' }),
-      el('span', { class: 'suggest-title', text: 'اقتراحات مساعد نَظْم' }),
+      el('span', { class: 'suggest-title', text: t('ai.suggestions') }),
       el('button', {
-        class: 'suggest-all', type: 'button', text: 'طبّق الكل',
+        class: 'suggest-all', type: 'button', text: t('form.applyAll'),
         onClick: () => {
           for (const row of rows) row.apply();
-          toast('طُبّقت الاقتراحات — راجعها قبل الحفظ', '✦');
+          toast(t('form.applied'), '✦');
           renderSuggestions();
         },
       }),
@@ -456,7 +496,7 @@ function renderSuggestions() {
       el('span', { class: 'suggest-value', text: row.value }),
       el('span', { class: 'suggest-apply', text: '+', 'aria-hidden': 'true' }),
     ]))),
-    el('div', { class: 'suggest-note', text: 'اقتراحات مبنية على الصورة — راجعها، فهي ليست توثيقاً معتمداً.' }),
+    el('div', { class: 'suggest-note', text: t('form.suggestNote') }),
     followUpPrompt(),
   ]);
 }
@@ -481,52 +521,52 @@ function refreshAiPanel() {
   button.disabled = !canRun;
 
   let hint = '';
-  if (availability === AiAvailability.UNAVAILABLE) hint = 'خدمة التحليل غير مهيأة على الخادم';
-  else if (availability === AiAvailability.OFFLINE) hint = 'التحليل يحتاج اتصالاً بالإنترنت';
-  else if (!image) hint = 'أضف صورة ثم اضغط تحليل';
-  else if (image.storagePath?.startsWith('local:')) hint = 'التحليل يتطلب تسجيل الدخول لرفع الصورة للسحابة';
+  if (availability === AiAvailability.UNAVAILABLE) hint = t('error.ai/failed-precondition');
+  else if (availability === AiAvailability.OFFLINE) hint = t('error.ai/offline');
+  else if (!image) hint = t('ai.addPhotoFirst');
+  else if (image.storagePath?.startsWith('local:')) hint = t('form.aiNeedsCloud');
 
   if (form.aiData) {
     const ai = form.aiData;
     const stale = ai.imageHash && image?.hash && ai.imageHash !== image.hash;
     dot.className = `aidot${stale ? '' : ' live'}`;
     render(content, [
-      stale ? el('div', { class: 'ai-stale', role: 'status', text: '⚠ تغيّرت الصورة بعد آخر تحليل — أعد التحليل' }) : null,
+      stale ? el('div', { class: 'ai-stale', role: 'status', text: t('form.aiStale') }) : null,
       el('div', { class: 'aitxt', style: { marginBottom: '8px' }, text: ai.description || ai.evaluation || '' }),
       el('div', { class: 'airow' }, [
         ai.localScore != null ? el('div', { class: 'aipill' }, [
-          el('div', { class: 'aiplbl', text: 'السوق المحلي' }),
+          el('div', { class: 'aiplbl', text: t('detail.localMarket') }),
           el('div', { class: 'aipval' }, [String(ai.localScore), el('small', { text: '/10' })]),
         ]) : null,
         ai.globalScore != null ? el('div', { class: 'aipill' }, [
-          el('div', { class: 'aiplbl', text: 'السوق العالمي' }),
+          el('div', { class: 'aiplbl', text: t('detail.globalMarket') }),
           el('div', { class: 'aipval' }, [String(ai.globalScore), el('small', { text: '/10' })]),
         ]) : null,
         ai.condition ? el('div', { class: 'aipill' }, [
-          el('div', { class: 'aiplbl', text: 'الحالة' }),
-          el('div', { class: 'aipval', style: { fontSize: '13px' }, text: ai.condition }),
+          el('div', { class: 'aiplbl', text: t('field.condition') }),
+          el('div', { class: 'aipval', style: { fontSize: '13px' }, text: conditionLabel(ai.condition) }),
         ]) : null,
         ai.suggestedValuation ? el('div', { class: 'aipill' }, [
-          el('div', { class: 'aiplbl', text: 'تقدير أولي' }),
+          el('div', { class: 'aiplbl', text: t('ai.subtitle') }),
           el('div', { class: 'aipval', style: { fontSize: '12px' }, text: formatValuation(ai.suggestedValuation, { compact: true }) }),
         ]) : null,
       ]),
-      el('div', { class: 'ai-disclaimer', text: AI_DISCLAIMER }),
+      el('div', { class: 'ai-disclaimer', text: aiDisclaimer() }),
     ]);
   } else {
     dot.className = 'aidot';
-    render(content, [el('div', { class: 'aiph', text: hint || 'أضف صورة ثم اضغط تحليل' })]);
+    render(content, [el('div', { class: 'aiph', text: hint || t('ai.addPhotoFirst') })]);
   }
 
-  setText('ai-status-label', `${AI_TITLE} · ${AI_SUBTITLE}`);
+  setText('ai-status-label', `${assistantName()} · ${aiSubtitle()}`);
 }
 
 async function runAnalysis() {
   const image = primaryFormImage();
-  if (!image) { toast('أضف صورة أولاً', '⚠'); return; }
+  if (!image) { toast(t('form.addPhotoFirst'), '⚠'); return; }
 
   const button = $('aibtn');
-  await withBusy(button, 'جارٍ التحليل…', async () => {
+  await withBusy(button, t('form.analyzing'), async () => {
     try {
       const aiData = await analyzeItem({
         workspaceId: repository.session.workspaceId,
@@ -540,9 +580,9 @@ async function runAnalysis() {
       form.aiData = aiData;
       refreshAiPanel();
       renderSuggestions();
-      toast('اكتمل التحليل ✦');
+      toast(t('form.analyzed'));
     } catch (error) {
-      toastError(error, 'تعذّر إجراء التحليل');
+      toastError(error, 'error.ai/failed');
     }
   });
 }
@@ -572,8 +612,8 @@ function updateValuationPreview() {
   if (!text) { preview.textContent = ''; return; }
   const valuation = readValuation();
   preview.textContent = valuation
-    ? `سيُحفظ كـ ${formatValuation(valuation)}`
-    : 'لم يُتعرّف على رقم — سيُحفظ بدون تقييم';
+    ? t('form.valuationWillSave', { value: formatValuation(valuation) })
+    : t('form.valuationUnread');
   preview.className = `field-hint${valuation ? '' : ' warn'}`;
 }
 
@@ -639,7 +679,7 @@ export function __formPendingForTest() {
 let openGeneration = 0;
 
 export async function openItemForm({ itemId = null, folderId = null } = {}) {
-  if (!repository.canWrite()) { toast('صلاحيتك للعرض فقط', '🔒'); return; }
+  if (!repository.canWrite()) { toast(t('error.repo/forbidden.viewer'), '🔒'); return; }
 
   // An edit starts from the record as it is stored now, not from the card it
   // was opened from: the card may be a snapshot of an older version, and the
@@ -652,11 +692,11 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
     try {
       item = await repository.getItem(itemId, { fresh: true });
     } catch (error) {
-      if (mine === openGeneration) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
+      if (mine === openGeneration) toastError(error, 'error.item/load-failed');
       return;
     }
     if (mine !== openGeneration) return;
-    if (!item) { toast('لم تعد هذه القطعة موجودة.', '✕'); return; }
+    if (!item) { toast(t('error.item/not-found'), '✕'); return; }
   }
 
   // At the ceiling, say so before the form is filled in — and never for an
@@ -684,7 +724,7 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
   form.autoAnalyzed = false;
   form.assistantValuationText = null;
 
-  setText('addtitle', item ? 'تعديل القطعة' : 'إضافة قطعة');
+  setText('addtitle', item ? t('form.editTitle') : t('form.addTitle'));
   fillSelects(item);
 
   $('f-name').value = item?.name || '';
@@ -714,7 +754,7 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
 
 async function saveItem() {
   const name = $('f-name').value.trim();
-  if (!name) { toast('أدخل اسم القطعة', '⚠'); $('f-name').focus(); return; }
+  if (!name) { toast(t('form.nameRequired'), '⚠'); $('f-name').focus(); return; }
 
   const unit = $('f-unit').value || 'قطعة';
   const quantity = validateQuantity($('f-qty').value, unit);
@@ -726,10 +766,10 @@ async function saveItem() {
   const skuClash = await repository.skuConflict(sku, form.isNew ? null : form.itemId);
   if (skuClash) {
     const proceed = await confirmAction({
-      title: 'الرمز مستخدم مسبقاً',
-      message: `الرمز "${sku}" مرتبط بالقطعة "${skuClash.name}". هل تريد توليد رمز جديد؟`,
+      title: t('form.skuTakenTitle'),
+      message: t('form.skuTakenMessage', { sku, name: skuClash.name }),
       icon: '🔖',
-      confirmLabel: 'توليد رمز جديد',
+      confirmLabel: t('form.generateSku'),
     });
     if (!proceed) return;
     $('f-sku').value = await repository.reserveUniqueSku();
@@ -739,10 +779,10 @@ async function saveItem() {
   const barcodeClash = barcode ? await repository.barcodeConflict(barcode, form.isNew ? null : form.itemId) : null;
   if (barcodeClash) {
     const proceed = await confirmAction({
-      title: 'الباركود مكرّر',
-      message: `الباركود "${barcode}" مسجّل على "${barcodeClash.name}". هل تريد الحفظ على أي حال؟`,
+      title: t('form.barcodeTakenTitle'),
+      message: t('form.barcodeTakenMessage', { barcode, name: barcodeClash.name }),
       icon: '⚠️',
-      confirmLabel: 'حفظ رغم التكرار',
+      confirmLabel: t('form.saveAnyway'),
     });
     if (!proceed) return;
   }
@@ -778,14 +818,14 @@ async function saveItem() {
     aiData: form.aiData,
   };
 
-  await withBusy($('save-item-btn'), 'جارٍ الحفظ…', async () => {
+  await withBusy($('save-item-btn'), t('common.saving'), async () => {
     try {
       if (form.isNew) {
         await repository.createItem(payload);
-        toast('تمت الإضافة', '✓');
+        toast(t('manage.added'), '✓');
       } else {
         await repository.updateItem(form.itemId, payload, form.baseVersion);
-        toast('تم التحديث', '✓');
+        toast(t('manage.updated'), '✓');
       }
 
       // Saved, references counted: the record now holds every file this form
@@ -798,17 +838,17 @@ async function saveItem() {
         await handleConflict(error);
         return;
       }
-      toastError(error, 'تعذّر حفظ القطعة');
+      toastError(error, 'form.saveFailed');
     }
   });
 }
 
 async function handleConflict(error) {
   const keepMine = await confirmAction({
-    title: 'تعارض في التعديل',
-    message: 'عُدّلت هذه القطعة على جهاز آخر بعد أن فتحتها. هل تريد الكتابة فوق النسخة الأحدث أم إعادة تحميلها؟',
+    title: t('sync.conflict'),
+    message: t('form.conflictMessage'),
     icon: '⚠️',
-    confirmLabel: 'الكتابة فوقها',
+    confirmLabel: t('form.overwrite'),
   });
 
   if (!keepMine) {
@@ -817,7 +857,7 @@ async function handleConflict(error) {
     // the new form replaces the list that knows about it.
     await discardAbandonedFormMedia(form.itemId);
     await openItemForm({ itemId: form.itemId });
-    toast('أُعيد تحميل النسخة الأحدث', '↻');
+    toast(t('form.reloaded'), '↻');
     return;
   }
 
@@ -826,16 +866,16 @@ async function handleConflict(error) {
     form.baseVersion = current?.version ?? error.current?.version ?? null;
     await saveItem();
   } catch (retryError) {
-    toastError(retryError, 'تعذّر حفظ القطعة');
+    toastError(retryError, 'form.saveFailed');
   }
 }
 
 export function bindItemForm() {
   $('f-barcode-scan')?.addEventListener('click', () => openScanner({
-    title: 'امسح باركود القطعة',
+    title: t('form.scanTitle'),
     onCode: ({ value }) => {
       $('f-barcode').value = value;
-      toast('تمت قراءة الباركود', '⊡');
+      toast(t('form.scanned'), '⊡');
     },
   }));
   $('camInput')?.addEventListener('change', (event) => {

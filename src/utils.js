@@ -1,5 +1,9 @@
 // Shared primitives: numerals, DOM construction, formatting, hashing.
 
+import {
+  formatDate as formatLocaleDate, formatNumber as formatLocaleNumber, hasMessage, t,
+} from './i18n.js';
+
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
 const PERSIAN_INDIC = '۰۱۲۳۴۵۶۷۸۹';
 
@@ -105,18 +109,18 @@ export function render(node, children) {
 }
 
 // ── formatting ──
-const AR_NUM = new Intl.NumberFormat('ar-SA-u-nu-latn');
+// In the current language (see i18n.js): the formatting follows the screen,
+// the stored values never do.
 
 export function formatNumber(n) {
-  if (n == null || !Number.isFinite(n)) return '—';
-  return AR_NUM.format(n);
+  return formatLocaleNumber(n);
 }
 
 export function formatCompact(n) {
   if (n == null || !Number.isFinite(n)) return '—';
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}م`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(1)}ألف`;
-  return AR_NUM.format(Math.round(n));
+  if (Math.abs(n) >= 1_000_000) return t('number.millionShort', { value: (n / 1_000_000).toFixed(1) });
+  if (Math.abs(n) >= 1_000) return t('number.thousandShort', { value: (n / 1_000).toFixed(1) });
+  return formatLocaleNumber(Math.round(n));
 }
 
 /** Accepts a Date, epoch millis, or a Firestore Timestamp-like object. */
@@ -138,17 +142,17 @@ export function toMillis(value) {
 export function formatDate(value) {
   const date = toDate(value);
   if (!date) return '—';
-  return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+  return formatLocaleDate(date);
 }
 
 export function timeAgo(value) {
   const date = toDate(value);
   if (!date) return '—';
   const days = Math.floor((Date.now() - date.getTime()) / 86_400_000);
-  if (days <= 0) return 'اليوم';
-  if (days === 1) return 'أمس';
-  if (days < 7) return `منذ ${days} أيام`;
-  return date.toLocaleDateString('ar-SA');
+  if (days <= 0) return t('time.today');
+  if (days === 1) return t('time.yesterday');
+  if (days < 7) return t('time.daysAgo', { count: days });
+  return formatLocaleDate(date, {});
 }
 
 export function debounce(fn, ms) {
@@ -160,15 +164,34 @@ export function debounce(fn, ms) {
 }
 
 /** Errors that carry an Arabic message safe to show the user. */
+/**
+ * An error the customer may see.
+ *
+ * `message` is a message key (see i18n.js), with `options` as its parameters;
+ * `.message` is that message in the language at the moment it was thrown, and
+ * `messageKey` lets the screen say it again in whatever language is current
+ * when it is shown (`describeError`). A literal sentence is still accepted —
+ * older callers and stored errors — and shown as it is.
+ */
 export class AppError extends Error {
   constructor(message, options = {}) {
-    super(message, { cause: options.cause });
+    const key = typeof message === 'string' && hasMessage(message) ? message : null;
+    super(key ? t(key, options) : message, { cause: options.cause });
     this.name = 'AppError';
     this.code = options.code || 'app/unknown';
+    if (key) this.messageKey = key;
     // Anything else the thrower knows — how many records a bulk write reached
     // before it stopped, say — travels as a field, so the caller reads a
-    // number instead of parsing one out of an Arabic sentence.
+    // number instead of parsing one out of a sentence.
     const { cause, code, ...details } = options;
     Object.assign(this, details);
   }
+}
+
+/** What to tell the customer about `error`, in the current language. */
+export function describeError(error, fallbackKey = 'common.unknownError') {
+  if (error?.messageKey) return t(error.messageKey, error);
+  if (error?.code && hasMessage(`error.${error.code}`)) return t(`error.${error.code}`, error);
+  if (error instanceof AppError && error.message) return error.message;
+  return hasMessage(fallbackKey) ? t(fallbackKey) : (fallbackKey || t('common.unknownError'));
 }

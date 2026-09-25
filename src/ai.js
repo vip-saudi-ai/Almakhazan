@@ -8,6 +8,7 @@
 import { FUNCTIONS_REGION } from './config.js';
 import { firebaseContext, isCloudEnabled } from './firebase.js';
 import { AppError } from './utils.js';
+import { hasMessage, t } from './i18n.js';
 import { primaryImage, validateAiData } from './validation.js';
 
 export const AiAvailability = {
@@ -22,22 +23,10 @@ export function aiAvailability() {
   return firebaseContext().functions ? AiAvailability.READY : AiAvailability.UNAVAILABLE;
 }
 
-export const AI_STATUS_LABELS = {
-  ready: 'متصل',
-  offline: 'غير متصل',
-  unavailable: 'غير مهيأ',
-};
-
-const ERROR_MESSAGES = {
-  unauthenticated: 'سجّل الدخول لاستخدام التحليل',
-  'permission-denied': 'لا تملك صلاحية التحليل',
-  'resource-exhausted': 'تم تجاوز حد الاستخدام، حاول بعد قليل',
-  'deadline-exceeded': 'استغرق التحليل وقتاً طويلاً، حاول مجدداً',
-  unavailable: 'خدمة التحليل غير متاحة حالياً',
-  'failed-precondition': 'خدمة التحليل غير مهيأة على الخادم',
-  'invalid-argument': 'بيانات التحليل غير مكتملة',
-  internal: 'حدث خطأ أثناء التحليل',
-};
+/** The assistant's connection state, as the `ai.status.<state>` messages. */
+export function aiStatusLabel(availability) {
+  return t(`ai.status.${availability}`);
+}
 
 /**
  * Requests an analysis for an item's primary image.
@@ -46,13 +35,13 @@ const ERROR_MESSAGES = {
 export async function analyzeItem({ workspaceId, itemId, image, name, categoryName, categories = [] }) {
   const availability = aiAvailability();
   if (availability === AiAvailability.OFFLINE) {
-    throw new AppError('التحليل يحتاج اتصالاً بالإنترنت', { code: 'ai/offline' });
+    throw new AppError('error.ai/offline', { code: 'ai/offline' });
   }
   if (availability !== AiAvailability.READY) {
-    throw new AppError('خدمة التحليل غير مهيأة', { code: 'ai/unavailable' });
+    throw new AppError('error.ai/failed-precondition', { code: 'ai/unavailable' });
   }
   if (!image?.storagePath || image.storagePath.startsWith('local:')) {
-    throw new AppError('ارفع الصورة إلى السحابة أولاً', { code: 'ai/no-cloud-image' });
+    throw new AppError('error.ai/no-cloud-image', { code: 'ai/no-cloud-image' });
   }
 
   const { functions, sdk } = firebaseContext();
@@ -73,13 +62,15 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
     });
   } catch (error) {
     console.error('[ai] callable failed', error);
-    const message = ERROR_MESSAGES[error?.code?.replace('functions/', '')] || 'تعذّر إجراء التحليل';
-    throw new AppError(message, { code: error?.code, cause: error });
+    const reason = error?.code?.replace('functions/', '');
+    const key = reason && hasMessage(`error.ai/${reason}`) ? `error.ai/${reason}` : 'error.ai/failed';
+    throw new AppError(key, { code: error?.code, cause: error });
   }
 
   const payload = response?.data;
   if (!payload || payload.ok === false) {
-    throw new AppError(payload?.message || 'استجابة التحليل غير صالحة', { code: 'ai/bad-response' });
+    // The function's own message, when it sent one; it is not ours to translate.
+    throw new AppError(payload?.message || 'error.ai/bad-response', { code: 'ai/bad-response' });
   }
 
   // The function already validated this; re-validating here keeps the client
@@ -89,7 +80,7 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
     imageHash: image.hash,
     analyzedAt: Date.now(),
   });
-  if (!aiData) throw new AppError('لم يُرجع التحليل نتيجة قابلة للاستخدام', { code: 'ai/empty' });
+  if (!aiData) throw new AppError('error.ai/empty', { code: 'ai/empty' });
 
   return aiData;
 }
@@ -106,9 +97,8 @@ export function isAnalysisStale(item) {
   return item.aiData.imageHash !== image.hash;
 }
 
-export const AI_DISCLAIMER = 'هذا التقدير مبني على الصور والمعلومات المتاحة، ولا يُعد توثيقاً احترافياً ولا تقييماً معتمداً.';
-export const ASSISTANT_NAME = 'مساعد نَظْم';
 export const ASSISTANT_MARK = '✦';
-export const AI_TITLE = ASSISTANT_NAME;
-export const AI_SUBTITLE = 'تقدير أولي';
+export const aiDisclaimer = () => t('ai.disclaimer');
+export const assistantName = () => t('ai.assistantName');
+export const aiSubtitle = () => t('ai.subtitle');
 export { FUNCTIONS_REGION };

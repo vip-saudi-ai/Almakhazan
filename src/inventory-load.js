@@ -53,6 +53,7 @@
 import { repository } from './repository.js';
 import { toastError } from './ui.js';
 import { $, el, formatNumber } from './utils.js';
+import { t } from './i18n.js';
 
 let overlay = null;
 
@@ -63,7 +64,7 @@ function showOverlay() {
   }, [
     el('div', { class: 'loadbox' }, [
       el('div', { class: 'boot-spin', 'aria-hidden': 'true' }),
-      el('div', { class: 'loadtext', id: 'loadtext', text: 'جارٍ قراءة المخزون…' }),
+      el('div', { class: 'loadtext', id: 'loadtext', text: t('load.reading') }),
     ]),
   ]);
   document.body.appendChild(overlay);
@@ -96,13 +97,13 @@ export async function withFullInventory(reason = '') {
     await repository.completeItems({
       onProgress: (seen) => {
         const node = $('loadtext');
-        if (node) node.textContent = `جارٍ قراءة المخزون… ${formatNumber(seen)}`;
+        if (node) node.textContent = t('load.readingCount', { count: seen });
       },
     });
     return true;
   } catch (error) {
     console.error('[inventory] loading the rest failed', error);
-    toastError(error, 'تعذّر تحميل المخزون كاملاً');
+    toastError(error, 'load.failed');
     return false;
   } finally {
     clearTimeout(timer);
@@ -122,12 +123,12 @@ export function partialNotice(onLoadAll) {
     el('span', {
       class: 'partial-text',
       text: total
-        ? `يُعرض أحدث ${formatNumber(loaded)} من ${formatNumber(total)} قطعة`
-        : `يُعرض أحدث ${formatNumber(loaded)} قطعة`,
+        ? t('load.partialOf', { loaded, total })
+        : t('load.partial', { count: loaded }),
     }),
     el('button', {
-      class: 'partial-btn', type: 'button', text: 'اعرض الكل',
-      onClick: async () => { if (await withFullInventory('جارٍ قراءة المخزون كاملاً…')) onLoadAll?.(); },
+      class: 'partial-btn', type: 'button', text: t('load.showAll'),
+      onClick: async () => { if (await withFullInventory(t('load.readingAll'))) onLoadAll?.(); },
     }),
   ]);
 }

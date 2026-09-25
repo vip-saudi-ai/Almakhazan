@@ -14,6 +14,7 @@ import { normalizeArabic } from './search.js';
 import { normalizeDigits } from './utils.js';
 import { valuationMidpoint } from './validation.js';
 import { describeTotals, formatAmount, resolveCurrency, totalsByCurrency } from './money.js';
+import { getLanguage, t } from './i18n.js';
 
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 
@@ -26,29 +27,61 @@ const byId = (list, id) => (id ? list.find((entry) => entry.id === id) : null);
  * and the UI says so by offering these rather than an empty box implying it
  * will understand anything.
  */
-export const SUGGESTIONS = [
-  'وين ساعة الجيب؟',
-  'وش القطع اللي ما لها صور؟',
-  'وش القطع بدون موقع؟',
-  'وش الأشياء اللي قيمتها فوق 10000؟',
-  'كم إجمالي قيمة مخزوني؟',
-  'وش القطع اللي ما تم تحديثها من سنة؟',
-  'وش القطع بدون تصنيف؟',
-];
+//
+// The questions are written in the language on screen; the parser understands
+// both languages whatever the screen says, so an English question typed into
+// the Arabic interface (or the reverse) is still answered.
+const SUGGESTION_SETS = {
+  ar: [
+    'وين ساعة الجيب؟',
+    'وش القطع اللي ما لها صور؟',
+    'وش القطع بدون موقع؟',
+    'وش الأشياء اللي قيمتها فوق 10000؟',
+    'كم إجمالي قيمة مخزوني؟',
+    'وش القطع اللي ما تم تحديثها من سنة؟',
+    'وش القطع بدون تصنيف؟',
+  ],
+  en: [
+    'Where is the pocket watch?',
+    'Which items have no photos?',
+    'Which items have no location?',
+    'What is worth more than 10000?',
+    'What is the total value of my inventory?',
+    'Which items have not been updated in a year?',
+    'Which items have no category?',
+  ],
+};
+
+const CAPABILITY_SETS = {
+  ar: [
+    { label: 'أين قطعة معينة؟', example: 'وين ساعة الجيب؟' },
+    { label: 'ما القطع بدون صور؟', example: 'وش القطع اللي ما لها صور؟' },
+    { label: 'اعرض قطع موقع معين', example: 'وش في الخزنة؟' },
+    { label: 'ما القطع عالية القيمة؟', example: 'وش الأشياء اللي قيمتها فوق 10000؟' },
+    { label: 'ما القطع التي تحتاج مراجعة؟', example: 'وش القطع اللي ما تم تحديثها من سنة؟' },
+  ],
+  en: [
+    { label: 'Where is a particular item?', example: 'Where is the pocket watch?' },
+    { label: 'Which items have no photos?', example: 'Which items have no photos?' },
+    { label: 'Items in a particular location', example: 'What is in the safe?' },
+    { label: 'Which items are high value?', example: 'What is worth more than 10000?' },
+    { label: 'Which items need a review?', example: 'Which items have not been updated in a year?' },
+  ],
+};
+
+export function suggestions() {
+  return SUGGESTION_SETS[getLanguage()] || SUGGESTION_SETS.ar;
+}
 
 /** The kinds of question the parser understands, for a failed answer. */
-export const CAPABILITIES = [
-  { label: 'أين قطعة معينة؟', example: 'وين ساعة الجيب؟' },
-  { label: 'ما القطع بدون صور؟', example: 'وش القطع اللي ما لها صور؟' },
-  { label: 'اعرض قطع موقع معين', example: 'وش في الخزنة؟' },
-  { label: 'ما القطع عالية القيمة؟', example: 'وش الأشياء اللي قيمتها فوق 10000؟' },
-  { label: 'ما القطع التي تحتاج مراجعة؟', example: 'وش القطع اللي ما تم تحديثها من سنة؟' },
-];
+export function capabilities() {
+  return CAPABILITY_SETS[getLanguage()] || CAPABILITY_SETS.ar;
+}
 
 /** Arabic and Latin digits, with thousands separators and "ألف"/"مليون". */
 function readNumber(text) {
-  const t = normalizeDigits(String(text)).replace(/,/g, '');
-  const match = t.match(/(\d+(?:\.\d+)?)\s*(ألف|الف|مليون|k|m)?/i);
+  const clean = normalizeDigits(String(text)).replace(/,/g, '');
+  const match = clean.match(/(\d+(?:\.\d+)?)\s*(ألف|الف|مليون|k|m)?/i);
   if (!match) return null;
   let value = Number(match[1]);
   const scale = match[2]?.toLowerCase();
@@ -60,43 +93,46 @@ function readNumber(text) {
 const INTENTS = [
   {
     id: 'missing-images',
-    test: (q) => /(بدون|بلا|ما ?لها|ماله[اا]?|بدون) ?(صور|صوره|صورة)/.test(q) || /(صور|صورة).*(ناقص|مفقود)/.test(q),
-    build: () => ({ kind: 'list', title: 'قطع بدون صور', match: (i) => !i.images?.length }),
+    test: (q) => /(بدون|بلا|ما ?لها|ماله[اا]?|بدون) ?(صور|صوره|صورة)/.test(q) || /(صور|صورة).*(ناقص|مفقود)/.test(q)
+      || /\b(no|without|missing)\s+(photos?|images?|pictures?)\b/.test(q),
+    build: () => ({ kind: 'list', title: t('ask.titleNoImages'), match: (i) => !i.images?.length }),
   },
   {
     id: 'missing-category',
-    test: (q) => /(بدون|بلا|ما ?لها) ?(تصنيف|فئة)/.test(q),
-    build: () => ({ kind: 'list', title: 'قطع بدون تصنيف', match: (i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID }),
+    test: (q) => /(بدون|بلا|ما ?لها) ?(تصنيف|فئة)/.test(q) || /\b(no|without|missing)\s+categor(y|ies)\b|\buncategori[sz]ed\b/.test(q),
+    build: () => ({ kind: 'list', title: t('ask.titleNoCategory'), match: (i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID }),
   },
   {
     id: 'missing-location',
-    test: (q) => /(بدون|بلا|ما ?لها) ?(موقع|مكان)/.test(q),
-    build: () => ({ kind: 'list', title: 'قطع بدون موقع', match: (i) => !i.locationId }),
+    test: (q) => /(بدون|بلا|ما ?لها) ?(موقع|مكان)/.test(q) || /\b(no|without|missing)\s+locations?\b/.test(q),
+    build: () => ({ kind: 'list', title: t('ask.titleNoLocation'), match: (i) => !i.locationId }),
   },
   {
     id: 'stale',
-    test: (q) => /(ما ?تم|لم) ?(تحديث|تحدث|تراجع|مراجعة)|من سنة|منذ سنة|قديمة المراجعة/.test(q),
+    test: (q) => /(ما ?تم|لم) ?(تحديث|تحدث|تراجع|مراجعة)|من سنة|منذ سنة|قديمة المراجعة/.test(q)
+      || /\bnot (been )?(updated|reviewed)\b|\bin (a|over a) year\b|\bstale\b/.test(q),
     build: (q, ctx) => ({
       kind: 'list',
-      title: 'قطع لم تُراجع منذ سنة',
+      title: t('ask.titleStale'),
       match: (i) => ctx.now - (i.updatedAt ?? 0) > YEAR,
     }),
   },
   {
     id: 'value-above',
-    test: (q) => /(فوق|أكثر من|اكثر من|تتجاوز|>)\s*[\d٠-٩]/.test(q) && /(قيمة|قيمته|سعر|تقييم|تقدير)/.test(q),
+    test: (q) => (/(فوق|أكثر من|اكثر من|تتجاوز|>)\s*[\d٠-٩]/.test(q) && /(قيمة|قيمته|سعر|تقييم|تقدير)/.test(q))
+      || (/\b(over|above|more than|greater than)\s*[\d]/.test(q) && /\b(worth|value|valued|price|priced|cost)\b/.test(q)),
     build: (q, ctx) => {
-      const threshold = readNumber(q.split(/فوق|أكثر من|اكثر من|تتجاوز|>/)[1] || '');
+      const threshold = readNumber(q.split(/فوق|أكثر من|اكثر من|تتجاوز|>|\bover\b|\babove\b|\bmore than\b|\bgreater than\b/i)[1] || '');
       // "Worth more than 100,000" is not one question when the inventory
       // holds several currencies — it is one question per currency, and they
       // have different answers. Rather than pick one, say so.
       const currency = resolveCurrency(q, ctx.items);
       if (!currency.ok) {
-        return { kind: 'currency-choice', title: 'أي عملة؟', threshold, options: currency.options, match: () => false };
+        return { kind: 'currency-choice', title: t('ask.titleWhichCurrency'), threshold, options: currency.options, match: () => false };
       }
       return {
         kind: 'list',
-        title: `قطع تزيد قيمتها عن ${formatAmount(threshold ?? 0, currency.currency)}`,
+        title: t('ask.titleValueAbove', { amount: formatAmount(threshold ?? 0, currency.currency) }),
         match: (i) => i.valuation?.currency === currency.currency
           && (valuationMidpoint(i.valuation) ?? 0) > (threshold ?? Infinity),
       };
@@ -104,26 +140,26 @@ const INTENTS = [
   },
   {
     id: 'total-value',
-    test: (q) => /(إجمالي|اجمالي|مجموع|كم).*(قيمة|قيم|تقييم)/.test(q),
-    build: () => ({ kind: 'sum', title: 'إجمالي القيمة المقدّرة', match: () => true }),
+    test: (q) => /(إجمالي|اجمالي|مجموع|كم).*(قيمة|قيم|تقييم)/.test(q) || /\b(total|sum|how much)\b.*\b(value|worth)\b/.test(q),
+    build: () => ({ kind: 'sum', title: t('ask.titleTotal'), match: () => true }),
   },
   {
     id: 'count',
-    test: (q) => /^(كم|عدد)(\s|$)/.test(q) && !/(قيمة|قيم)/.test(q),
+    test: (q) => (/^(كم|عدد)(\s|$)/.test(q) && !/(قيمة|قيم)/.test(q)) || (/^(how many|count)\b/.test(q) && !/\b(value|worth)\b/.test(q)),
     build: (q, ctx) => {
       const scope = scopeFrom(q, ctx);
-      return { kind: 'count', title: scope.title || 'عدد القطع', match: scope.match };
+      return { kind: 'count', title: scope.title || t('ask.titleCount'), match: scope.match };
     },
   },
   {
     id: 'where',
-    test: (q) => /^(وين|اين|فين)(\s|$)/.test(q),
+    test: (q) => /^(وين|اين|فين)(\s|$)/.test(q) || /^where\b/.test(q),
     build: (q, ctx) => {
-      const subject = q.replace(/^(وين|أين|اين|فين)\s*/, '').replace(/[؟?]/g, '').trim();
+      const subject = q.replace(/^(وين|أين|اين|فين)\s*/, '').replace(/^where\s+(is|are)?\s*(the|my)?\s*/i, '').replace(/[؟?]/g, '').trim();
       const terms = normalizeArabic(subject).split(' ').filter((t) => t.length > 1);
       return {
         kind: 'where',
-        title: subject ? `أين ${subject}` : 'أين القطعة',
+        title: subject ? t('ask.titleWhere', { subject }) : t('ask.titleWhereItem'),
         match: (i) => terms.length > 0 && terms.every((t) => normalizeArabic(
           [i.name, i.brand, i.description, byId(ctx.lookups.categories, i.categoryId)?.name].join(' '),
         ).includes(t)),
@@ -159,7 +195,7 @@ function scopeFrom(question, ctx) {
     }
   }
 
-  return { match, title: parts.length ? `القطع في ${parts.join(' · ')}` : null, parts };
+  return { match, title: parts.length ? t('ask.titleIn', { place: parts.join(' · ') }) : null, parts };
 }
 
 /**
@@ -170,7 +206,7 @@ function scopeFrom(question, ctx) {
 export function askInventory(question, { items, lookups, now = Date.now() }) {
   const text = normalizeDigits(String(question || '')).trim();
   if (!text) {
-    return { understood: false, kind: 'empty', title: '', answer: 'اكتب سؤالك عن مخزونك.', items: [], suggestions: SUGGESTIONS };
+    return { understood: false, kind: 'empty', title: '', answer: t('ask.empty'), items: [], suggestions: suggestions() };
   }
 
   const q = normalizeArabic(text);
@@ -186,7 +222,7 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
         understood: true,
         kind: 'list',
         title: scope.title,
-        answer: `${found.length.toLocaleString('en-US')} قطعة.`,
+        answer: t('ask.count', { count: found.length }),
         items: found,
       };
     }
@@ -196,10 +232,10 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
       understood: false,
       kind: 'unknown',
       title: '',
-      answer: 'لم أفهم هذا السؤال بعد. هذه أنواع الأسئلة التي أفهمها:',
+      answer: t('ask.unknown'),
       items: [],
-      capabilities: CAPABILITIES,
-      suggestions: SUGGESTIONS,
+      capabilities: capabilities(),
+      suggestions: suggestions(),
     };
   }
 
@@ -215,7 +251,7 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
       understood: true,
       kind: 'currency-choice',
       title: plan.title,
-      answer: `مخزونك فيه أكثر من عملة، و${(plan.threshold ?? 0).toLocaleString('en-US')} تختلف قيمتها بينها. أي عملة تقصد؟`,
+      answer: t('ask.whichCurrency', { amount: plan.threshold ?? 0 }),
       options: plan.options,
       threshold: plan.threshold,
       items: [],
@@ -233,10 +269,10 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
       title,
       totals,
       answer: totals.length
-        ? `${describeTotals(totals)} تقديراً، من ${priced.toLocaleString('en-US')} قطعة مسعّرة.`
-        : 'لا توجد قطع مسعّرة في هذا النطاق.',
+        ? t('ask.total', { totals: describeTotals(totals), count: priced })
+        : t('ask.noPriced'),
       items: found.filter((item) => item.valuation).slice(0, 12),
-      note: found.length > priced ? `${found.length - priced} قطعة بلا تقدير سعري لم تدخل في المجموع.` : null,
+      note: found.length > priced ? t('ask.unpricedNote', { count: found.length - priced }) : null,
     };
   }
 
@@ -245,7 +281,7 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
       understood: true,
       kind: 'count',
       title,
-      answer: `${found.length.toLocaleString('en-US')} قطعة.`,
+      answer: t('ask.count', { count: found.length }),
       items: found.slice(0, 12),
       total: found.length,
     };
@@ -253,7 +289,7 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
 
   if (plan.kind === 'where') {
     if (!found.length) {
-      return { understood: true, kind: 'where', title, answer: 'لم أجد قطعة بهذا الاسم.', items: [] };
+      return { understood: true, kind: 'where', title, answer: t('ask.notFound'), items: [] };
     }
     const first = found[0];
     const where = byId(lookups.locations, first.locationId)?.name
@@ -264,8 +300,8 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
       kind: 'where',
       title,
       answer: where
-        ? `${first.name} — ${where}.`
-        : `${first.name} — لم يُسجَّل لها موقع بعد.`,
+        ? t('ask.whereAnswer', { name: first.name, where })
+        : t('ask.whereUnknown', { name: first.name }),
       items: found.slice(0, 6),
     };
   }
@@ -275,8 +311,8 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
     kind: 'list',
     title,
     answer: found.length
-      ? `${found.length.toLocaleString('en-US')} قطعة.`
-      : 'لا توجد قطع تطابق هذا السؤال — وهذه أخبار جيدة.',
+      ? t('ask.count', { count: found.length })
+      : t('ask.noneMatch'),
     items: found,
     total: found.length,
   };

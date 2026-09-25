@@ -1,0 +1,28 @@
+// Spreadsheet import messages.
+
+export default {
+  'importField.name': { ar: "الاسم", en: "Name" },
+  'importField.quantity': { ar: "الكمية", en: "Quantity" },
+  'importField.unit': { ar: "الوحدة", en: "Unit" },
+  'importField.category': { ar: "التصنيف", en: "Category" },
+  'importField.location': { ar: "الموقع", en: "Location" },
+  'importField.folder': { ar: "المجلد", en: "Folder" },
+  'importField.condition': { ar: "الحالة", en: "Condition" },
+  'importField.brand': { ar: "البراند", en: "Brand" },
+  'importField.sku': { ar: "الرمز (SKU)", en: "SKU" },
+  'importField.barcode': { ar: "الباركود", en: "Barcode" },
+  'importField.serialNumber': { ar: "الرقم التسلسلي", en: "Serial number" },
+  'importField.modelNumber': { ar: "رقم الموديل", en: "Model number" },
+  'importField.referenceNumber': { ar: "الرقم المرجعي", en: "Reference number" },
+  'importField.description': { ar: "الوصف", en: "Description" },
+  'importField.valuationMin': { ar: "أدنى قيمة", en: "Min value" },
+  'importField.valuationMax': { ar: "أعلى قيمة", en: "Max value" },
+  'importField.currency': { ar: "العملة", en: "Currency" },
+  'importField.ignore': { ar: "تجاهل العمود", en: "Ignore column" },
+  'importProblem.noName': { ar: "بلا اسم — تُخطّى", en: "No name — skipped" },
+  'importProblem.quantity': { ar: "كمية غير مفهومة: «{value}»", en: "Unreadable quantity: “{value}”" },
+  'importProblem.condition': { ar: "حالة غير معروفة: «{value}»", en: "Unknown condition: “{value}”" },
+  'importProblem.value': { ar: "قيمة غير مفهومة: «{value}»", en: "Unreadable value: “{value}”" },
+  'importProblem.inverted': { ar: "أعلى قيمة ({max}) أقل من أدنى قيمة ({min}) — صحّح الملف أو المطابقة", en: "The max value ({max}) is below the min value ({min}) — correct the file or the mapping" },
+  'importProblem.currency': { ar: "عملة غير معروفة: «{value}»", en: "Unknown currency: “{value}”" },
+};

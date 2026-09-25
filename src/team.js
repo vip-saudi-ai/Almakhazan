@@ -24,13 +24,13 @@ export const INVITABLE_ROLES = [ROLES.VIEWER, ROLES.EDITOR, ROLES.ADMIN];
 
 function fs() {
   const { db, sdk } = firebaseContext();
-  if (!db) throw new AppError('لا يتوفر اتصال بالحساب', { code: 'team/offline' });
+  if (!db) throw new AppError('error.team/offline', { code: 'team/offline' });
   return { db, f: sdk.firestore, sdk };
 }
 
 async function call(name, payload, { timeout = 30_000 } = {}) {
   const { functions, sdk } = firebaseContext();
-  if (!functions) throw new AppError('لا يتوفر اتصال بالحساب', { code: 'team/offline' });
+  if (!functions) throw new AppError('error.team/offline', { code: 'team/offline' });
   const fn = sdk.functions.httpsCallable(functions, name, { timeout });
   const result = await fn(payload);
   return result.data;
@@ -50,7 +50,7 @@ export function watchMembers(workspaceId, onData, onError) {
 
 export async function changeRole(workspaceId, uid, role) {
   if (!INVITABLE_ROLES.includes(role)) {
-    throw new AppError('دور غير صالح', { code: 'team/role' });
+    throw new AppError('error.team/role', { code: 'team/role' });
   }
   const { db, f } = fs();
   await f.updateDoc(f.doc(db, 'workspaces', workspaceId, 'members', uid), { role });
@@ -147,7 +147,8 @@ export async function listWorkspaces(uid) {
       if (!memberSnap.exists()) continue;
       workspaces.push({
         id,
-        name: wsSnap.exists() ? (wsSnap.data().name || 'مساحة بلا اسم') : 'مساحة بلا اسم',
+        // The name the workspace was given; a missing one is shown as untitled by the screen.
+        name: wsSnap.exists() ? (wsSnap.data().name || '') : '',
         role: memberSnap.data().role || ROLES.VIEWER,
       });
     } catch (error) {

@@ -13,6 +13,7 @@
 // back as the text it held, or as a number when the sheet stored a number.
 
 import { AppError } from './utils.js';
+import { t } from './i18n.js';
 
 /**
  * The most rows one import may process in a browser, whatever the plan says.
@@ -91,8 +92,8 @@ export function parseDelimited(text, delimiter = null, { rowLimit = Infinity } =
     row.push(field);
     if (row.length > MAX_COLUMNS) {
       throw new AppError(
-        `يحتوي الملف على أكثر من ${MAX_COLUMNS} عموداً — تحقّق من الفواصل في الملف`,
-        { code: 'sheet/too-many-columns' },
+        'error.sheet/too-many-columns',
+        { code: 'sheet/too-many-columns', max: MAX_COLUMNS },
       );
     }
     rows.push(row);
@@ -105,7 +106,7 @@ export function parseDelimited(text, delimiter = null, { rowLimit = Infinity } =
 
     if (field.length > MAX_CELL_CHARS) {
       throw new AppError(
-        'خلية في الملف أطول مما يمكن استيراده — تحقّق من علامات الاقتباس في الملف',
+        'error.sheet/cell-too-long.quotes',
         { code: 'sheet/cell-too-long' },
       );
     }
@@ -125,8 +126,8 @@ export function parseDelimited(text, delimiter = null, { rowLimit = Infinity } =
       field = '';
       if (row.length > MAX_COLUMNS) {
         throw new AppError(
-          `يحتوي الملف على أكثر من ${MAX_COLUMNS} عموداً — تحقّق من الفواصل في الملف`,
-          { code: 'sheet/too-many-columns' },
+          'error.sheet/too-many-columns',
+          { code: 'sheet/too-many-columns', max: MAX_COLUMNS },
         );
       }
       continue;
@@ -164,7 +165,7 @@ function zipEntries(bytes) {
   for (let i = bytes.length - 22; i >= 0 && i >= bytes.length - 65_557; i -= 1) {
     if (u32(view, i) === 0x06054b50) { eocd = i; break; }
   }
-  if (eocd < 0) throw new AppError('الملف ليس ملف Excel صالحاً', { code: 'sheet/not-zip' });
+  if (eocd < 0) throw new AppError('error.sheet/not-zip', { code: 'sheet/not-zip' });
 
   const count = u16(view, eocd + 10);
   let offset = u32(view, eocd + 16);
@@ -189,18 +190,18 @@ function zipEntries(bytes) {
 async function readEntry(bytes, view, entry) {
   const local = entry.localOffset;
   if (u32(view, local) !== 0x04034b50) {
-    throw new AppError('الملف تالف', { code: 'sheet/bad-entry' });
+    throw new AppError('error.sheet/bad-entry', { code: 'sheet/bad-entry' });
   }
   const start = local + 30 + u16(view, local + 26) + u16(view, local + 28);
   const slice = bytes.subarray(start, start + entry.compressedSize);
 
   if (entry.method === 0) return new TextDecoder().decode(slice);
   if (entry.method !== 8) {
-    throw new AppError('ضغط غير مدعوم داخل الملف', { code: 'sheet/compression' });
+    throw new AppError('error.sheet/compression', { code: 'sheet/compression' });
   }
   if (typeof DecompressionStream !== 'function') {
     throw new AppError(
-      'هذا المتصفح لا يفك ضغط ملفات Excel — صدّر الملف بصيغة CSV وأعد المحاولة',
+      'error.sheet/no-inflate',
       { code: 'sheet/no-inflate' },
     );
   }
@@ -225,7 +226,7 @@ async function readEntry(bytes, view, entry) {
     if (seen > ceiling) {
       await reader.cancel().catch(() => {});
       throw new AppError(
-        'هذا الملف يتمدّد إلى حجم غير معقول عند فتحه — صدّره من جديد بصيغة CSV',
+        'error.sheet/inflation',
         { code: 'sheet/inflation' },
       );
     }
@@ -295,7 +296,7 @@ function sharedStrings(xml) {
     for (const [, inner] of iterateTags(block, 't')) text += unescapeXml(inner || '');
     if (text.length > MAX_CELL_CHARS) {
       throw new AppError(
-        'خلية في الملف أطول مما يمكن استيراده',
+        'error.sheet/cell-too-long',
         { code: 'sheet/cell-too-long' },
       );
     }
@@ -406,8 +407,8 @@ function sheetRows(xml, strings, dates, { rowLimit = Infinity } = {}) {
     }
     if (cells.length > MAX_COLUMNS) {
       throw new AppError(
-        `تحتوي ورقة العمل على أكثر من ${MAX_COLUMNS} عموداً`,
-        { code: 'sheet/too-many-columns' },
+        'error.sheet/too-many-columns.sheet',
+        { code: 'sheet/too-many-columns', max: MAX_COLUMNS },
       );
     }
     rows.push({ cells, line });
@@ -456,16 +457,16 @@ async function readXlsx(buffer, { rowLimit = Infinity } = {}) {
   const read = async (name) => (entries.has(name) ? readEntry(bytes, view, entries.get(name)) : null);
 
   let path = null;
-  let sheetName = 'ورقة 1';
+  let sheetName = t('sheet.defaultSheetName');
   {
     const workbookXml = await read('xl/workbook.xml');
     const relsXml = await read('xl/_rels/workbook.xml.rels');
     path = firstSheetPath(workbookXml, relsXml, entries);
     if (workbookXml) {
-      sheetName = unescapeXml((workbookXml.match(/<sheet\b[^>]*name="([^"]*)"/) || [])[1] || 'ورقة 1');
+      sheetName = unescapeXml((workbookXml.match(/<sheet\b[^>]*name="([^"]*)"/) || [])[1] || t('sheet.defaultSheetName'));
     }
   }
-  if (!path) throw new AppError('لا توجد ورقة بيانات في الملف', { code: 'sheet/no-sheet' });
+  if (!path) throw new AppError('error.sheet/no-sheet', { code: 'sheet/no-sheet' });
 
   const strings = sharedStrings(await read('xl/sharedStrings.xml'));
   const dates = dateStyles(await read('xl/styles.xml'));
@@ -508,20 +509,20 @@ async function readXlsx(buffer, { rowLimit = Infinity } = {}) {
  */
 export function validateSpreadsheetFileMetadata(file) {
   if (!file || typeof file.size !== 'number') {
-    throw new AppError('اختر ملف .xlsx أو .csv', { code: 'sheet/unsupported' });
+    throw new AppError('error.sheet/unsupported', { code: 'sheet/unsupported' });
   }
   const name = String(file.name || '').toLowerCase();
   if (name.endsWith('.xls')) {
-    throw new AppError('صيغة .xls القديمة غير مدعومة — احفظ الملف بصيغة .xlsx أو .csv', { code: 'sheet/legacy-xls' });
+    throw new AppError('error.sheet/legacy-xls', { code: 'sheet/legacy-xls' });
   }
   if (!/\.(xlsx|xlsm|csv|tsv|txt)$/.test(name)) {
-    throw new AppError('اختر ملف .xlsx أو .csv', { code: 'sheet/unsupported' });
+    throw new AppError('error.sheet/unsupported', { code: 'sheet/unsupported' });
   }
-  if (file.size === 0) throw new AppError('الملف فارغ', { code: 'sheet/empty' });
+  if (file.size === 0) throw new AppError('error.sheet/empty', { code: 'sheet/empty' });
   if (file.size > MAX_FILE_BYTES) {
     const mb = Math.round(MAX_FILE_BYTES / 1024 / 1024);
-    throw new AppError(`حجم الملف أكبر من الحد المسموح للاستيراد (${mb} ميجابايت).`, {
-      code: 'import/file-too-large', limitBytes: MAX_FILE_BYTES,
+    throw new AppError('error.import/file-too-large', {
+      code: 'import/file-too-large', limitBytes: MAX_FILE_BYTES, mb,
     });
   }
 }
@@ -540,8 +541,8 @@ export async function readSpreadsheet(file, { rowLimit = MAX_ROWS } = {}) {
   if (file?.size > MAX_FILE_BYTES) {
     const mb = Math.round(MAX_FILE_BYTES / 1024 / 1024);
     throw new AppError(
-      `حجم الملف يتجاوز ${mb} ميجابايت — قسّمه أو صدّر جزءاً منه`,
-      { code: 'sheet/too-large' },
+      'error.sheet/too-large',
+      { code: 'sheet/too-large', mb },
     );
   }
 
@@ -562,19 +563,19 @@ export async function readSpreadsheet(file, { rowLimit = MAX_ROWS } = {}) {
     }
   } else if (name.endsWith('.xls')) {
     throw new AppError(
-      'صيغة .xls القديمة غير مدعومة — احفظ الملف بصيغة .xlsx أو .csv',
+      'error.sheet/legacy-xls',
       { code: 'sheet/legacy-xls' },
     );
   } else {
-    throw new AppError('اختر ملف .xlsx أو .csv', { code: 'sheet/unsupported' });
+    throw new AppError('error.sheet/unsupported', { code: 'sheet/unsupported' });
   }
 
   const nonEmpty = table.rows.filter((row) => row.cells.some((cell) => String(cell ?? '').trim() !== ''));
-  if (!nonEmpty.length) throw new AppError('الملف فارغ', { code: 'sheet/empty' });
+  if (!nonEmpty.length) throw new AppError('error.sheet/empty', { code: 'sheet/empty' });
 
   const headers = nonEmpty[0].cells.map((cell, index) => {
     const text = String(cell ?? '').trim();
-    return text || `عمود ${columnLetter(index)}`;
+    return text || t('sheet.columnFallback', { letter: columnLetter(index) });
   });
 
   const body = nonEmpty.slice(1);

@@ -6,6 +6,8 @@
 // that the device cannot do it and hands the customer back to typing. A
 // feature that pretends to work is worse than one that admits it does not.
 
+import { AppError } from './utils.js';
+
 const FORMATS = [
   'qr_code', 'ean_13', 'ean_8', 'upc_a', 'upc_e',
   'code_128', 'code_39', 'code_93', 'itf', 'codabar', 'data_matrix',
@@ -36,7 +38,7 @@ export async function supportedFormats() {
  */
 export async function scanFromCamera(video, { signal } = {}) {
   if (!scanningSupported()) {
-    throw new Error('هذا الجهاز لا يدعم المسح داخل المتصفح — أدخل الرقم يدوياً');
+    throw new AppError('error.scan/unsupported', { code: 'scan/unsupported' });
   }
 
   const formats = await supportedFormats();
@@ -50,8 +52,8 @@ export async function scanFromCamera(video, { signal } = {}) {
     });
   } catch (error) {
     console.error('[scan] camera refused', error);
-    if (error?.name === 'NotAllowedError') throw new Error('لم يُسمح باستخدام الكاميرا');
-    throw new Error('تعذّر فتح الكاميرا');
+    if (error?.name === 'NotAllowedError') throw new AppError('error.scan/denied', { code: 'scan/denied' });
+    throw new AppError('error.scan/camera', { code: 'scan/camera' });
   }
 
   video.srcObject = stream;

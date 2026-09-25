@@ -6,6 +6,7 @@
 
 import { ROLES } from './config.js';
 import { AppError } from './utils.js';
+import { hasMessage, t } from './i18n.js';
 import { firebaseContext, isCloudEnabled } from './firebase.js';
 
 let session = { user: null, workspaceId: null, role: null, ready: false };
@@ -74,7 +75,7 @@ function toProfile(user) {
   return {
     uid: user.uid,
     email: user.email || null,
-    displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
+    displayName: user.displayName || user.email?.split('@')[0] || t('auth.defaultUser'),
     photoURL: user.photoURL || null,
     isAnonymous: user.isAnonymous,
     emailVerified: user.emailVerified,
@@ -104,7 +105,7 @@ async function resolveWorkspace(user) {
   const workspaceId = user.uid; // personal workspace, stable and collision-free
   const batch = fs.writeBatch(db);
   batch.set(fs.doc(db, 'workspaces', workspaceId), {
-    name: `مخزن ${toProfile(user).displayName}`,
+    name: t('workspace.defaultName', { name: toProfile(user).displayName }),
     ownerId: user.uid,
     createdAt: fs.serverTimestamp(),
     schemaVersion: 2,
@@ -126,25 +127,15 @@ async function resolveWorkspace(user) {
 }
 
 function authError(error) {
-  const messages = {
-    'auth/invalid-email': 'البريد الإلكتروني غير صالح',
-    'auth/user-disabled': 'هذا الحساب معطّل',
-    'auth/user-not-found': 'لا يوجد حساب بهذا البريد',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة',
-    'auth/invalid-credential': 'بيانات الدخول غير صحيحة',
-    'auth/email-already-in-use': 'هذا البريد مسجّل مسبقاً',
-    'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-    'auth/popup-closed-by-user': 'أُغلقت نافذة الدخول',
-    'auth/network-request-failed': 'تعذّر الاتصال بالشبكة',
-    'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً',
-    'auth/operation-not-allowed': 'طريقة الدخول هذه غير مفعّلة في المشروع',
-  };
-  return new AppError(messages[error?.code] || 'تعذّر تسجيل الدخول', { code: error?.code, cause: error });
+  // Each Firebase code has its own message (`error.auth/…`); anything else
+  // is a sign-in failure, said as one.
+  const key = error?.code && hasMessage(`error.${error.code}`) ? `error.${error.code}` : 'error.auth/failed';
+  return new AppError(key, { code: error?.code, cause: error });
 }
 
 export async function signInWithEmail(email, password) {
   const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
     await sdk.auth.signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
@@ -155,7 +146,7 @@ export async function signInWithEmail(email, password) {
 
 export async function registerWithEmail(email, password, displayName) {
   const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
     const credential = await sdk.auth.createUserWithEmailAndPassword(auth, email, password);
     if (displayName) await sdk.auth.updateProfile(credential.user, { displayName });
@@ -173,7 +164,7 @@ export async function registerWithEmail(email, password, displayName) {
  */
 export async function signInWithApple() {
   const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
     const provider = new sdk.auth.OAuthProvider('apple.com');
     provider.addScope('email');
@@ -183,7 +174,7 @@ export async function signInWithApple() {
   } catch (error) {
     console.error('[auth] Apple sign-in failed', error);
     if (error?.code === 'auth/operation-not-allowed') {
-      throw new AppError('الدخول عبر Apple غير مفعّل في المشروع بعد', { code: error.code });
+      throw new AppError('error.auth/apple-disabled', { code: error.code });
     }
     throw authError(error);
   }
@@ -191,7 +182,7 @@ export async function signInWithApple() {
 
 export async function signInWithGoogle() {
   const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
     await sdk.auth.signInWithPopup(auth, new sdk.auth.GoogleAuthProvider());
   } catch (error) {
@@ -204,15 +195,15 @@ export async function signInWithGoogle() {
 export async function sendVerification() {
   const { auth, sdk } = firebaseContext();
   const user = auth?.currentUser;
-  if (!user) throw new AppError('لا يوجد حساب نشط');
+  if (!user) throw new AppError('error.auth/no-user', { code: 'auth/no-user' });
   try {
     await sdk.auth.sendEmailVerification(user);
   } catch (error) {
     console.error('[auth] verification email failed', error);
     if (error?.code === 'auth/too-many-requests') {
-      throw new AppError('أُرسلت رسائل كثيرة — انتظر قليلاً ثم حاول', { code: error.code });
+      throw new AppError('error.auth/verify-too-many', { code: error.code });
     }
-    throw new AppError('تعذّر إرسال رسالة التفعيل', { cause: error });
+    throw new AppError('error.auth/verify-failed', { code: 'auth/verify-failed', cause: error });
   }
 }
 
@@ -249,7 +240,7 @@ export function needsVerification() {
 
 export async function sendPasswordReset(email) {
   const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('الخدمة السحابية غير متاحة');
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
     await sdk.auth.sendPasswordResetEmail(auth, email);
   } catch (error) {
@@ -273,7 +264,7 @@ export async function refreshWorkspace() {
     emit({ user: toProfile(user), ...membership, ready: true, local: false });
   } catch (error) {
     console.error('[auth] workspace refresh failed', error);
-    throw new AppError('تعذّر فتح المساحة', { cause: error });
+    throw new AppError('workspace.openFailed', { code: 'workspace/open-failed', cause: error });
   }
   return session;
 }
@@ -285,7 +276,7 @@ export async function signOutUser() {
     await sdk.auth.signOut(auth);
   } catch (error) {
     console.error('[auth] sign-out failed', error);
-    throw new AppError('تعذّر تسجيل الخروج', { cause: error });
+    throw new AppError('error.auth/sign-out', { code: 'auth/sign-out', cause: error });
   }
 }
 

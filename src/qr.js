@@ -9,6 +9,8 @@
 // Correctness is checked against segno (a reference implementation) in
 // tests/unit/qr.test.mjs: same input, same version, same mask, same matrix.
 
+import { AppError } from './utils.js';
+
 const EC_LEVEL_M = 0;   // the format-information code for level M
 
 const ALNUM = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
@@ -127,7 +129,7 @@ function pickVersion(text, mode) {
   for (let version = 1; version <= 10; version++) {
     if (4 + COUNT_BITS[mode](version) + dataBitsFor(text, mode) <= capacityBits(version)) return version;
   }
-  throw new Error('النص أطول من أن يُرمَّز في ملصق');
+  throw new AppError('error.qr/too-long', { code: 'qr/too-long' });
 }
 
 function encodeData(text, version, mode) {
@@ -398,7 +400,7 @@ function penalty(matrix) {
  */
 export function encodeQr(text) {
   const value = String(text ?? '').trim();
-  if (!value) throw new Error('لا يوجد نص لترميزه');
+  if (!value) throw new AppError('error.qr/empty', { code: 'qr/empty' });
 
   const mode = isNumeric(value) ? 'numeric' : isAlnum(value) ? 'alnum' : 'byte';
   const version = pickVersion(value, mode);

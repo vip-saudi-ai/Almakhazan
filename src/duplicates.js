@@ -7,6 +7,7 @@
 
 import { normalizeArabic } from './search.js';
 import { UNCATEGORIZED_ID } from './config.js';
+import { t } from './i18n.js';
 
 /**
  * What each signal is, and how much it is worth claiming.
@@ -31,26 +32,26 @@ const SIGNALS = {
   serial: {
     strength: 4,
     confidence: 'certain',
-    label: 'تطابق مؤكد',
-    reason: 'نفس الرقم التسلسلي — رقم يخص قطعة واحدة بعينها',
+    get label() { return t('dup.serial.label'); },
+    get reason() { return t('dup.serial.reason'); },
   },
   barcode: {
     strength: 3,
     confidence: 'high',
-    label: 'نفس المنتج',
-    reason: 'نفس الباركود — قد تكون نسختين تملكهما فعلاً من المنتج نفسه',
+    get label() { return t('dup.barcode.label'); },
+    get reason() { return t('dup.barcode.reason'); },
   },
   sku: {
     strength: 2,
     confidence: 'high',
-    label: 'تشابه مرتفع',
-    reason: 'نفس الرمز',
+    get label() { return t('dup.sku.label'); },
+    get reason() { return t('dup.sku.reason'); },
   },
   name: {
     strength: 1,
     confidence: 'likely',
-    label: 'تشابه محتمل',
-    reason: 'اسم متطابق في نفس التصنيف',
+    get label() { return t('dup.name.label'); },
+    get reason() { return t('dup.name.reason'); },
   },
 };
 
@@ -173,7 +174,7 @@ export function findDuplicateGroups(items) {
         items: group.items,
         ...SIGNALS[kind],
         reason: kinds.length > 1
-          ? `${SIGNALS[kind].reason}، و${SIGNALS[kinds[1]].reason}`
+          ? t('dup.twoReasons', { first: SIGNALS[kind].reason, second: SIGNALS[kinds[1]].reason })
           : SIGNALS[kind].reason,
       };
     })

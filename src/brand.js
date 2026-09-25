@@ -6,24 +6,26 @@
 // infrastructure. Renaming them would migrate live customer data for a
 // cosmetic gain, so they keep their original spelling.
 
+import { t } from './i18n.js';
+
+// The customer-facing names read in the current language: نَظْم / NAZM.
 export const BRAND = {
-  name: 'نَظْم',
+  get name() { return t('app.brand'); },
+  nameAr: 'نَظْم',
   nameLatin: 'NAZM',
-  /** Without the diacritics, for places where marks would crowd small type. */
-  namePlain: 'نظم',
-  tagline: 'كل ما تملك، في مكانه.',
-  taglineEn: 'Everything you own, in its place.',
-  descriptor: 'الجرد الذكي للمقتنيات والأصول',
-  descriptorLong: 'منصة ذكية لتوثيق وتنظيم المقتنيات والمخزون والأصول.',
-  assistant: 'مساعد نَظْم',
+  get tagline() { return t('brand.tagline'); },
+  get descriptor() { return t('app.tagline'); },
+  get assistant() { return t('ai.assistantName'); },
   assistantMark: '✦',
   /** [YOU] Confirm the real address before launch — see DEPLOYMENT.md. */
   salesEmail: 'sales@nazm.app',
   supportEmail: 'support@nazm.app',
 };
 
-/** "✦ مساعد نَظْم" — the assistant is always introduced this way. */
-export const ASSISTANT = `${BRAND.assistantMark} ${BRAND.assistant}`;
+/** "✦ NAZM Assistant" — the assistant is always introduced this way. */
+export function assistantTitle() {
+  return `${BRAND.assistantMark} ${BRAND.assistant}`;
+}
 
 /** Symbol paths, so no view hard-codes an asset location. */
 export const BRAND_ASSETS = {

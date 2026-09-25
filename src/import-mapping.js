@@ -17,6 +17,7 @@
 import { CONDITIONS, UNCATEGORIZED_ID, isCurrencyCode, normalizeCurrencyCode } from './config.js';
 import { normalizeArabic } from './search.js';
 import { parseNumber } from './utils.js';
+import { t } from './i18n.js';
 
 /**
  * The id a given row of a given import becomes.
@@ -37,31 +38,38 @@ export function importItemId(importId, sourceLine) {
  * hold a path this app has no right to read, and a URL it cannot vouch for.
  */
 export const FIELDS = [
-  { key: 'name', label: 'الاسم', required: true, aliases: ['الاسم', 'اسم القطعة', 'القطعة', 'البيان', 'الصنف', 'name', 'item', 'title', 'product'] },
-  { key: 'quantity', label: 'الكمية', aliases: ['الكمية', 'العدد', 'كمية', 'qty', 'quantity', 'count'] },
-  { key: 'unit', label: 'الوحدة', aliases: ['الوحدة', 'وحدة', 'unit', 'uom'] },
-  { key: 'category', label: 'التصنيف', taxonomy: 'categories', aliases: ['التصنيف', 'الفئة', 'القسم', 'النوع', 'category', 'type', 'group'] },
-  { key: 'location', label: 'الموقع', taxonomy: 'locations', aliases: ['الموقع', 'المكان', 'الرف', 'المخزن', 'location', 'place', 'shelf', 'room'] },
-  { key: 'folder', label: 'المجلد', taxonomy: 'folders', aliases: ['المجلد', 'المجموعة', 'folder', 'collection'] },
-  { key: 'condition', label: 'الحالة', aliases: ['الحالة', 'حالة القطعة', 'condition', 'state'] },
-  { key: 'brand', label: 'البراند', aliases: ['البراند', 'الماركة', 'الشركة', 'brand', 'maker', 'manufacturer'] },
+  { key: 'name', get label() { return t('importField.name'); }, required: true, aliases: ['الاسم', 'اسم القطعة', 'القطعة', 'البيان', 'الصنف', 'name', 'item', 'title', 'product', 'item name'] },
+  { key: 'quantity', get label() { return t('importField.quantity'); }, aliases: ['الكمية', 'العدد', 'كمية', 'qty', 'quantity', 'count'] },
+  { key: 'unit', get label() { return t('importField.unit'); }, aliases: ['الوحدة', 'وحدة', 'unit', 'uom'] },
+  { key: 'category', get label() { return t('importField.category'); }, taxonomy: 'categories', aliases: ['التصنيف', 'الفئة', 'القسم', 'النوع', 'category', 'type', 'group'] },
+  { key: 'location', get label() { return t('importField.location'); }, taxonomy: 'locations', aliases: ['الموقع', 'المكان', 'الرف', 'المخزن', 'location', 'place', 'shelf', 'room'] },
+  { key: 'folder', get label() { return t('importField.folder'); }, taxonomy: 'folders', aliases: ['المجلد', 'المجموعة', 'folder', 'collection'] },
+  { key: 'condition', get label() { return t('importField.condition'); }, aliases: ['الحالة', 'حالة القطعة', 'condition', 'state'] },
+  { key: 'brand', get label() { return t('importField.brand'); }, aliases: ['البراند', 'الماركة', 'الشركة', 'brand', 'maker', 'manufacturer'] },
   // A bare 'ref' is deliberately absent from every alias list below: it means a
   // serial number to a watch dealer, a SKU to a retailer and an internal
   // reference to everyone else. It is asked about (see AMBIGUOUS), never
   // guessed. The unambiguous spellings are claimed here.
-  { key: 'sku', label: 'الرمز', aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code'] },
-  { key: 'barcode', label: 'الباركود', aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc', 'gtin'] },
-  { key: 'serialNumber', label: 'الرقم التسلسلي', aliases: ['الرقم التسلسلي', 'رقم تسلسلي', 'التسلسلي', 'serial', 'serial no', 'serial number', 's/n', 'sn'] },
-  { key: 'modelNumber', label: 'رقم الموديل', aliases: ['رقم الموديل', 'الموديل', 'موديل', 'الطراز', 'model', 'model no', 'model number'] },
-  { key: 'referenceNumber', label: 'الرقم المرجعي', aliases: ['الرقم المرجعي', 'رقم مرجعي', 'رقم البوليصة', 'reference number', 'ref no'] },
-  { key: 'description', label: 'الوصف', aliases: ['الوصف', 'ملاحظات', 'ملاحظة', 'تفاصيل', 'description', 'notes', 'note', 'details'] },
-  { key: 'valuationMin', label: 'أدنى قيمة', aliases: ['أدنى قيمة', 'السعر', 'القيمة', 'التكلفة', 'price', 'value', 'cost', 'min'] },
-  { key: 'valuationMax', label: 'أعلى قيمة', aliases: ['أعلى قيمة', 'أعلى سعر', 'max', 'max price'] },
-  { key: 'currency', label: 'العملة', aliases: ['العملة', 'currency'] },
+  { key: 'sku', get label() { return t('importField.sku'); }, aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code'] },
+  { key: 'barcode', get label() { return t('importField.barcode'); }, aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc', 'gtin'] },
+  { key: 'serialNumber', get label() { return t('importField.serialNumber'); }, aliases: ['الرقم التسلسلي', 'رقم تسلسلي', 'التسلسلي', 'serial', 'serial no', 'serial number', 's/n', 'sn'] },
+  { key: 'modelNumber', get label() { return t('importField.modelNumber'); }, aliases: ['رقم الموديل', 'الموديل', 'موديل', 'الطراز', 'model', 'model no', 'model number'] },
+  { key: 'referenceNumber', get label() { return t('importField.referenceNumber'); }, aliases: ['الرقم المرجعي', 'رقم مرجعي', 'رقم البوليصة', 'reference number', 'ref no'] },
+  { key: 'description', get label() { return t('importField.description'); }, aliases: ['الوصف', 'ملاحظات', 'ملاحظة', 'تفاصيل', 'description', 'notes', 'note', 'details'] },
+  { key: 'valuationMin', get label() { return t('importField.valuationMin'); }, aliases: ['أدنى قيمة', 'أدنى تقييم', 'السعر', 'القيمة', 'التكلفة', 'price', 'value', 'cost', 'min', 'min value', 'minimum value', 'min valuation', 'valuation', 'estimated value'] },
+  { key: 'valuationMax', get label() { return t('importField.valuationMax'); }, aliases: ['أعلى قيمة', 'أعلى تقييم', 'أعلى سعر', 'max', 'max price', 'max value', 'maximum value', 'max valuation'] },
+  { key: 'currency', get label() { return t('importField.currency'); }, aliases: ['العملة', 'currency'] },
 ];
 
 const CONDITION_SET = new Set(CONDITIONS.map(normalizeArabic));
 const CONDITION_BY_KEY = new Map(CONDITIONS.map((c) => [normalizeArabic(c), c]));
+// A condition written in English maps to the stored value it names. The
+// stored value never changes with the language; this only reads a file.
+const ENGLISH_CONDITIONS = ['excellent', 'very good', 'good', 'fair', 'poor', 'for disposal'];
+ENGLISH_CONDITIONS.forEach((word, index) => {
+  CONDITION_SET.add(word);
+  CONDITION_BY_KEY.set(word, CONDITIONS[index]);
+});
 
 /**
  * A first guess at the mapping, from the header row. Only exact matches after
@@ -115,7 +123,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
       // A row with no name is not an error to argue with — spreadsheets are
       // full of blank separators and totals. It is reported and skipped.
       if (row.some((c) => String(c ?? '').trim())) {
-        problems.push({ line, field: 'name', reason: 'بلا اسم — تُخطّى' });
+        problems.push({ line, field: 'name', reason: t('importProblem.noName') });
       }
       return;
     }
@@ -126,7 +134,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     if (rawQuantity) {
       const parsed = parseNumber(rawQuantity);
       if (parsed == null || parsed < 0) {
-        problems.push({ line, field: 'quantity', reason: `كمية غير مفهومة: «${rawQuantity}»`, value: rawQuantity });
+        problems.push({ line, field: 'quantity', reason: t('importProblem.quantity', { value: rawQuantity }), value: rawQuantity });
       } else {
         record.quantity = parsed;
       }
@@ -139,7 +147,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     if (rawCondition) {
       const key = normalizeArabic(rawCondition);
       if (CONDITION_SET.has(key)) record.condition = CONDITION_BY_KEY.get(key);
-      else problems.push({ line, field: 'condition', reason: `حالة غير معروفة: «${rawCondition}»`, value: rawCondition });
+      else problems.push({ line, field: 'condition', reason: t('importProblem.condition', { value: rawCondition }), value: rawCondition });
     }
 
     for (const key of ['brand', 'sku', 'barcode', 'description',
@@ -163,19 +171,19 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     let valuationFault = null;
 
     if (rawMin && min == null) {
-      valuationFault = { field: 'valuationMin', reason: `قيمة غير مفهومة: «${rawMin}»`, value: rawMin };
+      valuationFault = { field: 'valuationMin', reason: t('importProblem.value', { value: rawMin }), value: rawMin };
     } else if (rawMax && max == null) {
       // Read independently. An unreadable upper bound used to be dropped, and
       // "5,000 to unreadable" became a flat 5,000 — a narrower claim about the
       // object's worth than the file made, presented as the file's own.
-      valuationFault = { field: 'valuationMax', reason: `قيمة غير مفهومة: «${rawMax}»`, value: rawMax };
+      valuationFault = { field: 'valuationMax', reason: t('importProblem.value', { value: rawMax }), value: rawMax };
     } else if (min != null && max != null && max < min) {
       // Could be columns mapped the wrong way round, could be a typo, could be
       // the truth badly entered. Swapping them picks one of those readings and
       // writes it down as fact.
       valuationFault = {
         field: 'valuationMax',
-        reason: `أعلى قيمة (${max}) أقل من أدنى قيمة (${min}) — صحّح الملف أو المطابقة`,
+        reason: t('importProblem.inverted', { max: String(max), min: String(min) }),
         value: rawMax,
       };
     } else if (rawCurrency && !isCurrencyCode(rawCurrency)) {
@@ -184,7 +192,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
       // wrong number on every row of the file.
       valuationFault = {
         field: 'currency',
-        reason: `عملة غير معروفة: «${rawCurrency}»`,
+        reason: t('importProblem.currency', { value: rawCurrency }),
         value: rawCurrency,
       };
     }
@@ -288,33 +296,38 @@ export function ambiguousColumns(headers, mapping) {
   return out;
 }
 
+/** One answer to "what is this column?", labelled in the current language. */
+function option(key) {
+  return { key, get label() { return key ? t(`importField.${key}`) : t('importField.ignore'); } };
+}
+
 const AMBIGUOUS = [
   {
     match: ['ref', 'reference', 'مرجع'],
     options: [
-      { key: 'referenceNumber', label: 'الرقم المرجعي' },
-      { key: 'sku', label: 'الرمز (SKU)' },
-      { key: 'serialNumber', label: 'الرقم التسلسلي' },
-      { key: 'barcode', label: 'الباركود' },
-      { key: '', label: 'تجاهل العمود' },
+      option('referenceNumber'),
+      option('sku'),
+      option('serialNumber'),
+      option('barcode'),
+      option(''),
     ],
   },
   {
     match: ['value', 'amount', 'القيمة', 'المبلغ'],
     options: [
-      { key: 'valuationMin', label: 'أدنى قيمة' },
-      { key: 'valuationMax', label: 'أعلى قيمة' },
-      { key: '', label: 'تجاهل العمود' },
+      option('valuationMin'),
+      option('valuationMax'),
+      option(''),
     ],
   },
   {
     match: ['no', 'number', 'رقم', 'الرقم'],
     options: [
-      { key: 'sku', label: 'الرمز (SKU)' },
-      { key: 'barcode', label: 'الباركود' },
-      { key: 'serialNumber', label: 'الرقم التسلسلي' },
-      { key: 'quantity', label: 'الكمية' },
-      { key: '', label: 'تجاهل العمود' },
+      option('sku'),
+      option('barcode'),
+      option('serialNumber'),
+      option('quantity'),
+      option(''),
     ],
   },
 ];

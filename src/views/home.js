@@ -14,7 +14,9 @@ import {
 } from '../search.js';
 import { $, appendChildren, debounce, el, formatNumber, render, setText } from '../utils.js';
 import { formatValuation, primaryImage } from '../validation.js';
-import { closeSheet, confirmAction, emptyState, openSheet, optionList, toast, toastError } from '../ui.js';
+import {
+  closeSheet, confirmAction, emptyState, isSheetOpen, openSheet, optionList, toast, toastError,
+} from '../ui.js';
 import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateItemFlow } from './detail.js';
 import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
@@ -23,6 +25,15 @@ import { goTab } from '../navigation.js';
 import { openScanner } from './scan.js';
 import { openLabels } from './labels.js';
 import { exportSelection } from '../exporting.js';
+import { onLanguageChange, t } from '../i18n.js';
+import { categoryName, conditionLabel, locationName, unitLabel } from '../labels.js';
+
+// A language switch redraws the sheets this screen owns if they are open —
+// from the state they already show, so a half-set filter is not lost.
+onLanguageChange(() => {
+  if (isSheetOpen('filter')) openFilterSheet();
+  if (isSheetOpen('sort')) openSortSheet();
+});
 
 /**
  * The screen's state *is* a query — scope, search, filters, sort, page. It is
@@ -133,7 +144,7 @@ async function requestList({ apply, revertOnFailure = false, cursor = null } = {
   let result;
   try {
     result = await queryInventory(currentQuery(), {
-      ensure: () => withFullInventory('جارٍ قراءة المخزون كاملاً…'),
+      ensure: () => withFullInventory(t('load.readingAll')),
       signal,
       // Carrying on from where the last page ended, when there is one. Asking
       // for "page 40" of a walked answer means walking to it; asking for "what
@@ -144,7 +155,7 @@ async function requestList({ apply, revertOnFailure = false, cursor = null } = {
   } catch (error) {
     if (ticket !== narrowingGeneration) return;
     console.error('[home] the list could not be read', error);
-    toastError(error, 'تعذّر قراءة المخزون');
+    toastError(error, 'home.readFailed');
     return;
   }
 
@@ -185,14 +196,14 @@ function renderStats(summary) {
   setText('s-qty', summary.quantity == null ? '—' : formatNumber(summary.quantity));
 
   if (summary.documentedRatio == null) {
-    setText('s-cats', summary.records ? 'اعرض الكل لحساب النِّسب' : 'ابدأ بأول قطعة');
+    setText('s-cats', summary.records ? t('home.statShowAllForRatio') : t('home.statStart'));
   } else {
-    setText('s-cats', `${Math.round(summary.documentedRatio * 100)}% موثّق بالصور`);
+    setText('s-cats', t('home.statDocumented', { percent: String(Math.round(summary.documentedRatio * 100)) }));
   }
 
   setText('s-qtysub', summary.categories == null
-    ? `${formatNumber(summary.folders)} مجلد`
-    : `${formatNumber(summary.categories)} تصنيف · ${formatNumber(summary.folders)} مجلد`);
+    ? t('count.folders', { count: summary.folders })
+    : `${t('count.categories', { count: summary.categories })} · ${t('count.folders', { count: summary.folders })}`);
 }
 
 // ── folders ──
@@ -230,7 +241,7 @@ function folderCard(folder, counts) {
   return el('button', {
     class: 'fld-card gl-s',
     type: 'button',
-    'aria-label': count == null ? folder.name : `${folder.name}، ${count} قطعة`,
+    'aria-label': count == null ? folder.name : t('home.folderAria', { name: folder.name, items: t('count.items', { count }) }),
     onClick: () => enterFolder(folder.id),
   }, [
     el('div', { class: 'fld-card-bg', text: folder.icon, 'aria-hidden': 'true' }),
@@ -238,10 +249,10 @@ function folderCard(folder, counts) {
       el('div', { style: { fontSize: '28px' }, text: folder.icon, 'aria-hidden': 'true' }),
       count == null ? null : el('div', {
         style: { background: `${color}22`, color, fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px' },
-        text: `${count} قطعة`,
+        text: t('count.items', { count }),
       }),
     ]),
-    el('div', { class: 'fld-card-name', text: folder.name }),
+    el('div', { class: 'fld-card-name', dir: 'auto', text: folder.name }),
     folder.description ? el('div', { class: 'fld-card-count', text: folder.description }) : null,
   ]);
 }
@@ -271,7 +282,7 @@ function renderFolders() {
       class: 'fld-card fld-add gl-s',
       type: 'button',
       onClick: () => window.dispatchEvent(new CustomEvent('almakhzan:new-folder')),
-    }, [icon('plus', { size: 18 }), el('span', { text: 'مجلد جديد' })]),
+    }, [icon('plus', { size: 18 }), el('span', { text: t('folder.newTitle') })]),
   ]);
 }
 
@@ -287,7 +298,7 @@ function renderFolders() {
 function placeholderNode(category) {
   return el('div', { class: 'icph' }, [
     el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
-    el('span', { class: 'icph-lbl', text: 'بدون صورة' }),
+    el('span', { class: 'icph-lbl', text: t('home.noPhoto') }),
   ]);
 }
 
@@ -300,7 +311,7 @@ function attachImageFallback(img, image, category, onRetry) {
       el('div', { class: 'icph icph-failed' }, [
         el('span', { class: 'icph-ico', text: category.icon, 'aria-hidden': 'true' }),
         el('button', {
-          class: 'icph-retry', type: 'button', text: 'تعذّر تحميل الصورة · إعادة',
+          class: 'icph-retry', type: 'button', text: t('home.imageRetry'),
           onClick: (event) => { event.stopPropagation(); onRetry?.(); },
         }),
       ]),
@@ -315,7 +326,7 @@ function itemThumb(item, className) {
   if (!image) {
     return el('div', { class: className, text: category.icon, 'aria-hidden': 'true' });
   }
-  const img = el('img', { alt: item.name || 'صورة القطعة', loading: 'lazy', decoding: 'async' });
+  const img = el('img', { alt: item.name || t('home.itemPhoto'), loading: 'lazy', decoding: 'async' });
   bindImageSrc(img, image, { tier: ImageTier.THUMB });
   return el('div', { class: className }, [img]);
 }
@@ -350,7 +361,7 @@ function cardNode(item) {
     role: view.selection ? 'checkbox' : undefined,
     'aria-checked': view.selection ? String(selected) : undefined,
     tabindex: view.selection ? '0' : undefined,
-    'aria-label': view.selection ? `${item.name}، ${category.name}` : undefined,
+    'aria-label': view.selection ? t('home.itemAria', { name: item.name, detail: categoryName(category) }) : undefined,
     onClick: view.selection ? activate : undefined,
     onKeydown: view.selection ? (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
@@ -359,7 +370,7 @@ function cardNode(item) {
     view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
     view.selection ? null : el('button', {
       class: 'icard-open', type: 'button',
-      'aria-label': `${item.name}، ${category.name}`,
+      'aria-label': t('home.itemAria', { name: item.name, detail: categoryName(category) }),
       onClick: activate,
     }),
     // The same actions the long press offers, on a button that can be seen.
@@ -367,7 +378,7 @@ function cardNode(item) {
     // way to find out that "duplicate" or "print a label" exist at all.
     view.selection ? null : el('button', {
       class: 'icmore', type: 'button',
-      'aria-label': `إجراءات ${item.name || 'القطعة'}`,
+      'aria-label': t('home.itemActions', { name: item.name || t('home.theItem') }),
       onClick: (event) => { event.stopPropagation(); openContextMenu(item.id); },
     }, [icon('more', { size: 16 })]),
     el('div', { class: 'icimg' }, [
@@ -378,14 +389,14 @@ function cardNode(item) {
           color: 'white', fontSize: '9px', padding: '2px 6px', borderRadius: '20px', fontWeight: '700',
         },
         text: '✦',
-        title: 'حُلِّلت بمساعد نَظْم',
+        title: t('home.analyzed'),
       }) : null,
     ]),
     el('div', { class: 'icbody' }, [
-      el('div', { class: 'icname', text: item.name || '—' }),
-      el('div', { class: 'iccat', text: `${category.icon} ${category.name}` }),
+      el('div', { class: 'icname', dir: 'auto', text: item.name || '—' }),
+      el('div', { class: 'iccat', dir: 'auto', text: `${category.icon} ${categoryName(category)}` }),
       el('div', { class: 'icft' }, [
-        el('div', { class: 'qbadge', text: `${formatNumber(item.quantity)} ${item.unit || ''}`.trim() }),
+        el('div', { class: 'qbadge', text: `${formatNumber(item.quantity)} ${unitLabel(item.unit)}`.trim() }),
         item.valuation ? el('div', { class: 'tag tb', style: { fontSize: '10px' }, text: formatValuation(item.valuation, { compact: true }) }) : null,
       ]),
     ]),
@@ -395,7 +406,7 @@ function cardNode(item) {
 function rowNode(item) {
   const category = repository.category(item.categoryId);
   const folder = repository.folder(item.folderId);
-  const subtitle = [`${category.icon} ${category.name}`, item.sku, folder ? `${folder.icon} ${folder.name}` : null]
+  const subtitle = [`${category.icon} ${categoryName(category)}`, item.sku, folder ? `${folder.icon} ${folder.name}` : null]
     .filter(Boolean).join(' · ');
 
   const selected = view.selection?.has(item.id) === true;
@@ -409,7 +420,7 @@ function rowNode(item) {
     role: view.selection ? 'checkbox' : undefined,
     'aria-checked': view.selection ? String(selected) : undefined,
     tabindex: view.selection ? '0' : undefined,
-    'aria-label': view.selection ? (item.name || 'قطعة') : undefined,
+    'aria-label': view.selection ? (item.name || t('common.item')) : undefined,
     onClick: view.selection ? activate : undefined,
     onKeydown: view.selection ? (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
@@ -418,21 +429,21 @@ function rowNode(item) {
     view.selection ? el('span', { class: `pickmark${selected ? ' on' : ''}`, text: selected ? '✓' : '', 'aria-hidden': 'true' }) : null,
     view.selection ? null : el('button', {
       class: 'icard-open', type: 'button',
-      'aria-label': `${item.name || 'قطعة'}، ${subtitle}`,
+      'aria-label': t('home.itemAria', { name: item.name || t('common.item'), detail: subtitle }),
       onClick: activate,
     }),
     itemThumb(item, 'lthumb'),
     el('div', { class: 'linfo' }, [
-      el('div', { class: 'lname', text: item.name || '—' }),
-      el('div', { class: 'lsub', text: subtitle }),
+      el('div', { class: 'lname', dir: 'auto', text: item.name || '—' }),
+      el('div', { class: 'lsub', dir: 'auto', text: subtitle }),
     ]),
     el('div', { style: { textAlign: 'left', flexShrink: '0' } }, [
       el('div', { class: 'lqty', text: formatNumber(item.quantity) }),
-      el('div', { class: 'lunit', text: item.unit || '' }),
+      el('div', { class: 'lunit', text: unitLabel(item.unit) }),
     ]),
     view.selection ? null : el('button', {
       class: 'lmore', type: 'button',
-      'aria-label': `إجراءات ${item.name || 'القطعة'}`,
+      'aria-label': t('home.itemActions', { name: item.name || t('home.theItem') }),
       onClick: (event) => { event.stopPropagation(); openContextMenu(item.id); },
     }, [icon('more', { size: 16 })]),
     el('div', { class: 'lchev', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
@@ -469,9 +480,9 @@ function renderPills(result) {
   });
 
   render(container, [
-    pill('all', 'الكل'),
-    ...used.map((c) => pill(c.id, `${c.icon} ${c.name}`)),
-    hasUncategorized ? pill(UNCATEGORIZED_ID, '📦 غير مصنّف') : null,
+    pill('all', t('common.all')),
+    ...used.map((c) => pill(c.id, `${c.icon} ${categoryName(c)}`)),
+    hasUncategorized ? pill(UNCATEGORIZED_ID, `📦 ${t('category.uncategorized')}`) : null,
   ]);
 }
 
@@ -497,11 +508,11 @@ function renderQuotaBanner() {
   render(banner, [
     el('span', { class: 'qb-txt', text: quota.message }),
     el('button', {
-      class: 'qb-act', type: 'button', text: 'عرض الباقات',
+      class: 'qb-act', type: 'button', text: t('home.showPlans'),
       onClick: () => { openPlansSheet(); },
     }),
     quota.level === 'full' ? null : el('button', {
-      class: 'qb-close', type: 'button', 'aria-label': 'إخفاء',
+      class: 'qb-close', type: 'button', 'aria-label': t('home.hide'),
       onClick: () => { dismissedQuotaLevel = quota.level; renderQuotaBanner(); },
     }, [icon('close', { size: 14 })]),
   ]);
@@ -530,7 +541,7 @@ async function findMatchingRecord(value) {
   if (direct && !direct.deletedAt) return direct;
   if (byIndex) return null;
 
-  if (!(await withFullInventory('جارٍ البحث في المخزون…'))) return null;
+  if (!(await withFullInventory(t('home.searching')))) return null;
   return repository.liveItems().find(
     (item) => item.barcode === value || item.sku === value
       || item.serialNumber === value || item.id === value,
@@ -539,7 +550,7 @@ async function findMatchingRecord(value) {
 
 export async function scanIntoSearch() {
   await openScanner({
-    title: 'امسح باركود أو رمز QR لقطعة',
+    title: t('scan.itemTitle'),
     onCode: async ({ value }) => {
       // "No item carries this code" has to mean the whole inventory, not the
       // part of it this screen happens to hold — and it is one index lookup,
@@ -553,7 +564,7 @@ export async function scanIntoSearch() {
       view.query = value;
       resetPage();
       renderHome();
-      toast('لا توجد قطعة بهذا الرمز — ابحث أو أضِف قطعة جديدة', '⌕');
+      toast(t('scan.noItem'), '⌕');
     },
   });
 }
@@ -568,7 +579,7 @@ export async function scanIntoSearch() {
 export function startSelection(firstId = null) {
   const gate = canUseFeature('bulkActions');
   if (!gate.allowed) {
-    openPlansSheet(`${gate.message} الإجراءات الجماعية متاحة من خطة شخصي فصاعداً.`);
+    openPlansSheet(`${gate.message} ${t('bulk.needsPlan')}`);
     return;
   }
   view.selection = new Set(firstId ? [firstId] : []);
@@ -623,9 +634,10 @@ function selectedIds() {
  */
 function bulkOutcome(label, done, result) {
   const notes = [];
-  if (result.missing?.length) notes.push(`${formatNumber(result.missing.length)} لم تعد موجودة`);
-  if (result.skipped?.length) notes.push(`${formatNumber(result.skipped.length)} في المحذوفات`);
-  toast(`${label} — ${formatNumber(done)} قطعة${notes.length ? ` (${notes.join('، ')})` : ''}`, notes.length ? '⚠' : '✓');
+  if (result.missing?.length) notes.push(t('bulk.noteMissing', { count: result.missing.length }));
+  if (result.skipped?.length) notes.push(t('bulk.noteTrashed', { count: result.skipped.length }));
+  const main = t(label, { count: done });
+  toast(notes.length ? t('bulk.outcomeWithNotes', { main, notes: notes.join(t('list.separator')) }) : main, notes.length ? '⚠' : '✓');
 }
 
 function renderSelectionBar(visibleItems) {
@@ -657,11 +669,11 @@ function renderSelectionBar(visibleItems) {
 
   render(bar, [
     el('div', { class: 'selbar-top' }, [
-      el('button', { class: 'selbar-close', type: 'button', 'aria-label': 'إنهاء التحديد', onClick: endSelection }, [icon('close', { size: 16 })]),
-      el('span', { class: 'selbar-count', text: count ? `${formatNumber(count)} محددة` : 'اختر قطعاً' }),
+      el('button', { class: 'selbar-close', type: 'button', 'aria-label': t('bulk.end'), onClick: endSelection }, [icon('close', { size: 16 })]),
+      el('span', { class: 'selbar-count', text: count ? t('bulk.selected', { count }) : t('bulk.pick') }),
       el('button', {
         class: 'selbar-all', type: 'button',
-        text: allOnPage ? 'إلغاء تحديد الصفحة' : 'تحديد الصفحة',
+        text: allOnPage ? t('bulk.unselectPage') : t('bulk.selectPage'),
         onClick: () => {
           for (const id of pageIds) {
             if (allOnPage) {
@@ -678,11 +690,11 @@ function renderSelectionBar(visibleItems) {
       }),
     ]),
     el('div', { class: 'selbar-acts' }, [
-      action('نقل', 'move', () => bulkMove()),
-      action('تصنيف', 'category', () => bulkField('categoryId', 'التصنيف')),
-      action('موقع', 'location', () => bulkField('locationId', 'الموقع')),
-      action('تصدير', 'download', () => bulkExport()),
-      action('حذف', 'trash', () => bulkDelete(), true),
+      action(t('bulk.move'), 'move', () => bulkMove()),
+      action(t('bulk.category'), 'category', () => bulkField('categoryId')),
+      action(t('bulk.location'), 'location', () => bulkField('locationId')),
+      action(t('bulk.export'), 'download', () => bulkExport()),
+      action(t('common.delete'), 'trash', () => bulkDelete(), true),
     ]),
   ]);
 }
@@ -723,24 +735,26 @@ function applyToSelection(label, patch) {
       bulkOutcome(label, result.updated, result);
       endSelection();
     } catch (error) {
-      toastError(error, 'تعذّر تنفيذ الإجراء');
+      toastError(error, 'bulk.failed');
     }
   });
 }
 
 function bulkMove() {
   const options = [
-    { value: '', label: '📦 المخزون الرئيسي' },
+    { value: '', label: `📦 ${t('home.mainInventory')}` },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
   ];
-  pickOne('نقل إلى مجلد', options, (value) => applyToSelection('نُقلت', { folderId: value || null }));
+  pickOne(t('item.moveToFolder'), options, (value) => applyToSelection('bulk.outcomeMoved', { folderId: value || null }));
 }
 
-function bulkField(field, title) {
-  const source = field === 'categoryId' ? repository.state.categories : repository.state.locations;
-  const options = source.map((entry) => ({ value: entry.id, label: `${entry.icon || '⌂'} ${entry.name}` }));
-  if (!options.length) { toast(`لا توجد ${title} بعد`, '⚠'); return; }
-  pickOne(`تغيير ${title}`, options, (value) => applyToSelection('حُدّثت', { [field]: value }));
+function bulkField(field) {
+  const isCategory = field === 'categoryId';
+  const source = isCategory ? repository.state.categories : repository.state.locations;
+  const nameOf = isCategory ? categoryName : locationName;
+  const options = source.map((entry) => ({ value: entry.id, label: `${entry.icon || '⌂'} ${nameOf(entry)}` }));
+  if (!options.length) { toast(t(isCategory ? 'bulk.noCategories' : 'bulk.noLocations'), '⚠'); return; }
+  pickOne(t(isCategory ? 'bulk.changeCategory' : 'bulk.changeLocation'), options, (value) => applyToSelection('bulk.outcomeUpdated', { [field]: value }));
 }
 
 async function bulkExport() {
@@ -748,28 +762,28 @@ async function bulkExport() {
     const { items, missing } = await repository.getItems(selectedIds());
     const live = items.filter((item) => !item.deletedAt);
     exportSelection(live);
-    bulkOutcome('صُدِّرت', live.length, { missing, skipped: items.filter((i) => i.deletedAt).map((i) => i.id) });
+    bulkOutcome('bulk.outcomeExported', live.length, { missing, skipped: items.filter((i) => i.deletedAt).map((i) => i.id) });
   } catch (error) {
-    toastError(error, 'تعذّر التصدير');
+    toastError(error, 'bulk.exportFailed');
   }
 }
 
 async function bulkDelete() {
   const ids = selectedIds();
   const confirmed = await confirmAction({
-    title: `نقل ${formatNumber(ids.length)} قطعة إلى المحذوفات؟`,
-    message: 'يمكنك استرجاعها من المحذوفات — لا شيء يُحذف نهائياً الآن.',
+    title: t('bulk.trashTitle', { count: ids.length }),
+    message: t('bulk.trashMessage'),
     icon: '🗑',
-    confirmLabel: 'نقل للمحذوفات',
+    confirmLabel: t('bulk.trashConfirm'),
   });
   if (!confirmed) return;
   await withBulkLock(async () => {
     try {
       const result = await repository.bulkTrash(ids, { versions: selectionVersions });
-      bulkOutcome('نُقلت للمحذوفات', result.trashed, result);
+      bulkOutcome('bulk.outcomeTrashed', result.trashed, result);
       endSelection();
     } catch (error) {
-      toastError(error, 'تعذّر الحذف');
+      toastError(error, 'bulk.deleteFailed');
     }
   });
 }
@@ -819,7 +833,7 @@ function renderAssistantBanner() {
   render(banner, [
     el('span', { class: 'ab-mark', text: '✦', 'aria-hidden': 'true' }),
     el('span', { class: 'ab-txt', text: view.assistantSet.label }),
-    el('button', { class: 'ab-clear', type: 'button', text: 'إلغاء', onClick: clearAssistantFilter }),
+    el('button', { class: 'ab-clear', type: 'button', text: t('common.cancel'), onClick: clearAssistantFilter }),
   ]);
 }
 
@@ -835,14 +849,14 @@ function renderFilterBanner(searching) {
   if (!show) { render(banner, []); return; }
 
   const parts = [];
-  if (count) parts.push(`${count} فلتر`);
-  if (pillActive) parts.push(`تصنيف: ${repository.category(view.categoryPill).name}`);
-  if (searching) parts.push('بحث شامل');
+  if (count) parts.push(t('filter.count', { count }));
+  if (pillActive) parts.push(t('filter.categoryPart', { name: categoryName(repository.category(view.categoryPill)) }));
+  if (searching) parts.push(t('filter.searchPart'));
 
   render(banner, [
-    el('span', { class: 'af-txt', text: `نتائج مُصفّاة — ${parts.join(' · ')}` }),
+    el('span', { class: 'af-txt', text: t('filter.summary', { parts: parts.join(' · ') }) }),
     el('button', {
-      class: 'af-reset', type: 'button', text: 'إلغاء الفلاتر',
+      class: 'af-reset', type: 'button', text: t('filter.clearAll'),
       onClick: () => { resetAllFilters(); },
     }),
   ]);
@@ -878,13 +892,13 @@ function renderPagination(result) {
   };
 
   const back = el('button', {
-    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة السابقة',
+    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': t('page.previous'),
     disabled: view.page <= 1 || undefined,
     onClick: () => go(view.page - 1),
   }, [icon('forward', { size: 17 })]);
 
   const forward = el('button', {
-    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': 'الصفحة التالية',
+    class: 'pbtn pbtn-nav', type: 'button', 'aria-label': t('page.next'),
     disabled: !result.hasMore || undefined,
     onClick: () => go(view.page + 1, result.nextCursor),
   }, [icon('back', { size: 17 })]);
@@ -893,7 +907,7 @@ function renderPagination(result) {
     if (view.page <= 1 && !result.hasMore) { render(container, []); return; }
     render(container, [
       back,
-      el('span', { class: 'pgap', text: `صفحة ${formatNumber(view.page)}` }),
+      el('span', { class: 'pgap', text: t('page.number', { page: view.page }) }),
       forward,
     ]);
     return;
@@ -910,7 +924,7 @@ function renderPagination(result) {
         class: `pbtn${entry.value === view.page ? ' on' : ''}`,
         type: 'button',
         text: formatNumber(entry.value),
-        'aria-label': `صفحة ${entry.value}`,
+        'aria-label': t('page.number', { page: entry.value }),
         'aria-current': entry.value === view.page ? 'page' : undefined,
         onClick: () => go(entry.value),
       }))),
@@ -968,7 +982,7 @@ function paintList(result) {
   renderPills(result);
   renderFilterBanner(searching);
 
-  setText('htitle', searching ? 'نتائج البحث' : folder ? `${folder.icon} ${folder.name}` : 'القطع');
+  setText('htitle', searching ? t('home.searchResults') : folder ? `${folder.icon} ${folder.name}` : t('home.items'));
   // A total the engine could not count cheaply is not printed as if it had
   // been. "24+" is what is actually known; a number would be a guess.
   setText('hcount', total == null
@@ -1028,30 +1042,30 @@ function renderEmptyState({ searching, filtered, folder }) {
   const iconHost = $('hempty-ico');
 
   if (searching) {
-    setText('hempty-title', 'لم نجد شيئاً بهذا الوصف.');
-    setText('hempty-sub', 'جرّب كلمة أقل تحديداً، أو امسح البحث.');
+    setText('hempty-title', t('home.emptySearchTitle'));
+    setText('hempty-sub', t('home.emptySearchSub'));
     if (iconHost) render(iconHost, [icon('search', { size: 44 })]);
-    if (cta) { cta.textContent = 'مسح البحث'; cta.dataset.emptyAction = 'search'; }
+    if (cta) { cta.textContent = t('search.clear'); cta.dataset.emptyAction = 'search'; }
     return;
   }
   if (filtered) {
-    setText('hempty-title', 'لا نتائج مطابقة.');
-    setText('hempty-sub', 'الفلاتر الحالية لا تُبقي أي قطعة.');
+    setText('hempty-title', t('home.emptyFilterTitle'));
+    setText('hempty-sub', t('home.emptyFilterSub'));
     if (iconHost) render(iconHost, [icon('filter', { size: 44 })]);
-    if (cta) { cta.textContent = 'مسح الفلاتر'; cta.dataset.emptyAction = 'filters'; }
+    if (cta) { cta.textContent = t('filter.clear'); cta.dataset.emptyAction = 'filters'; }
     return;
   }
   if (folder) {
-    setText('hempty-title', `${folder.name} فارغ.`);
-    setText('hempty-sub', 'أضف قطعة هنا، أو انقل قطعاً إليه من المخزون.');
+    setText('hempty-title', t('home.emptyFolderTitle', { name: folder.name }));
+    setText('hempty-sub', t('home.emptyFolderSub'));
     if (iconHost) render(iconHost, [icon('folder', { size: 44 })]);
-    if (cta) { cta.textContent = 'إضافة قطعة'; cta.dataset.emptyAction = 'add'; }
+    if (cta) { cta.textContent = t('form.addTitle'); cta.dataset.emptyAction = 'add'; }
     return;
   }
-  setText('hempty-title', 'لا توجد قطع بعد.');
-  setText('hempty-sub', 'ابدأ بتصوير أول قطعة، وسيساعدك نَظْم في توثيقها.');
+  setText('hempty-title', t('home.emptyTitle'));
+  setText('hempty-sub', t('home.emptySub'));
   if (iconHost) render(iconHost, [icon('image', { size: 44 })]);
-  if (cta) { cta.textContent = 'إضافة أول قطعة'; cta.dataset.emptyAction = 'add'; }
+  if (cta) { cta.textContent = t('home.addFirst'); cta.dataset.emptyAction = 'add'; }
 }
 
 /** Says, under the list, that this is a window and not an inventory. */
@@ -1075,7 +1089,7 @@ function renderSortNotice(result) {
   render(node, [el('div', { class: 'sortnote' }, [
     el('span', { class: 'sortnote-ico', text: '⇅', 'aria-hidden': 'true' }),
     el('span', {
-      text: `التقييمات هنا بعملات مختلفة (${result.valueCurrencies.join(' · ')}) — الترتيب داخل كل عملة على حدة، لأن العملات لا تُقارن بدون سعر صرف.`,
+      text: t('home.mixedCurrencySort', { currencies: result.valueCurrencies.join(' · ') }),
     }),
   ])]);
 }
@@ -1094,22 +1108,22 @@ function renderNavBar(folder) {
   const actions = el('div', { class: 'nacts' }, [
     folder ? el('button', {
       class: 'ibtn gls', type: 'button',
-      'aria-label': 'تعديل المجلد',
+      'aria-label': t('folder.edit'),
       onClick: () => window.dispatchEvent(new CustomEvent('almakhzan:edit-folder', { detail: folder.id })),
     }, [icon('edit')]) : el('button', {
-      class: 'ibtn gl', type: 'button', 'aria-label': 'تصدير واستيراد',
+      class: 'ibtn gl', type: 'button', 'aria-label': t('backup.sheetLabel'),
       onClick: () => openSheet('as'),
     }, [icon('upload')]),
     el('button', {
       class: 'ibtn gl ibtn-primary', type: 'button',
-      'aria-label': 'إضافة قطعة',
+      'aria-label': t('form.addTitle'),
       onClick: () => openItemForm({ folderId: view.folderId }),
     }, [icon('plus', { size: 22 })]),
   ]);
 
   if (folder) {
     render(bar, [
-      el('button', { class: 'nback', type: 'button', text: '‹ المخزون', onClick: exitFolder }),
+      el('button', { class: 'nback', type: 'button', text: t('nav.backToInventory'), onClick: exitFolder }),
       actions,
     ]);
   } else {
@@ -1118,8 +1132,8 @@ function renderNavBar(folder) {
         // One quiet mark, not the whole logo: this is the customer's inventory,
         // not our billboard.
         symbolNode(26, { className: 'nazm-mark ntitle-mark' }),
-        'المخزون',
-        el('span', { id: 'syncDot', class: 'syncdot', role: 'status', 'aria-label': 'حالة المزامنة' }),
+        t('nav.inventory'),
+        el('span', { id: 'syncDot', class: 'syncdot', role: 'status', 'aria-label': t('sync.labelShort') }),
       ]),
       actions,
     ]);
@@ -1130,31 +1144,31 @@ function renderNavBar(folder) {
 // ── filter + sort sheets ──
 export function openFilterSheet() {
   optionList($('fp-cond'), [
-    { value: '', label: 'الكل' },
-    ...CONDITIONS.map((c) => ({ value: c, label: c })),
+    { value: '', label: t('common.all') },
+    ...CONDITIONS.map((c) => ({ value: c, label: conditionLabel(c) })),
   ], view.filters.condition);
 
   optionList($('fp-folder'), [
-    { value: '', label: 'الكل' },
-    { value: '__root__', label: '📦 المخزون الرئيسي' },
+    { value: '', label: t('common.all') },
+    { value: '__root__', label: `📦 ${t('home.mainInventory')}` },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
   ], view.filters.folderId);
 
   optionList($('fp-loc'), [
-    { value: '', label: 'الكل' },
-    ...repository.state.locations.map((l) => ({ value: l.id, label: l.name })),
+    { value: '', label: t('common.all') },
+    ...repository.state.locations.map((l) => ({ value: l.id, label: locationName(l) })),
   ], view.filters.locationId);
 
   optionList($('fp-ai'), [
-    { value: '', label: 'الكل' },
-    { value: 'yes', label: 'مُحلّلة فقط' },
-    { value: 'no', label: 'غير مُحلّلة' },
+    { value: '', label: t('common.all') },
+    { value: 'yes', label: t('filter.analyzedOnly') },
+    { value: 'no', label: t('filter.notAnalyzed') },
   ], view.filters.ai);
 
   optionList($('fp-price'), [
-    { value: '', label: 'الكل' },
-    { value: 'yes', label: 'لها تقييم' },
-    { value: 'no', label: 'بدون تقييم' },
+    { value: '', label: t('common.all') },
+    { value: 'yes', label: t('filter.hasValuation') },
+    { value: 'no', label: t('filter.noValuation') },
   ], view.filters.valuation);
 
   // Offered only when there is more than one currency to choose between: on a
@@ -1169,7 +1183,7 @@ export function openFilterSheet() {
     if (currencyRow) currencyRow.style.display = present.length > 1 ? '' : 'none';
     if (present.length > 1) {
       optionList($('fp-currency'), [
-        { value: '', label: 'كل العملات' },
+        { value: '', label: t('filter.allCurrencies') },
         ...present.map((code) => ({ value: code, label: `${currencySymbol(code)} ${code}` })),
       ], view.filters.currency);
     }
@@ -1226,14 +1240,14 @@ export function syncFilterControls() {
 export function openSortSheet() {
   const container = $('sort-options');
   if (!container) return;
-  render(container, Object.entries(SORT_MODES).map(([mode, label]) => el('button', {
+  render(container, SORT_MODES.map((mode) => [mode, t(`sort.${mode}`)]).map(([mode, label]) => el('button', {
     class: `sort-opt${view.sortMode === mode ? ' on' : ''}`,
     type: 'button',
     'aria-pressed': String(view.sortMode === mode),
     onClick: () => narrowing(() => {
       view.sortMode = mode;
       resetPage();
-      setText('sort-label', SORT_MODES[mode]);
+      setText('sort-label', t(`sort.${mode}`));
       closeSheet('sort');
     }),
   }, [
@@ -1352,19 +1366,19 @@ export async function openContextMenu(itemId) {
     try {
       item = await repository.getItem(itemId);
     } catch (error) {
-      if (mine === contextGeneration) toastError(error, 'تعذّر فتح القطعة. حاول مرة أخرى.');
+      if (mine === contextGeneration) toastError(error, 'error.item/load-failed');
       return;
     }
     // A later long-press has already opened another item's menu.
     if (mine !== contextGeneration) return;
-    if (!item) { toast('لم تعد هذه القطعة موجودة.', '✕'); return; }
+    if (!item) { toast(t('error.item/not-found'), '✕'); return; }
   }
   contextItemId = itemId;
   contextVersion = item.version;
   const category = repository.category(item.categoryId);
 
   setText('ctx-name', item.name || '—');
-  setText('ctx-cat', `${category.icon} ${category.name}`);
+  setText('ctx-cat', `${category.icon} ${categoryName(category)}`);
 
   const thumb = $('ctx-thumb');
   const image = primaryImage(item);
@@ -1413,5 +1427,5 @@ export function focusSearch() {
 }
 
 export function notifyReadOnly() {
-  toast('صلاحيتك للعرض فقط', '🔒');
+  toast(t('error.repo/forbidden.viewer'), '🔒');
 }

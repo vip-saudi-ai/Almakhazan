@@ -8,6 +8,7 @@
 // the Cloud Functions in /functions are. Both read the same shared/plans.json.
 
 import { PLAN_CONFIG } from './plans.generated.js';
+import { pick, t } from './i18n.js';
 
 export const PLANS = PLAN_CONFIG.plans;
 export const DEFAULT_PLAN = PLAN_CONFIG.defaultPlan;
@@ -100,27 +101,16 @@ function formatBytes(bytes) {
  * @property {{items?: number, storageBytes?: number, members?: number, aiCreditsUsed?: number, workspaces?: number}} usage
  */
 
-/**
- * Arabic counts in four shapes: one, two, a few (3–10) and many. A message
- * that says "بقي لك 2 قطع" reads like a machine wrote it.
- */
-function pieces(n) {
-  if (n === 1) return 'قطعة واحدة';
-  if (n === 2) return 'قطعتان';
-  if (n <= 10) return `${n} قطع`;
-  return `${n} قطعة`;
-}
-
-/** "الخطة المجانية" reads better than "خطة مجاني". */
+/** "the free plan" / "the Pro plan", in the language on screen. */
 function planPhrase(plan) {
-  return plan.id === 'free' ? 'الخطة المجانية' : `خطة ${plan.name.ar}`;
+  return plan.id === 'free' ? t('plan.phraseFree') : t('plan.phrase', { name: pick(plan.name) });
 }
 
 export function checkFrozen({ entitlement }) {
   if (entitlement.readOnly) {
     return decision(false, {
       reason: 'workspace/read-only',
-      message: 'مساحتك للقراءة فقط حالياً — جدّد الاشتراك لاستئناف التعديل.',
+      message: t('quota.readOnly'),
       planId: entitlement.planId,
     });
   }
@@ -138,9 +128,9 @@ export function checkCreateItem({ entitlement, usage }) {
   return decision(false, {
     reason: 'limit/items',
     message: entitlement.planId === 'free'
-      ? `اكتمل الحد المجاني — ${used} من ${limit} قطعة.`
-      : `اكتمل حد ${planPhrase(entitlement.plan)} — ${used} من ${limit} قطعة.`,
-    detail: 'جميع بياناتك ستبقى محفوظة ويمكنك الوصول إليها دائماً. للمتابعة وإضافة المزيد، اختر الخطة المناسبة لك.',
+      ? t('quota.fullFree', { used, limit })
+      : t('quota.fullPlan', { plan: planPhrase(entitlement.plan), used, limit }),
+    detail: t('quota.fullDetail'),
     used,
     limit,
     planId: entitlement.planId,
@@ -165,15 +155,15 @@ export function itemQuotaStatus({ entitlement, usage }) {
     return {
       level: 'full',
       message: entitlement.planId === 'free'
-        ? `اكتمل الحد المجاني — ${used} من ${limit} قطعة`
-        : `اكتمل حد ${planPhrase(entitlement.plan)} — ${used} من ${limit} قطعة`,
+        ? t('quota.bannerFullFree', { used, limit })
+        : t('quota.bannerFullPlan', { plan: planPhrase(entitlement.plan), used, limit }),
       used, limit, ratio,
     };
   }
   if (ratio >= warnAt) {
     return {
       level: 'warn',
-      message: `بقي لك ${pieces(limit - used)} في ${planPhrase(entitlement.plan)}.`,
+      message: t('quota.remaining', { count: limit - used, plan: planPhrase(entitlement.plan) }),
       used, limit, ratio,
     };
   }
@@ -181,8 +171,8 @@ export function itemQuotaStatus({ entitlement, usage }) {
     return {
       level: 'notice',
       message: entitlement.planId === 'free'
-        ? `استخدمت ${Math.round(ratio * 100)}% من المساحة المجانية.`
-        : `استخدمت ${Math.round(ratio * 100)}% من مساحة ${planPhrase(entitlement.plan)}.`,
+        ? t('quota.usedFree', { percent: String(Math.round(ratio * 100)) })
+        : t('quota.usedPlan', { percent: String(Math.round(ratio * 100)), plan: planPhrase(entitlement.plan) }),
       used, limit, ratio,
     };
   }
@@ -199,7 +189,7 @@ export function checkUploadBytes({ entitlement, usage }, bytes) {
 
   return decision(false, {
     reason: 'limit/storage',
-    message: `لا توجد مساحة كافية: ${formatBytes(used)} من ${formatBytes(limit)} مستخدمة.`,
+    message: t('quota.storageFull', { used: formatBytes(used), limit: formatBytes(limit) }),
     used,
     limit,
     planId: entitlement.planId,
@@ -211,7 +201,7 @@ export function checkImagesPerItem({ entitlement }, currentCount) {
   if (withinLimit(currentCount, limit)) return ALLOWED;
   return decision(false, {
     reason: 'limit/images-per-item',
-    message: `الحد ${limit} صور لكل قطعة في خطة ${entitlement.plan.name.ar}.`,
+    message: t('quota.imagesPerItem', { limit, plan: pick(entitlement.plan.name) }),
     used: currentCount,
     limit,
     planId: entitlement.planId,
@@ -253,8 +243,8 @@ export function checkImportRows({ entitlement }, rows, technical) {
   return decision(false, {
     reason: limit.boundBy === 'plan' ? 'limit/import-rows' : 'limit/import-file',
     message: limit.boundBy === 'plan'
-      ? `خطة ${entitlement.plan.name.ar} تسمح باستيراد ${limit.plan.toLocaleString('en-US')} صفّاً في الملف الواحد.`
-      : `يمكن استيراد حتى ${limit.technical.toLocaleString('en-US')} صفّاً في الملف الواحد. يمكنك استيراد ملفات إضافية.`,
+      ? t('quota.importRowsPlan', { plan: pick(entitlement.plan.name), limit: limit.plan })
+      : t('quota.importRowsFile', { limit: limit.technical }),
     used: rows,
     limit: limit.effective,
     planId: entitlement.planId,
@@ -272,8 +262,8 @@ export function checkInviteMember({ entitlement, usage }) {
   return decision(false, {
     reason: 'limit/members',
     message: limit <= 1
-      ? `خطة ${entitlement.plan.name.ar} لمستخدم واحد. رقِّ الخطة لإضافة أعضاء.`
-      : `وصلت إلى حد الأعضاء: ${used} من ${limit}.`,
+      ? t('quota.membersSingle', { plan: pick(entitlement.plan.name) })
+      : t('quota.members', { used, limit }),
     used,
     limit,
     planId: entitlement.planId,
@@ -289,7 +279,7 @@ export function checkUseAI({ entitlement, usage }) {
   if (limit === 0) {
     return decision(false, {
       reason: 'feature/ai',
-      message: `مساعد نَظْم غير متاح في ${planPhrase(entitlement.plan)}.`,
+      message: t('quota.aiUnavailable', { plan: planPhrase(entitlement.plan) }),
       used, limit, planId: entitlement.planId,
     });
   }
@@ -297,7 +287,7 @@ export function checkUseAI({ entitlement, usage }) {
 
   return decision(false, {
     reason: 'limit/ai',
-    message: `استهلكت رصيد التحليل لهذا الشهر: ${used} من ${limit}.`,
+    message: t('quota.aiUsed', { used, limit }),
     used,
     limit,
     planId: entitlement.planId,
@@ -310,7 +300,7 @@ export function checkCreateWorkspace({ entitlement, usage }) {
   if (withinLimit(used, limit)) return ALLOWED;
   return decision(false, {
     reason: 'limit/workspaces',
-    message: `خطة ${entitlement.plan.name.ar} تسمح بـ ${limit} مخزن.`,
+    message: t('quota.workspaces', { plan: pick(entitlement.plan.name), limit }),
     used,
     limit,
     planId: entitlement.planId,
@@ -325,7 +315,7 @@ export function assistantPresentation({ entitlement }) {
   const assistant = entitlement.plan.assistant || { display: 'counted' };
   return {
     included: assistant.display === 'included',
-    label: assistant.label?.ar || 'غير متاح',
+    label: pick(assistant.label) || t('quota.notAvailable'),
   };
 }
 
@@ -333,7 +323,7 @@ export function checkFeature({ entitlement }, feature) {
   if (entitlement.plan.features?.[feature]) return ALLOWED;
   return decision(false, {
     reason: `feature/${feature}`,
-    message: `هذه الميزة غير متاحة في خطة ${entitlement.plan.name.ar}.`,
+    message: t('quota.feature', { plan: pick(entitlement.plan.name) }),
     planId: entitlement.planId,
   });
 }
@@ -348,9 +338,9 @@ export function overagesFor({ entitlement, usage }) {
   const compare = (key, used, limit, label) => {
     if (limit !== UNLIMITED && used > limit) over.push({ key, used, limit, label });
   };
-  compare('items', usage.items ?? 0, limits.items, 'القطع');
-  compare('storageBytes', usage.storageBytes ?? 0, limits.storageBytes, 'مساحة الصور');
-  compare('members', usage.members ?? 1, limits.members, 'الأعضاء');
+  compare('items', usage.items ?? 0, limits.items, t('usage.items'));
+  compare('storageBytes', usage.storageBytes ?? 0, limits.storageBytes, t('usage.storageSpace'));
+  compare('members', usage.members ?? 1, limits.members, t('usage.members'));
   return over;
 }
 
@@ -358,10 +348,10 @@ export function overagesFor({ entitlement, usage }) {
 export function usageSummary({ entitlement, usage }) {
   const limits = entitlement.plan.limits;
   return [
-    { key: 'items', label: 'القطع', used: usage.items ?? 0, limit: limits.items, format: (n) => String(n) },
-    { key: 'storage', label: 'الصور', used: usage.storageBytes ?? 0, limit: limits.storageBytes, format: formatBytes },
-    { key: 'ai', label: 'مساعد نَظْم', used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
-    { key: 'members', label: 'الأعضاء', used: usage.members ?? 1, limit: limits.members, format: (n) => String(n) },
+    { key: 'items', label: t('usage.items'), used: usage.items ?? 0, limit: limits.items, format: (n) => String(n) },
+    { key: 'storage', label: t('usage.images'), used: usage.storageBytes ?? 0, limit: limits.storageBytes, format: formatBytes },
+    { key: 'ai', label: t('ai.assistantName'), used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
+    { key: 'members', label: t('usage.members'), used: usage.members ?? 1, limit: limits.members, format: (n) => String(n) },
   ];
 }
 

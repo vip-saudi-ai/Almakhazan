@@ -19,6 +19,7 @@ import { discardUnreferenced, mediaStore, mediaReference, reconcileLocalMediaRef
 import { repository } from './repository.js';
 import { firebaseContext } from './firebase.js';
 import { AppError, uid } from './utils.js';
+import { t } from './i18n.js';
 
 const STATE_KEY = 'deviceUpload.v1';
 
@@ -88,13 +89,13 @@ export async function readLocalImageRecord(image) {
 async function uploadLocalImage(image, ctx) {
   const record = await readLocalImageRecord(image);
   if (!record) {
-    throw new AppError('لم يُعثر على ملف الصورة على هذا الجهاز', { code: 'upload/missing-blob' });
+    throw new AppError('error.upload/missing-blob', { code: 'upload/missing-blob' });
   }
 
   const originalBlob = toBlob(record.original, record.originalType || image.mimeType);
   const thumbnailBlob = toBlob(record.thumbnail, record.thumbnailType || 'image/jpeg') || originalBlob;
   if (!originalBlob) {
-    throw new AppError('ملف الصورة تالف على هذا الجهاز', { code: 'upload/empty-blob' });
+    throw new AppError('error.upload/empty-blob', { code: 'upload/empty-blob' });
   }
 
   const { storage, sdk } = firebaseContext();
@@ -150,7 +151,7 @@ async function uploadLocalImage(image, ctx) {
 export async function uploadDeviceData({ onProgress } = {}) {
   const session = repository.session;
   if (session.mode !== 'cloud') {
-    throw new AppError('سجّل الدخول أولاً لرفع البيانات', { code: 'upload/not-signed-in' });
+    throw new AppError('error.upload/not-signed-in', { code: 'upload/not-signed-in' });
   }
 
   const state = (await deviceUploadState()) || {};
@@ -190,7 +191,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
   const conflicts = await repository.findSkuConflicts(newLive.map((item) => ({ key: item.id, id: item.id, sku: item.sku })));
   if (conflicts.length) {
     const names = new Map(newLive.map((item) => [item.id, item.name || '']));
-    throw new AppError('بعض رموز SKU على هذا الجهاز مستخدمة في مساحة العمل أو مكررة. عدّلها ثم أعد الرفع.', {
+    throw new AppError('error.upload/sku-conflict', {
       code: 'import/sku-conflict',
       conflicts: conflicts.map((c) => ({
         sku: c.sku, incomingId: c.id, incomingName: names.get(c.id) || '', type: c.type,
@@ -208,7 +209,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
 
   try {
     // Taxonomy first, so item references resolve on arrival.
-    report('taxonomy', 0, 1, 'رفع التصنيفات والمجلدات…');
+    report('taxonomy', 0, 1, t('upload.progressTaxonomy'));
     // Created where missing, never replaced: a category the workspace
     // already has keeps the workspace's name and icon.
     const taxonomy = [
@@ -232,7 +233,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
 
     for (const item of items) {
       if (!item?.id || uploaded.has(item.id) || skipped.has(item.id)) continue;
-      report('items', done, items.length, `رفع القطع… ${done}/${items.length}`);
+      report('items', done, items.length, t('upload.progressItems', { done, total: items.length }));
 
       // Already in the workspace: the cloud's record stays as it is, and
       // this device's photographs of it are not uploaded at all.
@@ -307,12 +308,12 @@ export async function uploadDeviceData({ onProgress } = {}) {
     }
 
     // Verification: nothing may have reached the cloud carrying a local path.
-    report('verify', items.length, items.length, 'التحقق من اكتمال الرفع…');
+    report('verify', items.length, items.length, t('upload.progressVerify'));
     const leftover = await findLocalReferences(session.workspaceId);
     if (leftover.length) {
       throw new AppError(
-        `بقيت ${leftover.length} صورة بمرجع محلي — أعد المحاولة`,
-        { code: 'upload/local-refs-remain' },
+        'error.upload/local-refs-remain',
+        { code: 'upload/local-refs-remain', count: leftover.length },
       );
     }
 
@@ -329,7 +330,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
       skippedItemIds: [...skipped],
     };
     await local.setMeta(STATE_KEY, result);
-    report('done', items.length, items.length, 'اكتمل الرفع');
+    report('done', items.length, items.length, t('upload.progressDone'));
     return result;
   } catch (error) {
     await local.setMeta(STATE_KEY, {
@@ -342,7 +343,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
       failedAt: Date.now(),
       error: error.message,
     });
-    throw error instanceof AppError ? error : new AppError('فشل رفع البيانات', { cause: error });
+    throw error instanceof AppError ? error : new AppError('error.upload/failed', { code: 'upload/failed', cause: error });
   }
 }
 
@@ -351,7 +352,7 @@ export async function findLocalReferences(workspaceId) {
   // "No image still points at the device" has to be true of every record, not
   // of the window the screen is showing.
   await repository.completeItems();
-  repository.assertItemsComplete('التحقق من الصور');
+  repository.assertItemsComplete('partial.checkImages');
   const offenders = [];
   for (const item of repository.state.items) {
     for (const image of item.images || []) {
@@ -368,7 +369,7 @@ export async function findLocalReferences(workspaceId) {
 export async function clearLocalCopy() {
   const state = await deviceUploadState();
   if (state.status !== UploadState.COMPLETED) {
-    throw new AppError('لم يكتمل الرفع بعد', { code: 'upload/not-complete' });
+    throw new AppError('error.upload/not-complete', { code: 'upload/not-complete' });
   }
   for (const store of ['items', 'folders', 'categories', 'locations', 'images', 'mediaAssets', 'activity']) {
     await local.clearStore(store).catch((error) => {

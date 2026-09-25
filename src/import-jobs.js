@@ -87,7 +87,8 @@ function isLive(job) {
 }
 
 /** What the customer reads when the device would not keep the job record. */
-export const JOB_STATE_UNSAVED_MESSAGE = 'أوقف نَظْم الاستيراد لحماية البيانات. تعذّر حفظ حالة الاستيراد بأمان. أعد فتح الملف للمتابعة.';
+/** Message keys (i18n.js). */
+export const JOB_STATE_UNSAVED_MESSAGE = 'import.jobUnsaved';
 
 function record(job, status) {
   return {
@@ -332,7 +333,7 @@ export function runImportRecovery() {
   return inFlight;
 }
 
-export const RECOVERY_BLOCKED_MESSAGE = 'تعذّر إكمال التراجع عن استيراد سابق. أعد المحاولة قبل بدء استيراد جديد.';
+export const RECOVERY_BLOCKED_MESSAGE = 'import.recoveryBlocked';
 
 /**
  * The gate in front of every new import: recovery has run and succeeded, or

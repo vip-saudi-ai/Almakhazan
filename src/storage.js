@@ -14,6 +14,7 @@ import * as local from './local-store.js';
 import { mediaReference, mediaStore } from './media.js';
 import { AppError, sha256Hex, uid } from './utils.js';
 
+
 const EXTENSIONS = {
   'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif',
 };
@@ -26,16 +27,16 @@ const IMAGE_EXTENSION = /\.(jpe?g|png|webp|avif|heic|heif|gif|bmp|tiff?|jfif|dng
  * the browser can decode it — checked in prepare().
  */
 function assertAcceptable(file) {
-  if (!file) throw new AppError('لم يتم اختيار ملف');
+  if (!file) throw new AppError('error.image/none', { code: 'image/none' });
 
   const looksLikeImage = (file.type && file.type.startsWith('image/'))
     || (!file.type && IMAGE_EXTENSION.test(file.name || ''));
   if (!looksLikeImage) {
-    throw new AppError('الملف المختار ليس صورة', { code: 'image/type' });
+    throw new AppError('error.image/type', { code: 'image/type' });
   }
   if (file.size > IMAGE_LIMITS.maxBytes) {
     const mb = Math.round(IMAGE_LIMITS.maxBytes / 1024 / 1024);
-    throw new AppError(`حجم الصورة يتجاوز ${mb} ميجابايت`, { code: 'image/size' });
+    throw new AppError('error.image/size', { code: 'image/size', mb });
   }
 }
 
@@ -106,7 +107,7 @@ async function loadBitmap(file, maxEdge = IMAGE_LIMITS.maxOriginalEdge) {
   const probe = await probeSize(file);
   if (probe && probe.width * probe.height > FALLBACK_MAX_PIXELS) {
     throw new AppError(
-      'أبعاد الصورة كبيرة جداً لهذا الجهاز. اختر نسخة أصغر أو التقط صورة بدقة أقل.',
+      'error.image/too-large',
       { code: 'image/too-large' },
     );
   }
@@ -117,7 +118,7 @@ async function loadBitmap(file, maxEdge = IMAGE_LIMITS.maxOriginalEdge) {
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = () => reject(new AppError(
-        'تعذّر فتح هذه الصورة — جرّب صيغة أخرى',
+        'error.image/decode',
         { code: 'image/decode' },
       ));
       img.src = url;
@@ -146,7 +147,7 @@ function drawScaled(bitmap, maxEdge) {
 function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new AppError('تعذّر تجهيز الصورة', { code: 'image/encode' }))),
+      (blob) => (blob ? resolve(blob) : reject(new AppError('error.image/encode', { code: 'image/encode' }))),
       type,
       quality,
     );
@@ -164,12 +165,12 @@ async function prepare(file) {
     bitmap = await loadBitmap(file);
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError('تعذّر فتح هذه الصورة — جرّب صيغة أخرى', { code: 'image/decode', cause: error });
+    throw new AppError('error.image/decode', { code: 'image/decode', cause: error });
   }
 
   const { width, height } = bitmap;
   if (!width || !height) {
-    throw new AppError('تعذّر فتح هذه الصورة — جرّب صيغة أخرى', { code: 'image/decode' });
+    throw new AppError('error.image/decode', { code: 'image/decode' });
   }
 
   const webSafe = IMAGE_LIMITS.webSafeTypes.includes(file.type);
@@ -274,7 +275,7 @@ export async function uploadImage(file, ctx, onProgress) {
   }
 
   const { storage, sdk } = firebaseContext();
-  if (!storage) throw new AppError('خدمة تخزين الصور غير متاحة', { code: 'image/no-storage' });
+  if (!storage) throw new AppError('error.image/no-storage', { code: 'image/no-storage' });
 
   const prefix = `workspaces/${ctx.workspaceId}/items/${ctx.itemId}`;
   const storagePath = `${prefix}/original/${imageId}.${extension}`;
@@ -320,9 +321,9 @@ export async function uploadImage(file, ctx, onProgress) {
   } catch (error) {
     console.error('[image] upload failed', error);
     if (error?.code === 'storage/unauthorized') {
-      throw new AppError('لا تملك صلاحية رفع الصور', { code: error.code, cause: error });
+      throw new AppError('error.image/forbidden', { code: error.code, cause: error });
     }
-    throw new AppError('فشل رفع الصورة', { code: error?.code, cause: error });
+    throw new AppError('error.image/upload', { code: error?.code, cause: error });
   }
 }
 
