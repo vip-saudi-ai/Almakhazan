@@ -115,7 +115,7 @@ const ARABIC = /[\u0600-\u06FF]/;
 const ALLOWED = [
   { file: 'src/config.js', why: 'stored values: conditions, units, seeded categories/locations (localised for display by labels.js)' },
   { file: 'src/plans.generated.js', why: 'plan data carrying its own { ar, en } pair' },
-  { file: 'src/ask.js', why: 'Arabic question recognisers (English ones sit beside them)' },
+  { file: 'src/ask.js', why: 'Arabic question recognisers and example questions (English sets beside them)' },
   { file: 'src/import-mapping.js', why: 'Arabic column-header aliases and condition words (English beside them)' },
   { file: 'src/search.js', why: 'Arabic letter normalisation for search' },
   { file: 'src/utils.js', why: 'Arabic-Indic digit normalisation for input' },
@@ -139,7 +139,13 @@ for (const path of sources) {
     if (trimmed.startsWith('//') || trimmed.startsWith('*')) return;
     const code = line.replace(/\/\/.*$/, '');
     if (!ARABIC.test(code)) return;
-    const rule = ALLOWED.find((a) => a.file === rel);
+    // A file on the list may hold stored values and recognisers, never a
+    // sentence for the screen: Arabic handed to a UI call is a leak anywhere.
+    const uiCall = /\b(text|label|title|message|placeholder|reason|confirmLabel)\s*:\s*['`][^'`]*[\u0600-\u06FF]|\b(toast|toastError|AppError|Error)\(\s*['`][^'`]*[\u0600-\u06FF]/;
+    // ask.js keeps its example questions as { ar, en } sets side by side,
+    // because each example must be a question the parser answers (tested).
+    const exampleSet = rel === 'src/ask.js' && /\bexample:/.test(code);
+    const rule = uiCall.test(code) && rel !== 'src/boot-guard.js' && !exampleSet ? null : ALLOWED.find((a) => a.file === rel);
     const entry = `${rel}:${index + 1}: ${trimmed.slice(0, 120)}`;
     if (rule) arabic.allowed.push({ entry, why: rule.why });
     else arabic.leaks.push(entry);

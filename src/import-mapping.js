@@ -50,7 +50,7 @@ export const FIELDS = [
   // serial number to a watch dealer, a SKU to a retailer and an internal
   // reference to everyone else. It is asked about (see AMBIGUOUS), never
   // guessed. The unambiguous spellings are claimed here.
-  { key: 'sku', get label() { return t('importField.sku'); }, aliases: ['الرمز', 'رقم الصنف', 'كود', 'sku', 'code'] },
+  { key: 'sku', get label() { return t('importField.sku'); }, aliases: ['الرمز', 'الرمز SKU', 'رمز SKU', 'رقم الصنف', 'كود', 'sku', 'code'] },
   { key: 'barcode', get label() { return t('importField.barcode'); }, aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc', 'gtin'] },
   { key: 'serialNumber', get label() { return t('importField.serialNumber'); }, aliases: ['الرقم التسلسلي', 'رقم تسلسلي', 'التسلسلي', 'serial', 'serial no', 'serial number', 's/n', 'sn'] },
   { key: 'modelNumber', get label() { return t('importField.modelNumber'); }, aliases: ['رقم الموديل', 'الموديل', 'موديل', 'الطراز', 'model', 'model no', 'model number'] },

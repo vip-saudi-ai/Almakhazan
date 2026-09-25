@@ -434,14 +434,14 @@ async function renderTrash() {
   const pager = pages && pages > 1 ? el('nav', { class: 'trash-pager', 'aria-label': t('trash.pages'),
     style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '12px 4px' } }, [
     el('button', {
-      class: 'btn btn-g', type: 'button', text: t('common.previous'),
+      class: 'btn btn-g', type: 'button', text: t('trash.previousPage'),
       disabled: trashView.page <= 1 || undefined,
       onClick: () => { trashView.page -= 1; void renderTrash(); },
     }),
     el('span', { class: 'lsub', 'aria-live': 'polite',
       text: t('trash.pageOf', { page: trashView.page, pages, items: t('count.items', { count: result.total }) }) }),
     el('button', {
-      class: 'btn btn-g', type: 'button', text: t('common.next'),
+      class: 'btn btn-g', type: 'button', text: t('trash.nextPage'),
       disabled: trashView.page >= pages || undefined,
       onClick: () => { trashView.page += 1; void renderTrash(); },
     }),

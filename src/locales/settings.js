@@ -154,4 +154,6 @@ export const messages = {
   'migration.running': { ar: "جارٍ الترقية…", en: "Upgrading…" },
   'migration.done': { ar: "اكتملت الترقية — {items}", en: "Upgrade complete — {items}" },
   'migration.imageFailures': { ar: "{count} صورة لم تُرحَّل", en: { one: "{count} image was not migrated", other: "{count} images were not migrated" } },
+  'trash.previousPage': { ar: "السابقة", en: "Previous" },
+  'trash.nextPage': { ar: "التالية", en: "Next" },
 };

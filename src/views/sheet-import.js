@@ -31,7 +31,7 @@ import { onLanguageChange, t } from '../i18n.js';
 import { closeSheet, confirmAction, onSheetClose, openSheet, section, toast, toastError } from '../ui.js';
 import {
   JOB, ensureImportReady, findCompletedJob, findUnfinishedJob, importRecoveryState, markJobActive,
-  markJobInactive, persistJobCritical, runImportRecovery,
+  RECOVERY_BLOCKED_MESSAGE, markJobInactive, persistJobCritical, runImportRecovery,
 } from '../import-jobs.js';
 
 const state = {

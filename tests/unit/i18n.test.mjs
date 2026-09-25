@@ -117,3 +117,36 @@ test('one error code, a message in each language', () => {
   assert.equal(describeError(error), 'الرمز SKU مستخدم على قطعة أخرى.');
   withLanguage('en', () => assert.equal(describeError(error), 'This SKU is already used by another item.'));
 });
+
+test('every example question offered, in either language, is one the parser answers', async () => {
+  const { askInventory, capabilities, suggestions } = await import('../../src/ask.js');
+  const lookups = { categories: [], locations: [{ id: 'l1', name: 'الخزنة' }, { id: 'l2', name: 'safe' }], folders: [] };
+  const items = [{ id: 'a', name: 'ساعة الجيب', locationId: 'l1', images: [] }, { id: 'b', name: 'pocket watch', locationId: 'l2', images: [] }];
+  for (const lang of LANGUAGES) {
+    withLanguage(lang, () => {
+      for (const question of [...suggestions(), ...capabilities().map((c) => c.example)]) {
+        const result = askInventory(question, { items, lookups });
+        assert.ok(result.understood, `${lang}: not understood — ${question}`);
+      }
+    });
+  }
+});
+
+test('an export’s headings, in either language, map back to their fields on import', async () => {
+  const { guessMapping } = await import('../../src/import-mapping.js');
+  const fields = {
+    sku: 'field.sku', barcode: 'field.barcode', name: 'field.name', category: 'field.category',
+    folder: 'field.folder', location: 'field.location', quantity: 'field.quantity', unit: 'field.unit',
+    condition: 'field.condition', brand: 'field.brand', serialNumber: 'field.serialNumber',
+    modelNumber: 'field.modelNumber', referenceNumber: 'field.referenceNumber',
+    valuationMin: 'export.minValuation', valuationMax: 'export.maxValuation', currency: 'field.currency',
+    description: 'field.description',
+  };
+  for (const lang of LANGUAGES) {
+    withLanguage(lang, () => {
+      const keys = Object.keys(fields);
+      const mapping = guessMapping(keys.map((field) => t(fields[field])));
+      for (const [index, field] of keys.entries()) assert.equal(mapping[field], index, `${lang}: ${field} (${t(fields[field])})`);
+    });
+  }
+});
