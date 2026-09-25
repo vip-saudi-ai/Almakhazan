@@ -1494,6 +1494,13 @@ class Repository {
     // Contention between devices is the expected failure here, and it is
     // transient — so retry. What must never happen is falling back to a
     // locally guessed number, which is exactly how two devices collide.
+    //
+    // Contention does not always arrive as a contention error. Two devices
+    // creating the year's counter at once: the second commit finds the
+    // document there, the rules judge its write as an update that does not
+    // move the counter forward, and it is refused as PERMISSION_DENIED. Seen
+    // against the emulator (tests/rules/cloud-integrity.test.mjs); the retry
+    // reads the counter afresh and succeeds, so the refusal is retried too.
     let lastError = null;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
