@@ -6,6 +6,7 @@
 import { handleViewerKey } from './views/image-viewer.js';
 import { onLanguageChange, t } from './i18n.js';
 import { $, appendChildren, describeError, el } from './utils.js';
+import { icon } from './icons.js';
 
 // ── toasts ──
 export function toast(message, icon = '✓', { assertive = false } = {}) {
@@ -34,6 +35,34 @@ export function toastError(error, fallback = 'common.unknownError') {
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const stack = [];
+
+/**
+ * Only the top surface is interactive. A scrim stops a finger, but not a
+ * screen reader's swipe or a hardware keyboard's Tab: behind an open sheet,
+ * the confirmation dialog or the image viewer, everything else is made
+ * `inert` — out of the tab order, out of the accessibility tree, deaf to
+ * clicks. Recomputed whenever any of them opens or closes.
+ */
+function refreshInert() {
+  const confirmOpen = $('del-confirm')?.classList.contains('open') === true;
+  const viewerOpen = document.body.classList.contains('viewer-open');
+  const app = document.querySelector('.app');
+  if (app) app.inert = Boolean(stack.length || confirmOpen || viewerOpen);
+  stack.forEach((entry, index) => {
+    const covered = confirmOpen || viewerOpen || index < stack.length - 1;
+    entry.panel.inert = covered;
+    if (entry.overlay) entry.overlay.inert = covered;
+  });
+}
+// The viewer lives in its own module and marks itself on <body>; watching
+// that class keeps this module free of an import cycle with it.
+if (typeof MutationObserver === 'function' && document.body) {
+  let viewerWasOpen = false;
+  new MutationObserver(() => {
+    const open = document.body.classList.contains('viewer-open');
+    if (open !== viewerWasOpen) { viewerWasOpen = open; refreshInert(); }
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+}
 
 function trapFocus(event) {
   const top = stack[stack.length - 1];
@@ -81,6 +110,7 @@ export function openSheet(name, { focus } = {}) {
   panel.setAttribute('aria-modal', 'true');
   overlay?.classList.add('open');
   panel.classList.add('open');
+  refreshInert();
 
   // Let the open transition start before moving focus, so iOS does not jump.
   requestAnimationFrame(() => {
@@ -110,6 +140,9 @@ export function closeSheet(name) {
   const panel = $(`sh-${name}`);
   overlay?.classList.remove('open');
   panel?.classList.remove('open');
+  if (panel) panel.inert = false;
+  if (overlay) overlay.inert = false;
+  refreshInert();
   entry?.opener?.focus?.({ preventScroll: true });
   if (entry) {
     try { closers.get(name)?.(); } catch (error) { console.error(`[ui] close handler for ${name} failed`, error); }
@@ -169,8 +202,11 @@ export function confirmAction(options) {
   const onInput = () => { button.disabled = input.value.trim() !== phrase; };
   input.addEventListener('input', onInput);
 
+  // Where focus returns when the dialog closes.
+  const opener = document.activeElement;
   dialog.classList.add('open');
   dialog.setAttribute('aria-hidden', 'false');
+  refreshInert();
   requestAnimationFrame(() => (phrase ? input : button).focus({ preventScroll: true }));
 
   return new Promise((resolve) => {
@@ -180,6 +216,8 @@ export function confirmAction(options) {
       dialog.setAttribute('aria-hidden', 'true');
       confirmResolve = null;
       currentConfirmation = null;
+      refreshInert();
+      if (opener?.isConnected && !opener.closest('[inert]')) opener.focus?.({ preventScroll: true });
       resolve(result);
     };
   });
@@ -243,12 +281,40 @@ export function detailRow(label, value) {
  * and given its own left-to-right direction. Nothing about the stored text
  * changes; only how it is laid out.
  */
-export function identifierRow(label, value) {
+export function identifierRow(label, value, { copy = false } = {}) {
   if (value == null || value === '' || value === '—') return null;
   return el('div', { class: 'dfrow' }, [
     el('div', { class: 'dflbl', text: label }),
     el('div', { class: 'dfval dfval-id', dir: 'ltr', text: value }),
+    copy ? el('button', {
+      class: 'dfcopy', type: 'button', 'aria-label': t('common.copyLabel', { label }),
+      onClick: () => { void copyText(value); },
+    }, [icon('duplicate', { size: 16 })]) : null,
   ]);
+}
+
+/**
+ * Copies text on a tap. The Clipboard API needs the user gesture this is
+ * called from; where it is refused (an older WebView, an insecure context)
+ * the text is selected and copied the old way, and failing that the customer
+ * is told to select it themselves — never a silent nothing.
+ */
+export async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t('common.copied'), '📋');
+    return true;
+  } catch {
+    const area = el('textarea', { value: text, readonly: 'readonly', 'aria-hidden': 'true' });
+    Object.assign(area.style, { position: 'fixed', top: '0', left: '0', opacity: '0', fontSize: '16px' });
+    document.body.appendChild(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    area.remove();
+    toast(ok ? t('common.copied') : t('common.copyManually'), ok ? '📋' : 'ℹ');
+    return ok;
+  }
 }
 
 export function section(titleText, children, extra = {}) {

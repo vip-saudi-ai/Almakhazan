@@ -15,6 +15,7 @@ import { markInterruptedRestore } from './restore.js';
 import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
+import { registerServiceWorker } from './pwa.js';
 import { applyDocumentLocale, onLanguageChange, setLanguage, t } from './i18n.js';
 import { goTab, registerTab, renderActiveTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
@@ -31,7 +32,6 @@ import { bindItemForm, openItemForm } from './views/item-form.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { bindAssistant, renderAssistant } from './views/assistant.js';
-import { stopScanner } from './views/scan.js';
 import { closeGate, gateOnSession, isGateOpen, openGate } from './views/welcome.js';
 import {
   activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
@@ -339,10 +339,8 @@ function initializeUI() {
   registerTab('set', renderSettings);
 
   for (const name of SHEETS) bindSheetDismiss(name);
-  // Whatever closes the scanner — the button, the overlay, Escape, the back
-  // gesture — the camera has to go off with it.
-  $('ov-scan')?.addEventListener('click', stopScanner);
-  $('sh-scan')?.querySelector('[data-close]')?.addEventListener('click', stopScanner);
+  // The scanner stops its own camera on every way out (src/views/scan.js
+  // registers onSheetClose; src/scanner.js stops on background and pagehide).
 
   bindSearch();
   bindLongPress();
@@ -482,13 +480,8 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // The service worker caches only the static shell; data never goes through it.
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch((error) => {
-      console.error('[app] service worker registration failed', error);
-    });
-  });
-}
+// Updates wait for a moment when reloading loses nothing (src/pwa.js).
+registerServiceWorker();
 
 boot().catch((error) => {
   console.error('[app] boot failed', error);

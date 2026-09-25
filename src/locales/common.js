@@ -174,4 +174,11 @@ export const messages = {
   'languageGate.arabic': { ar: "العربية", en: "العربية" },
   'languageGate.english': { ar: "English", en: "English" },
   'languageGate.previous': { ar: "اختيارك السابق", en: "Your previous choice" },
+  'update.available': { ar: "تحديث جديد متاح", en: "An update is available" },
+  'update.apply': { ar: "تحديث", en: "Update" },
+  'update.later': { ar: "لاحقاً", en: "Later" },
+  'update.finishFirst': { ar: "أكمل ما تعمل عليه أو أغلقه أولاً، ثم حدّث.", en: "Finish or close what you are working on first, then update." },
+  'common.copyLabel': { ar: "نسخ {label}", en: "Copy {label}" },
+  'common.copied': { ar: "نُسخ", en: "Copied" },
+  'common.copyManually': { ar: "حدّد النص وانسخه", en: "Select the text and copy it" },
 };

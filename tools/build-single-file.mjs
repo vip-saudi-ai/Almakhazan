@@ -148,6 +148,14 @@ let html = readFileSync(join(root, 'index.html'), 'utf8');
 // case this build exists to serve. The registry needs no module semantics.
 const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
 
+// The scanner's Safari fallback (ZXing). The served app fetches it on first
+// use from public/vendor; a single file has nowhere to fetch it from, so it
+// travels inside the page as inert text — not parsed as script, not run at
+// startup — and src/scanner.js evaluates it the first time a scan is asked
+// for. Guarded against a closing tag, although the build contains none.
+const zxing = readFileSync(join(root, 'public/vendor/zxing/zxing.min.js'), 'utf8').replace(/<\/script/gi, '<\\/script');
+const zxingBlock = `<script type="text/plain" id="nazm-zxing-source">\n${zxing}\n</script>\n`;
+
 // Replacements go through a function: in a replacement *string*, `$` is special
 // and would mangle any `$` in the code or CSS being inlined.
 html = html
@@ -156,7 +164,7 @@ html = html
   .replace(/<link rel="preload" href="public\/fonts\/[^"]+"[^>]*>/g, '')
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
   .replace('<script src="src/boot-guard.js"></script>\n', '')
-  .replace('<script type="module" src="src/app.js"></script>', () => inlineScript)
+  .replace('<script type="module" src="src/app.js"></script>', () => zxingBlock + inlineScript)
   // The meta CSP would block the inlined script; the served app keeps its CSP.
   .replace(/<meta http-equiv="Content-Security-Policy"[\s\S]*?">\n/, '')
   .replace('<link rel="manifest" href="manifest.webmanifest">\n', '')

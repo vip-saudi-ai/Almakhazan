@@ -100,8 +100,10 @@ const scanning = await page.evaluate(async () => {
   const { scanningSupported } = await import('/src/scanner.js');
   return { supported: scanningSupported(), hasApi: 'BarcodeDetector' in window };
 });
-check('L9 scanning support is reported from the platform, not assumed',
-  scanning.supported === scanning.hasApi, JSON.stringify(scanning));
+// Without BarcodeDetector (Safari, this Chromium) the self-hosted decoder
+// still scans, so scanning is offered everywhere.
+check('L9 scanning is offered even without BarcodeDetector (self-hosted fallback)',
+  scanning.supported === true && scanning.hasApi === false, JSON.stringify(scanning));
 
 await page.evaluate(() => { document.getElementById('sh-labels').querySelector('[data-close]').click(); });
 await page.waitForTimeout(300);
@@ -109,10 +111,11 @@ await page.click('#scan-btn');
 await page.waitForTimeout(500);
 const afterScan = await page.evaluate(() => ({
   sheetOpen: document.getElementById('sh-scan').classList.contains('open'),
-  toast: document.querySelector('.toast')?.innerText || '',
+  state: document.getElementById('scan-state')?.textContent || '',
+  photo: document.getElementById('scan-photo')?.offsetParent != null,
 }));
-check('L10 an unsupported device is told so instead of shown a dead camera',
-  scanning.supported ? afterScan.sheetOpen : afterScan.toast.includes('لا يدعم المسح'),
+check('L10 a device with no camera is told so in the scanner, with Choose Photo still there',
+  afterScan.sheetOpen && afterScan.state.includes('كاميرا') && afterScan.photo,
   JSON.stringify(afterScan));
 
 check('L11 no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));

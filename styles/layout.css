@@ -58,6 +58,17 @@
 /* ── the shell ─────────────────────────────────────────────────────────────
  * Phone: a column with the navigation bar pinned to the bottom.
  * Desktop: a row with a rail on the (RTL) right and content beside it.
+ *
+ * One element owns the screen. `.app` is the only viewport-fixed layer of the
+ * normal interface; the tab bar and the selection bar are anchored inside it
+ * (position: absolute), so Safari's toolbar expanding and collapsing — the
+ * moment iOS 26 is known to leave independent fixed-bottom layers floating or
+ * gapped — moves the whole interface as one surface instead of three layers
+ * each settling on its own. `inset: 0` with no explicit height makes the shell
+ * exactly the box a `position: fixed; bottom: 0` bar used to sit in, so the
+ * bar is where it always was. Full-screen overlays (sheets, scrims, dialogs,
+ * the viewer, the language gate) stay fixed: covering the viewport is their
+ * job.
  */
 .app {
   position: fixed;
@@ -65,7 +76,6 @@
   z-index: var(--z-content);
   display: flex;
   flex-direction: column;
-  height: var(--vh-small);
   padding-top: var(--sat);
   padding-bottom: var(--nav-h);
   padding-inline: 0;
@@ -79,7 +89,10 @@
   overflow-x: hidden;
   padding: 0 var(--gutter) 24px;
   scrollbar-width: none;
-  touch-action: pan-y;
+  /* pan-y keeps a vertical list from being dragged sideways; pinch-zoom keeps
+     the page's own zoom, which pan-y alone would switch off here — that is,
+     almost everywhere, since almost everything scrolls inside this. */
+  touch-action: pan-y pinch-zoom;
   overscroll-behavior: contain;
 }
 .vscroll::-webkit-scrollbar { display: none; }
@@ -181,7 +194,7 @@
   .view { min-width: 0; }
 
   .tbar {
-    position: fixed;
+    position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
     inset-inline-end: auto;
@@ -528,4 +541,24 @@ body.kb-open .select-bar { bottom: var(--kb, 0px); }
 /* Past this width the column may grow; the reading measure never does. */
 @media (min-width: 1700px) {
   :root { --shell-max: 1500px; }
+}
+
+/* ── horizontal safe area (landscape iPhone) ────────────────────────────────
+ * Portrait hides it; landscape exposes it: the camera housing and the rounded
+ * corners sit on the left or right edge, and content laid out to the plain
+ * gutter runs underneath them. Each region takes the larger of its own gutter
+ * and the inset on that side — not the sum, so portrait (inset 0) is exactly
+ * as before. Physical left/right on purpose: the notch is on a physical edge,
+ * whichever language is reading. Desktop has no cutout and keeps its own
+ * margins (some of them `auto`), so this stops below the rail breakpoint.
+ * The tab bar and the selection bar carry their own (main.css).
+ */
+@media (max-width: 1023px) {
+  .vscroll { padding-left: max(var(--gutter), var(--sal)); padding-right: max(var(--gutter), var(--sar)); }
+  .nbar { padding-left: max(20px, var(--sal)); padding-right: max(20px, var(--sar)); }
+  .sfrow, .fsact-row { margin-left: max(16px, var(--sal)); margin-right: max(16px, var(--sar)); }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nbar { padding-left: max(var(--gutter), var(--sal)); padding-right: max(var(--gutter), var(--sar)); }
+  .sfrow { margin-left: max(var(--gutter), var(--sal)); margin-right: max(var(--gutter), var(--sar)); }
 }

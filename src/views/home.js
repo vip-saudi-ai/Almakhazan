@@ -559,7 +559,8 @@ async function findMatchingRecord(value) {
 
 export async function scanIntoSearch() {
   await openScanner({
-    title: t('scan.itemTitle'),
+    titleKey: 'scan.itemTitle',
+    onManual: () => focusSearch(),
     onCode: async ({ value }) => {
       // "No item carries this code" has to mean the whole inventory, not the
       // part of it this screen happens to hold — and it is one index lookup,
@@ -1314,6 +1315,11 @@ export function bindSearch() {
     runSearch();
   });
   clear?.addEventListener('click', () => { clearSearch(); input.focus(); });
+  // The keyboard's Search key: the query already ran as it was typed, so all
+  // it has left to do is put the keyboard away and show the results.
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.isComposing) input.blur();
+  });
 }
 
 /** Empties the search box and the query behind it. */

@@ -151,6 +151,11 @@ export function __importMemoryForTest() {
   };
 }
 
+/** True while an import is writing or undoing — read by the update prompt (src/pwa.js). */
+export function isImportRunning() {
+  return state.busy === true;
+}
+
 export async function startSpreadsheetImport() {
   // Known to be blocked: say so now rather than after the customer has gone
   // looking for a file.

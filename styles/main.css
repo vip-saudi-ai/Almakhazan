@@ -41,7 +41,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .ntitle span{color:var(--blue)}
 .nacts{display:flex;gap:8px}
 .ibtn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;border:none;color:var(--blue);flex-shrink:0}
-.ibtn:active{transform:scale(.84);opacity:.7}
+.ibtn:active{transform:scale(.94);opacity:.75}
 .nback{display:flex;align-items:center;gap:4px;color:var(--blue);font-size:16px;font-weight:600;cursor:pointer;border:none;background:none;padding:4px 0;white-space:nowrap}
 /* SEARCH BAR */
 .sfrow{display:flex;align-items:center;gap:8px;margin:0 16px 10px}
@@ -49,7 +49,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .sbar input{background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--tp);flex:1;min-width:0}
 .sbar input::placeholder{color:var(--tt)}
 .sico{color:var(--tt);font-size:16px;flex-shrink:0}
-.sclear{color:var(--tt);font-size:12px;cursor:pointer;background:var(--track);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;opacity:0;border:none;flex-shrink:0;touch-action:manipulation}
+.sclear{color:var(--tt);font-size:12px;cursor:pointer;background:var(--track);border-radius:50%;width:44px;height:44px;padding:13px;margin-block:-13px;margin-inline:0 -13px;background-clip:content-box;display:flex;align-items:center;justify-content:center;opacity:0;border:none;flex-shrink:0;touch-action:manipulation}
 .sclear.show{opacity:1}
 /* FILTER + SORT ACTION ROW */
 .fsact-row{display:flex;gap:8px;margin:0 16px 14px}
@@ -64,7 +64,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .fsh-row{display:flex;align-items:center;padding:14px 20px;border-bottom:.5px solid var(--divider);gap:12px}
 .fsh-row:last-child{border-bottom:none}
 .fsh-lbl{font-size:15px;font-weight:500;color:var(--tp);flex-shrink:0;min-width:90px}
-.fsh-sel{background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--blue);flex:1;cursor:pointer;text-align:end;font-weight:600}
+.fsh-sel{background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--blue);flex:1;cursor:pointer;text-align:end;font-weight:600;
+  min-height:44px;margin-block:-13px}
 /* SORT OPTION ROWS */
 .sort-opt{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:.5px solid var(--divider);cursor:pointer}
 .sort-opt:last-child{border-bottom:none}
@@ -182,9 +183,12 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .emtitle{font-size:19px;font-weight:600;color:var(--ts)}
 .emsub{font-size:13px;color:var(--tt);line-height:1.5}
 /* TAB BAR */
-.tbar{position:fixed;bottom:0;left:4px;right:4px;height:var(--nav-h);z-index:var(--z-nav);border-radius:24px 24px 0 0;display:flex;align-items:flex-start;padding:8px 4px var(--sab)}
+/* Anchored in the shell (see layout.css). Physical left/right, because a notch
+   is physical: in landscape the bar clears whichever edge the camera is on,
+   in either language. */
+.tbar{position:absolute;bottom:0;left:max(4px,var(--sal));right:max(4px,var(--sar));height:var(--nav-h);z-index:var(--z-nav);border-radius:24px 24px 0 0;display:flex;align-items:flex-start;padding:8px 4px var(--sab)}
 .ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;cursor:pointer;border:none;background:none;border-radius:16px}
-.ti:active{transform:scale(.88)}
+.ti:active{transform:scale(.95)}
 .tico{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:18px;color:var(--tt)}
 .ti.on .tico{background:var(--blue);color:white;box-shadow:0 4px 12px rgba(0,122,255,.38)}
 .tilbl{font-size:10px;font-weight:600;color:var(--tt)}
@@ -213,7 +217,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .shhdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;flex-shrink:0}
 .shtitle{font-size:18px;font-weight:700;color:var(--tp)}
 .shclose{background:var(--state-pressed);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ts);cursor:pointer;font-weight:700}
-.shscroll{flex:1;overflow-y:auto;padding:0 20px 20px;scrollbar-width:none;touch-action:pan-y;overscroll-behavior:contain}
+.shscroll{flex:1;overflow-y:auto;padding:0 20px 20px;scrollbar-width:none;touch-action:pan-y pinch-zoom;overscroll-behavior:contain}
 .shscroll::-webkit-scrollbar{display:none}
 .shfoot{padding:10px 20px;flex-shrink:0;border-top:.5px solid var(--divider);display:flex;gap:10px}
 /* FORM */
@@ -223,6 +227,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .frow:last-child{border-bottom:none}
 .frow label{font-size:15px;font-weight:500;color:var(--tp);flex-shrink:0;min-width:88px;touch-action:manipulation}
 .frow input,.frow select,.frow textarea{background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--tp);flex:1}
+/* A borderless field is 20px of text in a 44px row; the row's height is what
+   a thumb aims at, so the control fills it (the negative margin keeps the row
+   exactly as tall as before). */
+.frow input:not([type=checkbox]):not([type=radio]),.frow select{min-height:44px;margin-block:-12px}
 .frow select{cursor:pointer;font-size:16px}
 .frow input::placeholder,.frow textarea::placeholder{color:var(--tt)}
 .frow textarea{resize:none;min-height:70px;line-height:1.5;font-size:16px}
@@ -231,7 +239,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .frowv textarea,.frowv input{width:100%}
 /* DESC TOGGLE */
 .desc-toggle{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--gb);margin-bottom:18px}
-.desc-toggle-btn{flex:1;padding:10px;border:none;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:var(--ts);touch-action:manipulation}
+.desc-toggle-btn{flex:1;padding:10px;min-height:44px;border:none;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:var(--ts);touch-action:manipulation}
 .desc-toggle-btn.on{background:var(--blue);color:white}
 /* IMAGE */
 .ipick{width:100%;aspect-ratio:16/9;max-height:200px;border-radius:var(--r);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--surface-input);border:1.5px dashed rgba(0,122,255,.4);margin-bottom:16px}
@@ -256,7 +264,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .aiph{font-size:13px;color:var(--tt)}
 .aitxt{font-size:13px;color:var(--tp);line-height:1.6}
 /* BTNS */
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px;border-radius:var(--r);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer;border:none;width:100%;touch-action:manipulation}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px;min-height:44px;border-radius:var(--r);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer;border:none;width:100%;touch-action:manipulation}
 .btn:active{opacity:.82}
 .btn-p{background:var(--blue);color:white;box-shadow:0 4px 14px rgba(0,122,255,.28)}
 .btn-s{background:rgba(0,122,255,.1);color:var(--blue)}
@@ -279,6 +287,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 /* A machine identifier reads back exactly as it is printed on the object:
    isolated from the surrounding right-to-left paragraph, and in a font where
    0/O and 1/l are not the same shape. */
+/* Values in Detail are for reading and copying: selectable even though the
+   cards they came from are not. */
+.dfval{-webkit-user-select:text;user-select:text}
+.dfcopy{flex-shrink:0;width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:none;color:var(--brand);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:12px}
+.dfcopy:active{background:var(--state-pressed)}
+.dfrow .dfval-id{min-width:0;margin-inline-start:auto;padding-inline-start:12px}
 .dfval-id{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;unicode-bidi:isolate;word-break:break-all}
 /* CAT GRID */
 .catcell{border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:var(--glass-elevated);border:1px solid var(--border)}
@@ -310,7 +325,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .apirow input{width:100%;background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--tp)}
 .apibadge{display:inline-flex;align-items:center;gap:5px;background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.3);color:var(--green);font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--rp)}
 /* CONTEXT ACTION SHEET (long press) */
-.ctx-as{position:fixed;bottom:0;left:0;right:0;z-index:var(--z-modal);padding:0 12px calc(var(--sb) + 12px);transform:translateY(110%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.ctx-as{position:fixed;bottom:0;left:0;right:0;z-index:var(--z-modal);padding:0 max(12px,var(--sar)) calc(var(--sb) + 12px) max(12px,var(--sal));transform:translateY(110%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
 .ctx-as.open{transform:translateY(0)}
 .ctx-as-header{background:var(--surface-action);border-radius:14px;overflow:hidden;margin-bottom:8px}
 .ctx-as-title{padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:.5px solid var(--divider)}
@@ -437,7 +452,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 
 /* header bits */
 .link-btn{border:none;background:none;font-family:var(--font);font-size:13px;color:var(--blue);cursor:pointer;font-weight:500;padding:4px}
-.shdr-acts{display:flex;gap:8px;align-items:center}
+.shdr-acts{display:flex;gap:14px;align-items:center}
 .view-toggle{width:30px;height:30px;border-radius:8px;font-size:13px}
 .fsact-sort-col{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
 .reset-btn{border:none;background:rgba(255,59,48,.1);color:var(--red);font-family:var(--font);font-size:13px;font-weight:600;padding:5px 12px;border-radius:20px;cursor:pointer}
@@ -450,7 +465,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .af-reset{border:none;background:var(--glass-elevated);color:var(--blue);font-family:var(--font);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;flex-shrink:0}
 
 /* empty state CTA */
-.empty-cta{margin-top:14px;padding:10px 22px}
+.empty-cta{margin-top:14px;padding:10px 22px;min-height:44px}
 
 /* pagination */
 .pgap{color:var(--tt);font-size:13px;padding:0 2px;align-self:center}
@@ -505,7 +520,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 /* destructive confirm additions */
 .del-phrase-wrap{padding:0 4px 4px;text-align:start}
 .del-phrase-label{display:block;font-size:12px;color:var(--ts);font-weight:600;margin-bottom:6px}
-.del-phrase{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border-quiet);font-family:var(--font);font-size:15px;outline:none;background:var(--glass-elevated);color:var(--text)}
+.del-phrase{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border-quiet);font-family:var(--font);font-size:16px;outline:none;background:var(--glass-elevated);color:var(--text);min-height:44px}
 .del-phrase:focus{border-color:var(--blue)}
 .del-actions .btn{flex:1;padding:12px}
 .del-go{background:var(--red);color:#fff}
@@ -515,7 +530,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--n
 .pick-row{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0 16px}
 .icon-pick{font-size:25px;cursor:pointer;padding:8px;border-radius:10px;border:2px solid transparent;background:transparent;line-height:1}
 .icon-pick.on{border-color:var(--blue);background:rgba(0,122,255,.1)}
-.color-pick{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;padding:0}
+.color-pick{width:44px;height:44px;border-radius:50%;cursor:pointer;border:3px solid transparent;padding:5px;background-clip:content-box}
 .color-pick.on{border-color:var(--text-secondary)}
 
 /* categories grid */
@@ -592,14 +607,17 @@ body.gated .app,body.gated .tbar{display:none}
 /* margin:auto on the panel, not align-items:center on the scroller: centring a
    flex item taller than its scroll container makes the top unreachable. */
 .gate-scroll{position:absolute;inset:0;overflow-y:auto;display:flex;
-  padding:calc(var(--st) + 24px) 20px calc(var(--sb) + 32px);scrollbar-width:none}
+  padding:calc(var(--st) + 24px) max(20px,var(--sar)) calc(var(--sb) + 32px) max(20px,var(--sal));scrollbar-width:none}
 .gate-scroll::-webkit-scrollbar{display:none}
 .gate-panel{width:100%;max-width:420px;margin:auto;display:flex;flex-direction:column;gap:14px}
 /* The language switch sits in the gate's top inline-end corner, above the
    scroller, so it is reachable from every gate screen. */
-.gate-lang{position:absolute;z-index:1;inset-block-start:calc(var(--st) + 10px);inset-inline-end:14px;
+.gate-lang{position:absolute;z-index:1;inset-block-start:calc(var(--st) + 10px);
   display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--glass,rgba(127,127,127,.12));
   border:1px solid var(--sep,rgba(127,127,127,.2))}
+/* The end corner, clear of a landscape notch on that physical side. */
+html[dir="rtl"] .gate-lang{left:max(14px,var(--sal))}
+html:not([dir="rtl"]) .gate-lang{right:max(14px,var(--sar))}
 .gate-lang-opt{border:0;background:none;color:var(--ts);font:inherit;font-size:12px;font-weight:600;
   padding:5px 10px;border-radius:999px;cursor:pointer;min-height:28px}
 .gate-lang-opt.on{background:var(--blue);color:#fff}
@@ -802,16 +820,19 @@ body.gated .app,body.gated .tbar{display:none}
 /* ask */
 .ask-form{display:flex;gap:8px;align-items:center}
 .ask-input{flex:1;min-width:0;border:1px solid var(--border-quiet);background:var(--glass-elevated);
-  border-radius:var(--rp);padding:11px 16px;font-family:var(--font);font-size:15px;color:var(--text);outline:none}
+  border-radius:var(--rp);padding:10px 16px;font-family:var(--font);font-size:16px;color:var(--text);outline:none;min-height:44px}
 .ask-input::placeholder{color:var(--text-tertiary)}
 .ask-input:focus-visible{box-shadow:var(--focus-ring);border-color:transparent}
-.ask-go{width:42px;height:42px;border-radius:50%;border:none;background:var(--brand);color:#fff;
+.ask-go{width:44px;height:44px;border-radius:50%;border:none;background:var(--brand);color:#fff;
   font-size:17px;cursor:pointer;flex-shrink:0}
-.ask-go:active{transform:scale(.9)}
-.ask-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.ask-go:active{transform:scale(.95)}
+.ask-chips{display:flex;flex-wrap:wrap;gap:16px 7px;margin-top:12px}
 .ask-chip{border:1px solid var(--border-quiet);background:var(--glass-secondary);color:var(--text-secondary);
   font-family:var(--font);font-size:12px;font-weight:600;padding:7px 13px;border-radius:var(--rp);cursor:pointer;
-  text-align:start}
+  text-align:start;position:relative}
+/* 30px visual, 46px tall hit area: 8px above and below, which the 16px row
+   gap leaves free. */
+.ask-chip::after{content:"";position:absolute;inset:-8px 0}
 .ask-chip:active{background:var(--state-pressed)}
 .ask-answer{margin-top:14px}
 .ask-title{font-size:12px;font-weight:700;color:var(--intelligence);margin-bottom:5px}
@@ -898,22 +919,40 @@ body.gated .app,body.gated .tbar{display:none}
 .capture-sub{font-size:12px;color:var(--text-secondary)}
 .capture-alt{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
 .capture-link{border:none;background:none;color:var(--brand);font-family:var(--font);font-size:12.5px;
-  font-weight:700;cursor:pointer;padding:4px}
+  font-weight:700;cursor:pointer;padding:15px 8px;margin-block:-11px}
 .capture-sep{color:var(--text-tertiary);font-size:12px}
 .suggest-ask{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border-radius:10px;
   background:var(--warning-soft);font-size:12px;font-weight:600;color:var(--warning);line-height:1.6}
 .suggest-ask-mark{flex-shrink:0}
 
 /* ── scanning ── */
-.fscan{width:38px;height:38px;border-radius:10px;border:1px solid var(--border-quiet);background:var(--glass-secondary);
+/* The field and its scan button share one row at every width, side by side:
+   the button's box ends where the field's begins, so a tap at the end of the
+   typed code is a tap in the field, never a scan. */
+.frow-field{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.frow-field input{flex:1;min-width:0}
+.fscan{width:44px;height:44px;border-radius:10px;border:1px solid var(--border-quiet);background:var(--glass-secondary);
   color:var(--brand);font-size:16px;cursor:pointer;flex-shrink:0;font-family:var(--font)}
 .fscan:active{background:var(--state-pressed)}
 .scan-frame{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#0B1F4B;aspect-ratio:3/4;
-  max-height:52vh;margin:0 auto}
+  max-height:52vh;max-height:52svh;margin:0 auto}
 .scan-video{width:100%;height:100%;object-fit:cover;display:block}
 .scan-guide{position:absolute;inset:18% 12%;border:2px solid rgba(255,255,255,.85);border-radius:14px;
   box-shadow:0 0 0 100vmax rgba(11,31,75,.45)}
 .scan-hint{text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary);margin:14px 0 4px;line-height:1.6}
+/* What the scanner is doing, over the preview: starting, reading a photo, or
+   why it cannot — so a refused camera is a sentence, not a black box. */
+.scan-state{position:absolute;inset:auto 12px 12px;display:none;padding:10px 12px;border-radius:12px;
+  background:rgba(8,14,34,.78);color:#fff;font-size:14px;font-weight:600;line-height:1.5;text-align:center}
+.scan-state:not(:empty){display:block}
+.scan-frame.is-idle .scan-guide{opacity:.35}
+/* A read lands: one quick flash of the guide, and nothing when motion is off. */
+.scan-frame.hit .scan-guide{border-color:#34C759;box-shadow:0 0 0 999px rgba(52,199,89,.18);transition:border-color .1s,box-shadow .1s}
+.scan-acts{display:flex;gap:10px;margin-top:10px}
+.scan-act{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px}
+@media (max-width:359px){.scan-acts{flex-direction:column}}
+/* Landscape phone: the preview gives height back so the actions stay on screen. */
+@media (orientation:landscape) and (max-height:500px){.scan-frame{aspect-ratio:16/9;max-height:52svh;margin-inline:auto}}
 
 /* ── QR labels ── */
 .label-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -980,16 +1019,22 @@ body.gated .app,body.gated .tbar{display:none}
    would dominate a toolbar. The visual size stays; the tappable area grows
    underneath it with a transparent extension, which is what a thumb and an
    assistive pointer actually hit. */
-.ibtn,.shclose,.view-toggle,.sclear,.link-btn,.reset-btn,.cpill,.fscan,
-.qb-close,.qb-act,.ab-clear,.af-reset,.ask-go,.asec-help,.nback,.selbar-close,
+.ibtn,.shclose,.view-toggle,.link-btn,.reset-btn,.cpill,
+.qb-close,.qb-act,.ab-clear,.af-reset,.asec-help,.nback,.selbar-close,
 .selbar-all,.mem-revoke,.partial-btn,.gate-billing-opt{position:relative}
-.ibtn::after,.shclose::after,.view-toggle::after,.sclear::after,.link-btn::after,
-.reset-btn::after,.cpill::after,.fscan::after,.qb-close::after,.qb-act::after,
-.ab-clear::after,.af-reset::after,.ask-go::after,.asec-help::after,.nback::after,
+/* Exactly --touch-target and never more: the old "+16px" made two 36px
+   buttons 8px apart claim the same 8px strip, so a thumb between them fired
+   whichever painted last. At 44px the hit areas of neighbours spaced by their
+   visual gap meet but do not overlap. Controls that sit against an input
+   (clear, scan, send) have real boxes instead — see below — because any
+   transparent extension there would steal taps meant for the text. */
+.ibtn::after,.shclose::after,.view-toggle::after,.link-btn::after,
+.reset-btn::after,.cpill::after,.qb-close::after,.qb-act::after,
+.ab-clear::after,.af-reset::after,.asec-help::after,.nback::after,
 .selbar-close::after,.selbar-all::after,.mem-revoke::after,.partial-btn::after,
 .gate-billing-opt::after{content:"";position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);width:max(100% + 16px,var(--touch-target));
-  height:max(100% + 16px,var(--touch-target));border-radius:inherit}
+  transform:translate(-50%,-50%);width:max(100%,var(--touch-target));
+  height:max(100%,var(--touch-target));border-radius:inherit}
 
 /* ── focus ──
    One visible ring, the same everywhere, and never removed. */
@@ -998,8 +1043,8 @@ body.gated .app,body.gated .tbar{display:none}
 .gate-btn:focus-visible,.ask-chip:focus-visible,.chipbtn:focus-visible{box-shadow:var(--focus-ring)}
 
 /* ── selecting several records ── */
-.select-bar{position:fixed;left:0;right:0;bottom:var(--nav-h);z-index:var(--z-sticky);
-  display:flex;flex-direction:column;gap:2px;padding:10px 14px;
+.select-bar{position:absolute;left:0;right:0;bottom:var(--nav-h);z-index:var(--z-sticky);
+  display:flex;flex-direction:column;gap:2px;padding:10px max(14px,var(--sar)) 10px max(14px,var(--sal));
   border-radius:var(--r-lg) var(--r-lg) 0 0}
 body.selecting .tbar{opacity:.35;pointer-events:none}
 .selbar-top{display:flex;align-items:center;gap:12px}
@@ -1044,7 +1089,7 @@ body.selecting .tbar{opacity:.35;pointer-events:none}
 .mem-id{flex:1;min-width:0}
 .mem-name{font:var(--type-body-strong);color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mem-mail{font:var(--type-small);color:var(--ts);direction:ltr;text-align:match-parent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mem-role{background:var(--glass-elevated);border:1px solid var(--border-quiet);border-radius:var(--r-sm);padding:7px 9px;font-family:var(--font);font-size:14px;color:var(--tp);cursor:pointer}
+.mem-role{background:var(--glass-elevated);border:1px solid var(--border-quiet);border-radius:var(--r-sm);padding:7px 9px;font-family:var(--font);font-size:16px;color:var(--tp);cursor:pointer;min-height:44px}
 .mem-badge{font:var(--type-caption);color:var(--ts);background:var(--glass-elevated);border:1px solid var(--border-quiet);border-radius:var(--rp);padding:4px 10px;flex-shrink:0}
 .mem-revoke{background:none;border:none;color:var(--red);font:var(--type-small);font-weight:600;padding:8px 10px;margin:-8px -10px;border-radius:8px;cursor:pointer}
 .mem-revoke:active{background:var(--state-pressed)}
@@ -1053,7 +1098,7 @@ body.selecting .tbar{opacity:.35;pointer-events:none}
    so visually, so it is not mistaken for something retrievable later. */
 .inv-fresh{margin-top:14px;padding:14px;border-radius:var(--r);background:var(--glass-elevated);border:1px solid var(--brand)}
 .inv-fresh-hd{font:var(--type-body-strong);color:var(--tp);margin-bottom:4px}
-.inv-link{width:100%;background:none;border:1px solid var(--border-quiet);border-radius:var(--r-sm);padding:10px;font-family:ui-monospace,monospace;font-size:12px;color:var(--tp);margin-bottom:10px}
+.inv-link{width:100%;background:none;border:1px solid var(--border-quiet);border-radius:var(--r-sm);padding:10px;font-family:ui-monospace,monospace;font-size:16px;color:var(--tp);margin-bottom:10px;text-overflow:ellipsis}
 
 /* ── spreadsheet import ── */
 /* The file as it is, before anything is read into it. Scrolls sideways rather
@@ -1069,9 +1114,12 @@ body.selecting .tbar{opacity:.35;pointer-events:none}
    Dark in both themes, deliberately. A photograph is judged against a neutral
    ground; a white surround in light mode would change how the object reads.
    That is why --surface-viewer does not follow the theme. */
+/* Safe areas, once each: every child is absolutely positioned against the
+   viewer's edges, so padding here moved nothing and only suggested it did.
+   The top bar owns the top inset, the zoom bar and loading pill the bottom,
+   the top bar's padding the left and right (landscape notch). */
 .viewer{position:fixed;inset:0;z-index:var(--z-viewer);background:var(--surface-viewer);
   display:flex;align-items:center;justify-content:center;overflow:hidden;
-  padding-top:var(--sat);padding-bottom:var(--sab);
   /* The gesture surface owns every touch: no page scroll, no pull-to-refresh,
      no browser pinch fighting the viewer's own. */
   touch-action:none;overscroll-behavior:contain;user-select:none;-webkit-user-select:none}
@@ -1090,7 +1138,7 @@ body.viewer-open{overflow:hidden}
 .viewer-stage.zoomed:active{cursor:grabbing}
 
 .viewer-bar{position:absolute;left:0;right:0;display:flex;align-items:center;gap:12px;
-  padding:10px 12px;z-index:2;transition:opacity var(--motion) var(--ease)}
+  padding:10px max(12px,var(--sar)) 10px max(12px,var(--sal));z-index:2;transition:opacity var(--motion) var(--ease)}
 .viewer-bar-top{top:var(--sat);
   background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)}
 /* "1 / 7" is numerical notation, not Arabic prose. In an RTL paragraph the
@@ -1251,7 +1299,10 @@ body.viewer-open{overflow:hidden}
 /* ── icon containers ──
    Where an icon replaced a glyph, the box that held the glyph was sized for
    text. These give the drawn icon the same optical placement. */
-.catcell-act{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;color:var(--ts)}
+.catcell-act{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;color:var(--ts);
+  /* A 33×25 chip on screen, a 45×45 target under the thumb: the transparent
+     border is part of the button, the background stops at the padding. */
+  border:solid transparent;border-width:10px 6px;background-clip:padding-box;margin-block:-10px}
 .catcell-act.danger{color:var(--danger)}
 .catcico{display:flex;align-items:center;justify-content:center;color:var(--brand)}
 .srowc{display:flex;align-items:center;justify-content:center}
@@ -1331,7 +1382,8 @@ html:not(.lang-pending) .lang-gate { display: none; }
 
 .lang-gate{position:fixed;inset:0;z-index:100;display:flex;overflow-y:auto;
   background:var(--app-bg);color:var(--tp);font-family:var(--font);
-  padding:calc(env(safe-area-inset-top, 0px) + 24px) 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  padding:calc(env(safe-area-inset-top, 0px) + 24px) max(20px, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 24px) max(20px, env(safe-area-inset-left, 0px));
   animation:lg-in .18s ease-out}
 .lg-panel{margin:auto;width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
 .lg-brand{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -1363,3 +1415,52 @@ html:not(.lang-pending) .lang-gate { display: none; }
   .lg-option{transition:none}
   .lg-option:active{transform:none}
 }
+
+/* ── no zoom on focus ──
+   iOS Safari zooms the whole page into any text field whose font is under
+   16px, and does not zoom back out. Every field above is 16px on purpose; this
+   is the net under the ones built later. `max()` keeps a larger size larger.
+   Page zoom itself stays available — the viewport meta never disables it. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),
+  select, textarea { font-size: max(16px, 1em); }
+}
+
+/* ── update available ──
+   Below the status bar and any notch, above everything but the boot screen;
+   it asks, it never interrupts. */
+.update-banner{position:fixed;z-index:var(--z-toast);top:calc(var(--sat) + 8px);
+  left:max(12px,var(--sal));right:max(12px,var(--sar));margin-inline:auto;max-width:460px;
+  display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:16px;
+  background:var(--surface-modal);color:var(--tp);box-shadow:var(--glass-shadow-high);border:1px solid var(--border-quiet)}
+.update-banner-text{flex:1;min-width:0;font-size:14px;font-weight:600}
+.update-banner-go,.update-banner-later{min-height:44px;padding:0 14px;border:none;border-radius:12px;
+  font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.update-banner-go{background:var(--brand);color:#fff}
+.update-banner-later{background:none;color:var(--ts)}
+
+/* ── horizontal strips ──
+   Category pills, image strips and the import preview table scroll sideways
+   inside a page that scrolls vertically. The global `manipulation` already
+   allows both pans; this states it where it matters so a later rule on an
+   ancestor cannot quietly take the sideways pan away. */
+.cpills,.img-strip,.imp-table-wrap{touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain}
+
+/* ── reduced transparency / more contrast ──
+   Glass is part of the identity, not of the function. Where the customer asks
+   for less transparency (or more contrast) every glass surface becomes its
+   solid token — same colour family, no blur, nothing showing through. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .gl,.gl-s,.gls,.gl-modal,.gl-dark,.img-cell-acts{
+    backdrop-filter:none;-webkit-backdrop-filter:none}
+  .gl,.gl-s,.gls{background:var(--surface-base)}
+  .gl-modal,.update-banner{background:var(--surface-base)}
+  .orb{display:none}
+}
+
+/* The confirmation centres in what the customer can actually see: with the
+   keyboard up (a typed-phrase confirmation), the visible area is the part
+   above it, so the phrase field and both buttons stay above the keys. */
+.del-confirm{padding-bottom:var(--kb,0px)}
+/* Toasts stay inside the status bar and a landscape notch. */
+.tstack{max-width:calc(100vw - 24px - var(--sal) - var(--sar))}

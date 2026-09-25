@@ -67,6 +67,11 @@ async function saveJob(job) {
 }
 
 /** The unfinished restore on this device, if any. */
+/** True while a restore is writing — read by the update prompt (src/pwa.js). */
+export function isRestoreRunning() {
+  return activeRestoreId != null;
+}
+
 export async function unfinishedRestore() {
   const job = await local.getMeta(JOB_KEY, null).catch(() => null);
   if (!job || !UNFINISHED.has(job.status)) return null;

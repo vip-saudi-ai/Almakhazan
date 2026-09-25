@@ -24,6 +24,9 @@ export const messages = {
   'labels.openFailed': { ar: "تعذّر فتح القطع. حاول مرة أخرى.", en: "Could not open the items. Try again." },
   'labels.missing': { ar: "{count} قطعة لم تعد موجودة", en: { one: "{count} item no longer exists", other: "{count} items no longer exist" } },
   'scan.aim': { ar: "وجّه الكاميرا نحو الباركود أو رمز QR", en: "Point the camera at a barcode or QR code" },
-  'scan.unsupported': { ar: "هذا الجهاز لا يدعم المسح داخل المتصفح — أدخل الرقم يدوياً", en: "This device cannot scan in the browser — enter the number manually" },
   'scan.failed': { ar: "تعذّر المسح", en: "Scanning failed" },
+  'scan.choosePhoto': { ar: "اختيار صورة", en: "Choose Photo" },
+  'scan.manual': { ar: "إدخال يدوي", en: "Enter manually" },
+  'scan.starting': { ar: "جارٍ تشغيل الكاميرا…", en: "Starting the camera…" },
+  'scan.reading': { ar: "جارٍ قراءة الصورة…", en: "Reading the photo…" },
 };

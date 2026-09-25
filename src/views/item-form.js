@@ -872,7 +872,8 @@ async function handleConflict(error) {
 
 export function bindItemForm() {
   $('f-barcode-scan')?.addEventListener('click', () => openScanner({
-    title: t('form.scanTitle'),
+    titleKey: 'form.scanTitle',
+    onManual: () => setTimeout(() => $('f-barcode')?.focus(), 250),
     onCode: ({ value }) => {
       $('f-barcode').value = value;
       toast(t('form.scanned'), '⊡');

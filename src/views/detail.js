@@ -186,16 +186,19 @@ function drawDetail(item) {
         detailRow(t('field.category'), `${category.icon} ${categoryName(category)}`),
         folder ? detailRow(t('field.folder'), `${folder.icon} ${folder.name}`) : null,
         location ? detailRow(t('field.location'), locationName(location)) : null,
-        detailRow(t('field.sku'), item.sku),
-        detailRow(t('field.barcode'), item.barcode),
+        // Identifiers read left to right, can be selected, and have a Copy
+        // button: they are what gets pasted into an insurer's form or a
+        // supplier's order, character for character.
+        identifierRow(t('field.sku'), item.sku, { copy: true }),
+        identifierRow(t('field.barcode'), item.barcode, { copy: true }),
         detailRow(t('field.brand'), item.brand),
         // The identifiers an insurer, a police report or an auction house asks
         // for. They are shown left-to-right and isolated, because an Arabic
         // paragraph direction otherwise reorders a mixed letter-and-digit
         // serial on screen into something that is not what is on the object.
-        identifierRow(t('field.serialNumber'), item.serialNumber),
-        identifierRow(t('field.modelNumber'), item.modelNumber),
-        identifierRow(t('field.referenceNumber'), item.referenceNumber),
+        identifierRow(t('field.serialNumber'), item.serialNumber, { copy: true }),
+        identifierRow(t('field.modelNumber'), item.modelNumber, { copy: true }),
+        identifierRow(t('field.referenceNumber'), item.referenceNumber, { copy: true }),
         item.valuation ? detailRow(t('field.valuation'), formatValuation(item.valuation)) : null,
         item.valuation ? detailRow(t('export.valuationSource'), item.valuation.source === 'ai' ? t('detail.estimateFrom', { name: assistantName() }) : t('form.manual')) : null,
       ]),

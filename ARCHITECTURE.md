@@ -218,11 +218,44 @@ Free-text search still has no server-side answer — Firestore has none — so a
 search loads the inventory and runs locally. That is a deliberate trade, not
 an oversight: see `PRODUCTION-CHECKLIST.md` → “Known limits”.
 
+## The phone
+
+Four rules, each with one owner:
+
+- **One shell owns the screen.** `.app` is the only viewport-fixed layer
+  (`inset: 0`); the tab bar and the selection bar are positioned inside it,
+  so the browser's toolbar and the keyboard move one box, not three. Safe
+  areas come from `--sat/--sab/--sal/--sar` (tokens over `env()`); the side
+  insets are `max(gutter, inset)` on physical left and right, the bottom inset
+  is applied once, by the tab bar.
+- **The keyboard is a focused field, not a smaller viewport**
+  (`src/viewport.js`). A VisualViewport shrink counts only while an editable
+  element has focus and the page is at scale 1; otherwise it is pinch-zoom or
+  the toolbar. It sets `--kb` and `body.kb-open`, and keeps the focused field
+  in view once the keyboard has settled.
+- **Lifecycle** (`src/lifecycle.js`): `onBackground` (hidden, `pagehide`) and
+  `onResume` (`pageshow` from the back-forward cache). The camera stops and
+  image gestures reset on background; the viewport re-measures on resume.
+- **The service worker is an optimisation** (`sw.js`, `src/pwa.js`). It
+  caches this origin's static files only — never Firestore, Storage,
+  Functions, auth, blobs or anything with a query string — network-first,
+  with the cache as the offline answer. A new version waits; "Update
+  available" activates it only when `safeToReload()` finds nothing half done
+  (a sheet, a confirmation, the viewer, an import or restore running).
+
+**The scanner** (`src/scanner.js`, `src/views/scan.js`) uses the native
+`BarcodeDetector` where it supports the formats, and otherwise ZXing
+(`@zxing/library`, Apache-2.0), self-hosted at `public/vendor/zxing/` by
+`tools/vendor-zxing.mjs`, loaded only when scanning starts, and inlined as
+text into the demo build. The live loop decodes a throttled centre region;
+1D codes must read the same twice. Choose Photo and Enter manually are always
+offered, and every way out stops the camera.
+
 ## Two builds
 
 | | Production | Demo |
 |---|---|---|
-| Entry | `index.html` + `src/` | `dist/almakhzan.html` |
+| Entry | `index.html` + `src/` | `dist/nazm.html` |
 | Built by | nothing — served as-is | `npm run build:demo` |
 | Firebase | loads normally over HTTPS | stubbed out; no cloud, no auth, no AI |
 | Storage | Firestore + Cloud Storage | IndexedDB only |

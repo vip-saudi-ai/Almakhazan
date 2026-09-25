@@ -21,6 +21,7 @@ import { ImageTier, hasDistinctOriginal, imageSrc } from '../storage.js';
 import { $, el, formatNumber, render } from '../utils.js';
 import { icon } from '../icons.js';
 import { onLanguageChange, t } from '../i18n.js';
+import { onBackground } from '../lifecycle.js';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -95,6 +96,15 @@ export function openImageViewer({ images, index = 0, title = '', actions = null 
  *
  * None of this is state the next visit should inherit, so none of it does.
  */
+// A finger on the glass when the app is sent to the background (home gesture,
+// a call, the app switcher) never lifts as far as this page is concerned: no
+// pointerup, often no pointercancel. Forget it, or the next touch would be
+// read as the second finger of a pinch.
+onBackground(() => {
+  state.pointers.clear();
+  state.gesture = null;
+});
+
 function resetSession(root) {
   state.controlsHidden = false;
   state.lastTap = 0;

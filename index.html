@@ -18,9 +18,14 @@
   form-action 'self';
 ">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- "default", not "black-translucent": a translucent bar draws white status
+     icons over whatever is behind them, and behind them in the light theme is
+     white. With "default" iOS paints the bar in theme-color (light and dark
+     variants below) and picks the icon colour that reads on it. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="نَظْم">
-<meta name="theme-color" content="#E8EEFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#060E22" media="(prefers-color-scheme: dark)">
 <meta name="description" content="وثّق ونظّم مقتنياتك ومخزونك وأصولك بذكاء.">
 <meta property="og:title" content="نَظْم — الجرد الذكي للمقتنيات والأصول">
@@ -32,7 +37,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="public/icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="public/icons/favicon-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="public/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="public/icons/apple-touch-icon.png">
 <link rel="preload" href="public/fonts/tajawal-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="public/fonts/tajawal-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles/tokens.css">
@@ -138,7 +143,7 @@
       <div class="sbar gl" style="flex:1">
         <span class="sico" aria-hidden="true">⌕</span>
         <label class="visually-hidden" for="hsearch" data-i18n="search.label">بحث في المخزون</label>
-        <input id="hsearch" dir="auto" type="search" placeholder="بحث في المخزون…" autocomplete="off" data-i18n-attr="placeholder:search.placeholder">
+        <input id="hsearch" dir="auto" type="search" enterkeyhint="search" placeholder="بحث في المخزون…" autocomplete="off" data-i18n-attr="placeholder:search.placeholder">
         <button class="sclear" id="sclear" type="button" aria-label="مسح البحث" data-i18n-attr="aria-label:search.clear"><span aria-hidden="true" data-icon="close" data-icon-size="12"></span></button>
       </div>
       <button class="ibtn gl" id="scan-btn" type="button" aria-label="مسح الباركود" data-icon="scan" data-i18n-attr="aria-label:scan.title"></button>
@@ -261,8 +266,11 @@
       </div>
     </div>
   </section>
-</div>
 
+<!-- The selection bar and the tab bar belong to the shell: anchored inside
+     .app rather than each fixed to the viewport, so the whole interface moves
+     as one surface while Safari's toolbar and the keyboard change the
+     viewport around it. -->
 <!-- SELECTION -->
 <div class="select-bar gl" id="select-bar" role="toolbar" aria-label="إجراءات على المحدد" style="display:none" data-i18n-attr="aria-label:bulk.toolbar"></div>
 
@@ -273,6 +281,7 @@
   <button class="ti" id="t-ai" type="button" role="tab" aria-selected="false" aria-controls="v-ai"><span class="tico" aria-hidden="true" data-icon="assistant"></span><span class="tilbl" data-i18n="nav.assistant">المساعد</span></button>
   <button class="ti" id="t-set" type="button" role="tab" aria-selected="false" aria-controls="v-set"><span class="tico" aria-hidden="true" data-icon="settings"></span><span class="tilbl" data-i18n="nav.settings">الإعدادات</span></button>
 </nav>
+</div>
 
 <!-- ADD / EDIT -->
 <div class="ov" id="ov-add"></div>
@@ -313,13 +322,13 @@
 
     <div class="fsec">
       <div class="fstitle" data-i18n="form.infoSection">معلومات القطعة</div>
-      <div class="frow"><label for="f-name" data-i18n="field.name">الاسم</label><input id="f-name" dir="auto" placeholder="اسم القطعة" data-i18n-attr="placeholder:form.namePlaceholder"></div>
-      <div class="frow"><label for="f-sku" data-i18n="field.sku">الرمز SKU</label><input id="f-sku" dir="ltr" placeholder="تلقائي" data-i18n-attr="placeholder:form.automatic"></div>
+      <div class="frow"><label for="f-name" data-i18n="field.name">الاسم</label><input id="f-name" dir="auto" enterkeyhint="next" autocomplete="off" placeholder="اسم القطعة" data-i18n-attr="placeholder:form.namePlaceholder"></div>
+      <div class="frow"><label for="f-sku" data-i18n="field.sku">الرمز SKU</label><input id="f-sku" dir="ltr" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" enterkeyhint="next" placeholder="تلقائي" data-i18n-attr="placeholder:form.automatic"></div>
       <!-- Not inputmode="numeric": a barcode is a string. Code 128 and QR carry
            letters and punctuation, and a numeric keypad made those unenterable
            on a phone. `autocapitalize`/`autocorrect` are off for the same
            reason a serial number is: the device must not improve it. -->
-      <div class="frow"><label for="f-barcode" data-i18n="field.barcode">الباركود</label><input id="f-barcode" dir="ltr" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:common.optional"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود" data-i18n-attr="aria-label:scan.title"><span aria-hidden="true" data-icon="scan"></span></button></div>
+      <div class="frow"><label for="f-barcode" data-i18n="field.barcode">الباركود</label><div class="frow-field"><input id="f-barcode" dir="ltr" placeholder="اختياري" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" data-i18n-attr="placeholder:common.optional"><button class="fscan" id="f-barcode-scan" type="button" aria-label="مسح الباركود" data-i18n-attr="aria-label:scan.title"><span aria-hidden="true" data-icon="scan"></span></button></div></div>
     </div>
 
     <div class="fsec">
@@ -333,7 +342,7 @@
       <div class="fstitle" data-i18n="form.detailsSection">بيانات القطعة</div>
       <div class="frow">
         <label for="f-qty" data-i18n="field.quantity">الكمية</label>
-        <input id="f-qty" inputmode="decimal" placeholder="1">
+        <input id="f-qty" inputmode="decimal" enterkeyhint="next" placeholder="1">
         <select id="f-unit" style="width:100px;flex-shrink:0" aria-label="الوحدة" data-i18n-attr="aria-label:field.unit"></select>
       </div>
       <div class="field-hint" id="f-qty-hint"></div>
@@ -347,7 +356,7 @@
       <div class="frow"><label for="f-ref" data-i18n="field.referenceNumber">الرقم المرجعي</label><input id="f-ref" dir="ltr" placeholder="مرجعك الخاص، أو رقم البوليصة" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-attr="placeholder:form.referencePlaceholder"></div>
       <div class="frow">
         <label for="f-valuation" data-i18n="field.valuation">التقييم</label>
-        <input id="f-valuation" inputmode="decimal" placeholder="5000 أو 5000-8000" data-i18n-attr="placeholder:form.valuationPlaceholder">
+        <input id="f-valuation" inputmode="decimal" enterkeyhint="next" placeholder="5000 أو 5000-8000" data-i18n-attr="placeholder:form.valuationPlaceholder">
         <select id="f-currency" style="width:100px;flex-shrink:0" aria-label="العملة" data-i18n-attr="aria-label:field.currency"></select>
       </div>
       <div class="field-hint" id="f-valuation-preview"></div>
@@ -561,9 +570,19 @@
   <div class="shhnd" aria-hidden="true"></div>
   <div class="shhdr"><h2 class="shtitle" id="scan-title" data-i18n="scan.title">مسح الباركود</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
-    <div class="scan-frame"><video id="scan-video" class="scan-video" muted playsinline></video><div class="scan-guide" aria-hidden="true"></div></div>
+    <div class="scan-frame" id="scan-frame">
+      <video id="scan-video" class="scan-video" muted playsinline webkit-playsinline disablepictureinpicture aria-hidden="true"></video>
+      <div class="scan-guide" aria-hidden="true"></div>
+      <div class="scan-state" id="scan-state" role="status" aria-live="polite"></div>
+    </div>
     <p class="scan-hint" id="scan-hint" data-i18n-js>وجّه الكاميرا نحو الباركود أو رمز QR</p>
+    <div class="scan-acts">
+      <button class="btn btn-s scan-act" id="scan-photo" type="button"><span class="ico-inline" aria-hidden="true" data-icon="image" data-icon-size="18"></span><span data-i18n="scan.choosePhoto">اختيار صورة</span></button>
+      <button class="btn btn-s scan-act" id="scan-manual" type="button"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="18"></span><span data-i18n="scan.manual">إدخال يدوي</span></button>
+    </div>
+    <input id="scan-photo-input" class="visually-hidden" type="file" accept="image/*" tabindex="-1" aria-label="اختيار صورة" data-i18n-attr="aria-label:scan.choosePhoto">
   </div>
+  <div class="shfoot"><button class="btn btn-g" type="button" data-close style="flex:1;padding:12px" data-i18n="common.cancel">إلغاء</button></div>
 </div>
 
 <!-- PLANS -->

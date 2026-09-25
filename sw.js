@@ -1,67 +1,77 @@
 // App-shell service worker.
 //
-// Deliberately conservative: it caches only this origin's static shell, serves
-// navigations network-first so a deployed update is never masked by a cached
-// page, and never touches Firestore, Storage or Cloud Function traffic — those
-// have their own offline story and must not be served stale.
+// What it does, and what it must never do:
+//
+//   · It caches this origin's static files — the page, scripts, styles, fonts,
+//     icons, brand art, the self-hosted barcode decoder — so an installed app
+//     opens with no network. Everything else passes through untouched:
+//     Firestore, Storage, Cloud Functions and authentication are other
+//     origins; customer exports are blobs made in the page; nothing private is
+//     ever fetched from, or stored in, this cache.
+//
+//   · It is network-first for everything it handles. A deploy is never masked
+//     by a cached copy, and a page is never assembled from one release's HTML
+//     and another release's scripts; the cache is what answers only when the
+//     network cannot.
+//
+//   · It never takes over a running app. A new version installs and waits;
+//     the page offers "Update available" when nothing is half done (src/pwa.js)
+//     and asks it to activate then, or it activates on its own the next time
+//     the app is opened. It does not skipWaiting on install, because reloading
+//     someone mid-form, mid-import or mid-restore to deliver an update is
+//     exactly the wrong trade.
 
-const VERSION = 'v10.0.0';
-const SHELL_CACHE = `almakhzan-shell-${VERSION}`;
+const VERSION = 'v10.14.0';
+const CACHE = `nazm-shell-${VERSION}`;
+const OLD_PREFIXES = ['almakhzan-shell-', 'nazm-shell-'];
 
-const SHELL = [
+// The minimum an offline launch needs before the first successful online run
+// has cached the rest (modules, locales, icons are cached as they load).
+const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './styles/tokens.css',
+  './styles/main.css',
+  './styles/layout.css',
+  './src/boot-guard.js',
+  './src/app.js',
   './public/fonts/tajawal-400.woff2',
   './public/fonts/tajawal-500.woff2',
   './public/fonts/tajawal-700.woff2',
   './public/fonts/tajawal-800.woff2',
-  './styles/main.css',
-  './src/app.js',
-  './src/config.js',
-  './src/utils.js',
-  './src/validation.js',
-  './src/search.js',
-  './src/firebase.js',
-  './src/auth.js',
-  './src/repository.js',
-  './src/local-store.js',
-  './src/storage.js',
-  './src/ai.js',
-  './src/migration.js',
-  './src/exporting.js',
-  './src/xlsx-writer.js',
-  './src/navigation.js',
-  './src/ui.js',
-  './src/views/home.js',
-  './src/views/detail.js',
-  './src/views/item-form.js',
-  './src/views/overview.js',
-  './src/views/manage.js',
-  './src/views/welcome.js',
-  './src/views/plans.js',
-  './src/subscription.js',
-  './src/entitlements.js',
-  './src/plans.generated.js',
-  './public/brand/nazm-symbol.svg',
-  './public/brand/nazm-logo-ar.svg',
   './public/icons/favicon.svg',
+  './public/icons/apple-touch-icon.png',
+  './public/icons/pwa-192.png',
+  './public/icons/pwa-512.png',
 ];
+
+/** Only static files of this app, by extension. */
+const STATIC = /\.(?:html|js|mjs|css|woff2|png|svg|webmanifest|ico|jpg|jpeg|webp)$/i;
+
+function cacheable(request, url) {
+  if (request.method !== 'GET') return false;
+  if (url.origin !== self.location.origin) return false;
+  // A launch is always the one page, whatever its query (a shortcut, a share
+  // target); it is stored and answered as ./index.html.
+  if (request.mode === 'navigate') return true;
+  if (url.search) return false;                 // anything parameterised is not the shell
+  if (url.pathname.endsWith('/sw.js')) return false;
+  return STATIC.test(url.pathname) || url.pathname.endsWith('/');
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(SHELL_CACHE);
-    // addAll fails the whole install if any entry 404s; add individually so a
-    // single renamed file cannot brick the installation.
-    await Promise.all(SHELL.map(async (url) => {
+    const cache = await caches.open(CACHE);
+    // One by one: addAll fails the whole install on a single 404.
+    await Promise.all(PRECACHE.map(async (url) => {
       try {
         await cache.add(new Request(url, { cache: 'reload' }));
       } catch (error) {
         console.warn('[sw] could not precache', url, error);
       }
     }));
-    await self.skipWaiting();
+    // No skipWaiting() here — see the header.
   })());
 });
 
@@ -69,45 +79,36 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(names
-      .filter((name) => name.startsWith('almakhzan-shell-') && name !== SHELL_CACHE)
+      .filter((name) => OLD_PREFIXES.some((prefix) => name.startsWith(prefix)) && name !== CACHE)
       .map((name) => caches.delete(name)));
     await self.clients.claim();
   })());
 });
 
+// The page asks for this only when it is safe to reload (src/pwa.js).
 self.addEventListener('message', (event) => {
   if (event.data === 'skip-waiting') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // Firebase, fonts, APIs
+  if (!cacheable(request, url)) return;
 
-  // Navigations: always try the network first so a new deploy wins.
-  if (request.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        return await fetch(request);
-      } catch {
-        const cached = await caches.match('./index.html');
-        return cached || Response.error();
-      }
-    })());
-    return;
-  }
-
-  // Static shell: serve from cache, then refresh it in the background.
   event.respondWith((async () => {
-    const cache = await caches.open(SHELL_CACHE);
-    const cached = await cache.match(request);
-    const network = fetch(request).then((response) => {
-      if (response.ok) cache.put(request, response.clone());
+    const cache = await caches.open(CACHE);
+    try {
+      const response = await fetch(request);
+      // Only complete, same-origin, successful answers are kept.
+      if (response.ok && response.type === 'basic') {
+        event.waitUntil(cache.put(request.mode === 'navigate' ? './index.html' : request, response.clone()));
+      }
       return response;
-    }).catch(() => null);
-
-    return cached || (await network) || Response.error();
+    } catch (error) {
+      const cached = request.mode === 'navigate'
+        ? (await cache.match('./index.html')) || (await cache.match('./'))
+        : await cache.match(request);
+      return cached || Response.error();
+    }
   })());
 });

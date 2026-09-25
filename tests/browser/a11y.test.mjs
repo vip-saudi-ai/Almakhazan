@@ -77,13 +77,15 @@ async function open(colorScheme) {
       if (!el) return null;
       const r = el.getBoundingClientRect();
       const inside = (x, y) => { const t = document.elementFromPoint(x, y); return t === el || el.contains(t); };
-      // Four pixels above and below the visual box must still hit the control.
-      return { sel, vertical: inside(r.left + r.width / 2, r.top - 4) && inside(r.left + r.width / 2, r.bottom + 4) };
+      // A 44-point square around the centre must hit the control — whether the
+      // box itself is that big or a ::after extends it.
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      return { sel, vertical: inside(cx, cy - 21) && inside(cx, cy + 21), horizontal: inside(cx - 21, cy) && inside(cx + 21, cy) };
     };
     return ['#scan-btn', '#sclear', '#new-folder-link', '#tl'].map(probe).filter(Boolean);
   });
-  check('X7 small controls carry an extended hit area',
-    hits.every(h => h.vertical), JSON.stringify(hits));
+  check('X7 small controls are 44 points to a thumb, by their box or an extended hit area',
+    hits.length === 4 && hits.every(h => h.vertical && h.horizontal), JSON.stringify(hits));
 
   await context.close();
 }
