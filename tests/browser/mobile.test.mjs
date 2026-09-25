@@ -374,9 +374,10 @@ async function open(ctx, path = '/index.html') {
     await page.evaluate(async () => (await import('/src/ui.js')).closeSheet('scan'));
     return state;
   };
-  const denied = await errorFor('NotAllowedError');
+  // Denied last: once refused, the camera is not asked for again this session.
   const none = await errorFor('NotFoundError');
   const busy = await errorFor('NotReadableError');
+  const denied = await errorFor('NotAllowedError');
   check('M32 camera denied, missing and busy each say so — and keep Choose Photo and Enter manually',
     /Settings/.test(denied.text) && /No camera/.test(none.text) && /in use/.test(busy.text)
     && [denied, none, busy].every((s) => s.open && s.photo && s.manual), JSON.stringify({ denied, none, busy }));

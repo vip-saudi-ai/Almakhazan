@@ -1,36 +1,24 @@
 // Firebase project config and app-wide constants.
+import { ENV } from './environment.js';
 // The Firebase web apiKey is a public project identifier, not a secret; access is
 // controlled by Security Rules and App Check. The Anthropic key lives server-side only.
 
-export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyD_dYt4pKDpu0YWg9PovvsWMOl99U3dlIQ',
-  authDomain: 'almakhzan-3d808.firebaseapp.com',
-  projectId: 'almakhzan-3d808',
-  storageBucket: 'almakhzan-3d808.firebasestorage.app',
-  messagingSenderId: '356609664014',
-  appId: '1:356609664014:web:6ec089c2102b9ba22ec85f',
-};
+// The project a deployment talks to is deployment configuration: nazm.config.js
+// → firebase.project. Unused while features.cloud is off.
+export const FIREBASE_CONFIG = ENV.firebase.project;
 
-// App Check. Set the site key to enable attestation; null disables it.
-// The backend enforces separately, through ENFORCE_APP_CHECK — see
-// DEPLOYMENT.md §5. Turn the client on first, watch the console for a week,
-// then enforce: enforcing before the client sends tokens locks everyone out.
-export const APP_CHECK_SITE_KEY = null;
-/** Honoured only on localhost. Never commit a token for a deployed origin. */
-export const APP_CHECK_DEBUG_TOKEN = null;
+// App Check, feature flags, contact details and every other value that differs
+// between deployments live in nazm.config.js, read through src/environment.js.
 
 export const FUNCTIONS_REGION = 'us-central1';
 
 /**
- * The one version.
- *
- * Semantic, and honest about where the product is: pre-1.0, because billing
- * has no provider and nothing has run against a deployed project yet. The
- * "v8" and "v10.x" numbers that appeared in changelog headings and stylesheet
- * comments were design iterations, not releases, and having two numbers meant
- * neither could be trusted. package.json reads this file's value.
+ * The one version, semantic. package.json and the native project's
+ * CFBundleShortVersionString carry the same value; the native build number is
+ * the native project's own. Capabilities that are not operational in a
+ * release are switched off in nazm.config.js rather than shown unfinished.
  */
-export const APP_VERSION = '0.9.1-beta';
+export const APP_VERSION = '1.0.0';
 export const SCHEMA_VERSION = 2;
 
 export const PAGE_SIZE = 20;
@@ -229,6 +217,12 @@ export const UNCATEGORIZED = { id: UNCATEGORIZED_ID, name: 'غير مصنّف', 
 //   development_unlimited  no plan limits on the device. Only for development
 //                          (localhost) and for the single-file demo opened from
 //                          disk, where there is nothing being sold.
+//   standalone             no plan limits on the device, because this release
+//                          sells nothing (features.billing is off). A limit the
+//                          customer could not lift would be a dead end: the
+//                          device inventory is the complete product then. The
+//                          plan table and entitlement engine are untouched and
+//                          take over again the moment billing is switched on.
 //
 // To decide it differently for a deployment, set LOCAL_MODE_POLICY_OVERRIDE.
 // The plan values themselves are not touched here.
@@ -236,6 +230,7 @@ export const UNCATEGORIZED = { id: UNCATEGORIZED_ID, name: 'غير مصنّف', 
 export const LocalModePolicy = {
   CONSUMER_FREE_TIER: 'consumer_free_tier',
   DEVELOPMENT_UNLIMITED: 'development_unlimited',
+  STANDALONE: 'standalone',
 };
 
 /** null = decided by the origin, as described above. */
@@ -243,6 +238,7 @@ export const LOCAL_MODE_POLICY_OVERRIDE = null;
 
 export function localModePolicy(where = globalThis.location) {
   if (LOCAL_MODE_POLICY_OVERRIDE) return LOCAL_MODE_POLICY_OVERRIDE;
+  if (!ENV.features.billing) return LocalModePolicy.STANDALONE;
   const protocol = where?.protocol || '';
   const host = where?.hostname || '';
   const development = protocol === 'file:'

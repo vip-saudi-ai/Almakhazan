@@ -18,9 +18,11 @@ firebase login
 firebase use <your-project-id>
 ```
 
-The repository is currently pinned to `almakhzan-3d808` in `src/config.js`.
-**[YOU]** If you deploy to a different project, replace `FIREBASE_CONFIG` there
-with the config from *Project settings → General → Your apps → Web app*. The
+The repository is currently pinned to `almakhzan-3d808` in `nazm.config.js`
+(`firebase.project`). **[YOU]** If you deploy to a different project, replace
+that block with the config from *Project settings → General → Your apps → Web
+app*. Cloud services are off in the 1.0.0 release (`features.cloud: false`);
+see IOS-RELEASE.md §1 for what switching them on requires. The
 `apiKey` in that block is a public project identifier, not a secret; access is
 controlled by Security Rules and App Check.
 
@@ -126,12 +128,14 @@ only you can create.
 client sends tokens locks every customer out.
 
 1. Firebase console → App Check → register the web app with **reCAPTCHA v3**.
-2. Put the site key in `APP_CHECK_SITE_KEY` in `src/config.js` and deploy.
-   The client now sends tokens; nothing is rejected yet.
-3. For local work, create a debug token (App Check → Apps → Manage debug
-   tokens) and put it in `APP_CHECK_DEBUG_TOKEN`. It is honoured **only on
-   localhost** — the code checks the hostname, not a build flag, so a token
-   left in the file cannot weaken a deployed origin. Still: do not commit one.
+2. Put the site key in `appCheck.siteKey` in `nazm.config.js` and deploy.
+   The client now sends tokens; nothing is rejected yet. (iOS app: App Attest
+   in the native Firebase SDK instead — IOS-RELEASE.md §6.)
+3. For local work, set `environment: 'development'` and `appCheck.debug: true`
+   in your local copy of `nazm.config.js`. Firebase then prints a debug token
+   in the console; register it under App Check → Apps → Manage debug tokens.
+   It is honoured **only on localhost with the development environment**, and
+   no token string is ever written into a file — nothing to commit by mistake.
 4. Watch the console's App Check metrics for a few days. Verified vs
    unverified requests tells you whether step 2 actually reached everyone —
    old cached bundles, embedded webviews and PWA installs are the usual

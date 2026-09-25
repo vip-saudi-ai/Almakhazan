@@ -24,6 +24,13 @@ import {
   LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t,
 } from '../i18n.js';
 import { formatNumber } from '../utils.js';
+import { Feature, isAuthProviderAvailable, isFeatureEnabled } from '../features.js';
+import { legalConsentLine, legalLinks } from './legal.js';
+import { ENV } from '../environment.js';
+import { openExternalUrl } from '../platform.js';
+
+/** Plans, prices and "free" are words for a release that sells something. */
+const sellsPlans = () => isFeatureEnabled(Feature.BILLING);
 
 const USE_CASES = [
   { id: 'personal', icon: '🏠' },
@@ -44,6 +51,9 @@ const NAME_SUGGESTIONS = {
   get equipment() { return t('gate.name.equipment'); },
   get other() { return t('gate.name.other'); },
 };
+
+/** Firebase Authentication's own minimum; said on screen before the first try. */
+const MIN_PASSWORD = 6;
 
 const state = {
   screen: 'welcome',
@@ -139,32 +149,41 @@ function welcomeScreen() {
       el('p', { class: 'gate-sub', text: t('gate.sub') }),
     ]),
     el('div', { class: 'gate-actions' }, [
-      primary(t('gate.startFree'), () => show('signup')),
+      primary(sellsPlans() ? t('gate.startFree') : t('gate.signUp'), () => show('signup')),
       secondary(t('gate.signIn'), () => show('signin')),
-      el('p', { class: 'gate-note', text: freeNote() }),
+      sellsPlans() ? el('p', { class: 'gate-note', text: freeNote() }) : null,
     ]),
     el('div', { class: 'gate-magic' }, [
       el('span', { class: 'gate-magic-mark', text: '✦', 'aria-hidden': 'true' }),
       el('span', { text: t('gate.magic', { assistant: BRAND.assistant }) }),
     ]),
-    el('button', {
+    sellsPlans() ? el('button', {
       class: 'gate-link gate-pricing-link', type: 'button', text: t('gate.pricing'),
       onClick: () => show('pricing'),
-    }),
+    }) : null,
+    legalLinks(),
   ];
 }
 
+/**
+ * Federated sign-in, only for providers that are configured and usable here
+ * (src/features.js): Apple and Google together or not at all on iOS, and in
+ * the native app only through the native bridge.
+ */
 function providerButtons() {
+  const apple = isAuthProviderAvailable('apple');
+  const google = isAuthProviderAvailable('google');
+  if (!apple && !google) return [];
   return [
-    el('button', {
+    apple ? el('button', {
       class: 'gate-btn gate-btn-provider', type: 'button',
       onClick: (event) => run(event.currentTarget, '…', signInWithApple),
-    }, [el('span', { class: 'gate-provider-mark', text: '', 'aria-hidden': 'true' }), t('gate.withApple')]),
-    el('button', {
+    }, [el('span', { class: 'gate-provider-mark', text: '', 'aria-hidden': 'true' }), t('gate.withApple')]) : null,
+    google ? el('button', {
       class: 'gate-btn gate-btn-provider', type: 'button',
       onClick: (event) => run(event.currentTarget, '…', signInWithGoogle),
-    }, [el('span', { class: 'gate-provider-mark gate-provider-google', text: 'G', 'aria-hidden': 'true' }), t('gate.withGoogle')]),
-    el('div', { class: 'gate-divider' }, [el('span', { text: t('gate.orEmail') })]),
+    }, [el('span', { class: 'gate-provider-mark gate-provider-google', text: 'G', 'aria-hidden': 'true' }), t('gate.withGoogle')]) : null,
+    isAuthProviderAvailable('email') ? el('div', { class: 'gate-divider' }, [el('span', { text: t('gate.orEmail') })]) : null,
   ];
 }
 
@@ -189,6 +208,7 @@ function signInScreen() {
       t('gate.noAccount'),
       link(t('gate.createAccount'), () => show('signup')),
     ]),
+    legalLinks(),
   ];
 }
 
@@ -199,18 +219,21 @@ function signUpScreen() {
     field('gate-name', t('gate.name'), 'text', t('gate.namePlaceholder'), 'name'),
     field('gate-email', t('gate.email'), 'email', 'name@example.com', 'email'),
     field('gate-password', t('gate.password'), 'password', t('gate.passwordMin'), 'new-password'),
-    primary(t('gate.startFree'), (event) => run(event.currentTarget, t('gate.creating'), async () => {
+    // The rule, visible before the first attempt rather than after a refusal.
+    el('p', { class: 'gate-hint', id: 'gate-password-rule', text: t('gate.passwordRule') }),
+    legalConsentLine(),
+    primary(sellsPlans() ? t('gate.startFree') : t('gate.signUp'), (event) => run(event.currentTarget, t('gate.creating'), async () => {
       const email = $('gate-email').value.trim();
       const password = $('gate-password').value;
       // Caught here rather than at the server so the message is ours, and so a
       // typo is not reported as a failure.
       if (!email) { toast(t('gate.emailRequired'), '⚠'); return; }
-      if (password.length < 6) { toast(t('gate.passwordShort'), '⚠'); return; }
+      if (password.length < MIN_PASSWORD) { toast(t('gate.passwordShort'), '⚠'); return; }
       await registerWithEmail(email, password, $('gate-name').value.trim());
       await sendVerification().catch((error) => console.error('[gate] verification send failed', error));
       show('verify');
     })),
-    el('p', { class: 'gate-note', text: freeNote() }),
+    sellsPlans() ? el('p', { class: 'gate-note', text: freeNote() }) : null,
     el('div', { class: 'gate-foot' }, [
       t('gate.haveAccount'),
       link(t('gate.signIn'), () => show('signin')),
@@ -371,7 +394,7 @@ function planCard(plan, annual) {
       ? pick(plan.limitsLabel)
       : t('count.items', { count: plan.limits.items }) }),
     el('div', { class: 'gate-plan-line', text: `${BRAND.assistant}: ${pick(plan.assistant.label)}` }),
-    el('button', {
+    plan.contactOnly && !ENV.contact.salesEmail ? null : el('button', {
       class: `gate-btn ${emphasised ? 'gate-btn-primary' : 'gate-btn-secondary'} gate-plan-cta`,
       type: 'button',
       text: planCta(plan),
@@ -391,7 +414,7 @@ function choosePlan(plan) {
   // one exists. The choice is remembered so checkout can resume after setup.
   state.intendedPlan = { id: plan.id, billing: state.billing };
   if (plan.contactOnly) {
-    toast(t('planUi.enterpriseContact', { email: BRAND.salesEmail }), '✉');
+    openExternalUrl(`mailto:${ENV.contact.salesEmail}`);
     return;
   }
   show(currentSession().user ? 'onboarding' : 'signup');

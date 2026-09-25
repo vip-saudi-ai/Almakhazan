@@ -50,6 +50,44 @@ acting on it.
 - Invitation tokens are stored only as SHA-256 hashes and compared in constant
   time.
 
+## Release hardening (1.0.0)
+
+- **No secret in the client.** The only credential-like value is the Firebase
+  web `apiKey` (a public project identifier) in `nazm.config.js`. The AI key
+  is a Cloud Functions secret. No App Check debug token is ever written into a
+  file: the debug provider asks Firebase to generate one, only in the
+  development environment on localhost.
+- **CSP** (`index.html`): scripts from this origin, the Firebase SDK and
+  reCAPTCHA only; no `unsafe-eval`; no AI provider domain, so the page cannot
+  call one; `object-src 'none'`, `base-uri 'self'`.
+- **No HTML from data.** Views build DOM with `el()` and `textContent`; there
+  is no `innerHTML` in `src/`. Imported files, AI output and backend error text
+  are never inserted as markup, and backend wording never reaches the screen
+  (errors map to this app's messages).
+- **Imports.** A JSON backup is parsed with a reviver that drops `__proto__`,
+  `constructor` and `prototype`; spreadsheet taxonomy names are kept in
+  prototype-less maps; sizes, row counts and field lengths are capped before
+  anything is written.
+- **Exports.** The Excel writer never emits a formula; text that begins with
+  `=`, `+`, `-` or `@` is an inline string cell and stays exactly as typed.
+  There is no CSV export.
+- **Images** are checked by MIME type and size, then actually decoded (with a
+  pixel cap on the fallback decoder) and re-encoded; the filename is not
+  trusted.
+- **Logs** carry error codes, not error objects, on the sign-in, AI and media
+  paths — Firebase attaches email addresses and credentials to its errors.
+- **Destructive operations** live in `src/account.js`, run one at a time,
+  report success only after completion, and are enforced server-side:
+  `deleteAccount` checks a sign-in within five minutes, refuses while the user
+  owns a shared workspace, and is rate-limited.
+- **Identity changes** (another account signing in on the device) close every
+  sheet, clear the search and restart the repository, dropping the previous
+  account's records and image URLs; the device inventory is untouched.
+
+Every backend operation must verify the authenticated user, workspace
+membership, role, resource ownership and the action itself, whatever the UI
+shows. Rate-limit requirements: IOS-RELEASE.md §13.
+
 ## Known gaps
 
 Stated plainly, because a checklist that hides these is worse than useless.

@@ -13,6 +13,8 @@ import { cameraAvailable, scanFromCamera, scanFromImage, stopCamera } from '../s
 import { $, describeError, setText } from '../utils.js';
 import { closeSheet, isSheetOpen, onSheetClose, openSheet } from '../ui.js';
 import { onLanguageChange, t } from '../i18n.js';
+import { Feature, isFeatureEnabled } from '../features.js';
+import { openSettings } from '../platform.js';
 
 let controller = null;
 /** The open request: what to do with a code, or with "I'll type it". */
@@ -30,12 +32,17 @@ function showStatus(next) {
   else if (next?.key) text = t(next.key);
   setText('scan-state', text);
   frame()?.classList.toggle('is-idle', Boolean(next?.error));
+  // A refused camera is re-allowed in the system Settings; in the native app
+  // that page is one tap away. The web cannot open it, so there it is said.
+  const settings = $('scan-settings');
+  if (settings) settings.hidden = !(next?.error?.code === 'scan/denied' && isFeatureEnabled(Feature.APP_SETTINGS_LINK));
 }
 
 function bind() {
   if (bound) return;
   bound = true;
   $('scan-photo')?.addEventListener('click', () => $('scan-photo-input')?.click());
+  $('scan-settings')?.addEventListener('click', () => openSettings());
   $('scan-photo-input')?.addEventListener('change', (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';

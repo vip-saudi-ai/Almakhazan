@@ -233,6 +233,23 @@ function releaseScratch() {
 /** The one live camera session, so every exit path can stop it. */
 let session = null;
 
+/** Set once the customer (or the system) refuses the camera this session. */
+let cameraRefused = false;
+
+/**
+ * 'granted' | 'denied' | 'prompt' | 'unknown'. The Permissions API answers
+ * without prompting where it exists; where it does not (older Safari), the
+ * state is unknown until the camera is actually requested.
+ */
+export async function cameraPermissionState() {
+  try {
+    const result = await navigator.permissions?.query?.({ name: 'camera' });
+    return result?.state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 function cameraError(error) {
   const name = error?.name || '';
   if (name === 'NotAllowedError' || name === 'SecurityError') return new AppError('error.scan/denied', { code: 'scan/denied', cause: error });
@@ -289,6 +306,14 @@ export async function scanFromCamera(video, { signal, onEngine } = {}) {
   onEngine?.(engine.name);
   if (signal?.aborted) throw new DOMException('aborted', 'AbortError');
 
+  // A camera already refused is not asked for again: not in this session after
+  // a refusal, and not when the browser reports the permission as denied —
+  // re-prompting someone who said no is both rude and, on iOS, silent.
+  if (cameraRefused || (await cameraPermissionState()) === 'denied') {
+    cameraRefused = true;
+    throw new AppError('error.scan/denied-settings', { code: 'scan/denied' });
+  }
+
   let stream;
   try {
     // Preferences, not requirements: an `exact` constraint is how a perfectly
@@ -301,7 +326,9 @@ export async function scanFromCamera(video, { signal, onEngine } = {}) {
     // Refused, missing or busy is a normal answer from a phone, told to the
     // customer in the sheet; a warning here, not an error.
     console.warn('[scan] camera refused', error?.name || error);
-    throw cameraError(error);
+    const failure = cameraError(error);
+    if (failure.code === 'scan/denied') cameraRefused = true;
+    throw failure;
   }
 
   const mine = { stream, video, stopped: false, frame: 0, reject: null };

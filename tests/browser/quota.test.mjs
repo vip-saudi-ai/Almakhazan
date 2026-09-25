@@ -185,7 +185,6 @@ const banner = (page) => page.evaluate(() => {
   await page.click('#plans-body .gate-billing-opt:nth-child(1)');
   await page.waitForTimeout(200);
 
-  // nothing may claim a plan was bought while no provider is connected
   const activated = await page.evaluate(async () => {
     const cards = [...document.querySelectorAll('#plans-body .plan-card')];
     const pro = cards.find(c => c.querySelector('.plan-name').textContent === 'احترافي');
@@ -194,8 +193,11 @@ const banner = (page) => page.evaluate(() => {
     const { currentPlan } = await import('/src/subscription.js');
     return { plan: currentPlan().id, toast: document.querySelector('.toast')?.innerText || '' };
   });
+  // No purchase provider is connected here: the choice is handed to the
+  // billing adapter, which says purchases are unavailable — and nothing
+  // pretends a plan was bought.
   check('Q18 choosing a plan never activates it client-side',
-    activated.plan === 'free' && /قيد التفعيل/.test(activated.toast), JSON.stringify(activated));
+    activated.plan === 'free' && /الشراء غير متاح/.test(activated.toast), JSON.stringify(activated));
   await page.close();
 }
 

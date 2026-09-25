@@ -10,6 +10,8 @@ import { firebaseContext, isCloudEnabled } from './firebase.js';
 import { AppError } from './utils.js';
 import { hasMessage, t } from './i18n.js';
 import { primaryImage, validateAiData } from './validation.js';
+import { Feature, isFeatureAvailable } from './features.js';
+import { aiConsent } from './ai-consent.js';
 
 export const AiAvailability = {
   READY: 'ready',
@@ -18,7 +20,8 @@ export const AiAvailability = {
 };
 
 export function aiAvailability() {
-  if (!isCloudEnabled()) return AiAvailability.UNAVAILABLE;
+  // Not part of this release, or no cloud to run it on: no assistant UI at all.
+  if (!isFeatureAvailable(Feature.CLOUD_AI) || !isCloudEnabled()) return AiAvailability.UNAVAILABLE;
   if (!navigator.onLine) return AiAvailability.OFFLINE;
   return firebaseContext().functions ? AiAvailability.READY : AiAvailability.UNAVAILABLE;
 }
@@ -43,6 +46,10 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
   if (!image?.storagePath || image.storagePath.startsWith('local:')) {
     throw new AppError('error.ai/no-cloud-image', { code: 'ai/no-cloud-image' });
   }
+  // Nothing is sent without consent to the current disclosure; callers ask
+  // first (ensureAiConsent), and the backend checks the version again.
+  const consent = aiConsent();
+  if (!consent) throw new AppError('error.ai/consent-required', { code: 'ai/consent-required' });
 
   const { functions, sdk } = firebaseContext();
   const callable = sdk.functions.httpsCallable(functions, 'analyzeInventoryItem', { timeout: 120_000 });
@@ -59,9 +66,10 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
       // The workspace's own category names, so a suggestion lands in the
       // customer's taxonomy instead of inventing a new one.
       categories,
+      consentVersion: consent.version,
     });
   } catch (error) {
-    console.error('[ai] callable failed', error);
+    console.warn('[ai] analysis failed', error?.code || 'unknown');
     const reason = error?.code?.replace('functions/', '');
     const key = reason && hasMessage(`error.ai/${reason}`) ? `error.ai/${reason}` : 'error.ai/failed';
     throw new AppError(key, { code: error?.code, cause: error });
@@ -69,8 +77,9 @@ export async function analyzeItem({ workspaceId, itemId, image, name, categoryNa
 
   const payload = response?.data;
   if (!payload || payload.ok === false) {
-    // The function's own message, when it sent one; it is not ours to translate.
-    throw new AppError(payload?.message || 'error.ai/bad-response', { code: 'ai/bad-response' });
+    // A backend's own wording never reaches the screen: it may be in the wrong
+    // language, or say more than a customer should see.
+    throw new AppError('error.ai/bad-response', { code: 'ai/bad-response' });
   }
 
   // The function already validated this; re-validating here keeps the client

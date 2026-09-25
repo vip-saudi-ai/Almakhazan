@@ -35,8 +35,13 @@ const ANALYSIS = {
   imageHash: 'abc123ef',
 };
 
-async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = false } = {}) {
+async function formPage({ assistant = 'allowed', analysis = ANALYSIS, fails = false, consent = true } = {}) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  // The customer agreed to external AI processing on an earlier visit — or,
+  // with consent: false, never did (src/ai-consent.js).
+  if (consent) {
+    await page.addInitScript(() => localStorage.setItem('nazm.aiConsent', JSON.stringify({ version: '2026-09-25', at: '2026-09-25T00:00:00Z' })));
+  }
   const errs = [];
   page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase\] SDK|automatic analysis/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
@@ -284,6 +289,39 @@ async function addPhoto(page) {
   });
   check('S13 a failed reading leaves the form and the photo intact',
     saved.name === 'قطعة مكتوبة يدوياً' && saved.quantity === 2 && saved.images === 1, JSON.stringify(saved));
+  await page.close();
+}
+
+// ── no photo leaves before the customer has agreed ─────────────────────────
+{
+  const { page } = await formPage({ consent: false });
+  await addPhoto(page);
+  const before = await page.evaluate(() => ({ calls: window.__aiCalls.length, rows: document.querySelectorAll('.suggest-row').length }));
+  check('S14 without consent a new photo is not sent for analysis', before.calls === 0 && before.rows === 0, JSON.stringify(before));
+
+  // Asking for an analysis shows the disclosure first; Cancel sends nothing.
+  await page.evaluate(() => { document.getElementById('dtbtn-ai').click(); });
+  await page.waitForTimeout(200);
+  await page.evaluate(() => { const b = document.getElementById('aibtn'); b.disabled = false; b.click(); });
+  await page.waitForTimeout(400);
+  const shown = await page.evaluate(() => ({
+    open: document.getElementById('sh-legal').classList.contains('open'),
+    title: document.getElementById('legal-title').textContent,
+    agree: document.getElementById('ai-consent-agree')?.textContent,
+  }));
+  check('S15 the AI disclosure appears before the first analysis', shown.open && shown.title === 'استخدام الذكاء الاصطناعي' && shown.agree === 'موافقة ومتابعة', JSON.stringify(shown));
+  await page.evaluate(() => [...document.querySelectorAll('#legal-body button')].find((b) => b.textContent === 'إلغاء').click());
+  await page.waitForTimeout(300);
+  const cancelled = await page.evaluate(() => ({ calls: window.__aiCalls.length, stored: localStorage.getItem('nazm.aiConsent') }));
+  check('S16 cancelling sends nothing and records nothing', cancelled.calls === 0 && cancelled.stored === null, JSON.stringify(cancelled));
+
+  await page.evaluate(() => { const b = document.getElementById('aibtn'); b.disabled = false; b.click(); });
+  await page.waitForTimeout(400);
+  await page.click('#ai-consent-agree');
+  await page.waitForTimeout(500);
+  const agreed = await page.evaluate(() => ({ calls: window.__aiCalls.length, stored: JSON.parse(localStorage.getItem('nazm.aiConsent') || 'null') }));
+  check('S17 agreeing records the consent version and time, then analyses',
+    agreed.calls === 1 && agreed.stored?.version === '2026-09-25' && Boolean(agreed.stored?.at), JSON.stringify(agreed));
   await page.close();
 }
 

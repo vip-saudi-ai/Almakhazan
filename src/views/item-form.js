@@ -2,6 +2,7 @@
 
 import { icon } from '../icons.js';
 import { AiAvailability, aiAvailability, aiDisclaimer, aiSubtitle, analyzeItem, assistantName } from '../ai.js';
+import { ensureAiConsent, hasAiConsent } from '../ai-consent.js';
 import { onLanguageChange, t } from '../i18n.js';
 import { categoryName, conditionLabel, locationName, unitGroupLabel, unitLabel } from '../labels.js';
 import {
@@ -330,6 +331,9 @@ async function maybeAutoAnalyze() {
   if (!form.isNew || form.aiData || form.autoAnalyzed) return;
   if ($('f-name').value.trim()) return;
   if (aiAvailability() !== AiAvailability.READY) return;
+  // Automatic only once the customer has agreed to external processing; the
+  // first analysis is always one they asked for, through the disclosure.
+  if (!hasAiConsent()) return;
 
   const image = primaryFormImage();
   if (!image || image.storagePath?.startsWith('local:')) return;
@@ -357,7 +361,7 @@ async function maybeAutoAnalyze() {
   } catch (error) {
     // Reading the photo is a bonus, not the job: a failure is reported quietly
     // and the form stays exactly as the customer left it.
-    console.error('[form] automatic analysis failed', error);
+    console.warn('[form] automatic analysis failed', error?.code || 'unknown');
     box.style.display = 'none';
     render(box, []);
   }
@@ -566,6 +570,7 @@ async function runAnalysis() {
   if (!image) { toast(t('form.addPhotoFirst'), '⚠'); return; }
 
   const button = $('aibtn');
+  if (!(await ensureAiConsent())) return;
   await withBusy(button, t('form.analyzing'), async () => {
     try {
       const aiData = await analyzeItem({

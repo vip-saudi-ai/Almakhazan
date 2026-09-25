@@ -344,7 +344,7 @@ export async function deleteImage(image, ctx) {
       await sdk.storage.deleteObject(sdk.storage.ref(storage, path));
     } catch (error) {
       if (error?.code === 'storage/object-not-found') continue;
-      console.error('[image] delete failed', path, error);
+      console.warn('[image] delete failed', error?.code || error?.name || 'unknown');
     }
   }
 }

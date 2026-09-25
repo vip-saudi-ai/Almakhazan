@@ -141,12 +141,14 @@ for (const weight of [400, 500, 700, 800]) {
   );
 }
 const bootGuard = readFileSync(join(root, 'src/boot-guard.js'), 'utf8');
+// The release configuration travels with the page, ahead of everything else.
+const releaseConfig = readFileSync(join(root, 'nazm.config.js'), 'utf8');
 let html = readFileSync(join(root, 'index.html'), 'utf8');
 
 // Emitted as a *classic* script, not a module: iOS Quick Look and some embedded
 // web views silently refuse to execute `type="module"`, which is exactly the
 // case this build exists to serve. The registry needs no module semantics.
-const inlineScript = `<script>\n${bootGuard}\n${bundle}\n</script>`;
+const inlineScript = `<script>\n${releaseConfig}\n${bootGuard}\n${bundle}\n</script>`;
 
 // The scanner's Safari fallback (ZXing). The served app fetches it on first
 // use from public/vendor; a single file has nowhere to fetch it from, so it
@@ -163,6 +165,7 @@ html = html
   .replace('<link rel="stylesheet" href="styles/layout.css">', '')
   .replace(/<link rel="preload" href="public\/fonts\/[^"]+"[^>]*>/g, '')
   .replace('<link rel="stylesheet" href="styles/main.css">', () => `<style>\n${css}\n</style>`)
+  .replace('<script src="nazm.config.js"></script>\n', '')
   .replace('<script src="src/boot-guard.js"></script>\n', '')
   .replace('<script type="module" src="src/app.js"></script>', () => zxingBlock + inlineScript)
   // The meta CSP would block the inlined script; the served app keeps its CSP.

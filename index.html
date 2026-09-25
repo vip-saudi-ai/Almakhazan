@@ -4,15 +4,24 @@
 <meta charset="UTF-8">
 <!-- user-scalable / maximum-scale intentionally omitted so zoom stays available -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Content Security Policy. Only this origin runs code, plus the Firebase SDK
+     and reCAPTCHA (App Check) when cloud services are switched on in
+     nazm.config.js. No eval, no inline script. AI requests go to our own Cloud
+     Functions only: no AI provider's domain is allowed here, so the page can
+     never call one directly. 'unsafe-inline' is for style attributes the views
+     set (el(..., { style })); it does not apply to scripts. A native build that
+     bundles the Firebase SDK can drop https://www.gstatic.com from script-src. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' https://www.gstatic.com;
+  script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/;
   style-src 'self' 'unsafe-inline';
   font-src 'self';
   img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.googleapis.com https://lh3.googleusercontent.com;
-  connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com;
-  frame-src https://almakhzan-3d808.firebaseapp.com https://accounts.google.com;
+  media-src 'self' blob:;
+  connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://www.google.com/recaptcha/;
+  frame-src https://almakhzan-3d808.firebaseapp.com https://accounts.google.com https://appleid.apple.com https://www.google.com/recaptcha/;
   worker-src 'self' blob:;
+  manifest-src 'self';
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -127,7 +136,7 @@
     <button class="ctx-as-btn" id="ctx-move" type="button"><div class="ctx-as-ico" style="background:rgba(175,82,222,.12)" aria-hidden="true" data-icon="move"></div><div class="ctx-as-lbl" data-i18n="item.moveToFolder">نقل إلى مجلد</div></button>
     <button class="ctx-as-btn" id="ctx-edit" type="button"><div class="ctx-as-ico" style="background:rgba(255,149,0,.12)" aria-hidden="true" data-icon="edit"></div><div class="ctx-as-lbl" data-i18n="common.edit">تعديل</div></button>
     <button class="ctx-as-btn" id="ctx-duplicate" type="button"><div class="ctx-as-ico" style="background:rgba(90,200,250,.12)" aria-hidden="true" data-icon="duplicate"></div><div class="ctx-as-lbl" data-i18n="item.duplicate">نسخ القطعة</div></button>
-    <button class="ctx-as-btn" id="ctx-label" type="button"><div class="ctx-as-ico" style="background:rgba(99,102,241,.12)" aria-hidden="true" data-icon="label"></div><div class="ctx-as-lbl" data-i18n="item.qrLabel">ملصق QR</div></button>
+    <button class="ctx-as-btn" id="ctx-label" data-feature="print" type="button"><div class="ctx-as-ico" style="background:rgba(99,102,241,.12)" aria-hidden="true" data-icon="label"></div><div class="ctx-as-lbl" data-i18n="item.qrLabel">ملصق QR</div></button>
     <button class="ctx-as-btn" id="ctx-select" type="button"><div class="ctx-as-ico" style="background:rgba(37,99,255,.12)" aria-hidden="true" data-icon="select"></div><div class="ctx-as-lbl" data-i18n="item.selectMany">تحديد عدة قطع</div></button>
     <button class="ctx-as-btn" id="ctx-delete" type="button"><div class="ctx-as-ico" style="background:rgba(255,59,48,.12)" aria-hidden="true" data-icon="trash"></div><div class="ctx-as-lbl red" data-i18n="common.delete">حذف</div></button>
   </div>
@@ -247,11 +256,11 @@
       <div class="shdr"><h2 class="stitle" data-i18n="settings.account">الحساب</h2></div>
       <div class="sgroup" id="auth-panel"></div>
 
-      <div class="shdr"><h2 class="stitle" data-i18n="settings.plan">الخطة والاشتراك</h2></div>
-      <div class="sgroup" id="plan-panel"></div>
+      <div class="shdr" data-feature="billing"><h2 class="stitle" data-i18n="settings.plan">الخطة والاشتراك</h2></div>
+      <div class="sgroup" id="plan-panel" data-feature="billing"></div>
 
-      <div class="shdr"><h2 class="stitle" data-i18n="settings.assistant">✦ مساعد نَظْم</h2></div>
-      <div class="sgroup" id="ai-settings"></div>
+      <div class="shdr" data-feature="cloudAi"><h2 class="stitle" data-i18n="settings.assistant">✦ مساعد نَظْم</h2></div>
+      <div class="sgroup" id="ai-settings" data-feature="cloudAi"></div>
 
       <div class="shdr"><h2 class="stitle" data-i18n="settings.data">البيانات</h2></div>
       <div class="sgroup" id="data-panel"></div>
@@ -259,9 +268,13 @@
       <div class="shdr"><h2 class="stitle" data-i18n="settings.danger">منطقة الخطر</h2></div>
       <div class="sgroup" id="danger-panel"></div>
 
+      <div class="shdr"><h2 class="stitle" id="legal-heading" data-i18n="settings.legal">القانونية والخصوصية</h2></div>
+      <div class="sgroup" id="legal-panel" role="group" aria-labelledby="legal-heading"></div>
+
+      <div class="shdr"><h2 class="stitle" data-i18n="settings.about">حول التطبيق</h2></div>
       <div class="sgroup">
         <div class="srow" style="cursor:default">
-          <div><div class="srowl" data-i18n="app.brand">نَظْم</div><div class="srowd" id="app-version">—</div></div>
+          <div><div class="srowl" data-i18n="app.brand">نَظْم</div><div class="srowd" id="app-version" dir="auto">—</div></div>
         </div>
       </div>
     </div>
@@ -301,16 +314,16 @@
       <!-- capture="environment" opens the camera directly on a phone; on a
            desktop the browser falls back to the file picker by itself. -->
       <input type="file" id="camInput" accept="image/*" capture="environment" class="visually-hidden" aria-label="التقاط صورة بالكاميرا" tabindex="-1" data-i18n-attr="aria-label:form.takePhoto">
-      <div class="suggest" id="ai-suggest" style="display:none" role="group" aria-label="اقتراحات مساعد نَظْم" data-i18n-attr="aria-label:ai.suggestions"></div>
-      <div class="field-hint" id="img-hint" data-i18n="form.photoHint">كل صيغ الصور مقبولة، وصور الآيفون (HEIC) تُحوَّل تلقائياً. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
+      <div class="suggest" id="ai-suggest" data-feature="cloudAi" style="display:none" role="group" aria-label="اقتراحات مساعد نَظْم" data-i18n-attr="aria-label:ai.suggestions"></div>
+      <div class="field-hint" id="img-hint" data-i18n="form.photoHint">صور JPEG وPNG وWebP وصور الآيفون (HEIC) مدعومة، وتُحوَّل HEIC تلقائياً حين يستطيع الجهاز قراءتها. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.</div>
     </div>
 
-    <div class="desc-toggle" role="group" aria-label="نمط الوصف" data-i18n-attr="aria-label:form.descriptionMode">
+    <div class="desc-toggle" data-feature="cloudAi" role="group" aria-label="نمط الوصف" data-i18n-attr="aria-label:form.descriptionMode">
       <button class="desc-toggle-btn on" id="dtbtn-manual" type="button" aria-pressed="true"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="16"></span><span data-i18n="form.manual">يدوي</span></button>
       <button class="desc-toggle-btn" id="dtbtn-ai" type="button" aria-pressed="false" data-i18n="form.visualAnalysis">✦ تحليل بصري</button>
     </div>
 
-    <div id="ai-section" style="display:none">
+    <div id="ai-section" data-feature="cloudAi" style="display:none">
       <div class="aipanel">
         <div class="aiphdr"><div class="aidot" id="aidot" aria-hidden="true"></div><span id="ai-status-label" data-i18n-js>مساعد نَظْم</span></div>
         <div class="aibody">
@@ -380,7 +393,7 @@
   <div class="shscroll" id="detbody"></div>
   <div class="shfoot">
     <button class="btn btn-d" id="detdel" type="button" style="flex:1;padding:12px" data-i18n="common.delete">حذف</button>
-    <button class="btn btn-g" id="detlabel" type="button" style="flex:1;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="label" data-icon-size="16"></span><span data-i18n="detail.label">ملصق</span></button>
+    <button class="btn btn-g" id="detlabel" data-feature="print" type="button" style="flex:1;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="label" data-icon-size="16"></span><span data-i18n="detail.label">ملصق</span></button>
     <button class="btn btn-g" id="detmove" type="button" style="flex:1;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="move" data-icon-size="16"></span><span data-i18n="detail.move">نقل</span></button>
     <button class="btn btn-p" id="detedit" type="button" style="flex:2;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="16"></span><span data-i18n="common.edit">تعديل</span></button>
   </div>
@@ -578,6 +591,7 @@
     <p class="scan-hint" id="scan-hint" data-i18n-js>وجّه الكاميرا نحو الباركود أو رمز QR</p>
     <div class="scan-acts">
       <button class="btn btn-s scan-act" id="scan-photo" type="button"><span class="ico-inline" aria-hidden="true" data-icon="image" data-icon-size="18"></span><span data-i18n="scan.choosePhoto">اختيار صورة</span></button>
+      <button class="btn btn-p scan-act" id="scan-settings" type="button" hidden><span data-i18n="scan.openSettings">فتح الإعدادات</span></button>
       <button class="btn btn-s scan-act" id="scan-manual" type="button"><span class="ico-inline" aria-hidden="true" data-icon="edit" data-icon-size="18"></span><span data-i18n="scan.manual">إدخال يدوي</span></button>
     </div>
     <input id="scan-photo-input" class="visually-hidden" type="file" accept="image/*" tabindex="-1" aria-label="اختيار صورة" data-i18n-attr="aria-label:scan.choosePhoto">
@@ -609,6 +623,22 @@
   <div class="shscroll"><div id="ws-body"></div></div>
 </div>
 
+<!-- LEGAL, PRIVACY AND SUPPORT READER (src/views/legal.js) -->
+<div class="ov" id="ov-legal"></div>
+<div class="sh" id="sh-legal" tabindex="-1" aria-labelledby="legal-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="legal-title" data-i18n-js></h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shscroll"><article class="legal-body" id="legal-body"></article></div>
+</div>
+
+<!-- ACCOUNT DELETION (src/views/account.js) -->
+<div class="ov" id="ov-account"></div>
+<div class="sh" id="sh-account" tabindex="-1" aria-labelledby="account-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="account-title" data-i18n="account.deleteTitle">حذف الحساب</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="shscroll"><div class="account-body" id="account-body"></div></div>
+</div>
+
 <!-- EXPORT ACTION SHEET -->
 <div class="ov" id="ov-as"></div>
 <div class="asht" id="sh-as" tabindex="-1" role="dialog" aria-modal="true" aria-label="تصدير واستيراد" data-i18n-attr="aria-label:backup.sheetLabel">
@@ -622,6 +652,7 @@
   <div class="ashcancel"><button class="ashbtn" type="button" data-close style="font-weight:600" data-i18n="common.cancel">إلغاء</button></div>
 </div>
 
+<script src="nazm.config.js"></script>
 <script src="src/boot-guard.js"></script>
 <script type="module" src="src/app.js"></script>
 </body>

@@ -43,7 +43,7 @@ export const messages = {
   'form.addTitle': { ar: "إضافة قطعة", en: "Add item" },
   'form.photos': { ar: "الصور", en: "Photos" },
   'form.noPhotos': { ar: "لا توجد صور", en: "No photos" },
-  'form.photoHint': { ar: "كل صيغ الصور مقبولة، وصور الآيفون (HEIC) تُحوَّل تلقائياً. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.", en: "Any image format works, and iPhone photos (HEIC) are converted automatically. A full-resolution original is kept for documentation and a smaller copy for display." },
+  'form.photoHint': { ar: "صور JPEG وPNG وWebP وصور الآيفون (HEIC) مدعومة، وتُحوَّل HEIC تلقائياً حين يستطيع الجهاز قراءتها. تُحفظ نسخة أصلية عالية الدقة للتوثيق ونسخة مصغّرة للعرض.", en: "JPEG, PNG, WebP and iPhone (HEIC) photos are supported; HEIC is converted automatically where the device can read it. A full-resolution original is kept for documentation and a smaller copy for display." },
   'form.manual': { ar: "يدوي", en: "Manual" },
   'form.visualAnalysis': { ar: "✦ تحليل بصري", en: "✦ Visual analysis" },
   'form.infoSection': { ar: "معلومات القطعة", en: "Item information" },

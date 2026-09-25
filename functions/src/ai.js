@@ -210,6 +210,10 @@ function mapAnthropicError(error) {
   return null;
 }
 
+/** The oldest AI disclosure a consent may refer to; raise it when the
+ *  provider or the processing terms change materially. */
+const AI_CONSENT_MIN_VERSION = '2026-09-25';
+
 exports.analyzeInventoryItem = onCall(
   callable({ secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, memory: '512MiB' }),
   async (request) => {
@@ -228,9 +232,20 @@ exports.analyzeInventoryItem = onCall(
         .filter(Boolean))].slice(0, 40)
       : [];
 
+    // No image leaves for the AI provider without the caller's recorded
+    // consent to the current disclosure (src/ai-consent.js). The version the
+    // client agreed to is stored on the profile the first time it is seen.
+    const consentVersion = typeof request.data?.consentVersion === 'string' ? request.data.consentVersion.slice(0, 32) : '';
+    if (!consentVersion || consentVersion < AI_CONSENT_MIN_VERSION) {
+      throw new HttpsError('failed-precondition', 'ai/consent-required');
+    }
+
     await requireMember(uid, workspaceId, 'editor');
     await assertWithinLimits(workspaceId, 'ai');
     await enforceBurstLimit(uid);
+    await db.doc(`users/${uid}`).set({
+      aiConsent: { version: consentVersion, recordedAt: admin.firestore.FieldValue.serverTimestamp() },
+    }, { merge: true });
 
     const image = await loadImage(workspaceId, mediaId);
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value(), maxRetries: 2 });

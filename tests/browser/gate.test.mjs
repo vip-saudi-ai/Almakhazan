@@ -66,10 +66,11 @@ async function gatePage({ user = null, verificationNeeded = false } = {}) {
   await page.route('**/src/firebase.js', route => route.fulfill({
     contentType: 'text/javascript',
     body: `
-      export const FirebaseStatus = { LOCAL: 'local', CLOUD: 'cloud' };
+      export const FirebaseStatus = { READY: 'ready', OFFLINE: 'offline', UNAVAILABLE: 'unavailable', UNCONFIGURED: 'unconfigured', DISABLED: 'disabled' };
       export function isCloudEnabled() { return true; }
+      export function isCloudOff() { return false; }
       export function firebaseContext() {
-        return { functions: {}, sdk: { functions: { httpsCallable: (_f, name) => (payload) => {
+        return { status: 'ready', functions: {}, sdk: { functions: { httpsCallable: (_f, name) => (payload) => {
           window.__calls = window.__calls || [];
           window.__calls.push(['callable:' + name, JSON.stringify(payload)]);
           return Promise.resolve({ data: { workspaceId: 'w1' } });

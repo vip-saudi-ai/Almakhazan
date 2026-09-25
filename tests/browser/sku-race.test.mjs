@@ -62,6 +62,15 @@ const B = await openPage(context);
     const { repository } = await import('/src/repository.js');
     // Both tabs ask first — and both are told the SKU is free.
     if (await repository.skuConflict('WATCH-001')) throw Object.assign(new Error('precheck'), { code: 'precheck' });
+    // A barrier: neither tab writes until both have been told the SKU is free,
+    // so the race is the one described — two prechecks passed, two commits
+    // attempted — however the scheduler happens to interleave the tabs.
+    const channel = new BroadcastChannel('sku-race-r1');
+    const otherChecked = new Promise((resolve) => { channel.onmessage = resolve; });
+    channel.postMessage('checked');
+    await Promise.race([otherChecked, new Promise((resolve) => setTimeout(resolve, 2000))]);
+    channel.postMessage('checked');
+    channel.close();
     await repository.createItem({ name: 'ساعة', sku: 'WATCH-001', quantity: 1 });
   };
   const outcome = await race(A.page, B.page, create.toString(), create.toString());

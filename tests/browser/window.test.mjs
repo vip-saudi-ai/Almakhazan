@@ -189,7 +189,7 @@ const repoState = (page) => page.evaluate(async () => {
   const { page, context } = await open();
   const refused = await page.evaluate(async () => {
     const { exportJSON } = await import('/src/exporting.js');
-    try { exportJSON(); return { threw: false }; }
+    try { await exportJSON(); return { threw: false }; }
     catch (error) { return { threw: true, code: error.code, message: error.message }; }
   });
   check('W19 an export refuses outright while only a window is loaded',

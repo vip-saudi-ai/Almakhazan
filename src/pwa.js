@@ -16,6 +16,7 @@ import { toast } from './ui.js';
 import { isRestoreRunning } from './restore.js';
 import { isImportRunning } from './views/sheet-import.js';
 import { isImageViewerOpen } from './views/image-viewer.js';
+import { Feature, isFeatureEnabled } from './features.js';
 
 let waiting = null;
 let banner = null;
@@ -78,6 +79,15 @@ function watchRegistration(registration) {
  */
 export function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
+  // The native app ships its code inside the bundle and is updated through the
+  // App Store: no service worker, no "Update available", no code arriving
+  // from the network. One left behind by an earlier build is removed.
+  if (!isFeatureEnabled(Feature.WEB_UPDATES)) {
+    navigator.serviceWorker.getRegistrations?.()
+      .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+      .catch(() => {});
+    return;
+  }
   const allowed = location.protocol === 'https:' || new URLSearchParams(location.search).has('sw-test');
   if (!allowed) return;
 

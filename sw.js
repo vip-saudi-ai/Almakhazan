@@ -21,7 +21,7 @@
 //     someone mid-form, mid-import or mid-restore to deliver an update is
 //     exactly the wrong trade.
 
-const VERSION = 'v10.14.0';
+const VERSION = '1.0.0';
 const CACHE = `nazm-shell-${VERSION}`;
 const OLD_PREFIXES = ['almakhzan-shell-', 'nazm-shell-'];
 
@@ -31,6 +31,7 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './nazm.config.js',
   './styles/tokens.css',
   './styles/main.css',
   './styles/layout.css',

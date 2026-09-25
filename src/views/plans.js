@@ -9,7 +9,13 @@ import { currentPlan } from '../subscription.js';
 import { BRAND } from '../brand.js';
 import { onLanguageChange, pick, t } from '../i18n.js';
 import { el, formatNumber, render, $ } from '../utils.js';
-import { openSheet, toast } from '../ui.js';
+import { confirmAction, openSheet, toast, toastError, withBusy } from '../ui.js';
+import { ENV } from '../environment.js';
+import { Feature, isFeatureEnabled } from '../features.js';
+import { openExternalUrl } from '../platform.js';
+import {
+  canManageSubscription, canRestorePurchases, manageSubscription, restorePurchases, startPurchase,
+} from '../billing.js';
 
 /** Remembered while the sheet is open, so switching cycles re-renders in place. */
 let billing = 'monthly';
@@ -73,12 +79,25 @@ function planCard(plan, current) {
     ]),
     isCurrent
       ? el('div', { class: 'plan-current-tag', text: t('planUi.current') })
-      : el('button', {
-        class: `btn ${plan.badge ? 'btn-p' : 'btn-s'}`, type: 'button',
-        text: custom ? t('planUi.contact') : t('planUi.choose', { name: pick(plan.name) }),
-        onClick: () => requestPlan(plan),
-      }),
+      : planAction(plan, custom),
   ]);
+}
+
+/** A plan's button — or none, when there is nothing it could honestly do. */
+function planAction(plan, custom) {
+  if (custom) {
+    if (!ENV.contact.salesEmail) return null;
+    return el('button', {
+      class: 'btn btn-s', type: 'button', text: t('planUi.contact'),
+      onClick: () => openExternalUrl(`mailto:${ENV.contact.salesEmail}`),
+    });
+  }
+  if (plan.price.monthly === 0) return null;
+  return el('button', {
+    class: `btn ${plan.badge ? 'btn-p' : 'btn-s'}`, type: 'button',
+    text: t('planUi.choose', { name: pick(plan.name) }),
+    onClick: (event) => requestPlan(event.currentTarget, plan),
+  });
 }
 
 function renderPlans() {
@@ -88,26 +107,55 @@ function renderPlans() {
     el('p', { class: 'plan-note', text: t('planUi.dataSafe') }),
     billingToggle(),
     el('div', { class: 'plan-list' }, orderedPlans().map((plan) => planCard(plan, current))),
+    el('div', { class: 'plan-store-actions' }, [
+      canRestorePurchases() ? el('button', {
+        class: 'btn btn-s', type: 'button', text: t('planUi.restorePurchases'),
+        onClick: (event) => withBusy(event.currentTarget, '…', async () => {
+          try { await restorePurchases(); toast(t('planUi.restoreRequested'), '✓'); } catch (error) { toastError(error); }
+        }),
+      }) : null,
+      canManageSubscription() ? el('button', {
+        class: 'btn btn-s', type: 'button', text: t('planUi.manageSubscription'),
+        onClick: () => { manageSubscription().catch(toastError); },
+      }) : null,
+    ]),
   ]);
 }
 
 /**
- * The upgrade sheet. Checkout is not wired to a payment provider yet, so the
- * button says what actually happens instead of pretending a plan was bought.
+ * The upgrade sheet — when this release sells plans. When it does not
+ * (features.billing off), a limit is explained and nothing is offered for
+ * sale: no prices, no button that could not complete.
  */
 export function openPlansSheet(reason = null) {
+  if (!isFeatureEnabled(Feature.BILLING)) {
+    void confirmAction({
+      titleKey: 'planUi.limitTitle',
+      message: () => reason || t('planUi.limitReached'),
+      icon: 'ℹ️',
+      confirmLabelKey: 'common.ok',
+      hideCancel: true,
+    });
+    return;
+  }
   lastReason = reason;
   renderPlans();
   openSheet('plans');
 }
 
-function requestPlan(plan) {
-  if (plan.price.custom) {
-    toast(t('planUi.enterpriseContact', { email: BRAND.salesEmail }), '✉');
-    return;
-  }
-  // Honest until a provider is connected: no checkout, no fake activation.
-  toast(t('planUi.paymentPending'), '⏳');
+/**
+ * Hands the choice to the store. The plan changes on screen only when the
+ * backend records the purchase (the subscription watch), never here.
+ */
+async function requestPlan(button, plan) {
+  await withBusy(button, '…', async () => {
+    try {
+      const status = await startPurchase(plan.id, billing);
+      if (status === 'purchased' || status === 'pending') toast(t('planUi.purchaseProcessing'), '⏳');
+    } catch (error) {
+      toastError(error, 'error.billing/failed');
+    }
+  });
 }
 
 onLanguageChange(() => { if ($('sh-plans')?.classList.contains('open')) renderPlans(); });

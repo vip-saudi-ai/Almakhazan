@@ -48,6 +48,10 @@ function refreshInert() {
   const viewerOpen = document.body.classList.contains('viewer-open');
   const app = document.querySelector('.app');
   if (app) app.inert = Boolean(stack.length || confirmOpen || viewerOpen);
+  // The sign-in gate is a layer of its own; a sheet opened over it (the
+  // Privacy Policy, from the sign-up screen) takes the focus from it too.
+  const gate = $('gate');
+  if (gate) gate.inert = Boolean(stack.length || confirmOpen);
   stack.forEach((entry, index) => {
     const covered = confirmOpen || viewerOpen || index < stack.length - 1;
     entry.panel.inert = covered;
@@ -143,7 +147,11 @@ export function closeSheet(name) {
   if (panel) panel.inert = false;
   if (overlay) overlay.inert = false;
   refreshInert();
-  entry?.opener?.focus?.({ preventScroll: true });
+  // Back to what opened the sheet — or, when a redraw replaced it while the
+  // sheet was up (a language switch redraws Settings), to its successor.
+  const opener = entry?.opener;
+  const target = opener?.isConnected ? opener : (opener?.id ? $(opener.id) : null);
+  target?.focus?.({ preventScroll: true });
   if (entry) {
     try { closers.get(name)?.(); } catch (error) { console.error(`[ui] close handler for ${name} failed`, error); }
   }
@@ -177,7 +185,8 @@ let currentConfirmation = null;
 
 /**
  * @param {{title: string, message: string, icon?: string, confirmLabel?: string,
- *          requirePhrase?: string}} options
+ *          cancelLabel?: string, requirePhrase?: string, hideCancel?: boolean,
+ *          tone?: 'danger' | 'neutral'}} options
  * @returns {Promise<boolean>}
  */
 export function confirmAction(options) {
@@ -195,6 +204,12 @@ export function confirmAction(options) {
   paintConfirmation();
 
   $('del-ico').textContent = options.icon || '🗑';
+  // A notice has one answer; a destructive question is red, anything else is
+  // the ordinary primary colour.
+  const cancel = $('del-cancel-btn');
+  if (cancel) cancel.hidden = Boolean(options.hideCancel);
+  button.classList.toggle('btn-d', options.tone !== 'neutral' && !options.hideCancel);
+  button.classList.toggle('btn-p', options.tone === 'neutral' || Boolean(options.hideCancel));
   wrap.style.display = phrase ? '' : 'none';
   input.value = '';
   button.disabled = Boolean(phrase);
@@ -245,6 +260,8 @@ function paintConfirmation() {
   $('del-title').textContent = confirmText(options, 'title');
   $('del-sub').textContent = confirmText(options, 'message');
   $('del-confirm-btn').textContent = confirmText(options, 'confirmLabel') || t('common.delete');
+  const cancel = $('del-cancel-btn');
+  if (cancel) cancel.textContent = confirmText(options, 'cancelLabel') || t('common.cancel');
   $('del-phrase-label').textContent = phrase ? t('confirm.typeToConfirm', { phrase }) : '';
 }
 

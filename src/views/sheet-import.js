@@ -1143,11 +1143,15 @@ async function run() {
     // attempt keeps the id it was given then.
     state.progress = { ...state.progress, stage: 'simport.stage.taxonomy' };
     renderImport();
-    const created = { categories: {}, locations: {}, folders: {} };
+    // Keyed by names that came out of a spreadsheet, so the maps have no
+    // prototype: a category called "__proto__" or "constructor" is a name
+    // like any other, never an inherited property or a prototype to replace.
+    const nameMap = (source = {}) => Object.assign(Object.create(null), source);
+    const created = { categories: nameMap(), locations: nameMap(), folders: nameMap() };
     const planned = {
-      categories: { ...(job.plannedTaxonomy?.categories || {}) },
-      locations: { ...(job.plannedTaxonomy?.locations || {}) },
-      folders: { ...(job.plannedTaxonomy?.folders || {}) },
+      categories: nameMap(job.plannedTaxonomy?.categories),
+      locations: nameMap(job.plannedTaxonomy?.locations),
+      folders: nameMap(job.plannedTaxonomy?.folders),
     };
     const claimed = {
       categories: new Set(job.created?.categories || []),

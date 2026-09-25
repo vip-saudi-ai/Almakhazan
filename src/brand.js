@@ -17,9 +17,9 @@ export const BRAND = {
   get descriptor() { return t('app.tagline'); },
   get assistant() { return t('ai.assistantName'); },
   assistantMark: '✦',
-  /** [YOU] Confirm the real address before launch — see DEPLOYMENT.md. */
-  salesEmail: 'sales@nazm.app',
-  supportEmail: 'support@nazm.app',
+  // Contact addresses are deployment configuration (nazm.config.js →
+  // contact), not brand constants: an address that is not confirmed is never
+  // shown to a customer.
 };
 
 /** "✦ NAZM Assistant" — the assistant is always introduced this way. */

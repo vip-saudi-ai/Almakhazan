@@ -6,8 +6,19 @@
 
 import { ROLES } from './config.js';
 import { AppError } from './utils.js';
-import { hasMessage, t } from './i18n.js';
+import { getLanguage, hasMessage, t } from './i18n.js';
 import { firebaseContext, isCloudEnabled } from './firebase.js';
+import { isAuthProviderAvailable } from './features.js';
+import { hasNativeSignIn, isNative, nativeSignIn } from './platform.js';
+
+/**
+ * What a sign-in failure may put in the log: the provider's error code, never
+ * the error object — Firebase attaches the email address and credential data
+ * to it (customData), and logs are not the place for either.
+ */
+function logAuthFailure(what, error) {
+  console.warn(`[auth] ${what} failed`, error?.code || 'unknown');
+}
 
 let session = { user: null, workspaceId: null, role: null, ready: false };
 const listeners = new Set();
@@ -61,7 +72,7 @@ export function initializeAuthentication() {
           const membership = await resolveWorkspace(user);
           emit({ user: toProfile(user), ...membership, ready: true, local: false });
         } catch (error) {
-          console.error('[auth] workspace resolution failed', error);
+          logAuthFailure('workspace resolution', error);
           emit({ user: toProfile(user), workspaceId: null, role: null, ready: true, error, local: false });
         }
       }
@@ -128,9 +139,59 @@ async function resolveWorkspace(user) {
 
 function authError(error) {
   // Each Firebase code has its own message (`error.auth/…`); anything else
-  // is a sign-in failure, said as one.
+  // is a sign-in failure, said as one. The raw error never reaches the screen.
   const key = error?.code && hasMessage(`error.${error.code}`) ? `error.${error.code}` : 'error.auth/failed';
-  return new AppError(key, { code: error?.code, cause: error });
+  return new AppError(key, { code: error?.code });
+}
+
+/**
+ * A federated sign-in, in the way that works where the app is running:
+ *
+ *   native app  the host's native sheet (AuthenticationServices for Apple,
+ *               the Google SDK) returns an identity token, exchanged here for
+ *               a Firebase credential. WKWebView has no popups, and Apple
+ *               requires its native sheet on iOS.
+ *   web         a popup; if the browser blocks it, a full-page redirect,
+ *               which completes when the app loads again.
+ *
+ * The account UX is identical either way; only this function knows.
+ */
+async function federatedSignIn(providerId) {
+  const { auth, sdk } = firebaseContext();
+  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
+  if (!isAuthProviderAvailable(providerId)) {
+    throw new AppError('error.auth/provider-unavailable', { code: 'auth/provider-unavailable' });
+  }
+  const fa = sdk.auth;
+
+  if (isNative()) {
+    if (!hasNativeSignIn()) throw new AppError('error.auth/provider-unavailable', { code: 'auth/provider-unavailable' });
+    const result = await nativeSignIn(providerId);
+    const credential = providerId === 'apple'
+      ? new fa.OAuthProvider('apple.com').credential({ idToken: result.idToken, rawNonce: result.rawNonce })
+      : fa.GoogleAuthProvider.credential(result.idToken, result.accessToken);
+    await fa.signInWithCredential(auth, credential);
+    return;
+  }
+
+  let provider;
+  if (providerId === 'apple') {
+    provider = new fa.OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    provider.setCustomParameters({ locale: getLanguage() === 'en' ? 'en_US' : 'ar_SA' });
+  } else {
+    provider = new fa.GoogleAuthProvider();
+  }
+  try {
+    await fa.signInWithPopup(auth, provider);
+  } catch (error) {
+    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/operation-not-supported-in-this-environment') {
+      await fa.signInWithRedirect(auth, provider);
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function signInWithEmail(email, password) {
@@ -139,7 +200,7 @@ export async function signInWithEmail(email, password) {
   try {
     await sdk.auth.signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
-    console.error('[auth] email sign-in failed', error);
+    logAuthFailure('email sign-in', error);
     throw authError(error);
   }
 }
@@ -151,28 +212,23 @@ export async function registerWithEmail(email, password, displayName) {
     const credential = await sdk.auth.createUserWithEmailAndPassword(auth, email, password);
     if (displayName) await sdk.auth.updateProfile(credential.user, { displayName });
   } catch (error) {
-    console.error('[auth] registration failed', error);
+    logAuthFailure('registration', error);
     throw authError(error);
   }
 }
 
 /**
- * Apple sign-in. Requires the Apple provider to be enabled in the Firebase
- * console and an Apple Developer Services ID — see DEPLOYMENT.md § Auth.
- * Until then the call returns a clear, actionable error rather than a stack
- * trace, and the button is hidden by appleSignInAvailable().
+ * Sign in with Apple. Offered only when `auth.providers.apple` is on in
+ * nazm.config.js (the Apple provider enabled in Firebase, a Services ID and
+ * key registered — IOS-RELEASE.md § Sign in with Apple) and, in the native
+ * app, the native bridge is installed: isAuthProviderAvailable('apple').
  */
 export async function signInWithApple() {
-  const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
-    const provider = new sdk.auth.OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
-    provider.setCustomParameters({ locale: 'ar' });
-    await sdk.auth.signInWithPopup(auth, provider);
+    await federatedSignIn('apple');
   } catch (error) {
-    console.error('[auth] Apple sign-in failed', error);
+    if (error instanceof AppError) throw error;
+    logAuthFailure('Apple sign-in', error);
     if (error?.code === 'auth/operation-not-allowed') {
       throw new AppError('error.auth/apple-disabled', { code: error.code });
     }
@@ -181,12 +237,11 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
-  const { auth, sdk } = firebaseContext();
-  if (!auth) throw new AppError('error.auth/no-cloud', { code: 'auth/no-cloud' });
   try {
-    await sdk.auth.signInWithPopup(auth, new sdk.auth.GoogleAuthProvider());
+    await federatedSignIn('google');
   } catch (error) {
-    console.error('[auth] Google sign-in failed', error);
+    if (error instanceof AppError) throw error;
+    logAuthFailure('Google sign-in', error);
     throw authError(error);
   }
 }
@@ -199,7 +254,7 @@ export async function sendVerification() {
   try {
     await sdk.auth.sendEmailVerification(user);
   } catch (error) {
-    console.error('[auth] verification email failed', error);
+    logAuthFailure('verification email', error);
     if (error?.code === 'auth/too-many-requests') {
       throw new AppError('error.auth/verify-too-many', { code: error.code });
     }
@@ -224,7 +279,7 @@ export async function refreshVerification() {
     }
     return user.emailVerified;
   } catch (error) {
-    console.error('[auth] could not refresh verification state', error);
+    logAuthFailure('verification refresh', error);
     return false;
   }
 }
@@ -244,7 +299,11 @@ export async function sendPasswordReset(email) {
   try {
     await sdk.auth.sendPasswordResetEmail(auth, email);
   } catch (error) {
-    console.error('[auth] password reset failed', error);
+    // Whether an address has an account is not this screen's to reveal: an
+    // unknown address gets the same answer as a known one. A malformed
+    // address or a rate limit is still said as such.
+    if (error?.code === 'auth/user-not-found') return;
+    logAuthFailure('password reset', error);
     throw authError(error);
   }
 }
@@ -263,7 +322,7 @@ export async function refreshWorkspace() {
     const membership = await resolveWorkspace(user);
     emit({ user: toProfile(user), ...membership, ready: true, local: false });
   } catch (error) {
-    console.error('[auth] workspace refresh failed', error);
+    logAuthFailure('workspace refresh', error);
     throw new AppError('workspace.openFailed', { code: 'workspace/open-failed', cause: error });
   }
   return session;
@@ -275,7 +334,7 @@ export async function signOutUser() {
   try {
     await sdk.auth.signOut(auth);
   } catch (error) {
-    console.error('[auth] sign-out failed', error);
+    logAuthFailure('sign-out', error);
     throw new AppError('error.auth/sign-out', { code: 'auth/sign-out', cause: error });
   }
 }

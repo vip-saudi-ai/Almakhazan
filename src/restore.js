@@ -157,7 +157,7 @@ export function buildSafetyBackup() {
  *
  * @param {object} data the parsed, validated backup being restored
  * @param {{onProgress?: (p: {stage: string, done: number, total: number}) => void,
- *          saveBackup: (text: string) => void,
+ *          saveBackup: (text: string) => void | Promise<void>,
  *          sourceFingerprint: string}} options
  *   saveBackup must throw if it cannot deliver the file to the customer.
  *   sourceFingerprint is the SHA-256 of the backup file's exact bytes, from
@@ -215,7 +215,7 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   let safety;
   try {
     safety = buildSafetyBackup();
-    saveBackup(safety.text);
+    await saveBackup(safety.text);
   } catch (error) {
     // Not a warning. Without a backup this operation does not run at all.
     console.error('[restore] safety backup failed — aborting', error);

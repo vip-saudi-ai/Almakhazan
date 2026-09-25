@@ -6,7 +6,7 @@ export const messages = {
   'invite.acceptFailed': { ar: "تعذّر قبول الدعوة", en: "Could not accept the invitation" },
   'workspace.openFailed': { ar: "تعذّر فتح المساحة", en: "Could not open the workspace" },
   'boot.loadFailed': { ar: "تعذّر تحميل البيانات", en: "Could not load your data" },
-  'boot.failedRefresh': { ar: "تعذّر تشغيل التطبيق — حدّث الصفحة", en: "NAZM could not start — refresh the page" },
+  'boot.failedRefresh': { ar: "تعذّر تشغيل التطبيق — أعد فتحه", en: "NAZM could not start — please open it again" },
   'boot.failed': { ar: "تعذّر تشغيل التطبيق", en: "NAZM could not start" },
   'upload.title': { ar: "رفع بيانات هذا الجهاز؟", en: "Upload this device's data?" },
   'upload.resumeTitle': { ar: "استئناف رفع بيانات هذا الجهاز؟", en: "Resume uploading this device's data?" },

@@ -12,18 +12,15 @@ import { t } from './i18n.js';
 import { actionLabel } from './labels.js';
 import { formatValuation, valuationMidpoint } from './validation.js';
 import { buildWorkbook } from './xlsx-writer.js';
+import { saveFile } from './platform.js';
 
-function download(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  // Revoking immediately can cancel the download in some browsers.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
+// A download in a browser, the share sheet (Files, Mail, AirDrop) in the
+// native app: src/platform.js decides, and throws if the file cannot be handed
+// over — which the restore path depends on.
+const download = (blob, filename) => saveFile(blob, filename);
+
+/** Never carried from an imported file into a record. */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 function stamp() {
   return new Date().toISOString().slice(0, 10);
@@ -34,15 +31,15 @@ function stamp() {
  * The restore path depends on this throwing: a silent failure here would mean
  * the safety net was never actually there.
  */
-export function saveBackupFile(text, prefix = 'nazm_backup') {
+export async function saveBackupFile(text, prefix = 'nazm_backup') {
   if (typeof text !== 'string' || text.length < 2) {
     throw new AppError('error.export/empty', { code: 'export/empty' });
   }
   const blob = new Blob([text], { type: 'application/json' });
-  download(blob, `${prefix}_${stamp()}.json`);
+  await download(blob, `${prefix}_${stamp()}.json`);
 }
 
-export function exportExcel() {
+export async function exportExcel() {
   const repo = repository;
   // An export is a statement about the whole inventory. If only a window is
   // loaded this refuses loudly rather than writing a short file that looks
@@ -149,7 +146,7 @@ export function exportExcel() {
   }
 
   try {
-    download(buildWorkbook(sheets), `${t('export.filePrefix')}_${stamp()}.xlsx`);
+    await download(buildWorkbook(sheets), `${t('export.filePrefix')}_${stamp()}.xlsx`);
   } catch (error) {
     console.error('[export] Excel export failed', error);
     throw new AppError('error.export/excel', { code: 'export/excel', cause: error });
@@ -164,7 +161,7 @@ export function exportExcel() {
  *   it — so the caller tells the customer now rather than on the day they
  *   need it. The file is still delivered: it is their data, readable as JSON.
  */
-export function exportJSON() {
+export async function exportJSON() {
   const repo = repository;
   repo.assertItemsComplete('partial.backup');
   const payload = {
@@ -194,7 +191,7 @@ export function exportJSON() {
       { code: error instanceof RangeError ? 'export/too-large' : 'export/failed', cause: error });
   }
   try {
-    download(blob, `nazm_backup_${stamp()}.json`);
+    await download(blob, `nazm_backup_${stamp()}.json`);
   } catch (error) {
     console.error('[export] JSON export failed', error);
     throw new AppError('error.export/failed', { code: 'export/failed', cause: error });
@@ -290,7 +287,10 @@ export async function readBackupFile(file) {
   }
   let data;
   try {
-    data = JSON.parse(new TextDecoder().decode(bytes));
+    // Keys that name an object's prototype machinery are dropped as the file
+    // is read: a backup is data, and "__proto__" in it must never become a
+    // prototype when a record is later copied or merged.
+    data = JSON.parse(new TextDecoder().decode(bytes), (key, value) => (UNSAFE_KEYS.has(key) ? undefined : value));
   } catch (error) {
     throw new AppError('error.import/parse', { code: 'import/parse', cause: error });
   }
@@ -379,7 +379,7 @@ export async function applyMerge(data) {
  * Exports a chosen subset rather than the whole inventory. Same columns as the
  * full export, so a selection and a backup open the same way.
  */
-export function exportSelection(items) {
+export async function exportSelection(items) {
   if (!items?.length) throw new AppError('error.export/empty-selection', { code: 'export/empty-selection' });
   const repo = repository;
 
@@ -415,7 +415,7 @@ export function exportSelection(items) {
   }
 
   try {
-    download(buildWorkbook([{ name: t('export.sheetSelection'), rows }]), `${t('export.filePrefix')}_${t('export.selectionSuffix')}_${stamp()}.xlsx`);
+    await download(buildWorkbook([{ name: t('export.sheetSelection'), rows }]), `${t('export.filePrefix')}_${t('export.selectionSuffix')}_${stamp()}.xlsx`);
   } catch (error) {
     console.error('[export] selection export failed', error);
     throw new AppError('error.export/selection', { code: 'export/selection', cause: error });

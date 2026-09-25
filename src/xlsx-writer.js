@@ -53,6 +53,13 @@ function toExcelSerial(date) {
  * @param {{name: string, rows: Array<Array<any>>}} sheet
  * Cell values: number → numeric, Date → date-formatted, null/undefined → empty,
  * anything else → inline string.
+ *
+ * Formula injection: this writer never emits a formula (<f>). Text is written
+ * as an inline string cell, which Excel, Numbers and LibreOffice display as
+ * text and never evaluate — so an item called "=HYPERLINK(…)" or "-5% lot"
+ * arrives exactly as typed, neither executed nor rewritten with a leading
+ * quote. There is deliberately no CSV export, where that guarantee would not
+ * hold. tests/unit/release.test.mjs pins this.
  */
 function sheetXml(sheet) {
   const rows = sheet.rows.map((cells, rowIndex) => {
@@ -208,3 +215,6 @@ export function buildWorkbook(sheets) {
   if (!sheets?.length) throw new Error('workbook needs at least one sheet');
   return zip(buildParts(sheets));
 }
+
+/** The worksheet XML for one sheet, exposed for tests/unit/release.test.mjs. */
+export { sheetXml as sheetXmlForTest };

@@ -218,6 +218,32 @@ Free-text search still has no server-side answer — Firestore has none — so a
 search loads the inventory and runs locally. That is a deliberate trade, not
 an oversight: see `PRODUCTION-CHECKLIST.md` → “Known limits”.
 
+## Release configuration and the platform
+
+- **`nazm.config.js`** (classic script, loaded first) is the one file a
+  deployment edits: environment, feature flags, auth providers, the Firebase
+  project and SDK location, App Check, contact details. `src/environment.js`
+  reads it once into a frozen `ENV`; a missing or malformed value can only
+  switch something off.
+- **`src/features.js`** answers two questions for every view:
+  `isFeatureEnabled(name)` (part of this release?) and
+  `isFeatureAvailable(name)` (usable now: enabled, and the cloud up when it
+  needs it). `isAuthProviderAvailable()` decides sign-in buttons. Static
+  markup is tagged `data-feature="…"` and hidden by `applyFeatureVisibility()`.
+  Hidden UI is never access control.
+- **`src/platform.js`** is the only place that knows whether the app runs in a
+  browser or the native container (`window.NazmNative`, installed by the iOS
+  host — IOS-RELEASE.md §3): external URLs, file export through the share
+  sheet, Open Settings, printing, status bar, native sign-in, and whether a
+  service worker is used.
+- **`src/billing.js`** hands purchases to the store; **`src/account.js`**
+  holds every account and data lifecycle operation (erase this device, delete
+  the account, leave / transfer / delete a workspace); **`src/ai-consent.js`**
+  gates every external AI request. The backend side of account deletion is
+  `functions/src/account.js`.
+- Legal documents live in `src/locales/legal-documents.js` (both languages,
+  section by section) and open in `src/views/legal.js`.
+
 ## The phone
 
 Four rules, each with one owner:

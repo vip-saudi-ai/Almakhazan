@@ -2,16 +2,16 @@
 
 import { icon } from '../icons.js';
 import {
-  APP_VERSION, CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, SCHEMA_VERSION, UNCATEGORIZED_ID,
+  CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, UNCATEGORIZED_ID,
 } from '../config.js';
 import { aiAvailability, aiStatusLabel } from '../ai.js';
 import { LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
 import { categoryName, locationName, roleLabel } from '../labels.js';
 import {
-  currentSession, listMembers, registerWithEmail, sendPasswordReset,
-  signInWithEmail, signInWithGoogle, signOutUser,
+  currentSession, registerWithEmail, sendPasswordReset,
+  signInWithApple, signInWithEmail, signInWithGoogle, signOutUser,
 } from '../auth.js';
-import { FirebaseStatus, firebaseContext } from '../firebase.js';
+import { firebaseContext, isCloudOff } from '../firebase.js';
 import {
   MAX_BACKUP_FILE_BYTES, applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile,
 } from '../exporting.js';
@@ -26,10 +26,15 @@ import { startSpreadsheetImport } from './sheet-import.js';
 import { MigrationState, migrationStatus, runMigration } from '../migration.js';
 import { repository } from '../repository.js';
 import {
-  assistantLabel, currentPlan, onSubscriptionChange, planStatus, planUsage, quotaStatus,
+  assistantLabel, currentPlan, onSubscriptionChange, planStatus, planUsage, quotaStatus, subscriptionState,
 } from '../subscription.js';
 import { UNLIMITED } from '../entitlements.js';
 import { openPlansSheet } from './plans.js';
+import { eraseRow, renderAboutPanel, renderLegalPanel } from './settings-legal.js';
+import { legalConsentLine } from './legal.js';
+import { accountSignInMethods } from '../account.js';
+import { hasAiConsent, withdrawAiConsent } from '../ai-consent.js';
+import { Feature, isAuthProviderAvailable, isFeatureAvailable } from '../features.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
 import { primaryImage, validateImport } from '../validation.js';
@@ -668,7 +673,7 @@ function showMergeSkuConflicts(conflicts) {
 export async function runFullExcelExport() {
   if (!(await withFullInventory(t('export.reading')))) return false;
   try {
-    exportExcel();
+    await exportExcel();
     toast(t('export.done'), '📊');
     return true;
   } catch (error) {
@@ -680,7 +685,7 @@ export async function runFullExcelExport() {
 export async function runFullJsonExport() {
   if (!(await withFullInventory(t('export.reading')))) return false;
   try {
-    const { bytes, restorable } = exportJSON();
+    const { bytes, restorable } = await exportJSON();
     if (!restorable) {
       // Said now, not on the day the file is needed.
       void confirmAction({
@@ -707,7 +712,8 @@ export function renderSettings() {
   renderAiPanel();
   renderDataPanel();
   renderMigrationPanel();
-  setText('app-version', t('app.versionLine', { version: APP_VERSION, schema: String(SCHEMA_VERSION) }));
+  renderLegalPanel();
+  renderAboutPanel();
 }
 
 /**
@@ -760,10 +766,10 @@ function renderAuthPanel() {
   const session = currentSession();
   const { status } = firebaseContext();
 
-  if (status === FirebaseStatus.UNAVAILABLE || status === FirebaseStatus.UNCONFIGURED) {
+  if (isCloudOff(status)) {
     render(panel, [
       el('div', { class: 'srow' }, [
-        el('div', { class: 'srowiw', style: { background: 'rgba(255,149,0,.15)' }, text: '📴', 'aria-hidden': 'true' }),
+        el('div', { class: 'srowiw', style: { background: 'rgba(52,199,89,.15)' }, text: '📱', 'aria-hidden': 'true' }),
         el('div', [
           el('div', { class: 'srowl', text: t('settings.localMode') }),
           el('div', { class: 'srowd', text: t('settings.localModeSub') }),
@@ -778,11 +784,12 @@ function renderAuthPanel() {
       el('div', { class: 'auth-intro', text: t('auth.intro') }),
       el('div', { class: 'frow' }, [
         el('label', { for: 'auth-email', text: t('auth.email') }),
-        el('input', { id: 'auth-email', type: 'email', dir: 'ltr', autocomplete: 'email', placeholder: 'name@example.com' }),
+        el('input', { id: 'auth-email', type: 'email', dir: 'ltr', autocomplete: 'email', placeholder: 'name@example.com', enterkeyhint: 'next' }),
       ]),
       el('div', { class: 'frow' }, [
         el('label', { for: 'auth-password', text: t('auth.password') }),
-        el('input', { id: 'auth-password', type: 'password', dir: 'ltr', autocomplete: 'current-password', placeholder: '••••••••' }),
+        el('input', { id: 'auth-password', type: 'password', dir: 'ltr', autocomplete: 'current-password', placeholder: '••••••••', enterkeyhint: 'go', 'aria-describedby': 'auth-password-rule' }),
+        el('div', { class: 'field-hint', id: 'auth-password-rule', text: t('gate.passwordRule') }),
       ]),
       el('div', { class: 'auth-actions' }, [
         el('button', {
@@ -794,10 +801,16 @@ function renderAuthPanel() {
           onClick: (event) => authAction(event.currentTarget, () => registerWithEmail($('auth-email').value.trim(), $('auth-password').value)),
         }),
       ]),
-      el('button', {
+      legalConsentLine(),
+      // Apple first: on iOS it is required wherever Google is offered.
+      isAuthProviderAvailable('apple') ? el('button', {
+        class: 'btn btn-s auth-google', type: 'button', text: t('gate.withApple'),
+        onClick: (event) => authAction(event.currentTarget, signInWithApple),
+      }) : null,
+      isAuthProviderAvailable('google') ? el('button', {
         class: 'btn btn-s auth-google', type: 'button', text: t('auth.google'),
         onClick: (event) => authAction(event.currentTarget, signInWithGoogle),
-      }),
+      }) : null,
       el('button', {
         class: 'auth-link', type: 'button', text: t('auth.forgot'),
         onClick: async () => {
@@ -815,30 +828,33 @@ function renderAuthPanel() {
     return;
   }
 
-  render(panel, [
-    el('div', { class: 'srow' }, [
-      el('div', { class: 'srowiw', style: { background: 'rgba(52,199,89,.15)' }, text: '👤', 'aria-hidden': 'true' }),
-      el('div', { style: { flex: '1' } }, [
-        el('div', { class: 'srowl', dir: 'auto', text: session.user.displayName }),
-        el('div', { class: 'srowd', text: `${session.user.email || t('common.noEmail')} · ${roleLabel(session.role)}` }),
-      ]),
+  const workspaceName = subscriptionState().workspace?.name || '';
+  const detail = (label, value, dir = 'auto') => el('div', { class: 'srow', style: { cursor: 'default' } }, [
+    el('div', { style: { flex: '1' } }, [
+      el('div', { class: 'srowd', text: label }),
+      el('div', { class: 'srowl', dir, text: value }),
     ]),
+  ]);
+  render(panel, [
+    detail(t('account.name'), session.user.displayName || '—'),
+    session.user.email ? detail(t('account.email'), session.user.email, 'ltr') : null,
+    detail(t('account.provider'), providerLabel()),
+    workspaceName ? detail(t('account.workspace'), `${workspaceName} · ${roleLabel(session.role)}`) : null,
     el('button', {
       class: 'btn btn-d', type: 'button', text: t('auth.signOut'), style: { width: '100%', marginTop: '10px' },
       onClick: (event) => authAction(event.currentTarget, signOutUser),
     }),
-    el('button', {
-      class: 'auth-link', type: 'button', text: t('auth.showMembers'),
-      onClick: async () => {
-        try {
-          const members = await listMembers(session.workspaceId);
-          toast(t('auth.memberCount', { count: members.length }), '👥');
-        } catch (error) {
-          toastError(error, 'auth.membersFailed');
-        }
-      },
-    }),
   ]);
+}
+
+/** How the signed-in account proves who it is, in words. */
+function providerLabel() {
+  const methods = accountSignInMethods();
+  const names = [];
+  if (methods.apple) names.push(t('account.provider.apple'));
+  if (methods.google) names.push(t('account.provider.google'));
+  if (methods.password) names.push(t('account.provider.password'));
+  return names.join(' · ') || '—';
 }
 
 function authAction(button, action) {
@@ -971,6 +987,17 @@ function renderAiPanel() {
         el('span', { text: aiStatusLabel(availability) }),
       ]),
     ]),
+    // Consent to external processing can be taken back as easily as it was
+    // given; the next analysis asks again.
+    hasAiConsent() ? el('button', {
+      class: 'srow srow-btn', type: 'button',
+      onClick: () => { withdrawAiConsent(); toast(t('aiConsent.withdrawn'), '✓'); renderAiPanel(); },
+    }, [
+      el('div', { style: { flex: '1' } }, [
+        el('div', { class: 'srowl', text: t('aiConsent.withdraw') }),
+        el('div', { class: 'srowd', text: t('aiConsent.withdrawSub') }),
+      ]),
+    ]) : null,
   ]);
 }
 
@@ -1044,8 +1071,8 @@ function renderDataPanel() {
     row('◈', 'rgba(99,102,241,.15)', t('settings.taxonomy'), t('settings.taxonomySub'), () => goTab('cats')),
     // Device-only mode has no members and no other workspace to move to, so
     // these are absent rather than present and refusing.
-    cloudSession ? row('👥', 'rgba(37,99,255,.15)', t('team.title'), t('settings.teamSub'), openTeamSheet) : null,
-    cloudSession ? row('🗄', 'rgba(147,197,253,.25)', t('workspace.title'), t('settings.workspacesSub'), () => { void openWorkspaceSheet(); }) : null,
+    cloudSession && isFeatureAvailable(Feature.TEAM) ? row('👥', 'rgba(37,99,255,.15)', t('team.title'), t('settings.teamSub'), openTeamSheet) : null,
+    cloudSession && isFeatureAvailable(Feature.TEAM) ? row('🗄', 'rgba(147,197,253,.25)', t('workspace.title'), t('settings.workspacesSub'), () => { void openWorkspaceSheet(); }) : null,
     row('📊', 'rgba(52,199,89,.15)', t('export.excel'), t('settings.excelSub'), () => { void runFullExcelExport(); }),
     // Honest about what the file holds. It is the records, never the image
     // files: on a device-only workspace those stay on the device, and on a
@@ -1082,7 +1109,9 @@ function renderDataPanel() {
 
   const danger = $('danger-panel');
   render(danger, [
-    el('button', {
+    // A workspace's records, in whichever workspace is open — for a device
+    // inventory the erase row below is the complete version of this.
+    !cloudSession ? null : el('button', {
       class: 'srow srow-btn', type: 'button',
       onClick: async () => {
         // clearInventory loads everything before it deletes anything, so the
@@ -1116,6 +1145,7 @@ function renderDataPanel() {
         el('div', { class: 'srowd', text: t('danger.clearRowSub') }),
       ]),
     ]),
+    eraseRow(),
   ]);
 }
 

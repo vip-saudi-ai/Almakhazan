@@ -43,5 +43,4 @@ export const messages = {
   'planUi.choose': { ar: "اختر {name}", en: "Choose {name}" },
   'planUi.dataSafe': { ar: "بياناتك تبقى كما هي في كل الأحوال — تغيير الخطة لا يحذف أي قطعة.", en: "Your data stays as it is either way — changing plans never deletes an item." },
   'planUi.enterpriseContact': { ar: "راسلنا على {email} لترتيب خطة المؤسسات", en: "Email us at {email} to arrange an Enterprise plan" },
-  'planUi.paymentPending': { ar: "الدفع الإلكتروني قيد التفعيل — راسلنا لتفعيل خطتك يدوياً", en: "Online payment is coming soon — email us to activate your plan manually" },
 };

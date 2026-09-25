@@ -20,6 +20,7 @@ import {
 import { openDetail, openMoveSheet, openQuickPreview, deleteItemFlow, duplicateItemFlow } from './detail.js';
 import { openItemForm } from './item-form.js';
 import { openPlansSheet } from './plans.js';
+import { Feature, isFeatureEnabled } from '../features.js';
 import { symbolNode } from './mark.js';
 import { goTab } from '../navigation.js';
 import { openScanner } from './scan.js';
@@ -516,10 +517,11 @@ function renderQuotaBanner() {
   banner.className = `quota-banner ${quota.level}`;
   render(banner, [
     el('span', { class: 'qb-txt', text: quota.message }),
-    el('button', {
+    // Plans are offered only by a release that sells them.
+    isFeatureEnabled(Feature.BILLING) ? el('button', {
       class: 'qb-act', type: 'button', text: t('home.showPlans'),
       onClick: () => { openPlansSheet(); },
-    }),
+    }) : null,
     quota.level === 'full' ? null : el('button', {
       class: 'qb-close', type: 'button', 'aria-label': t('home.hide'),
       onClick: () => { dismissedQuotaLevel = quota.level; renderQuotaBanner(); },
@@ -771,7 +773,7 @@ async function bulkExport() {
   try {
     const { items, missing } = await repository.getItems(selectedIds());
     const live = items.filter((item) => !item.deletedAt);
-    exportSelection(live);
+    await exportSelection(live);
     bulkOutcome('bulk.outcomeExported', live.length, { missing, skipped: items.filter((i) => i.deletedAt).map((i) => i.id) });
   } catch (error) {
     toastError(error, 'bulk.exportFailed');

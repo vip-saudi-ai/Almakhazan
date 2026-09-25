@@ -16,6 +16,8 @@ import * as local from './local-store.js';
 import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } from './device-upload.js';
 import { $, el, formatNumber, render } from './utils.js';
 import { registerServiceWorker } from './pwa.js';
+import { applyFeatureVisibility } from './features.js';
+import { isNative, setStatusBarStyle } from './platform.js';
 import { applyDocumentLocale, onLanguageChange, setLanguage, t } from './i18n.js';
 import { goTab, registerTab, renderActiveTab } from './navigation.js';
 import { watchViewport } from './viewport.js';
@@ -37,7 +39,7 @@ import {
   activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
 } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -112,7 +114,18 @@ async function boot() {
   // screen immediately.
   window.addEventListener('almakhzan:data-imported', () => renderAll());
 
+  let signedInAs = session.user?.uid || null;
   onSessionChange(async (next) => {
+    // A different person on this device: nothing the last one had on screen
+    // survives — an open record, a search, a selection. The repository
+    // restart below drops their data and image URLs; the device inventory is
+    // a separate store and is left alone.
+    const uid = next.user?.uid || null;
+    if (uid !== signedInAs) {
+      signedInAs = uid;
+      closeAllSheets();
+      clearSearch();
+    }
     gateOnSession(next);
     const wanted = next.user ? 'cloud' : 'local';
     if (repository.session.mode === wanted && repository.session.workspaceId === next.workspaceId) return;
@@ -318,6 +331,15 @@ function initializeUI() {
   watchViewport();
   // Static markup declares which icon it wants; this draws them all once.
   hydrateIcons();
+  // Features this release does not offer have no UI at all.
+  applyFeatureVisibility();
+  document.documentElement.classList.toggle('native-app', isNative());
+  // In the native app the host draws the status bar; it follows the theme the
+  // page is in (theme-color does the same job on the web).
+  const scheme = window.matchMedia?.('(prefers-color-scheme: dark)');
+  const followScheme = () => setStatusBarStyle(scheme?.matches ? 'dark' : 'light');
+  followScheme();
+  scheme?.addEventListener?.('change', followScheme);
 
   // A rotation changes the box the image is contained in. The zoom is kept —
   // losing it mid-inspection is worse than a moment's reflow — but a pan that

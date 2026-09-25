@@ -4,16 +4,26 @@
 // status. Nothing else in the app guesses at readiness from a global flag, and
 // no data is loaded or written before this settles.
 
-import { APP_CHECK_DEBUG_TOKEN, APP_CHECK_SITE_KEY, FIREBASE_CONFIG, FUNCTIONS_REGION } from './config.js';
+import { FIREBASE_CONFIG, FUNCTIONS_REGION } from './config.js';
+import { ENV, isLocalHost } from './environment.js';
 
-const SDK = 'https://www.gstatic.com/firebasejs/10.12.0';
+// Where the SDK comes from is configuration (nazm.config.js): a CDN for the
+// web, a copy inside the app bundle for the native build.
+const SDK = ENV.firebase.sdkBaseUrl.replace(/\/+$/, '');
 
 export const FirebaseStatus = {
   READY: 'ready',           // SDK loaded, project reachable
   OFFLINE: 'offline',       // SDK loaded but no network; cached reads only
   UNAVAILABLE: 'unavailable', // SDK could not be loaded at all
   UNCONFIGURED: 'unconfigured', // no project configured
+  DISABLED: 'disabled',     // cloud switched off for this release (nazm.config.js)
 };
+
+/** No cloud by decision or by circumstance: the app runs on the device. */
+export function isCloudOff(status = context.status) {
+  return status === FirebaseStatus.UNAVAILABLE || status === FirebaseStatus.UNCONFIGURED
+    || status === FirebaseStatus.DISABLED;
+}
 
 // Startup must never be able to hang. A slow CDN, a captive portal, or an
 // origin where Firebase cannot run all resolve to "no cloud" instead of an
@@ -57,30 +67,39 @@ async function loadSdk() {
   return { app: appMod, firestore: firestoreMod, storage: storageMod, auth: authMod, functions: functionsMod };
 }
 
-/** True on a developer machine, where a debug token is the only way in. */
-function isLocalHost() {
-  const host = globalThis.location?.hostname || '';
-  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.local');
-}
-
+/**
+ * App Check — ENABLE BEFORE THE CLOUD LAUNCH.
+ *
+ *   Web:    set appCheck.siteKey in nazm.config.js (reCAPTCHA v3 or Enterprise
+ *           key registered for the production origin in the Firebase console).
+ *   Native: configure App Attest in the native Firebase SDK (AppDelegate);
+ *           siteKey stays null in the bundled nazm.config.js.
+ *   Then, and only then, set ENFORCE_APP_CHECK on the backend (DEPLOYMENT.md
+ *   §5): enforcing before clients send tokens locks every customer out.
+ *
+ * Debug provider: only when environment is 'development' AND the page is on
+ * localhost AND appCheck.debug is true. It asks Firebase to generate a token
+ * on this machine (printed to the console, registered by the developer); no
+ * token string exists in the source, so none can ship.
+ */
 async function enableAppCheck(app) {
-  if (!APP_CHECK_SITE_KEY) return;
+  const { siteKey, provider, debug } = ENV.appCheck;
+  if (!siteKey) return;
   try {
-    // A debug token is honoured only on a developer machine. Registering one
-    // from a deployed origin would hand anyone a way around attestation, so
-    // the check is on the host, not on a build flag someone can forget.
-    if (isLocalHost() && APP_CHECK_DEBUG_TOKEN) {
-      globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = APP_CHECK_DEBUG_TOKEN;
+    if (debug && ENV.environment === 'development' && isLocalHost()) {
+      globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     }
-
-    const { initializeAppCheck, ReCaptchaV3Provider } = await import(`${SDK}/firebase-app-check.js`);
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
+    const appCheck = await import(`${SDK}/firebase-app-check.js`);
+    const Provider = provider === 'recaptcha-enterprise'
+      ? appCheck.ReCaptchaEnterpriseProvider
+      : appCheck.ReCaptchaV3Provider;
+    appCheck.initializeAppCheck(app, {
+      provider: new Provider(siteKey),
       isTokenAutoRefreshEnabled: true,
     });
   } catch (error) {
-    // App Check is a hardening layer; its absence must be visible but not fatal.
-    console.error('[firebase] App Check initialization failed', error);
+    // A hardening layer: its absence is logged, never fatal to startup.
+    console.error('[firebase] App Check initialization failed', error?.message);
   }
 }
 
@@ -92,6 +111,12 @@ export function initializeFirebase() {
   if (bootstrapPromise) return bootstrapPromise;
 
   bootstrapPromise = (async () => {
+    // Switched off for this release: the SDK is never fetched, nothing waits
+    // on a network, and the app opens as the device inventory it is.
+    if (!ENV.features.cloud) {
+      context = { ...context, status: FirebaseStatus.DISABLED };
+      return context;
+    }
     if (!FIREBASE_CONFIG?.projectId) {
       context = { ...context, status: FirebaseStatus.UNCONFIGURED };
       return context;
@@ -155,7 +180,7 @@ export function initializeFirebase() {
 /** Keeps the reported status in step with connectivity once initialized. */
 export function watchConnectivity(onChange) {
   const update = () => {
-    if (context.status === FirebaseStatus.UNAVAILABLE || context.status === FirebaseStatus.UNCONFIGURED) return;
+    if (isCloudOff()) return;
     context = { ...context, status: navigator.onLine ? FirebaseStatus.READY : FirebaseStatus.OFFLINE };
     onChange?.(context.status);
   };

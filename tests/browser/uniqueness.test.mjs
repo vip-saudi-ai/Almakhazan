@@ -535,7 +535,7 @@ const liveBySku = (page, sku) => page.evaluate(async (sku) => {
       try {
         repository.state.items = Array.from({ length: count }, (_, i) => item(i, profile));
         repository.itemsComplete = true;
-        const written = exportJSON();
+        const written = await exportJSON();
         repository.state.items = saved.items;
         const started = performance.now();
         const read = await readBackupFile(new File([captured], 'nazm_backup.json', { type: 'application/json' }));

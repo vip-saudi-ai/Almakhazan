@@ -14,6 +14,7 @@ const billing = require('./src/billing');
 const media = require('./src/media');
 const usage = require('./src/usage');
 const workspaces = require('./src/workspaces');
+const account = require('./src/account');
 
 // ── AI ──
 exports.analyzeInventoryItem = ai.analyzeInventoryItem;
@@ -38,6 +39,12 @@ exports.acceptInvitation = workspaces.acceptInvitation;
 exports.requestWorkspaceDeletion = workspaces.requestWorkspaceDeletion;
 exports.cancelWorkspaceDeletion = workspaces.cancelWorkspaceDeletion;
 exports.sweepDeletedWorkspaces = workspaces.sweepDeletedWorkspaces;
+
+// ── account lifecycle ──
+exports.accountDeletionStatus = account.accountDeletionStatus;
+exports.deleteAccount = account.deleteAccount;
+exports.leaveWorkspace = account.leaveWorkspace;
+exports.transferWorkspaceOwnership = account.transferWorkspaceOwnership;
 
 // ── billing ──
 exports.createCheckoutSession = billing.createCheckoutSession;
