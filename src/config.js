@@ -1,5 +1,6 @@
 // Firebase project config and app-wide constants.
 import { ENV } from './environment.js';
+import { purchaseProvider } from './purchase-provider.js';
 // The Firebase web apiKey is a public project identifier, not a secret; access is
 // controlled by Security Rules and App Check. The Anthropic key lives server-side only.
 
@@ -124,6 +125,22 @@ export const IMAGE_LIMITS = {
   webSafeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
 };
 
+/**
+ * The largest JSON backup a restore or merge will read, per platform.
+ *
+ * A backup is parsed whole: the file's bytes, the decoded text and the parsed
+ * records are all in memory at once, which peaks at several times the file
+ * size. A desktop browser has room for the largest backup NAZM can write
+ * (tools/measure-backup-size.mjs: a realistic record is ~7.4 KB, so 256 MB is
+ * ~35,000 records). An iPhone's WebView is killed under memory pressure well
+ * before that, so the native app accepts 64 MB (~8,600 realistic records) and
+ * says so, rather than being terminated half way through a restore. The size
+ * is checked from the file's metadata, before a byte is read.
+ */
+export const IMPORT_LIMITS = {
+  backupBytes: { web: 256 * 1024 * 1024, native: 64 * 1024 * 1024 },
+};
+
 export const TEXT_LIMITS = {
   name: 200,
   sku: 64,
@@ -238,7 +255,8 @@ export const LOCAL_MODE_POLICY_OVERRIDE = null;
 
 export function localModePolicy(where = globalThis.location) {
   if (LOCAL_MODE_POLICY_OVERRIDE) return LOCAL_MODE_POLICY_OVERRIDE;
-  if (!ENV.features.billing) return LocalModePolicy.STANDALONE;
+  // Nothing is sold without both the flag and a store to sell through.
+  if (!ENV.features.billing || !purchaseProvider()) return LocalModePolicy.STANDALONE;
   const protocol = where?.protocol || '';
   const host = where?.hostname || '';
   const development = protocol === 'file:'

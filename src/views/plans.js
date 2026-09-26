@@ -12,7 +12,7 @@ import { el, formatNumber, render, $ } from '../utils.js';
 import { confirmAction, openSheet, toast, toastError, withBusy } from '../ui.js';
 import { ENV } from '../environment.js';
 import { Feature, isFeatureEnabled } from '../features.js';
-import { openExternalUrl } from '../platform.js';
+import { contactSales } from '../contact.js';
 import {
   canManageSubscription, canRestorePurchases, manageSubscription, restorePurchases, startPurchase,
 } from '../billing.js';
@@ -89,7 +89,7 @@ function planAction(plan, custom) {
     if (!ENV.contact.salesEmail) return null;
     return el('button', {
       class: 'btn btn-s', type: 'button', text: t('planUi.contact'),
-      onClick: () => openExternalUrl(`mailto:${ENV.contact.salesEmail}`),
+      onClick: contactSales,
     });
   }
   if (plan.price.monthly === 0) return null;

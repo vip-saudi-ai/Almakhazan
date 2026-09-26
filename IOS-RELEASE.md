@@ -17,13 +17,20 @@ a Firebase deployment or production credentials are listed as external work.
 
 ## 1. What ships in 1.0.0
 
-`nazm.config.js` is the one file that decides the release. As shipped:
+`nazm.config.js` is the one file that decides the release — the
+**production, local-only** configuration. It configures no Firebase project at
+all (`firebase.project` fields are `null`); the cloud configuration for a later
+release is `config/nazm.config.cloud.example.js`. `src/environment.js`
+validates it at startup (inconsistent flags off, invalid addresses and
+non-HTTPS URLs dropped) and `src/config-report.js` reports what it corrected —
+every note in development, one sanitised line otherwise. After changing
+`features` or `firebase`, run `npm run security:apply` (§13). As shipped:
 
 | Flag | Value | What it switches on | Before switching it on |
 |---|---|---|---|
 | `features.cloud` | `false` | Firebase: accounts, sync, cloud images, cloud restore, server import jobs | Production Firebase project deployed (rules, indexes, functions); App Check (§6); the Firebase SDK **bundled in the app** via `firebase.sdkBaseUrl` (no code downloaded at run time on iOS); privacy labels updated (§10) |
 | `features.team` | `false` | Members, invitations, workspace switching | `cloud`; invitation delivery (mail provider) configured |
-| `features.billing` | `false` | Paid plans, purchase, Restore Purchases, Manage Subscription | StoreKit connected through the bridge (§7); App Store server notifications reaching `functions/src/billing.js` |
+| `features.billing` | `false` | Paid plans, purchase, Restore Purchases, Manage Subscription | StoreKit connected through the bridge (§7) — without a purchase provider the flag alone shows nothing; App Store server notifications reaching `functions/src/billing.js` |
 | `features.cloudAi` | `false` | Photo analysis by an external AI provider | `cloud`; `analyzeInventoryItem` deployed with its secret; provider named in the privacy labels |
 | `auth.providers.apple / google` | `false` | Sign in with Apple / Google | Both configured together (Guideline 4.8); native sign-in bridge (§5) |
 
@@ -47,7 +54,7 @@ billing is switched on.
    `npx cap init`), app name **نَظْم** (Arabic) / **NAZM**, with the
    **bundle identifier chosen by Mazayda** — none is assumed here.
 2. `webDir`: a copy of `index.html`, `nazm.config.js`, `manifest.webmanifest`,
-   `src/`, `styles/`, `public/`. Not `sw.js` (unused in the app), not `dist/`,
+   `src/`, `styles/`, `public/`. Not `sw.js` (unused in the app), not `config/`, `native/`, `dist/`,
    `tests/`, `tools/`, `functions/`, `node_modules/`.
 3. Load `native/nazm-native-bridge.js` (bundled with its plugins) before
    `nazm.config.js`. It installs `window.NazmNative`; see §3.
@@ -68,7 +75,8 @@ billing is switched on.
 | Method | Used for | Without it |
 |---|---|---|
 | `platform`, `appVersion`, `buildNumber` | Settings → About; problem reports | web values |
-| `openUrl(url)` | Support links, mail, enterprise contact | `window.open` (web only) |
+| `openUrl(url)` | Support website, public legal pages (https only) | `window.open` (web only) |
+| `composeEmail({ to, subject, body })` | Support, problem reports, privacy requests | `openUrl` with a validated, encoded `mailto:`, else a mailto link |
 | `shareFile({ filename, mimeType, base64 })` | Excel/JSON export, restore safety backup | exports refuse with a message (a WKWebView cannot follow a blob download) |
 | `openSettings()` | "Open Settings" after the camera was refused | button hidden; the message says where |
 | `print()` | QR labels | label buttons hidden in the native app |
@@ -238,10 +246,27 @@ Rate limits (server-side; client throttling is not protection):
 | Import jobs | plan row limits; add a per-user job rate if server-side jobs are enabled | partial |
 | Account deletion attempts | `enforceRate` — 5/hour/user | implemented |
 
-Content Security Policy: `index.html` meta tag. Firebase, Google sign-in,
-Apple sign-in and reCAPTCHA only; no `unsafe-eval`; `unsafe-inline` for style
-attributes only. A native build that bundles the Firebase SDK can remove
-`https://www.gstatic.com` from `script-src`.
+Content Security Policy and headers are **generated from the configuration**
+by `tools/security-policy.mjs` (`npm run security:apply`, checked by
+`npm run security:check` and the unit tests):
+
+- `index.html` carries an enforced meta CSP (the native app's bundled files and
+  any server that sends no header). With cloud off it allows **no external
+  origin**: `script-src 'self'`, no inline script, no `eval`; styles allow
+  `'unsafe-inline'` for style attributes only.
+- `firebase.json` sends the header version plus `frame-ancestors 'none'`,
+  `upgrade-insecure-requests`, HSTS, `nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: no-referrer`, a deny-by-default `Permissions-Policy`
+  (camera for this origin only), COOP and CORP. See DEPLOYMENT.md § Security
+  headers.
+- The single-file build (`dist/nazm.html`) carries its own policy that allows
+  its inline scripts by SHA-256 hash only.
+- Switching cloud on adds exactly the Firebase endpoints the project uses (and
+  reCAPTCHA once App Check has a site key). No AI provider's domain is ever
+  allowed: AI goes through NAZM's Cloud Functions. A native build that bundles
+  the Firebase SDK (`firebase.sdkBaseUrl` relative) needs no SDK origin.
+- In the native app, WKWebView does not receive HTTP headers for bundled
+  files; the meta CSP applies there, and frame embedding is not possible.
 
 ## 14. App Review
 
@@ -264,35 +289,82 @@ attributes only. A native build that bundles the Firebase SDK can remove
 
 ## 16. Release gate
 
-Legend: ✅ done in this repository · ⬜ external task, not done.
+Two lists. The first is checked only where it is true in this repository.
+The second stays unchecked until a person does the work outside it.
 
-- ⬜ Production iOS wrapper created
-- ⬜ Production Bundle ID configured
-- ⬜ Apple Developer signing configured (certificate, provisioning)
-- ⬜ App icons configured
-- ⬜ Launch screen configured
-- ⬜ Camera usage description configured (strings ready: `native/ios/`)
-- ✅ Photo library permission not needed (system picker) — strings ready if a plugin changes that
-- ⬜ Privacy manifest reviewed (§9)
-- ⬜ App Store privacy labels completed (§10)
-- ⬜ Privacy Policy public URL configured (`contact.privacyPolicyUrl`; the in-app copy is done)
-- ⬜ Terms public URL configured if desired (in-app copy done)
-- ✅ Delete Account flow and backend functions written — ⬜ deployed (needed only when accounts are enabled)
-- ⬜ Sign in with Apple production configuration (only when accounts are enabled)
-- ⬜ Google auth native configuration (only if enabled)
-- ⬜ Firebase production rules/functions deployed (only if cloud enabled)
-- ⬜ App Check enabled before production cloud enforcement
-- ✅ AI consent implemented (client and backend) — AI stays hidden until validated
-- ⬜ StoreKit connected before paid plans are shown — paid plans hidden ✅
-- ⬜ Restore Purchases implemented before subscriptions launch (UI ready, needs StoreKit)
-- ⬜ Manage Subscription path available before subscriptions launch (UI ready, needs StoreKit)
-- ✅ Review account not needed for 1.0.0 as configured (no login)
-- ✅ Backend not needed for 1.0.0 as configured
-- ⬜ Real iPhone regression testing (TESTING.md § iPhone)
-- ⬜ TestFlight test
-- ⬜ Crash-free smoke test
-- ✅ No placeholder/beta/debug UI in the shipped configuration (`release.test.mjs`)
-- ⬜ Support and privacy contact details configured (`contact.*`; hidden until set)
+### Code complete (this repository)
 
-**Status: the web application is release-ready for a device-only 1.0.0; the
-App Store submission is not ready until the external items above are done.**
+- [x] Local-first 1.0.0: cloud, team, billing, cloud AI off; no accounts, no
+      sign-in buttons, no plans, no cloud sync, no external AI (`release.test.mjs`)
+- [x] No Firebase project in the production config; the Firebase SDK is never
+      loaded and no request leaves the device (`release.test.mjs` R2,
+      `security.test.mjs` S11)
+- [x] Enforced CSP generated from the configuration; web security headers in
+      `firebase.json`; the app tested under them with no violation
+      (`security.test.mjs`)
+- [x] Legal documents bundled in both languages; legal entity, registration,
+      address and website render from `nazm.config.js` → `legal` / `contact`
+      only when set
+- [x] Contact actions centralised (`src/contact.js`, `platform.composeEmail`,
+      https-only `platform.openExternalUrl`); Support is never a dead end
+- [x] Privacy request action (`openPrivacyRequest()`): form URL, then email,
+      else an explanation of the in-app tools
+- [x] Account deletion flow and backend written (needed only once accounts are
+      enabled); Erase Data on This Device
+- [x] Native-safe JSON import limit (64 MB native, 256 MB web), checked before
+      reading
+- [x] Native mode: no service worker, no update prompt, share-sheet exports,
+      bridge-based detection
+- [x] Permission purpose strings prepared (`native/ios/`)
+- [x] No analytics, advertising or tracking SDK; no ATT request
+
+### External / native / App Store tasks (not done)
+
+- [ ] Native iOS project created using Capacitor or approved native wrapper
+- [ ] Bundle ID configured
+- [ ] Apple Developer signing configured
+- [ ] Distribution provisioning configured
+- [ ] App icons configured
+- [ ] Launch screen configured
+- [ ] Production display name verified
+- [ ] Camera usage description configured in Info.plist
+- [ ] Photo-library purpose description added only if actually required
+- [ ] Native Privacy Manifest reviewed and created based on actual native dependencies
+- [ ] Required Reason APIs reviewed based on actual SDK usage
+- [ ] App Store Connect app record created
+- [ ] Privacy Policy public HTTPS URL configured and reachable (`contact.privacyPolicyUrl` — currently null)
+- [ ] Support public HTTPS URL configured and reachable (`contact.supportUrl` — currently null), with at least one working way to contact Mazayda/NAZM
+- [ ] Privacy contact configured (`contact.privacyEmail` or `privacyRequestUrl` — currently null)
+- [ ] App Store privacy questionnaire completed against actual production behavior
+- [ ] Screenshots prepared
+- [ ] App description/subtitle/keywords completed
+- [ ] Age rating completed
+- [ ] TestFlight build uploaded
+- [ ] Real iPhone testing completed
+- [ ] iPhone small-screen test completed
+- [ ] iPhone Pro Max test completed
+- [ ] Light mode tested
+- [ ] Dark mode tested
+- [ ] Arabic RTL tested
+- [ ] English LTR tested
+- [ ] Landscape tested where supported
+- [ ] Camera scanner tested
+- [ ] Import tested
+- [ ] Export tested
+- [ ] Offline cold start tested
+- [ ] Reinstall/data-loss behavior understood (deleting the app deletes the device inventory)
+- [ ] Crash/smoke test passed
+- [ ] App Review notes prepared
+- [ ] Review account provided if accounts are enabled in the submitted build
+- [ ] Backend available to App Review if cloud features are enabled
+- [ ] StoreKit completed before paid plans are exposed
+- [ ] Restore Purchases implemented before subscriptions are exposed
+- [ ] Manage Subscription implemented before subscriptions are exposed
+- [ ] Account deletion backend deployed before account registration is exposed
+- [ ] Sign in with Apple fully configured before Google sign-in is exposed on iOS
+- [ ] AI privacy consent and backend processing verified before cloud AI is exposed
+
+**Status: local-first application core ready for iOS integration** — the web
+application code is ready for native packaging. It is **not** App Store
+submission ready: that state is reached only when every item in the external
+list is done.

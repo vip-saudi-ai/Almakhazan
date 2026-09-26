@@ -332,6 +332,8 @@ export async function deleteImage(image, ctx) {
   if (!image) return;
   if (image.storagePath?.startsWith('local:')) {
     await local.remove('images', image.id);
+    // Its blob is gone from the store; the URLs pinning it in memory go too.
+    releaseImageUrls(image.id);
     return;
   }
   if (ctx.mode !== 'cloud') return;
@@ -384,6 +386,16 @@ function touchObjectUrl(key) {
   objectUrlCache.delete(key);
   objectUrlCache.set(key, url);
   return url;
+}
+
+/** Drop the cached URLs of one image (thumbnail and full size). */
+export function releaseImageUrls(imageId) {
+  for (const key of [`${imageId}:true`, `${imageId}:false`]) {
+    const url = objectUrlCache.get(key);
+    if (!url) continue;
+    objectUrlCache.delete(key);
+    try { URL.revokeObjectURL(url); } catch { /* already gone */ }
+  }
 }
 
 /**

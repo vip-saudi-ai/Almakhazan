@@ -13,7 +13,7 @@ import {
 } from '../auth.js';
 import { firebaseContext, isCloudOff } from '../firebase.js';
 import {
-  MAX_BACKUP_FILE_BYTES, applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile,
+  maxBackupFileBytes, applyMerge, exportExcel, exportJSON, readBackupFile, saveBackupFile,
 } from '../exporting.js';
 import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
@@ -690,7 +690,7 @@ export async function runFullJsonExport() {
       // Said now, not on the day the file is needed.
       void confirmAction({
         titleKey: 'export.oversizeTitle',
-        messageKey: 'export.oversizeMessage', messageParams: { size: Math.ceil(bytes / 1048576), limit: MAX_BACKUP_FILE_BYTES / 1048576 },
+        messageKey: 'export.oversizeMessage', messageParams: { size: Math.ceil(bytes / 1048576), limit: maxBackupFileBytes() / 1048576 },
         icon: '⚠️',
         confirmLabelKey: 'common.ok',
       });

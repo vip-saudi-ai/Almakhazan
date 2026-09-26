@@ -8,7 +8,8 @@
 //   window.NazmNative = {
 //     platform: 'ios',
 //     appVersion: '1.0.0', buildNumber: '1',
-//     openUrl(url),                         // SFSafariViewController / system browser
+//     openUrl(url),                         // SFSafariViewController / system browser (https)
+//     composeEmail({ to, subject, body }),  // MFMailComposeViewController (optional)
 //     shareFile({ filename, mimeType, base64 }),   // UIActivityViewController
 //     openSettings(),                       // UIApplication.openSettingsURLString
 //     print(),                              // UIPrintInteractionController of the WebView
@@ -20,6 +21,7 @@
 // reported as unavailable and its UI is not shown. See IOS-RELEASE.md.
 
 import { APP_VERSION } from './config.js';
+import { isEmailAddress, isHttpsUrl } from './environment.js';
 
 const bridge = () => globalThis.NazmNative || null;
 
@@ -44,33 +46,63 @@ export function getAppVersion() {
   };
 }
 
-const SAFE_SCHEMES = new Set(['https:', 'mailto:']);
-
 /**
- * Opens a web page or a mail draft outside the app. Only https and mailto are
- * accepted: nothing here may navigate the app's own WebView away from itself.
+ * Opens a public web page outside the app: the in-app browser sheet in the
+ * native app, a new tab on the web. Only absolute https URLs with a host and
+ * no embedded credentials are accepted — never javascript:, data:, blob:,
+ * file: or plain http — and nothing here can navigate the app's own page or
+ * WebView away from NAZM. Email goes through composeEmail() instead.
  * @returns {boolean} whether it was handed to the platform
  */
 export function openExternalUrl(url) {
-  let parsed;
-  try { parsed = new URL(url); } catch { return false; }
-  if (!SAFE_SCHEMES.has(parsed.protocol)) return false;
+  if (!isHttpsUrl(url)) {
+    console.warn('[platform] refused to open a non-https URL');
+    return false;
+  }
+  const href = new URL(url).href;
   const native = bridge();
   if (native?.openUrl) {
-    Promise.resolve(native.openUrl(parsed.href)).catch((error) => console.warn('[platform] openUrl failed', error?.message));
+    Promise.resolve(native.openUrl(href)).catch((error) => console.warn('[platform] openUrl failed', error?.message));
     return true;
   }
-  if (parsed.protocol === 'mailto:') {
-    // A mailto link opens the mail app and leaves the page where it is.
-    const link = document.createElement('a');
-    link.href = parsed.href;
-    link.rel = 'noopener';
-    document.body.append(link);
-    link.click();
-    link.remove();
+  if (isNative()) return false;
+  return Boolean(window.open(href, '_blank', 'noopener,noreferrer'));
+}
+
+/**
+ * A new email to one validated address, with an optional subject and body —
+ * the mail composer in the native app (bridge.composeEmail, or openUrl with
+ * the mailto), the default mail app on the web. The address must be a single
+ * plain address and every part is percent-encoded, so nothing in a subject or
+ * body can add recipients or headers.
+ * @returns {boolean}
+ */
+export function composeEmail(address, { subject = '', body = '' } = {}) {
+  if (!isEmailAddress(address)) {
+    console.warn('[platform] refused to compose to an invalid address');
+    return false;
+  }
+  const params = [];
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  if (body) params.push(`body=${encodeURIComponent(body)}`);
+  const href = `mailto:${encodeURIComponent(address).replace('%40', '@')}${params.length ? `?${params.join('&')}` : ''}`;
+  const native = bridge();
+  if (typeof native?.composeEmail === 'function') {
+    Promise.resolve(native.composeEmail({ to: address, subject, body })).catch((error) => console.warn('[platform] composeEmail failed', error?.message));
     return true;
   }
-  return Boolean(window.open(parsed.href, '_blank', 'noopener,noreferrer'));
+  if (typeof native?.openUrl === 'function') {
+    Promise.resolve(native.openUrl(href)).catch((error) => console.warn('[platform] openUrl failed', error?.message));
+    return true;
+  }
+  // A mailto anchor opens the mail app and leaves this page where it is.
+  const link = document.createElement('a');
+  link.href = href;
+  link.rel = 'noopener';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  return true;
 }
 
 function blobToBase64(blob) {

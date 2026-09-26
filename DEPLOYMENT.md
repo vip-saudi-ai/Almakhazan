@@ -157,6 +157,42 @@ client sends tokens locks every customer out.
 Until step 5, App Check is registered but not enforced — treat it as not yet
 providing protection.
 
+## 5a. Security headers
+
+Generated from `nazm.config.js` by `tools/security-policy.mjs` — never edited
+by hand. `npm run security:apply` writes them into `firebase.json` (hosting,
+`source: "**"`) and the matching meta CSP into `index.html`;
+`npm run security:check` fails if either is stale;
+`node tools/security-policy.mjs --print` shows the set.
+
+For the local-only 1.0.0 configuration the web server sends:
+
+| Header | Value | Why |
+|---|---|---|
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests` | no external origin, no inline script, no eval; `blob:`/`data:` images for local photos and QR labels; style attributes need `'unsafe-inline'` for styles only |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPS only; add `preload` only once the domain is confirmed |
+| `X-Content-Type-Options` | `nosniff` | |
+| `X-Frame-Options` | `DENY` | older browsers; `frame-ancestors 'none'` for the rest |
+| `Referrer-Policy` | `no-referrer` | support and legal links reveal nothing |
+| `Permissions-Policy` | `camera=(self), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), accelerometer=(), gyroscope=(), magnetometer=(), display-capture=(), browsing-topics=(), fullscreen=(self)` | camera for the scanner and photos only; everything else denied |
+| `Cross-Origin-Opener-Policy` | `same-origin` (`same-origin-allow-popups` once cloud sign-in popups exist) | |
+| `Cross-Origin-Resource-Policy` | `same-origin` | |
+
+Tested, not assumed: `tests/browser/security.test.mjs` serves the app with
+exactly these headers (minus HSTS and `upgrade-insecure-requests`, which do not
+apply to its local http server) and exercises startup, photos, language
+switch, import, export, the barcode decoder, the live camera, legal pages,
+IndexedDB and the service worker — with zero CSP violations and no request
+leaving the origin.
+
+When `features.cloud` is switched on, re-run `npm run security:apply`: the
+policy then adds the Firebase endpoints of the configured project, the sign-in
+frames of the configured providers, and reCAPTCHA once App Check has a site
+key. It never adds an AI provider's domain.
+
+Native app: WKWebView does not apply HTTP headers to files in the app bundle.
+The meta CSP in `index.html` is what applies there; framing is not possible.
+
 ## 5b. Invitations and mail
 
 Invitations work without a mail provider. `inviteMember` returns the plain

@@ -16,7 +16,10 @@
 
 import { ENV } from './environment.js';
 import { firebaseContext, isCloudOff, FirebaseStatus } from './firebase.js';
-import { canOpenSettings, canPrint, hasNativeSignIn, isNative, usesServiceWorker } from './platform.js';
+import {
+  canOpenSettings, canPrint, hasNativeSignIn, isNative, usesServiceWorker,
+} from './platform.js';
+import { purchaseProvider } from './purchase-provider.js';
 
 export const Feature = Object.freeze({
   CLOUD: 'cloud',             // Firebase at all
@@ -51,7 +54,9 @@ export function isFeatureEnabled(name) {
       return flags.cloud;
     case Feature.TEAM: return flags.cloud && flags.team;
     case Feature.CLOUD_AI: return flags.cloud && flags.cloudAi;
-    case Feature.BILLING: return flags.billing;
+    // Selling needs a store to sell through: without a purchase provider the
+    // flag alone shows nothing (see reportConfiguration).
+    case Feature.BILLING: return flags.billing && Boolean(purchaseProvider());
     case Feature.PRINT: return canPrint();
     case Feature.APP_SETTINGS_LINK: return canOpenSettings();
     case Feature.WEB_UPDATES: return usesServiceWorker();

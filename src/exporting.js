@@ -4,7 +4,7 @@
 // their paths and URLs, not their bytes. That distinction is stated in the file
 // itself and in the UI, so nobody mistakes it for a full media backup.
 
-import { ACTIONS, APP_VERSION, SCHEMA_VERSION } from './config.js';
+import { ACTIONS, APP_VERSION, IMPORT_LIMITS, SCHEMA_VERSION } from './config.js';
 import { assertNoUnfinishedRestore } from './restore.js';
 import { repository } from './repository.js';
 import { AppError, toDate } from './utils.js';
@@ -12,7 +12,7 @@ import { t } from './i18n.js';
 import { actionLabel } from './labels.js';
 import { formatValuation, valuationMidpoint } from './validation.js';
 import { buildWorkbook } from './xlsx-writer.js';
-import { saveFile } from './platform.js';
+import { isNative, saveFile } from './platform.js';
 
 // A download in a browser, the share sheet (Files, Mail, AirDrop) in the
 // native app: src/platform.js decides, and throws if the file cannot be handed
@@ -196,7 +196,7 @@ export async function exportJSON() {
     console.error('[export] JSON export failed', error);
     throw new AppError('error.export/failed', { code: 'export/failed', cause: error });
   }
-  return { bytes: blob.size, restorable: blob.size <= MAX_BACKUP_FILE_BYTES };
+  return { bytes: blob.size, restorable: blob.size <= maxBackupFileBytes() };
 }
 
 /**
@@ -221,7 +221,13 @@ export async function exportJSON() {
  * decoded text and the parsed records are all in memory at once, so a file
  * past this is refused from its metadata before any of that happens.
  */
-export const MAX_BACKUP_FILE_BYTES = 256 * 1024 * 1024;
+/** The web limit; the one that applies here is maxBackupFileBytes(). */
+export const MAX_BACKUP_FILE_BYTES = IMPORT_LIMITS.backupBytes.web;
+
+/** The largest backup this platform reads (config.js → IMPORT_LIMITS). */
+export function maxBackupFileBytes() {
+  return isNative() ? IMPORT_LIMITS.backupBytes.native : IMPORT_LIMITS.backupBytes.web;
+}
 
 /**
  * Checked from the file's metadata alone, before a byte of it is read. The
@@ -238,9 +244,10 @@ export function validateBackupFileMetadata(file) {
   if (!(file.size > 0)) {
     throw new AppError('error.backup/empty-file', { code: 'backup/empty-file' });
   }
-  if (file.size > MAX_BACKUP_FILE_BYTES) {
+  const max = maxBackupFileBytes();
+  if (file.size > max) {
     throw new AppError('error.backup/file-too-large', {
-      code: 'backup/file-too-large', size: file.size, max: MAX_BACKUP_FILE_BYTES,
+      code: 'backup/file-too-large', size: file.size, max, mb: Math.round(max / 1048576),
     });
   }
   if (!/\.json$/i.test(String(file.name || ''))) {

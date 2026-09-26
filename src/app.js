@@ -17,6 +17,7 @@ import { UploadState, deviceUploadState, localDataSummary, uploadDeviceData } fr
 import { $, el, formatNumber, render } from './utils.js';
 import { registerServiceWorker } from './pwa.js';
 import { applyFeatureVisibility } from './features.js';
+import { reportConfiguration } from './config-report.js';
 import { isNative, setStatusBarStyle } from './platform.js';
 import { applyDocumentLocale, onLanguageChange, setLanguage, t } from './i18n.js';
 import { goTab, registerTab, renderActiveTab } from './navigation.js';
@@ -65,6 +66,7 @@ async function boot() {
   // welcome gate, a restore warning, the upload offer — waits for the choice,
   // so it appears in the chosen language and direction.
   const firebaseReady = initializeFirebase();
+  reportConfiguration();
 
   const lang = await languageChosen();
   setLanguage(lang);

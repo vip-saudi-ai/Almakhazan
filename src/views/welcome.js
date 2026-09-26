@@ -27,7 +27,7 @@ import { formatNumber } from '../utils.js';
 import { Feature, isAuthProviderAvailable, isFeatureEnabled } from '../features.js';
 import { legalConsentLine, legalLinks } from './legal.js';
 import { ENV } from '../environment.js';
-import { openExternalUrl } from '../platform.js';
+import { contactSales } from '../contact.js';
 
 /** Plans, prices and "free" are words for a release that sells something. */
 const sellsPlans = () => isFeatureEnabled(Feature.BILLING);
@@ -414,7 +414,7 @@ function choosePlan(plan) {
   // one exists. The choice is remembered so checkout can resume after setup.
   state.intendedPlan = { id: plan.id, billing: state.billing };
   if (plan.contactOnly) {
-    openExternalUrl(`mailto:${ENV.contact.salesEmail}`);
+    contactSales();
     return;
   }
   show(currentSession().user ? 'onboarding' : 'signup');

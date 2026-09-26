@@ -13,31 +13,12 @@
 
 import { AppError } from './utils.js';
 import { Feature, isFeatureEnabled } from './features.js';
+import { purchaseProvider } from './purchase-provider.js';
 
-/**
- * The provider, installed by the host:
- *   window.NazmNative.purchase({ planId, cycle, accountToken }) → { status }
- *   window.NazmNative.restorePurchases() → { restored }
- *   window.NazmNative.manageSubscriptions()
- * or, on the web, registerPurchaseProvider({ purchase, restore, manage }).
- */
-let webProvider = null;
-
-export function registerPurchaseProvider(provider) {
-  webProvider = provider || null;
-}
-
-function provider() {
-  const native = globalThis.NazmNative;
-  if (typeof native?.purchase === 'function') {
-    return {
-      purchase: (request) => native.purchase(request),
-      restore: typeof native.restorePurchases === 'function' ? () => native.restorePurchases() : null,
-      manage: typeof native.manageSubscriptions === 'function' ? () => native.manageSubscriptions() : null,
-    };
-  }
-  return webProvider;
-}
+// The provider is the host's (src/platform.js → purchaseProvider): StoreKit
+// through the native bridge, or a web checkout integration. Without one,
+// Feature.BILLING is off whatever the configuration says.
+const provider = () => purchaseProvider();
 
 export function purchasesAvailable() {
   return isFeatureEnabled(Feature.BILLING) && typeof provider()?.purchase === 'function';

@@ -197,7 +197,7 @@ const banner = (page) => page.evaluate(() => {
   // billing adapter, which says purchases are unavailable — and nothing
   // pretends a plan was bought.
   check('Q18 choosing a plan never activates it client-side',
-    activated.plan === 'free' && /الشراء غير متاح/.test(activated.toast), JSON.stringify(activated));
+    activated.plan === 'free' && /تعذّر إكمال الشراء|الشراء غير متاح/.test(activated.toast), JSON.stringify(activated));
   await page.close();
 }
 

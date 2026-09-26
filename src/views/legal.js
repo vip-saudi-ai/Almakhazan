@@ -6,9 +6,12 @@
 // or not: it is part of the bundle, never fetched. Everything is built with
 // text nodes; nothing here is parsed as HTML.
 
-import { LEGAL_DOCUMENTS, LEGAL_ENTITY, LEGAL_VERSION } from '../locales/legal-documents.js';
+import { LEGAL_DOCUMENTS, LEGAL_VERSION } from '../locales/legal-documents.js';
 import { ENV } from '../environment.js';
-import { getAppVersion, isNative, openExternalUrl, platformName } from '../platform.js';
+import {
+  contactChannels, contactSupport, diagnosticsLine, legalContactText, openPrivacyRequest,
+  openPublicLegal, openSupportWebsite, reportProblem,
+} from '../contact.js';
 import { getLanguage, onLanguageChange, t } from '../i18n.js';
 import { $, el, render } from '../utils.js';
 import { isSheetOpen, openSheet } from '../ui.js';
@@ -16,6 +19,7 @@ import { isSheetOpen, openSheet } from '../ui.js';
 /** What the sheet is showing, so a language switch can redraw it in place. */
 let showing = null;
 
+/** LEGAL_VERSION is the one date both documents carry, in the Gregorian calendar. */
 export function legalLastUpdated() {
   const [y, m, d] = LEGAL_VERSION.split('-').map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
@@ -24,20 +28,55 @@ export function legalLastUpdated() {
   }).format(date);
 }
 
-/** The channel a customer is told to use: a configured address, or the Support page. */
-function contactChannel() {
-  const email = ENV.contact.privacyEmail || ENV.contact.supportEmail;
-  return email || t('legal.contactInApp');
+/** The controller's name in the document's language (nazm.config.js → legal). */
+function entityName(lang) {
+  return lang === 'en' ? ENV.legal.entityNameEn : ENV.legal.entityNameAr;
 }
 
 function fill(text, lang) {
-  return text.replaceAll('{entity}', LEGAL_ENTITY[lang]).replaceAll('{contact}', contactChannel());
+  return text.replaceAll('{entity}', entityName(lang)).replaceAll('{contact}', legalContactText());
 }
 
 function bodyNodes(entries, lang) {
   return entries.map((entry) => (typeof entry === 'string'
     ? el('p', { text: fill(entry, lang) })
     : el('ul', {}, entry.list.map((item) => el('li', { text: fill(item, lang) })))));
+}
+
+/**
+ * The controller, and whichever of its registration details are configured —
+ * a label is printed only with a value beside it.
+ */
+function entityBlock(lang) {
+  const { legal, contact } = ENV;
+  const lines = [
+    [null, entityName(lang)],
+    [t('legal.commercialRegistration'), legal.commercialRegistration],
+    [t('legal.address'), lang === 'en' ? legal.addressEn : legal.addressAr],
+    [t('legal.website'), contact.websiteUrl],
+    [t('legal.email'), contact.privacyEmail || contact.supportEmail],
+  ].filter(([, value]) => value);
+  return el('div', { class: 'legal-entity' }, lines.map(([label, value]) => el('p', {}, [
+    label ? el('span', { text: `${label}: ` }) : null,
+    el('span', { dir: label ? 'auto' : null, text: value }),
+  ])));
+}
+
+/** The actions a document offers at its end — only those that can act. */
+function documentActions(kind) {
+  const channels = contactChannels();
+  const actions = [];
+  if (kind === 'privacy') {
+    actions.push(el('button', { class: 'btn btn-s', type: 'button', text: t('support.privacyRequestSend'), onClick: openPrivacyRequest }));
+    if (channels.privacyPolicyUrl) actions.push(el('button', { class: 'btn btn-s', type: 'button', text: t('legal.webVersion'), onClick: () => openPublicLegal('privacy') }));
+  }
+  if (kind === 'terms' && channels.termsUrl) {
+    actions.push(el('button', { class: 'btn btn-s', type: 'button', text: t('legal.webVersion'), onClick: () => openPublicLegal('terms') }));
+  }
+  if (kind === 'dataAi') {
+    actions.push(el('button', { class: 'btn btn-s', type: 'button', text: t('legal.privacyPolicy'), onClick: () => openLegalDocument('privacy') }));
+  }
+  return actions.length ? el('div', { class: 'legal-links' }, actions) : null;
 }
 
 function renderDocument(kind) {
@@ -47,20 +86,19 @@ function renderDocument(kind) {
   $('legal-title').textContent = doc.title[lang];
   render($('legal-body'), [
     el('p', { class: 'legal-updated', text: t('legal.lastUpdated', { date: legalLastUpdated() }) }),
-    kind === 'dataAi' ? null : el('p', { class: 'legal-entity', text: LEGAL_ENTITY[lang] }),
+    kind === 'dataAi' ? null : entityBlock(lang),
     ...doc.sections.map((section) => el('section', { class: 'legal-section', 'aria-labelledby': `legal-${kind}-${section.id}` }, [
       el('h3', { id: `legal-${kind}-${section.id}`, text: section.title[lang] }),
       ...bodyNodes(section.body[lang], lang),
     ])),
-    kind === 'dataAi' ? el('div', { class: 'legal-links' }, [
-      el('button', { class: 'btn btn-s', type: 'button', text: t('legal.privacyPolicy'), onClick: () => openLegalDocument('privacy') }),
-    ]) : null,
+    documentActions(kind),
   ]);
 }
 
 /**
- * Opens a document: 'privacy' | 'terms' | 'dataAi'. Opening another one
- * while the sheet is up replaces what it shows and returns to the top.
+ * Opens a document: 'privacy' | 'terms' | 'dataAi' — always the copy bundled
+ * with the app, so it reads offline and before any account exists. Opening
+ * another one while the sheet is up replaces what it shows.
  */
 export function openLegalDocument(kind) {
   if (!LEGAL_DOCUMENTS[kind]) return;
@@ -72,63 +110,57 @@ export function openLegalDocument(kind) {
 
 // ── Support ────────────────────────────────────────────────────────────────
 
-/** What a problem report carries: the app and platform, nothing personal. */
-function diagnosticsLine() {
-  const { version, build } = getAppVersion();
-  return `NAZM ${version}${build ? ` (${build})` : ''} · ${isNative() ? platformName() : 'web'} · ${getLanguage()}`;
-}
-
-function mailto(address, subject, body = '') {
-  const query = new URLSearchParams({ subject, ...(body ? { body } : {}) }).toString().replaceAll('+', '%20');
-  return `mailto:${address}?${query}`;
-}
-
-function supportRow({ title, subtitle, onClick }) {
-  return el('button', { class: 'srow srow-btn', type: 'button', onClick }, [
+function supportRow({ title, subtitle, onClick, id }) {
+  return el('button', { class: 'srow srow-btn', type: 'button', onClick, id }, [
     el('div', { style: { flex: '1' } }, [
       el('div', { class: 'srowl', text: title }),
-      subtitle ? el('div', { class: 'srowd', text: subtitle }) : null,
+      subtitle ? el('div', { class: 'srowd', dir: 'auto', text: subtitle }) : null,
     ]),
   ]);
 }
 
+/**
+ * Help, contact and privacy requests. Every row that appears can act; a
+ * channel that is not configured has no row, and when none is, the page says
+ * so plainly instead of offering a button that goes nowhere.
+ */
 function renderSupport() {
-  const { supportEmail, privacyEmail, supportUrl } = ENV.contact;
+  const { supportEmail, supportUrl } = ENV.contact;
+  const channels = contactChannels();
   $('legal-title').textContent = t('support.title');
+  $('legal-body').dataset.kind = 'support';
 
   const contact = [];
   if (supportUrl) {
-    contact.push(supportRow({ title: t('support.helpCenter'), subtitle: t('support.helpCenterSub'), onClick: () => openExternalUrl(supportUrl) }));
+    contact.push(supportRow({ id: 'support-website', title: t('support.helpCenter'), subtitle: t('support.helpCenterSub'), onClick: openSupportWebsite }));
   }
   if (supportEmail) {
-    contact.push(supportRow({
-      title: t('support.contact'), subtitle: supportEmail,
-      onClick: () => openExternalUrl(mailto(supportEmail, t('support.contactSubject'))),
-    }));
-    contact.push(supportRow({
-      title: t('support.report'), subtitle: t('support.reportSub'),
-      onClick: () => openExternalUrl(mailto(supportEmail, t('support.reportSubject'), `\n\n—\n${diagnosticsLine()}`)),
-    }));
+    contact.push(supportRow({ id: 'support-email', title: t('support.contact'), subtitle: supportEmail, onClick: contactSupport }));
+    contact.push(supportRow({ id: 'support-report', title: t('support.report'), subtitle: t('support.reportSub'), onClick: reportProblem }));
   }
-  const privacyAddress = privacyEmail || supportEmail;
-  $('legal-body').dataset.kind = 'support';
 
   render($('legal-body'), [
     el('section', { class: 'legal-section', 'aria-labelledby': 'support-help' }, [
       el('h3', { id: 'support-help', text: t('support.help') }),
       el('ul', {}, ['support.tipAdd', 'support.tipScan', 'support.tipBackup', 'support.tipSearch'].map((key) => el('li', { text: t(key) }))),
     ]),
-    contact.length ? el('section', { class: 'legal-section', 'aria-labelledby': 'support-contact' }, [
+    el('section', { class: 'legal-section', 'aria-labelledby': 'support-contact' }, [
       el('h3', { id: 'support-contact', text: t('support.contactHeading') }),
-      el('div', { class: 'sgroup' }, contact),
-    ]) : null,
+      contact.length
+        ? el('div', { class: 'sgroup' }, contact)
+        : el('p', { id: 'support-no-channel', text: t('support.noChannel') }),
+    ]),
     el('section', { class: 'legal-section', 'aria-labelledby': 'support-privacy' }, [
       el('h3', { id: 'support-privacy', text: t('support.privacyRequest') }),
       el('p', { text: t('support.privacyRequestSub') }),
-      privacyAddress ? el('div', { class: 'sgroup' }, [supportRow({
-        title: t('support.privacyRequestSend'), subtitle: privacyAddress,
-        onClick: () => openExternalUrl(mailto(privacyAddress, t('support.privacySubject'))),
+      channels.privacyRequest ? el('div', { class: 'sgroup' }, [supportRow({
+        id: 'support-privacy-request', title: t('support.privacyRequestSend'),
+        subtitle: ENV.contact.privacyRequestUrl ? t('support.helpCenterSub') : ENV.contact.privacyEmail,
+        onClick: openPrivacyRequest,
       })]) : null,
+      el('div', { class: 'legal-links' }, [
+        el('button', { class: 'btn btn-s', type: 'button', text: t('legal.privacyPolicy'), onClick: () => openLegalDocument('privacy') }),
+      ]),
     ]),
     el('p', { class: 'legal-updated', text: diagnosticsLine() }),
   ]);

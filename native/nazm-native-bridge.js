@@ -32,10 +32,17 @@ window.NazmNative = {
   appVersion: info.version,   // CFBundleShortVersionString — keep equal to APP_VERSION
   buildNumber: info.build,    // CFBundleVersion
 
-  /** https and mailto only (the app enforces this before calling). */
+  /** https only (the app validates before calling). */
   openUrl(url) {
-    if (url.startsWith('mailto:')) return App.openUrl?.({ url }) ?? window.open(url, '_system');
+    if (url.startsWith('mailto:')) return window.open(url, '_system');
     return Browser.open({ url, presentationStyle: 'popover' });
+  },
+
+  /** A validated address; subject and body are plain text. Optional: without
+   *  it the app hands openUrl an encoded mailto: URL. */
+  composeEmail({ to, subject, body }) {
+    const query = new URLSearchParams({ subject, body }).toString().replaceAll('+', '%20');
+    return window.open(`mailto:${to}?${query}`, '_system');
   },
 
   /** Exports and backups: write to a temporary file, then the share sheet. */

@@ -17,6 +17,9 @@
 const FULL_PRODUCT = `
 window.NAZM_CONFIG.features = { cloud: true, team: true, billing: true, cloudAi: true };
 window.NAZM_CONFIG.auth = { providers: { email: true, apple: true, google: true } };
+// A store that is connected but refuses every purchase: plans are offered,
+// and nothing is ever bought in a test.
+window.NazmBilling = { purchase: () => Promise.reject(Object.assign(new Error('test store'), { code: 'test-store' })) };
 `;
 
 export async function useFullProduct(context) {

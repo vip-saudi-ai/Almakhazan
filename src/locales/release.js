@@ -15,6 +15,19 @@ export const messages = {
   'legal.dataAi': { ar: 'البيانات والذكاء الاصطناعي', en: 'Data & AI Privacy' },
   'legal.dataAiSub': { ar: 'ملخص مختصر لما يحدث لبياناتك', en: 'A short summary of what happens to your data' },
   'legal.lastUpdated': { ar: 'آخر تحديث: {date}', en: 'Last updated: {date}' },
+  'legal.commercialRegistration': { ar: 'السجل التجاري', en: 'Commercial Registration' },
+  'legal.address': { ar: 'العنوان', en: 'Address' },
+  'legal.website': { ar: 'الموقع الإلكتروني', en: 'Website' },
+  'legal.email': { ar: 'البريد الإلكتروني', en: 'Email' },
+  'legal.webVersion': { ar: 'فتح النسخة المنشورة على الويب', en: 'Open the published web version' },
+  'support.noChannel': {
+    ar: 'لا تتوفر وسيلة تواصل مباشرة في هذه النسخة من التطبيق. المساعدة أعلاه وأدوات الخصوصية في الإعدادات متاحة لك دائماً.',
+    en: 'No direct contact option is available in this version of the app. The help above and the privacy tools in Settings are always available to you.',
+  },
+  'support.privacyNoChannel': {
+    ar: 'يمكنك الآن الوصول إلى بياناتك وتصحيحها وتصديرها وحذفها من داخل التطبيق: عدّل أي قطعة، واستخدم «تصدير بياناتي» و«مسح بيانات هذا الجهاز». لا تتوفر في هذه النسخة وسيلة لإرسال طلب خصوصية مكتوب.',
+    en: 'You can access, correct, export and delete your data in the app right now: edit any item, and use Export My Data and Erase Data on This Device. This version has no channel for sending a written privacy request.',
+  },
   'legal.contactInApp': {
     ar: 'صفحة «الدعم» في التطبيق (الإعدادات ← القانونية والخصوصية ← الدعم)',
     en: 'the Support page in the app (Settings → Legal & Privacy → Support)',

@@ -22,6 +22,7 @@
 
 export const LEGAL_VERSION = '2026-09-25';
 
+/** The approved controller wording — the default for nazm.config.js → legal. */
 export const LEGAL_ENTITY = {
   ar: 'شركة مزايدة، المالكة والمشغلة لتطبيق نَظْم (NAZM)',
   en: 'Mazayda Company, owner and operator of the NAZM application',

@@ -57,9 +57,13 @@ acting on it.
   is a Cloud Functions secret. No App Check debug token is ever written into a
   file: the debug provider asks Firebase to generate one, only in the
   development environment on localhost.
-- **CSP** (`index.html`): scripts from this origin, the Firebase SDK and
-  reCAPTCHA only; no `unsafe-eval`; no AI provider domain, so the page cannot
-  call one; `object-src 'none'`, `base-uri 'self'`.
+- **CSP**, generated from the configuration (`tools/security-policy.mjs`):
+  enforced as a meta tag in `index.html`, as headers in `firebase.json`, and
+  by script hashes in the single-file build. With cloud off, no external origin
+  at all; `script-src 'self'`, no inline script, no `eval`; `object-src`,
+  `frame-src`, `base-uri`, `form-action` and `frame-ancestors` closed. Cloud
+  adds only its configured Firebase endpoints — never an AI provider.
+  Verified by running the app under it (`tests/browser/security.test.mjs`).
 - **No HTML from data.** Views build DOM with `el()` and `textContent`; there
   is no `innerHTML` in `src/`. Imported files, AI output and backend error text
   are never inserted as markup, and backend wording never reaches the screen

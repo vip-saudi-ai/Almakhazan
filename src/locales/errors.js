@@ -44,7 +44,7 @@ export const messages = {
   'error.export/empty-selection': { ar: "لا توجد قطع مختارة", en: "No items are selected" },
   'error.backup/no-file': { ar: "لم يُختر ملف بيانات.", en: "No data file was chosen." },
   'error.backup/empty-file': { ar: "ملف البيانات فارغ.", en: "The data file is empty." },
-  'error.backup/file-too-large': { ar: "حجم ملف البيانات أكبر من الحد المسموح.", en: "The file is larger than the allowed limit." },
+  'error.backup/file-too-large': { ar: "حجم الملف أكبر من {mb} ميغابايت، وهو أقصى ما يستورده هذا الجهاز. صدّر نسخة أصغر، أو استوردها من متصفح على الحاسب.", en: "The file is larger than {mb} MB, the most this device can import. Export a smaller backup, or import it from a browser on a computer." },
   'error.backup/not-json': { ar: "الملف ليس ملف بيانات JSON.", en: "The file is not a JSON data file." },
   'error.import/read': { ar: "تعذّر قراءة الملف", en: "Could not read the file" },
   'error.backup/fingerprint-unavailable': { ar: "تعذّر التحقق من هوية ملف النسخة الاحتياطية. أعد المحاولة.", en: "Could not verify which backup this file is. Please try again." },

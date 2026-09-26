@@ -101,3 +101,62 @@ test('the Excel export never writes a formula: text that looks like one stays te
     assert.ok(xml.includes(`<t xml:space="preserve">${value}</t>`), `${value} kept verbatim as an inline string`);
   }
 });
+
+test('the local-only release configures no Firebase project', () => {
+  const config = shippedConfig();
+  assert.ok(Object.values(config.firebase.project).every((value) => value === null));
+  assert.equal(config.legal.entityNameAr, 'شركة مزايدة، المالكة والمشغلة لتطبيق نَظْم (NAZM)');
+  assert.equal(config.legal.commercialRegistration, null, 'no registration number is invented');
+});
+
+test('the validator switches inconsistent or unsafe values off', async () => {
+  globalThis.NAZM_CONFIG = {
+    features: { cloud: false, team: true, cloudAi: true },
+    contact: { supportUrl: 'http://example.org', privacyPolicyUrl: 'javascript:alert(1)', termsUrl: 'https://example.org/terms', supportEmail: 'a@example.org?cc=b@example.org', privacyEmail: 'privacy@example.org' },
+  };
+  const { ENV, CONFIG_DIAGNOSTICS } = await import(`../../src/environment.js?validator=${Date.now()}`);
+  assert.equal(ENV.features.team, false, 'team needs cloud');
+  assert.equal(ENV.features.cloudAi, false, 'cloud AI needs cloud');
+  assert.equal(ENV.contact.supportUrl, null, 'plain http is refused');
+  assert.equal(ENV.contact.privacyPolicyUrl, null, 'javascript: is refused');
+  assert.equal(ENV.contact.termsUrl, 'https://example.org/terms');
+  assert.equal(ENV.contact.supportEmail, null, 'an address that could inject headers is refused');
+  assert.equal(ENV.contact.privacyEmail, 'privacy@example.org');
+  assert.ok(CONFIG_DIAGNOSTICS.length >= 5);
+  delete globalThis.NAZM_CONFIG;
+});
+
+test('the security policy follows the feature flags', async () => {
+  const { contentSecurityPolicy, securityHeaders } = await import('../../tools/security-policy.mjs');
+  const local = shippedConfig();
+  const header = securityHeaders(local)['Content-Security-Policy'];
+  assert.doesNotMatch(header, /https?:\/\//, 'local-only: no external origin');
+  assert.match(header, /script-src 'self';/);
+  assert.match(header, /frame-ancestors 'none'/);
+  assert.doesNotMatch(header, /unsafe-eval/);
+  assert.doesNotMatch(header, /script-src[^;]*unsafe-inline/);
+
+  const cloud = {
+    ...local,
+    features: { ...local.features, cloud: true },
+    auth: { providers: { email: true, apple: true, google: true } },
+    firebase: { ...local.firebase, project: { ...local.firebase.project, projectId: 'demo-nazm', authDomain: 'demo-nazm.firebaseapp.com' } },
+  };
+  const cloudPolicy = contentSecurityPolicy(cloud, { target: 'header' });
+  assert.match(cloudPolicy, /https:\/\/firestore\.googleapis\.com/);
+  assert.match(cloudPolicy, /https:\/\/us-central1-demo-nazm\.cloudfunctions\.net/);
+  assert.match(cloudPolicy, /frame-src https:\/\/demo-nazm\.firebaseapp\.com https:\/\/accounts\.google\.com https:\/\/appleid\.apple\.com/);
+  assert.doesNotMatch(cloudPolicy, /anthropic|openai/i, 'never an AI provider, even with cloud on');
+  assert.doesNotMatch(cloudPolicy, /recaptcha/, 'reCAPTCHA only once App Check has a site key');
+});
+
+test('index.html and firebase.json carry the policy generated from the shipped configuration', async () => {
+  const { metaBlock, securityHeaders } = await import('../../tools/security-policy.mjs');
+  const config = shippedConfig();
+  const html = readFileSync(new URL('index.html', root), 'utf8');
+  assert.ok(html.includes(metaBlock(config)), 'run npm run security:apply');
+  assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>/, 'index.html has no inline script');
+  const firebase = JSON.parse(readFileSync(new URL('firebase.json', root), 'utf8'));
+  const sent = Object.fromEntries(firebase.hosting.headers.find((rule) => rule.source === '**').headers.map((h) => [h.key, h.value]));
+  assert.deepEqual(sent, securityHeaders(config));
+});
