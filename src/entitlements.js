@@ -1,0 +1,358 @@
+// The single place that answers "is this allowed on this plan?".
+//
+// No view may branch on a plan id. Every limit check goes through a `check*`
+// function here and gets back a uniform decision the UI can render directly.
+//
+// This layer exists for the *experience*: it keeps the user from starting work
+// they cannot finish. It is not the enforcement boundary — Security Rules and
+// the Cloud Functions in /functions are. Both read the same shared/plans.json.
+
+import { PLAN_CONFIG } from './plans.generated.js';
+import { pick, t } from './i18n.js';
+
+export const PLANS = PLAN_CONFIG.plans;
+export const DEFAULT_PLAN = PLAN_CONFIG.defaultPlan;
+export const TRIAL_DAYS = PLAN_CONFIG.trialDays;
+export const RETENTION = PLAN_CONFIG.retention;
+
+export const UNLIMITED = -1;
+
+/** Subscription states that keep a paid plan active. */
+const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due']);
+
+export function planById(planId) {
+  return PLANS[planId] || PLANS[DEFAULT_PLAN];
+}
+
+export function orderedPlans() {
+  return Object.values(PLANS).sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Resolves the effective plan for a workspace.
+ *
+ * The workspace document carries `plan`, which only a verified backend write
+ * can set (see firestore.rules). A lapsed subscription falls back to free
+ * rather than keeping paid limits.
+ *
+ * @param {{plan?: string, trialEndsAt?: number, readOnly?: boolean}} workspace
+ * @param {{status?: string, plan?: string, currentPeriodEnd?: number, cancelAtPeriodEnd?: boolean}|null} subscription
+ */
+export function resolveEntitlement(workspace, subscription = null, now = Date.now()) {
+  const trialEndsAt = workspace?.trialEndsAt ?? null;
+  const inTrial = trialEndsAt != null && trialEndsAt > now;
+
+  let planId = workspace?.plan || DEFAULT_PLAN;
+  let status = 'free';
+
+  if (subscription && LIVE_STATUSES.has(subscription.status)) {
+    planId = subscription.plan || planId;
+    status = subscription.status;
+  } else if (inTrial) {
+    planId = PLAN_CONFIG.trialPlan || planId;
+    status = 'trialing';
+  } else if (subscription) {
+    // Cancelled, unpaid or expired: entitlements drop to the free tier, but
+    // nothing is ever deleted for it.
+    planId = DEFAULT_PLAN;
+    status = subscription.status || 'inactive';
+  }
+
+  const plan = planById(planId);
+  return {
+    planId: plan.id,
+    plan,
+    status,
+    inTrial,
+    trialEndsAt,
+    readOnly: workspace?.readOnly === true,
+    renewsAt: subscription?.currentPeriodEnd ?? null,
+    cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd === true,
+  };
+}
+
+function decision(allowed, options = {}) {
+  return {
+    allowed,
+    reason: options.reason || null,
+    message: options.message || null,
+    detail: options.detail || null,
+    used: options.used ?? null,
+    limit: options.limit ?? null,
+    planId: options.planId ?? null,
+  };
+}
+
+const ALLOWED = decision(true);
+
+function withinLimit(used, limit) {
+  return limit === UNLIMITED || used < limit;
+}
+
+function formatBytes(bytes) {
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  if (bytes >= 1024 ** 2) return `${Math.round(bytes / 1024 ** 2)} MB`;
+  return `${Math.round(bytes / 1024)} KB`;
+}
+
+/**
+ * @typedef {object} EntitlementContext
+ * @property {ReturnType<typeof resolveEntitlement>} entitlement
+ * @property {{items?: number, storageBytes?: number, members?: number, aiCreditsUsed?: number, workspaces?: number}} usage
+ */
+
+/** "the free plan" / "the Pro plan", in the language on screen. */
+function planPhrase(plan) {
+  return plan.id === 'free' ? t('plan.phraseFree') : t('plan.phrase', { name: pick(plan.name) });
+}
+
+export function checkFrozen({ entitlement }) {
+  if (entitlement.readOnly) {
+    return decision(false, {
+      reason: 'workspace/read-only',
+      message: t('quota.readOnly'),
+      planId: entitlement.planId,
+    });
+  }
+  return ALLOWED;
+}
+
+export function checkCreateItem({ entitlement, usage }) {
+  const frozen = checkFrozen({ entitlement });
+  if (!frozen.allowed) return frozen;
+
+  const limit = entitlement.plan.limits.items;
+  const used = usage.items ?? 0;
+  if (withinLimit(used, limit)) return ALLOWED;
+
+  return decision(false, {
+    reason: 'limit/items',
+    message: entitlement.planId === 'free'
+      ? t('quota.fullFree', { used, limit })
+      : t('quota.fullPlan', { plan: planPhrase(entitlement.plan), used, limit }),
+    detail: t('quota.fullDetail'),
+    used,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+/**
+ * Warns before the wall, not at it. A customer should learn they are running
+ * out at 70% and again at 90%, never be surprised at record 51.
+ *
+ * @returns {{level: 'none'|'notice'|'warn'|'full', message: string|null, used: number, limit: number, ratio: number}}
+ */
+export function itemQuotaStatus({ entitlement, usage }) {
+  const limit = entitlement.plan.limits.items;
+  const used = usage.items ?? 0;
+  if (limit === UNLIMITED) return { level: 'none', message: null, used, limit, ratio: 0 };
+
+  const ratio = limit > 0 ? used / limit : 1;
+  const { noticeAt, warnAt } = PLAN_CONFIG.usageWarnings;
+
+  if (used >= limit) {
+    return {
+      level: 'full',
+      message: entitlement.planId === 'free'
+        ? t('quota.bannerFullFree', { used, limit })
+        : t('quota.bannerFullPlan', { plan: planPhrase(entitlement.plan), used, limit }),
+      used, limit, ratio,
+    };
+  }
+  if (ratio >= warnAt) {
+    return {
+      level: 'warn',
+      message: t('quota.remaining', { count: limit - used, plan: planPhrase(entitlement.plan) }),
+      used, limit, ratio,
+    };
+  }
+  if (ratio >= noticeAt) {
+    return {
+      level: 'notice',
+      message: entitlement.planId === 'free'
+        ? t('quota.usedFree', { percent: String(Math.round(ratio * 100)) })
+        : t('quota.usedPlan', { percent: String(Math.round(ratio * 100)), plan: planPhrase(entitlement.plan) }),
+      used, limit, ratio,
+    };
+  }
+  return { level: 'none', message: null, used, limit, ratio };
+}
+
+export function checkUploadBytes({ entitlement, usage }, bytes) {
+  const frozen = checkFrozen({ entitlement });
+  if (!frozen.allowed) return frozen;
+
+  const limit = entitlement.plan.limits.storageBytes;
+  const used = usage.storageBytes ?? 0;
+  if (limit === UNLIMITED || used + bytes <= limit) return ALLOWED;
+
+  return decision(false, {
+    reason: 'limit/storage',
+    message: t('quota.storageFull', { used: formatBytes(used), limit: formatBytes(limit) }),
+    used,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+export function checkImagesPerItem({ entitlement }, currentCount) {
+  const limit = entitlement.plan.limits.imagesPerItem;
+  if (withinLimit(currentCount, limit)) return ALLOWED;
+  return decision(false, {
+    reason: 'limit/images-per-item',
+    message: t('quota.imagesPerItem', { limit, plan: pick(entitlement.plan.name) }),
+    used: currentCount,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+/**
+ * How many rows one import may bring in.
+ *
+ * Two limits, kept apart on purpose. The plan's allowance is a commercial
+ * promise; the technical ceiling is what a browser can process in one pass.
+ * Conflating them is how the plans came to promise Business 50,000 rows while
+ * the parser stopped at 5,000 — a limit the customer met without ever being
+ * told which of the two they had met.
+ *
+ * @returns {{plan: number, technical: number, effective: number,
+ *            unlimitedPlan: boolean, boundBy: 'plan'|'file'}}
+ */
+export function importRowLimit({ entitlement }, technical) {
+  const planLimit = entitlement.plan.limits.importRows ?? UNLIMITED;
+  const unlimitedPlan = planLimit === UNLIMITED;
+  const effective = unlimitedPlan ? technical : Math.min(planLimit, technical);
+  return {
+    plan: planLimit,
+    technical,
+    effective,
+    unlimitedPlan,
+    boundBy: unlimitedPlan || technical < planLimit ? 'file' : 'plan',
+  };
+}
+
+/**
+ * Whether this many rows may be written. Checked again before the commit, not
+ * only when the file is opened: the screen is a courtesy, the check is the rule.
+ */
+export function checkImportRows({ entitlement }, rows, technical) {
+  const limit = importRowLimit({ entitlement }, technical);
+  if (rows <= limit.effective) return ALLOWED;
+  return decision(false, {
+    reason: limit.boundBy === 'plan' ? 'limit/import-rows' : 'limit/import-file',
+    message: limit.boundBy === 'plan'
+      ? t('quota.importRowsPlan', { plan: pick(entitlement.plan.name), limit: limit.plan })
+      : t('quota.importRowsFile', { limit: limit.technical }),
+    used: rows,
+    limit: limit.effective,
+    planId: entitlement.planId,
+  });
+}
+
+export function checkInviteMember({ entitlement, usage }) {
+  const frozen = checkFrozen({ entitlement });
+  if (!frozen.allowed) return frozen;
+
+  const limit = entitlement.plan.limits.members;
+  const used = usage.members ?? 1;
+  if (withinLimit(used, limit)) return ALLOWED;
+
+  return decision(false, {
+    reason: 'limit/members',
+    message: limit <= 1
+      ? t('quota.membersSingle', { plan: pick(entitlement.plan.name) })
+      : t('quota.members', { used, limit }),
+    used,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+export function checkUseAI({ entitlement, usage }) {
+  const frozen = checkFrozen({ entitlement });
+  if (!frozen.allowed) return frozen;
+
+  const limit = entitlement.plan.limits.aiCreditsMonthly;
+  const used = usage.aiCreditsUsed ?? 0;
+  if (limit === 0) {
+    return decision(false, {
+      reason: 'feature/ai',
+      message: t('quota.aiUnavailable', { plan: planPhrase(entitlement.plan) }),
+      used, limit, planId: entitlement.planId,
+    });
+  }
+  if (withinLimit(used, limit)) return ALLOWED;
+
+  return decision(false, {
+    reason: 'limit/ai',
+    message: t('quota.aiUsed', { used, limit }),
+    used,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+export function checkCreateWorkspace({ entitlement, usage }) {
+  const limit = entitlement.plan.limits.workspaces;
+  const used = usage.workspaces ?? 1;
+  if (withinLimit(used, limit)) return ALLOWED;
+  return decision(false, {
+    reason: 'limit/workspaces',
+    message: t('quota.workspaces', { plan: pick(entitlement.plan.name), limit }),
+    used,
+    limit,
+    planId: entitlement.planId,
+  });
+}
+
+/**
+ * How the Assistant allowance should be presented. Paid plans say "included"
+ * rather than advertising a credit number; the meter still runs server-side.
+ */
+export function assistantPresentation({ entitlement }) {
+  const assistant = entitlement.plan.assistant || { display: 'counted' };
+  return {
+    included: assistant.display === 'included',
+    label: pick(assistant.label) || t('quota.notAvailable'),
+  };
+}
+
+export function checkFeature({ entitlement }, feature) {
+  if (entitlement.plan.features?.[feature]) return ALLOWED;
+  return decision(false, {
+    reason: `feature/${feature}`,
+    message: t('quota.feature', { plan: pick(entitlement.plan.name) }),
+    planId: entitlement.planId,
+  });
+}
+
+/**
+ * A downgrade never deletes anything. This reports which limits the workspace
+ * currently sits above, so the UI can explain what is restricted and why.
+ */
+export function overagesFor({ entitlement, usage }) {
+  const limits = entitlement.plan.limits;
+  const over = [];
+  const compare = (key, used, limit, label) => {
+    if (limit !== UNLIMITED && used > limit) over.push({ key, used, limit, label });
+  };
+  compare('items', usage.items ?? 0, limits.items, t('usage.items'));
+  compare('storageBytes', usage.storageBytes ?? 0, limits.storageBytes, t('usage.storageSpace'));
+  compare('members', usage.members ?? 1, limits.members, t('usage.members'));
+  return over;
+}
+
+/** Shape used by the subscription card in Settings. */
+export function usageSummary({ entitlement, usage }) {
+  const limits = entitlement.plan.limits;
+  return [
+    { key: 'items', label: t('usage.items'), used: usage.items ?? 0, limit: limits.items, format: (n) => String(n) },
+    { key: 'storage', label: t('usage.images'), used: usage.storageBytes ?? 0, limit: limits.storageBytes, format: formatBytes },
+    { key: 'ai', label: t('ai.assistantName'), used: usage.aiCreditsUsed ?? 0, limit: limits.aiCreditsMonthly, format: (n) => String(n) },
+    { key: 'members', label: t('usage.members'), used: usage.members ?? 1, limit: limits.members, format: (n) => String(n) },
+  ];
+}
+
+export { formatBytes };

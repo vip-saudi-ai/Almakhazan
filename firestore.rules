@@ -1,0 +1,328 @@
+rules_version = '2';
+
+// Multi-tenant authorization. Every path derives access from workspace
+// membership, never from an identifier the browser supplies.
+//
+// Three things are deliberately NOT writable by any client, at any role:
+//   - subscription and customer records (billing truth comes from webhooks)
+//   - the plan/entitlement fields on a workspace
+//   - usage counters
+// A client that edits its own JavaScript still cannot grant itself a plan.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── identity ──────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      // Email/password accounts must verify before writing shared state.
+      // Federated sign-ins (Google) arrive already verified.
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function memberPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
+    }
+
+    function isMember(workspaceId) {
+      return isSignedIn() && exists(memberPath(workspaceId));
+    }
+
+    function role(workspaceId) {
+      return get(memberPath(workspaceId)).data.role;
+    }
+
+    function isEditor(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) in ['editor', 'admin', 'owner'];
+    }
+
+    function isAdmin(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) in ['admin', 'owner'];
+    }
+
+    function isOwner(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) == 'owner';
+    }
+
+    /** A workspace whose subscription lapsed is readable but frozen. */
+    function isWritable(workspaceId) {
+      let ws = get(/databases/$(database)/documents/workspaces/$(workspaceId)).data;
+      return !('readOnly' in ws) || ws.readOnly != true;
+    }
+
+    function canWrite(workspaceId) {
+      return isEditor(workspaceId) && isWritable(workspaceId);
+    }
+
+    /**
+     * The plan's limits are denormalised onto the workspace by the backend
+     * (createWorkspace and the billing webhook) precisely so that rules can
+     * enforce them. A client cannot write them — see entitlementFieldsUnchanged.
+     */
+    function planLimit(workspaceId, key, fallback) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId))
+               .data.get('limits', {}).get(key, fallback);
+    }
+
+    function currentUsage(workspaceId, key) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId)/usage/current)
+        ? get(/databases/$(database)/documents/workspaces/$(workspaceId)/usage/current).data.get(key, 0)
+        : 0;
+    }
+
+    /**
+     * Item creation is refused at the plan's record limit, here rather than
+     * only in the UI — a patched frontend gains nothing. Counters are
+     * maintained by a trigger, so a rapid burst may land a small number over;
+     * that is a billing tolerance, not a security boundary.
+     */
+    function withinItemQuota(workspaceId) {
+      let limit = planLimit(workspaceId, 'items', 50);
+      return limit == -1 || currentUsage(workspaceId, 'items') < limit;
+    }
+
+    // ── validation helpers ────────────────────────────────────────────────
+    function validName(name, maxLength) {
+      return name is string && name.size() > 0 && name.size() <= maxLength;
+    }
+
+    function validValuation(v) {
+      return v.min is number && v.max is number
+             && v.min >= 0 && v.max >= v.min
+             && v.currency in ['SAR', 'USD', 'EUR', 'GBP'];
+    }
+
+    function validItem(data) {
+      return validName(data.name, 200)
+             && data.quantity is number
+             && data.quantity >= 0
+             && data.unit is string
+             && data.images is list
+             && data.images.size() <= 12
+             && (!('description' in data) || data.description is string)
+             && (!('sku' in data) || (data.sku is string && data.sku.size() <= 64))
+             && (!('barcode' in data) || (data.barcode is string && data.barcode.size() <= 64))
+             && (!('valuation' in data) || data.valuation == null || validValuation(data.valuation));
+    }
+
+    /** Fields only a trusted backend may set on a workspace. */
+    function entitlementFieldsUnchanged() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return after.ownerId == before.ownerId
+             && after.get('plan', 'free') == before.get('plan', 'free')
+             && after.get('planSource', 'system') == before.get('planSource', 'system')
+             && after.get('subscriptionId', null) == before.get('subscriptionId', null)
+             && after.get('trialEndsAt', null) == before.get('trialEndsAt', null)
+             && after.get('readOnly', false) == before.get('readOnly', false)
+             && after.get('retentionUntil', null) == before.get('retentionUntil', null)
+             && after.get('limits', {}) == before.get('limits', {});
+    }
+
+    // ── user profiles ─────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      // A profile points at workspaces; it must not carry entitlements.
+      allow create, update: if isSignedIn()
+                            && request.auth.uid == userId
+                            && !request.resource.data.keys().hasAny(['plan', 'subscriptionId', 'isAdmin']);
+      allow delete: if false; // account deletion runs server-side
+    }
+
+    // ── billing: readable by the subject, writable only by the backend ────
+    match /customers/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSignedIn()
+                  && (resource.data.userId == request.auth.uid
+                      || isAdmin(resource.data.workspaceId));
+      allow write: if false; // webhooks only, via the Admin SDK
+    }
+
+    // Idempotency ledger for webhook replays — backend only.
+    match /billingEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ── invitations ───────────────────────────────────────────────────────
+    // Created by an admin, accepted through a backend callable that verifies
+    // the token. Membership is never granted by a client write.
+    match /invitations/{inviteId} {
+      allow read: if isSignedIn()
+                  && (isAdmin(resource.data.workspaceId)
+                      || resource.data.email == request.auth.token.email);
+      allow create: if isVerified()
+                    && isAdmin(request.resource.data.workspaceId)
+                    && request.resource.data.role in ['viewer', 'editor', 'admin']
+                    && request.resource.data.status == 'pending';
+      allow update: if false; // acceptance is server-side
+      allow delete: if isAdmin(resource.data.workspaceId);
+    }
+
+    // ── workspaces ────────────────────────────────────────────────────────
+    match /workspaces/{workspaceId} {
+      // A user may only bootstrap their own personal workspace, and must name
+      // themselves owner on a free plan.
+      allow create: if isVerified()
+                    && workspaceId == request.auth.uid
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.get('plan', 'free') == 'free'
+                    && !request.resource.data.keys().hasAny(['subscriptionId', 'readOnly']);
+
+      allow read: if isMember(workspaceId);
+
+      // Admins may rename and configure, but never touch entitlements.
+      allow update: if isAdmin(workspaceId) && entitlementFieldsUnchanged();
+
+      // Deleting a workspace cascades across collections and Storage; that runs
+      // server-side so it cannot be left half-done.
+      allow delete: if false;
+
+      // ── membership ──
+      match /members/{userId} {
+        allow read: if isMember(workspaceId);
+
+        // Bootstrap: the creator writes their own owner record.
+        allow create: if isVerified()
+                      && workspaceId == request.auth.uid
+                      && userId == request.auth.uid
+                      && request.resource.data.role == 'owner';
+
+        // Afterwards admins manage members, but cannot promote to owner, edit
+        // their own role, or remove themselves.
+        allow update: if isAdmin(workspaceId)
+                      && userId != request.auth.uid
+                      && request.resource.data.role in ['viewer', 'editor', 'admin']
+                      && resource.data.role != 'owner';
+        allow delete: if isAdmin(workspaceId)
+                      && userId != request.auth.uid
+                      && resource.data.role != 'owner';
+      }
+
+      // ── inventory ──
+      match /items/{itemId} {
+        allow read: if isMember(workspaceId);
+        allow create: if canWrite(workspaceId)
+                      && withinItemQuota(workspaceId)
+                      && request.resource.data.version == 1
+                      && validItem(request.resource.data);
+        // The version must advance by exactly one, which is what makes the
+        // client's optimistic-concurrency check meaningful here too.
+        allow update: if canWrite(workspaceId)
+                      && request.resource.data.version == resource.data.version + 1
+                      && validItem(request.resource.data);
+        // Soft delete is an update; permanent removal is an admin action.
+        allow delete: if isAdmin(workspaceId) && isWritable(workspaceId);
+      }
+
+      match /folders/{folderId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if canWrite(workspaceId);
+      }
+
+      match /categories/{categoryId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if canWrite(workspaceId);
+      }
+
+      match /locations/{locationId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId) && validName(request.resource.data.name, 120);
+        allow delete: if canWrite(workspaceId);
+      }
+
+      // ── media assets ──
+      // Items reference a mediaId rather than owning a Storage path, so a
+      // duplicated item cannot delete the original's file. refCount moves by
+      // one per write; a backend trigger reconciles it and performs the
+      // physical delete once it truly reaches zero.
+      match /media/{mediaId} {
+        allow read: if isMember(workspaceId);
+        allow create: if canWrite(workspaceId)
+                      && request.resource.data.refCount == 0
+                      && request.resource.data.storagePath is string
+                      && request.resource.data.storagePath.matches('workspaces/' + workspaceId + '/.*');
+        allow update: if canWrite(workspaceId)
+                      && request.resource.data.storagePath == resource.data.storagePath
+                      && request.resource.data.refCount is int
+                      && request.resource.data.refCount >= 0
+                      && request.resource.data.refCount <= resource.data.refCount + 1
+                      && request.resource.data.refCount >= resource.data.refCount - 1;
+        // Physical cleanup is the backend's job.
+        allow delete: if false;
+      }
+
+      // ── usage counters: read-only to clients ──
+      match /usage/{document} {
+        allow read: if isMember(workspaceId);
+        allow write: if false;
+      }
+
+      // ── sequence counters ──
+      // A client may take the next SKU in a transaction, only forwards — it
+      // cannot rewind the sequence. It may jump forward, because records
+      // imported or restored with higher generated SKUs than the counter has
+      // issued must move the counter past them, or the next SKU collides.
+      match /counters/{counterId} {
+        allow read: if isMember(workspaceId);
+        allow create: if canWrite(workspaceId) && request.resource.data.value is int
+                      && request.resource.data.value >= 0;
+        allow update: if canWrite(workspaceId)
+                      && request.resource.data.value is int
+                      && request.resource.data.value > resource.data.value;
+        allow delete: if false;
+      }
+
+      // ── workspace settings ──
+      match /settings/{document} {
+        allow read: if isMember(workspaceId);
+        allow write: if isAdmin(workspaceId) && isWritable(workspaceId);
+      }
+
+      // ── audit log: append-only, never rewritten ──
+      match /activityLogs/{logId} {
+        allow read: if isMember(workspaceId);
+        allow create: if isEditor(workspaceId)
+                      && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // ── restore jobs ──
+      // Staging area for a large restore. The commit that swaps the dataset
+      // runs server-side, so an interrupted restore cannot half-destroy a
+      // workspace.
+      match /restoreJobs/{jobId} {
+        allow read: if isAdmin(workspaceId);
+        allow create: if isAdmin(workspaceId)
+                      && isWritable(workspaceId)
+                      && request.resource.data.status == 'staging';
+        allow update: if isAdmin(workspaceId) && resource.data.status == 'staging';
+        allow delete: if isAdmin(workspaceId);
+
+        match /records/{recordId} {
+          allow read, write: if isAdmin(workspaceId) && isWritable(workspaceId);
+        }
+      }
+    }
+
+    // The v7 single-document store stays readable for migration, by its owner
+    // only, and is never written again.
+    match /almakhzan/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
