@@ -1253,7 +1253,7 @@ function renderClassificationPanel() {
   const savedCount = repository.taxonomy().storedNodes().reduce((sum, node) => sum + node.fields.length, 0);
   render(panel, [
     row('◈', 'rgba(99,102,241,.15)', t('taxonomy.manage'), t('taxonomy.manageSub'), () => openClassificationManager()),
-    row('✎', 'rgba(52,199,89,.15)', t('taxonomy.customFields'), t('taxonomy.fieldsIn', { count: savedCount }), () => openClassificationManager({ fields: true })),
+    row('🏷️', 'rgba(52,199,89,.15)', t('taxonomy.customFields'), t('taxonomy.fieldsIn', { count: savedCount }), () => openClassificationManager({ fields: true })),
     repository.canWrite() ? row('↺', 'rgba(255,149,0,.15)', t('taxonomy.restoreDefaults'), t('taxonomy.restoreDefaultsSub'), restoreDefaultsFlow) : null,
   ]);
 }

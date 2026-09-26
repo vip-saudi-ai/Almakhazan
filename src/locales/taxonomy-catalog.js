@@ -268,7 +268,7 @@ export const MAIN_CATEGORIES = [
   },
   {
     // Deliberately empty: the customer's own Categories go here.
-    id: 'other', icon: '🗂️', ar: 'أخرى', en: 'Other', template: null,
+    id: 'other', icon: '🧩', ar: 'أخرى', en: 'Other', template: null,
     aliases: { ar: ['متنوع', 'عام'], en: ['misc', 'general'] },
     categories: [],
   },
