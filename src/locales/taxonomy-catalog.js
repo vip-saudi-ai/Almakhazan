@@ -154,16 +154,23 @@ export const MAIN_CATEGORIES = [
   {
     id: 'products_merchandise', icon: '📦', ar: 'منتجات وبضائع', en: 'Products & Merchandise', template: 'product',
     aliases: { ar: ['منتجات', 'بضائع', 'بضاعة'], en: ['products', 'merchandise', 'stock', 'goods'] },
+    // What a product *is*. Whether it is a sample, returned, damaged or
+    // seasonal is its «حالة المخزون» (the inventory_status field), not a kind.
     categories: [
       { id: 'products_finished', ar: 'منتجات جاهزة', en: 'Finished Products' },
       { id: 'products_for_sale', ar: 'بضائع للبيع', en: 'Merchandise' },
-      { id: 'products_samples', ar: 'عينات', en: 'Samples', aliases: { ar: ['عينة'], en: ['sample'] } },
+      { id: 'products_components', ar: 'مكونات', en: 'Components', aliases: { ar: ['مكون', 'قطع تجميع'], en: ['component', 'part'] } },
+      { id: 'products_kits', ar: 'أطقم ومجموعات', en: 'Kits & Sets', aliases: { ar: ['طقم', 'مجموعة'], en: ['kit', 'set', 'bundle'] } },
       { id: 'products_accessories', ar: 'إكسسوارات', en: 'Accessories' },
       { id: 'products_packaging', ar: 'تغليف', en: 'Packaging' },
-      { id: 'products_returned', ar: 'منتجات مرتجعة', en: 'Returned Products', aliases: { ar: ['مرتجع'], en: ['returns'] } },
-      { id: 'products_damaged', ar: 'منتجات تالفة', en: 'Damaged Products', aliases: { ar: ['تالف'], en: ['damaged'] } },
-      { id: 'products_seasonal', ar: 'منتجات موسمية', en: 'Seasonal Products' },
+      { id: 'products_promotional', ar: 'مواد ترويجية', en: 'Promotional Items', aliases: { ar: ['هدايا دعائية', 'دعاية'], en: ['promo', 'giveaway'] } },
       { id: 'products_other', ar: 'أخرى', en: 'Other', other: true },
+      // Retired before release: these are states, now the inventory_status
+      // field. Kept so an id already written somewhere still resolves.
+      { id: 'products_samples', ar: 'عينات', en: 'Samples', deprecated: true },
+      { id: 'products_returned', ar: 'منتجات مرتجعة', en: 'Returned Products', deprecated: true },
+      { id: 'products_damaged', ar: 'منتجات تالفة', en: 'Damaged Products', deprecated: true },
+      { id: 'products_seasonal', ar: 'منتجات موسمية', en: 'Seasonal Products', deprecated: true },
     ],
   },
   {
@@ -238,7 +245,9 @@ export const MAIN_CATEGORIES = [
     ],
   },
   {
-    id: 'professional_equipment', icon: '🔬', ar: 'أدوات ومعدات مهنية', en: 'Professional Equipment', template: 'equipment',
+    // Label only: «معدات متخصصة» says what it is next to «معدات وأدوات»
+    // without overlapping it. Same meaning, same id.
+    id: 'professional_equipment', icon: '🔬', ar: 'معدات متخصصة', en: 'Specialized Equipment', template: 'equipment',
     aliases: { ar: ['مهنية', 'مختبر', 'استوديو'], en: ['professional', 'lab', 'studio'] },
     categories: [
       { id: 'professional_lab', ar: 'أجهزة مختبر', en: 'Laboratory Equipment', aliases: { ar: ['مختبر', 'مجهر', 'ميكروسكوب'], en: ['laboratory', 'microscope'] } },
@@ -252,18 +261,34 @@ export const MAIN_CATEGORIES = [
     ],
   },
   {
-    id: 'assets_property', icon: '🏢', ar: 'أصول وممتلكات', en: 'Assets & Property', template: null,
-    aliases: { ar: ['اصول', 'ممتلكات', 'عقار'], en: ['assets', 'property'] },
+    // Retired before release: «أصول وممتلكات» offered a second home for
+    // equipment, furniture and vehicles. Replaced by real_estate_property
+    // (a new id, because the meaning narrowed); kept so its ids resolve.
+    id: 'assets_property', icon: '🏢', ar: 'أصول وممتلكات', en: 'Assets & Property', template: null, deprecated: true,
     categories: [
-      { id: 'assets_fixed', ar: 'أصول ثابتة', en: 'Fixed Assets' },
-      { id: 'assets_buildings', ar: 'مبانٍ', en: 'Buildings', aliases: { ar: ['مبنى', 'مباني'], en: ['building'] } },
-      { id: 'assets_land', ar: 'أراضٍ', en: 'Land', aliases: { ar: ['ارض', 'اراضي'], en: ['plot'] } },
-      { id: 'assets_real_estate_units', ar: 'وحدات عقارية', en: 'Real Estate Units', aliases: { ar: ['شقة', 'فيلا', 'محل'], en: ['apartment', 'unit', 'villa'] } },
-      { id: 'assets_fixtures', ar: 'تجهيزات', en: 'Fixtures' },
-      { id: 'assets_furniture', ar: 'أثاث', en: 'Furniture Assets', template: 'furniture' },
-      { id: 'assets_equipment', ar: 'أجهزة', en: 'Equipment Assets', template: 'equipment' },
-      { id: 'assets_leased', ar: 'أصول مؤجرة', en: 'Leased Assets', aliases: { ar: ['مستأجر', 'ايجار'], en: ['lease', 'rented'] } },
-      { id: 'assets_other', ar: 'أخرى', en: 'Other', other: true },
+      { id: 'assets_fixed', ar: 'أصول ثابتة', en: 'Fixed Assets', deprecated: true },
+      { id: 'assets_buildings', ar: 'مبانٍ', en: 'Buildings', deprecated: true },
+      { id: 'assets_land', ar: 'أراضٍ', en: 'Land', deprecated: true },
+      { id: 'assets_real_estate_units', ar: 'وحدات عقارية', en: 'Real Estate Units', deprecated: true },
+      { id: 'assets_fixtures', ar: 'تجهيزات', en: 'Fixtures', deprecated: true },
+      { id: 'assets_furniture', ar: 'أثاث', en: 'Furniture Assets', template: 'furniture', deprecated: true },
+      { id: 'assets_equipment', ar: 'أجهزة', en: 'Equipment Assets', template: 'equipment', deprecated: true },
+      { id: 'assets_leased', ar: 'أصول مؤجرة', en: 'Leased Assets', deprecated: true },
+      { id: 'assets_other', ar: 'أخرى', en: 'Other', deprecated: true },
+    ],
+  },
+  {
+    // What cannot be moved. Equipment, furniture and vehicles stay in their
+    // own Main Categories; they are not classified twice.
+    id: 'real_estate_property', icon: '🏢', ar: 'عقارات وممتلكات ثابتة', en: 'Real Estate & Fixed Property', template: null,
+    aliases: { ar: ['عقار', 'عقارات', 'ممتلكات'], en: ['real estate', 'property'] },
+    categories: [
+      { id: 'property_land', ar: 'أراضٍ', en: 'Land', aliases: { ar: ['ارض', 'اراضي'], en: ['plot'] } },
+      { id: 'property_buildings', ar: 'مبانٍ', en: 'Buildings', aliases: { ar: ['مبنى', 'مباني'], en: ['building'] } },
+      { id: 'property_units', ar: 'وحدات عقارية', en: 'Real Estate Units', aliases: { ar: ['شقة', 'فيلا', 'محل'], en: ['apartment', 'unit', 'villa'] } },
+      { id: 'property_installations', ar: 'منشآت ثابتة', en: 'Fixed Installations', aliases: { ar: ['تمديدات', 'منشأة'], en: ['installation'] } },
+      { id: 'property_fixtures', ar: 'تجهيزات ثابتة', en: 'Fixed Fixtures' },
+      { id: 'property_other', ar: 'أخرى', en: 'Other', other: true },
     ],
   },
   {
@@ -473,6 +498,21 @@ export const FIELD_DEFINITIONS = [
   { id: 'material', type: 'text', ar: 'المادة', en: 'Material' },
   { id: 'page_count', type: 'number', ar: 'عدد الصفحات', en: 'Number of Pages', validation: { integer: true, min: 0 } },
 
+  // The state of the stock, not its physical condition (الحالة) and not its
+  // kind (the Category): a «جيد» item can be «مرتجع».
+  {
+    id: 'inventory_status', type: 'select', ar: 'حالة المخزون', en: 'Inventory Status',
+    options: [
+      { id: 'normal', ar: 'عادي', en: 'Normal' },
+      { id: 'sample', ar: 'عينة', en: 'Sample' },
+      { id: 'returned', ar: 'مرتجع', en: 'Returned' },
+      { id: 'damaged', ar: 'تالف', en: 'Damaged' },
+      { id: 'seasonal', ar: 'موسمي', en: 'Seasonal' },
+      { id: 'reserved', ar: 'محجوز', en: 'Reserved' },
+      { id: 'quarantined', ar: 'معزول للفحص', en: 'Quarantined' },
+      { id: 'out_of_service', ar: 'خارج الخدمة', en: 'Out of Service' },
+    ],
+  },
   { id: 'supplier', type: 'text', ar: 'المورّد', en: 'Supplier' },
   { id: 'purchase_price', type: 'currency', ar: 'سعر الشراء', en: 'Purchase Price' },
   { id: 'selling_price', type: 'currency', ar: 'سعر البيع', en: 'Selling Price' },
@@ -492,7 +532,7 @@ export const FIELD_TEMPLATES = {
   gemstone: ['stone_type', 'carat_weight', 'measurements', 'shape', 'colour', 'clarity', 'treatment', 'origin', 'laboratory', 'report_number', 'report_date'],
   diamond: ['carat_weight', 'measurements', 'shape', 'cut_grade', 'colour_grade', 'clarity_grade', 'polish', 'symmetry', 'fluorescence', 'treatment', 'origin', 'laboratory', 'report_number', 'report_date'],
   books: ['author', 'document_title', 'document_date', 'languages', 'publisher', 'edition', 'publication_place', 'document_number', 'material', 'dimensions', 'page_count', 'provenance'],
-  product: ['supplier', 'purchase_price', 'selling_price', 'reorder_level', 'batch_number', 'expiry_date'],
+  product: ['inventory_status', 'supplier', 'purchase_price', 'selling_price', 'reorder_level', 'batch_number', 'expiry_date'],
 };
 
 /** The Main Categories offered first to a new inventory. */

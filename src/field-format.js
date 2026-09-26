@@ -7,16 +7,28 @@ import { currencySymbol } from './labels.js';
 import { hasFieldValue } from './custom-fields.js';
 import { definitionFor, fieldLabel, measurementUnitLabel, optionLabel } from './taxonomy.js';
 
+/**
+ * Any stored value as plain text, for a field whose type does not describe it
+ * (a recovered or damaged one). Never "[object Object]", never markup.
+ */
+function plainValue(value) {
+  if (Array.isArray(value)) return value.map((entry) => (typeof entry === 'object' ? '' : String(entry))).filter(Boolean).join(t('common.listSeparator'));
+  if (value && typeof value === 'object') {
+    if ('amount' in value) return `${formatNumber(Number(value.amount) || 0)} ${currencySymbol(value.currency)}`.trim();
+    if ('value' in value) return `${formatNumber(Number(value.value) || 0)} ${value.unit ? measurementUnitLabel(value.unit) : ''}`.trim();
+    return '';
+  }
+  return String(value);
+}
+
 export function formatFieldValue(def, value, language) {
   if (!hasFieldValue(value)) return '';
   switch (def?.type) {
-    case 'boolean': return value ? t('fields.yes') : t('fields.no');
+    case 'boolean': return typeof value === 'boolean' ? (value ? t('fields.yes') : t('fields.no')) : plainValue(value);
     case 'select': return optionLabel(def, value, language);
     case 'multiselect': return (Array.isArray(value) ? value : [value]).map((id) => optionLabel(def, id, language)).join(t('common.listSeparator'));
     case 'currency':
-      return value && typeof value === 'object'
-        ? `${formatNumber(value.amount)} ${currencySymbol(value.currency)}`
-        : String(value);
+      return plainValue(value);
     case 'measurement': {
       const number = typeof value === 'object' ? value.value : value;
       const unit = typeof value === 'object' && value.unit ? value.unit : def.unit;
@@ -24,15 +36,13 @@ export function formatFieldValue(def, value, language) {
     }
     case 'number':
     case 'decimal':
-      return typeof value === 'number' ? formatNumber(value) : String(value);
+      return typeof value === 'number' ? formatNumber(value) : plainValue(value);
     case 'date': {
       const date = new Date(`${value}T00:00:00`);
       return Number.isNaN(date.getTime()) ? String(value) : formatDate(date);
     }
     default:
-      if (Array.isArray(value)) return value.join(t('common.listSeparator'));
-      if (value && typeof value === 'object') return '';
-      return String(value);
+      return plainValue(value);
   }
 }
 
@@ -60,7 +70,9 @@ export function fieldRows(item, taxonomy) {
   const previous = [];
   for (const id of Object.keys(values)) {
     if (seen.has(id)) continue;
-    const def = definitionFor(id, { taxonomy, item });
+    // Never skipped: a value whose definition was lost still has a row, under
+    // a definition inferred from the value («حقل محفوظ سابقاً»).
+    const def = definitionFor(id, { taxonomy, item, value: values[id] });
     if (!def) continue;
     const text = formatFieldValue(def, values[id]);
     if (text) previous.push({ def, label: fieldLabel(def), text });

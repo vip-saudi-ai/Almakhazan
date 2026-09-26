@@ -19,6 +19,9 @@ export function configurationReport() {
   if (features.cloud && isNative() && auth.providers.google && !auth.providers.apple) {
     notes.push('Google sign-in is configured without Sign in with Apple; Google is hidden on iOS');
   }
+  if (!features.cloud && Object.values(auth.providers || {}).some(Boolean)) {
+    notes.push('sign-in providers are switched on while cloud is off; no account can exist, so none is shown');
+  }
   // Not errors in the app — requirements of a public release.
   const releaseGaps = [];
   if (!contact.supportUrl) releaseGaps.push('contact.supportUrl (public HTTPS support page) is not configured');

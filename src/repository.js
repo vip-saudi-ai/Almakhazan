@@ -14,7 +14,7 @@
 import { ACTIONS, DEFAULT_LOCATIONS, ROLES, TAXONOMY_LIMITS, UNCATEGORIZED_ID, roleAtLeast } from './config.js';
 import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
-import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
+import { applyReferenceDelta, reconcileAfterBulkWrite, releaseAll, retainAll } from './media.js';
 import { releaseObjectUrls } from './storage.js';
 import { currenciesPresent as currenciesInItems } from './money.js';
 import { quotaStatus } from './subscription.js';
@@ -22,9 +22,10 @@ import {
   GENERATED_SKU_MAX, formatGeneratedSku, generatedSkuPrefix, parseGeneratedSku,
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
+import { inferFieldDefinition, normalizeFieldRecord } from './custom-fields.js';
 import { t } from './i18n.js';
 import {
-  LEVELS, OTHER_MAIN_ID, TAXONOMY_SCHEMA_VERSION, buildTaxonomy, isBuiltinId, legacyPlacement,
+  LEVELS, OTHER_MAIN_ID, TAXONOMY_SCHEMA_VERSION, buildTaxonomy, definitionFor, isBuiltinId, legacyPlacement,
   reconcileClassification,
 } from './taxonomy.js';
 import {
@@ -51,7 +52,7 @@ export class ConflictError extends AppError {
   }
 }
 
-const COLLECTIONS = ['items', 'folders', 'categories', 'locations'];
+const COLLECTIONS = ['items', 'folders', 'categories', 'locations', 'fieldDefinitions'];
 
 /** The index holding only the trashed records of each scope value. */
 const TRASH_INDEX_BY_FIELD = {
@@ -66,6 +67,7 @@ const TRASH_INDEX_BY_FIELD = {
 const CLASSIFICATION_FIELDS = ['mainCategoryId', 'categoryId', 'subcategoryId'];
 
 const TAXONOMY_MIGRATION_KEY = 'taxonomy.migration';
+const FIELD_INDEX_KEY = 'fields.index.v1';
 
 // The taxonomies are small by design and stay whole. Records are not: a
 // workspace at the Business limit is 20,000 of them, and loading all of it to
@@ -483,7 +485,8 @@ export class FirestoreBackend {
    */
   async countItemsByField(field, value) {
     if (value == null) return 0;
-    const q = this.fs.query(this.col('items'), this.fs.where(field, '==', value));
+    // `customFieldIds` is a list; its membership is asked with array-contains.
+    const q = this.fs.query(this.col('items'), this.fs.where(field, field === 'customFieldIds' ? 'array-contains' : '==', value));
     if (this.fs.getCountFromServer) {
       const snapshot = await this.fs.getCountFromServer(q);
       return snapshot.data().count;
@@ -1049,7 +1052,7 @@ export class LocalBackend {
 // ── Repository facade ──────────────────────────────────────────────────────
 class Repository {
   constructor() {
-    this.state = { items: [], folders: [], categories: [], locations: [], activity: [] };
+    this.state = { items: [], folders: [], categories: [], locations: [], fieldDefinitions: [], activity: [] };
     this.sync = { status: SyncState.LOADING, message: null, error: null };
     this.session = { userId: null, role: ROLES.OWNER, workspaceId: null, mode: 'local' };
     this.listeners = new Set();
@@ -1199,6 +1202,7 @@ class Repository {
 
     await this._seedDefaults();
     await this.migrateTaxonomy();
+    await this._maintainFieldIndex();
     this.ready = true;
     this.emit();
   }
@@ -1214,6 +1218,7 @@ class Repository {
       case 'folders': return rows.map((r) => normalizeFolder(r));
       case 'categories': return rows.map((r) => normalizeCategory(r));
       case 'locations': return rows.map((r) => normalizeLocation(r));
+      case 'fieldDefinitions': return rows.map((r) => normalizeFieldRecord(r)).filter(Boolean);
       default: return rows;
     }
   }
@@ -1481,9 +1486,10 @@ class Repository {
    * inventory stored. Rebuilt only when the stored nodes change.
    */
   taxonomy() {
-    if (this._taxonomySource !== this.state.categories) {
+    if (this._taxonomySource !== this.state.categories || this._fieldSource !== this.state.fieldDefinitions) {
       this._taxonomySource = this.state.categories;
-      this._taxonomy = buildTaxonomy(this.state.categories);
+      this._fieldSource = this.state.fieldDefinitions;
+      this._taxonomy = buildTaxonomy(this.state.categories, this.state.fieldDefinitions);
     }
     return this._taxonomy;
   }
@@ -1927,6 +1933,8 @@ class Repository {
     this.assertCanWrite();
     const before = await this._current(id);
     patch = this._classificationPatch(before, patch);
+    // The derived list of field ids moves with the values it describes.
+    if ('customFields' in patch) patch = { ...patch, customFieldIds: Object.keys(patch.customFields || {}) };
     this.setSync(SyncState.SAVING);
     await this.backend.update('items', id, { ...patch, updatedBy: this.session.userId }, expectedVersion);
 
@@ -2411,12 +2419,187 @@ class Repository {
     if (operations.length) await this._runRelational(operations);
   }
 
-  /** Field definitions the customer saves to a node, for every record under it. */
+  // ── field definitions ──
+  //
+  // A field saved to a Category lives in two places on purpose: the node's
+  // `fields` say where it is offered (the template), and the field registry
+  // (`fieldDefinitions`) says what it is, for as long as any record may hold
+  // a value under it. Taking a field off a template never deletes the
+  // definition while a record uses it: it is retired — no longer offered for
+  // new records, still resolvable, its values shown under «حقول سابقة».
+
+  /** How many records, live or in the Trash, hold a value under this field. */
+  fieldUsage(fieldId) {
+    return this.countItemsReferencing('customFieldIds', fieldId);
+  }
+
+  _registryRecord(fieldId) {
+    return this.state.fieldDefinitions.find((def) => def.id === fieldId) || null;
+  }
+
+  /** Is this field on any node's template other than `exceptNodeId`? */
+  _fieldOnAnotherTemplate(fieldId, exceptNodeId) {
+    return this.state.categories.some((record) => record.id !== exceptNodeId && !record.mergedInto
+      && (record.fields || []).some((def) => def.id === fieldId));
+  }
+
+  /** Registry writes that keep every definition in `defs` known and active. */
+  _registerFieldOps(defs, nodeId) {
+    const ops = [];
+    for (const def of defs) {
+      const existing = this._registryRecord(def.id);
+      if (existing && !existing.retired && existing.label === def.label && existing.type === def.type) continue;
+      ops.push({
+        type: 'set', collection: 'fieldDefinitions', id: def.id, merge: false,
+        data: normalizeFieldRecord({
+          ...existing, ...def, retired: false, retiredAt: null,
+          createdAt: existing?.createdAt ?? Date.now(),
+          originalTaxonomyNodeId: existing?.originalTaxonomyNodeId ?? nodeId,
+        }),
+      });
+    }
+    return ops;
+  }
+
+  /** Registry writes that retire definitions no template offers any more. */
+  _retireFieldOps(defs, { exceptNodeId = null, checkTemplates = true } = {}) {
+    const ops = [];
+    for (const def of defs) {
+      if (checkTemplates && this._fieldOnAnotherTemplate(def.id, exceptNodeId)) continue;
+      const existing = this._registryRecord(def.id);
+      ops.push({
+        type: 'set', collection: 'fieldDefinitions', id: def.id, merge: false,
+        data: normalizeFieldRecord({
+          ...def, ...existing, retired: true, retiredAt: Date.now(),
+          createdAt: existing?.createdAt ?? Date.now(),
+          originalTaxonomyNodeId: existing?.originalTaxonomyNodeId ?? exceptNodeId,
+        }),
+      });
+    }
+    return ops;
+  }
+
+  /**
+   * Field definitions the customer saves to a node, for every record under it.
+   *
+   * A field taken off the template is retired, not deleted, while any record
+   * holds a value under it. One that no record uses — asked of the index, not
+   * guessed — is removed outright.
+   *
+   * @returns {Promise<{retired: Array<{id, usage}>, deleted: string[]}>}
+   */
   async saveTaxonomyNodeFields(id, fields) {
     this.assertCanWrite();
-    const clean = normalizeCategory({ id, fields }).fields || [];
     if (Array.isArray(fields) && fields.length > TAXONOMY_LIMITS.fieldsPerTemplate) throw this._taxonomyError('taxonomy.error.limit');
+    const clean = normalizeCategory({ id, fields }).fields || [];
+    const before = this.taxonomy().node(id)?.fields || [];
+    const kept = new Set(clean.map((def) => def.id));
+    const removed = before.filter((def) => !kept.has(def.id));
+
+    const ops = this._registerFieldOps(clean, id);
+    const retired = [];
+    const deleted = [];
+    for (const def of removed) {
+      if (this._fieldOnAnotherTemplate(def.id, id)) continue;
+      const usage = await this.fieldUsage(def.id);
+      if (usage > 0) {
+        retired.push({ id: def.id, usage });
+        ops.push(...this._retireFieldOps([def], { exceptNodeId: id }));
+      } else {
+        deleted.push(def.id);
+        if (this._registryRecord(def.id)) ops.push({ type: 'delete', collection: 'fieldDefinitions', id: def.id });
+      }
+    }
+    if (ops.length) await this._runRelational(ops);
     await this._patchNode(id, { fields: clean });
+    return { retired, deleted };
+  }
+
+  /** Offers a retired field again, on the node it came from. */
+  async reactivateField(fieldId) {
+    this.assertCanWrite();
+    const record = this._registryRecord(fieldId);
+    if (!record || record.recovered) throw this._taxonomyError('taxonomy.error.unknown');
+    const node = this.taxonomy().resolve(record.originalTaxonomyNodeId);
+    if (!node) throw this._taxonomyError('taxonomy.error.unknown');
+    const { retired, retiredAt, originalTaxonomyNodeId, createdAt, recovered, ...def } = record;
+    void retired; void retiredAt; void originalTaxonomyNodeId; void createdAt; void recovered;
+    await this.saveTaxonomyNodeFields(node.id, [...node.fields.filter((f) => f.id !== fieldId), def]);
+    return node.id;
+  }
+
+  /** Every definition in the registry, retired ones included. */
+  fieldDefinitions() {
+    return this.state.fieldDefinitions;
+  }
+
+  /**
+   * Makes sure every value in these records has a definition somewhere. A
+   * value nothing defines gets a `recovered` definition in the registry,
+   * inferred from its shape — kept and shown, never dropped.
+   *
+   * @returns {Array} registry write operations
+   */
+  recoveredFieldOps(items, { taxonomy = this.taxonomy(), fallbackDefinitions = [] } = {}) {
+    const fallback = new Map(fallbackDefinitions.filter(Boolean).map((def) => [def.id, def]));
+    const known = new Set();
+    const ops = new Map();
+    for (const item of items) {
+      for (const [fieldId, value] of Object.entries(item.customFields || {})) {
+        if (known.has(fieldId) || ops.has(fieldId)) continue;
+        if (definitionFor(fieldId, { taxonomy, item })) { known.add(fieldId); continue; }
+        // Kept, retired, under the best definition there is: one this device
+        // already knows, or else one inferred from the value.
+        const kept = fallback.get(fieldId);
+        const record = kept
+          ? normalizeFieldRecord({ ...kept, retired: true, retiredAt: kept.retiredAt || Date.now() })
+          : inferFieldDefinition(fieldId, value);
+        if (record) ops.set(fieldId, { type: 'set', collection: 'fieldDefinitions', id: fieldId, merge: false, data: record });
+      }
+    }
+    return [...ops.values()];
+  }
+
+  /**
+   * Once per device: records written before the field index existed gain
+   * their `customFieldIds`, and every template field gains a registry entry.
+   * Both are idempotent; `updatedAt` is left alone.
+   */
+  async _maintainFieldIndex() {
+    if (!this.backend || !this.canWrite()) return;
+    try {
+      await this.syncFieldRegistry();
+      if (this.session.mode !== 'local') return;
+      const done = await local.getMeta(FIELD_INDEX_KEY, null);
+      if (done) return;
+      const ops = [];
+      await local.walk('items', {
+        batchSize: 500,
+        onBatch: (batch) => {
+          for (const item of batch) {
+            const ids = Object.keys(item.customFields || {});
+            if (!ids.length || (Array.isArray(item.customFieldIds) && item.customFieldIds.length === ids.length)) continue;
+            ops.push({ type: 'set', collection: 'items', id: item.id, merge: true, preserveUpdatedAt: true, data: { customFieldIds: ids } });
+          }
+          return true;
+        },
+      });
+      for (let i = 0; i < ops.length; i += ATOMIC_BULK_MAX) await this._runRelational(ops.slice(i, i + ATOMIC_BULK_MAX));
+      await local.setMeta(FIELD_INDEX_KEY, { at: Date.now(), items: ops.length });
+    } catch (error) {
+      console.error('[repo] field index maintenance deferred', error);
+    }
+  }
+
+  /** Brings the registry up to date with every template (idempotent). */
+  async syncFieldRegistry() {
+    if (!this.backend || !this.canWrite()) return 0;
+    const ops = [];
+    for (const record of this.state.categories) {
+      if (record.fields?.length) ops.push(...this._registerFieldOps(normalizeCategory(record).fields || [], record.id));
+    }
+    if (ops.length) await this._runRelational(ops);
+    return ops.length;
   }
 
   /** The records field holding a node of this level. */
@@ -2513,8 +2696,19 @@ class Repository {
       }
     }
 
+    // The fields saved to what is being deleted outlive it: records may hold
+    // values under them, and a value without its definition cannot be read.
+    const leavingFields = [node, ...below].flatMap((n) => n.fields || []);
+    const leavingIds = new Set([id, ...below.map((child) => child.id)]);
+    const fieldOps = [];
+    for (const def of leavingFields) {
+      const elsewhere = this.state.categories.some((record) => !leavingIds.has(record.id) && !record.mergedInto
+        && (record.fields || []).some((f) => f.id === def.id));
+      if (!elsewhere) fieldOps.push(...this._retireFieldOps([def], { exceptNodeId: id, checkTemplates: false }));
+    }
     await this._runRelational([
       ...(patch ? this._clearReferenceOps(affected, patch) : []),
+      ...fieldOps,
       ...below.map((child) => ({ type: 'delete', collection: 'categories', id: child.id })),
       { type: 'delete', collection: 'categories', id },
     ]);
@@ -2540,40 +2734,118 @@ class Repository {
   async mergeTaxonomyNodes(sourceId, targetId) {
     this.assertCanWrite();
     const taxonomy = this.taxonomy();
+    const plan = this.planTaxonomyMerge(sourceId, targetId);
+    const source = taxonomy.node(sourceId);
+
+    // Every record under the source carries the source's own id at its level
+    // (a Category's records carry its Main Category too), so one index read
+    // finds them all; each is rewritten through the plan's map.
+    const field = this._levelField(source.level);
+    const affected = await this.itemsReferencing(field, sourceId);
+    const through = (id) => (id && plan.map.has(id) ? plan.map.get(id) : id);
+    const operations = [];
+    const patched = [];
+    for (const item of affected) {
+      const patch = {
+        mainCategoryId: through(item.mainCategoryId) ?? null,
+        categoryId: through(item.categoryId) || UNCATEGORIZED_ID,
+        subcategoryId: through(item.subcategoryId) ?? null,
+      };
+      // Each level follows the one below it, wherever the merge left it.
+      if (patch.subcategoryId) patch.categoryId = plan.parentAfter(patch.subcategoryId) ?? patch.categoryId;
+      if (patch.categoryId !== UNCATEGORIZED_ID) patch.mainCategoryId = plan.parentAfter(patch.categoryId) ?? patch.mainCategoryId;
+      patched.push([item, patch]);
+      operations.push(...this._clearReferenceOps([item], patch));
+    }
+    operations.push(...plan.nodeOps);
+    await this._runRelational(operations);
+    for (const [item, patch] of patched) this._patchLoaded([item], patch);
+    await this.log(ACTIONS.CATEGORY_MERGED, {
+      categoryId: sourceId, categoryName: taxonomy.label(source), reassigned: affected.length, newCategoryId: plan.targetId,
+    });
+    return affected.length;
+  }
+
+  /**
+   * What merging `sourceId` into `targetId` would do, worked out before
+   * anything is written.
+   *
+   * A child of the source whose name matches a child of the target (the same
+   * normalised comparison that refuses a duplicate on creation) is merged into
+   * it, recursively — so «معدات A › مولدات › ديزل» into «معدات B» that already
+   * has «مولدات › ديزل» leaves one «مولدات» and one «ديزل», never two. Every
+   * other child moves under the target. Fields travel with their nodes: the
+   * same field id is kept once, and two different fields that happen to share
+   * a label are both kept — a label is not an identity.
+   *
+   * @returns {{targetId, map: Map<string,string>, parentAfter: (id: string) => string|null,
+   *   nodeOps: Array, merged: Array<{from,into}>, moved: Array<{id,parentId}>}}
+   */
+  planTaxonomyMerge(sourceId, targetId) {
+    const taxonomy = this.taxonomy();
     const source = taxonomy.node(sourceId);
     const target = taxonomy.resolve(targetId);
     if (!source || !target || source.id === target.id) throw this._taxonomyError('taxonomy.error.unknown');
     if (source.source !== 'custom') throw this._taxonomyError('taxonomy.error.builtinDelete');
     if (source.level !== target.level) throw this._taxonomyError('taxonomy.error.mergeLevel');
-
-    const field = this._levelField(source.level);
-    const affected = await this.itemsReferencing(field, sourceId);
-    const targetMain = taxonomy.mainOf(target)?.id || null;
-    let patch;
-    if (source.level === LEVELS.MAIN) patch = { mainCategoryId: target.id };
-    else if (source.level === LEVELS.CATEGORY) patch = { mainCategoryId: targetMain, categoryId: target.id };
-    else patch = { mainCategoryId: targetMain, categoryId: target.parentId, subcategoryId: target.id };
-
-    const children = taxonomy.children(sourceId).filter((child) => child.source === 'custom');
-    const operations = [
-      ...this._clearReferenceOps(affected, patch),
-      ...children.map((child) => ({ type: 'set', collection: 'categories', id: child.id, merge: true, data: { parentId: target.id } })),
-      { type: 'set', collection: 'categories', id: sourceId, merge: true, data: { mergedInto: target.id, hidden: true } },
-    ];
-    // Records under a moved Category keep it, but their Main Category moves.
-    if (source.level === LEVELS.MAIN) {
-      for (const child of children) {
-        const under = await this.itemsReferencing('categoryId', child.id);
-        const extra = under.filter((item) => !affected.some((a) => a.id === item.id));
-        operations.unshift(...this._clearReferenceOps(extra, { mainCategoryId: target.id }));
-      }
+    for (let n = target; n; n = n.parentId ? taxonomy.node(n.parentId) : null) {
+      if (n.id === source.id) throw this._taxonomyError('taxonomy.error.mergeLevel');
     }
-    await this._runRelational(operations);
-    this._patchLoaded(affected, patch);
-    await this.log(ACTIONS.CATEGORY_MERGED, {
-      categoryId: sourceId, categoryName: taxonomy.label(source), reassigned: affected.length, newCategoryId: target.id,
-    });
-    return affected.length;
+
+    const map = new Map();
+    const movedTo = new Map();
+    const merged = [];
+    const moved = [];
+    const fieldsFor = new Map();
+    const nodeOps = [];
+
+    const unionFields = (into, from) => {
+      const current = fieldsFor.get(into.id) || [...(into.fields || [])];
+      const ids = new Set(current.map((def) => def.id));
+      for (const def of from.fields || []) if (!ids.has(def.id)) { current.push(def); ids.add(def.id); }
+      fieldsFor.set(into.id, current);
+    };
+
+    const reconcile = (from, into) => {
+      map.set(from.id, into.id);
+      merged.push({ from: from.id, into: into.id });
+      unionFields(into, from);
+      const intoChildren = taxonomy.children(into.id);
+      for (const child of taxonomy.children(from.id)) {
+        if (child.mergedInto) continue;
+        const twin = intoChildren.find((candidate) => candidate.level === child.level && !candidate.mergedInto
+          && candidate.id !== child.id
+          && taxonomy.duplicateOf(taxonomy.label(child), { level: child.level, parentId: into.id })?.id === candidate.id);
+        if (twin) {
+          reconcile(child, twin);
+        } else {
+          moved.push({ id: child.id, parentId: into.id });
+          movedTo.set(child.id, into.id);
+        }
+      }
+    };
+    reconcile(source, target);
+
+    for (const { from, into } of merged) {
+      nodeOps.push({ type: 'set', collection: 'categories', id: from, merge: true, data: { mergedInto: into, hidden: true } });
+    }
+    for (const { id, parentId } of moved) {
+      nodeOps.push({ type: 'set', collection: 'categories', id, merge: true, data: { parentId } });
+    }
+    for (const [nodeId, fields] of fieldsFor) {
+      const before = taxonomy.node(nodeId).fields || [];
+      if (fields.length === before.length) continue;
+      nodeOps.push({
+        type: 'set', collection: 'categories', id: nodeId, merge: true,
+        data: this._storedNode(nodeId)
+          ? { fields }
+          : { ...normalizeCategory({ id: nodeId, name: '', source: 'builtin' }), source: 'builtin', fields },
+      });
+      nodeOps.push(...this._registerFieldOps(fields, nodeId));
+    }
+    /** A node's parent once the merge is done. */
+    const parentAfter = (categoryId) => movedTo.get(categoryId) ?? taxonomy.node(categoryId)?.parentId ?? null;
+    return { targetId: target.id, map, parentAfter, nodeOps, merged, moved };
   }
 
   /**
@@ -3093,6 +3365,8 @@ class Repository {
     }
     if (orphans.length) await this._runRelational(orphans);
 
+    // Whatever the removed records referenced is counted again now.
+    if (removed) await reconcileAfterBulkWrite(this.session);
     if (removed || orphans.length) {
       await this.log(ACTIONS.IMPORT_ROLLED_BACK, {
         importJobId, items: removed, taxonomy: orphans.length,
@@ -3150,6 +3424,9 @@ class Repository {
       ...this.state.folders.map((f) => ({ type: 'delete', collection: 'folders', id: f.id })),
     ];
     await this.backend.runBatch(operations);
+    // The records are gone; so are the images only they referenced. Their
+    // counts were not moved one by one, so the store is asked what is left.
+    await reconcileAfterBulkWrite(this.session, { reclaimNow: true });
     await this.log(ACTIONS.WORKSPACE_CLEARED, {
       itemsRemoved: this.state.items.length, foldersRemoved: this.state.folders.length,
     });

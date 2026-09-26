@@ -7,6 +7,7 @@ import {
 import { aiAvailability, aiStatusLabel } from '../ai.js';
 import { LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
 import { locationName, roleLabel } from '../labels.js';
+import { fieldLabel } from '../taxonomy.js';
 import {
   currentSession, registerWithEmail, sendPasswordReset,
   signInWithApple, signInWithEmail, signInWithGoogle, signOutUser,
@@ -19,6 +20,9 @@ import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
 } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
+import {
+  createFullBackup, lastBackupInfo, looksLikeFullBackup, openFullBackup, restoreFullBackup, verifyFullBackupMedia,
+} from '../full-backup.js';
 import { inventoryCounts, queryInventory } from '../query.js';
 import { storageEstimate } from '../local-store.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
@@ -36,7 +40,7 @@ import { accountSignInMethods } from '../account.js';
 import { hasAiConsent, withdrawAiConsent } from '../ai-consent.js';
 import { Feature, isAuthProviderAvailable, isFeatureAvailable } from '../features.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
-import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
+import { $, AppError, el, formatDate, formatNumber, render, setText, timeAgo } from '../utils.js';
 import { primaryImage, validateImport } from '../validation.js';
 import {
   closeSheet, confirmAction, emptyState, flashSuccess, isSheetOpen, openSheet, optionList, toast, toastError, withBusy,
@@ -211,12 +215,34 @@ function savedFieldsBlock(category) {
       el('span', { class: 'tx-open' }, [el('span', { class: 'tx-name', dir: 'auto', text: def.label }), el('span', { class: 'tx-sub', text: t(`fieldType.${def.type}`) })]),
       repository.canWrite() ? el('button', {
         type: 'button', class: 'tx-act', text: t('fields.removeValue'), 'aria-label': t('taxonomy.removeSavedField', { name: def.label }),
-        onClick: async () => {
-          try { await repository.saveTaxonomyNodeFields(category.id, fields.filter((f) => f.id !== def.id)); } catch (error) { toastError(error); }
-        },
+        onClick: () => removeSavedField(category.id, def),
       }) : null,
     ]))) : el('p', { class: 'tax-empty', text: t('taxonomy.noSavedFields') }),
   ]);
+}
+
+/**
+ * Taking a field off a Category's template. The customer is told first what
+ * happens to the values: kept and shown under «حقول سابقة» when records use
+ * it, the field deleted only when none does.
+ */
+async function removeSavedField(nodeId, def) {
+  const usage = await repository.fieldUsage(def.id);
+  const confirmed = await confirmAction({
+    title: () => t('fields.removeTitle', { name: def.label }),
+    message: () => (usage ? t('fields.retiredNote', { count: usage }) : t('fields.removeUnusedNote')),
+    icon: '◈',
+    confirmLabelKey: 'fields.removeValue',
+    tone: usage ? 'neutral' : 'danger',
+  });
+  if (!confirmed) return;
+  try {
+    const fields = repository.taxonomy().savedFields(nodeId).filter((f) => f.id !== def.id);
+    const result = await repository.saveTaxonomyNodeFields(nodeId, fields);
+    toast(t(result.retired.length ? 'fields.retiredDone' : 'fields.deletedDone'), '✓');
+  } catch (error) {
+    toastError(error);
+  }
 }
 
 /** Opens Settings → التصنيفات, optionally on one node's list. */
@@ -252,6 +278,36 @@ function fieldsOverview() {
         ]),
       ]),
     ]))) : el('p', { class: 'tax-empty', text: t('taxonomy.noCustomFields') }),
+    ...retiredFieldsBlock(),
+  ];
+}
+
+/** «حقول متوقفة»: definitions kept for the values records still hold. */
+function retiredFieldsBlock() {
+  const taxonomy = repository.taxonomy();
+  const retired = repository.fieldDefinitions().filter((def) => def.retired);
+  if (!retired.length) return [];
+  return [
+    el('h2', { class: 'cf-title', text: t('taxonomy.retiredFields') }),
+    el('p', { class: 'sheet-note', text: t('taxonomy.retiredFieldsHint') }),
+    el('div', { class: 'sgroup' }, retired.map((def) => {
+      const name = fieldLabel(def);
+      const origin = def.originalTaxonomyNodeId ? taxonomy.resolve(def.originalTaxonomyNodeId) : null;
+      return el('div', { class: 'tx-row' }, [
+        el('span', { class: 'tx-open' }, [
+          el('span', {}, [
+            el('div', { class: 'tx-name', dir: 'auto', text: name }),
+            el('div', { class: 'tx-sub', text: [t(`fieldType.${def.type}`, {}), origin ? taxonomy.label(origin) : null].filter(Boolean).join(' · ') }),
+          ]),
+        ]),
+        repository.canWrite() && origin && !def.recovered ? el('button', {
+          type: 'button', class: 'tx-act', text: t('taxonomy.reactivate'), 'aria-label': t('taxonomy.reactivateAria', { name }),
+          onClick: async () => {
+            try { await repository.reactivateField(def.id); toast(t('taxonomy.reactivated'), '✓'); } catch (error) { toastError(error); }
+          },
+        }) : null,
+      ]);
+    })),
   ];
 }
 
@@ -763,7 +819,12 @@ function showImportSummary(result, filename) {
     el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.folders) }), ` ${t('backup.statFolders', { count: result.stats.folders })}`]),
     el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.categories) }), ` ${t('backup.statCategories', { count: result.stats.categories })}`]),
     el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.locations) }), ` ${t('backup.statLocations', { count: result.stats.locations })}`]),
+    result.archive ? el('div', { class: 'imp-stat' }, [el('b', { text: formatNumber(result.stats.media) }), ` ${t('fullBackup.statImages', { count: result.stats.media })}`]) : null,
   ]);
+  // A Full Backup is restored whole; merging it would leave its images and
+  // its classification half applied.
+  $('import-merge').style.display = result.archive ? 'none' : '';
+  $('import-full-note').style.display = result.archive ? '' : 'none';
 
   const warnings = $('import-warnings');
   // An unfinished restore is said up front, on the screen that would start
@@ -811,17 +872,25 @@ async function runImport(mode) {
         const { added } = await applyMerge(data);
         toast(t('backup.merged', { count: added }), '✓');
       } else {
-        const result = await restoreFromBackup(data, {
-          sourceFingerprint: pendingImport.sourceFingerprint,
-          saveBackup: (text) => saveBackupFile(text, 'nazm_safety'),
-          onProgress: ({ stage, done, total }) => {
-            const label = stageLabel(stage);
-            setText('import-progress', stage === RestoreStage.DONE || total <= 1
-              ? label
-              : `${label} ${formatNumber(done)} / ${formatNumber(total)}`);
-          },
-        });
-        toast(t('backup.restored', { count: result.restored }), '✓');
+        const onProgress = ({ stage, done, total }) => {
+          if (stage === 'media') {
+            setText('import-progress', t('fullBackup.writingImages', { done: formatNumber(done), total: formatNumber(total) }));
+            return;
+          }
+          const label = stageLabel(stage);
+          setText('import-progress', stage === RestoreStage.DONE || total <= 1
+            ? label
+            : `${label} ${formatNumber(done)} / ${formatNumber(total)}`);
+        };
+        const saveBackup = (text) => saveBackupFile(text, 'nazm_safety');
+        if (pendingImport.archive) {
+          const result = await restoreFullBackup(pendingImport.archive, { onProgress, saveBackup });
+          toast(t('fullBackup.restored', { items: formatNumber(result.restored), media: formatNumber(result.images) }), '✓');
+          if (result.declaredMissing) toast(t('fullBackup.restoreMissing', { count: result.declaredMissing }), '⚠');
+        } else {
+          const result = await restoreFromBackup(data, { sourceFingerprint: pendingImport.sourceFingerprint, saveBackup, onProgress });
+          toast(t('backup.restored', { count: result.restored }), '✓');
+        }
       }
       pendingImport = null;
       setText('import-progress', '');
@@ -1275,6 +1344,77 @@ async function restoreDefaultsFlow() {
   }
 }
 
+/** «آخر نسخة احتياطية: قبل ١٢ يوماً» under the Full Backup row. */
+async function paintLastBackup() {
+  const last = await lastBackupInfo();
+  // Looked up after the read: the panel may have been redrawn meanwhile.
+  const node = $('full-backup-sub');
+  if (!node) return;
+  node.textContent = `${t('fullBackup.sub')} · ${last ? t('fullBackup.last', { when: timeAgo(last.at) }) : t('fullBackup.never')}`;
+}
+
+function showBackupProgress(text, ratio = null) {
+  if (!isSheetOpen('bk')) openSheet('bk');
+  setText('bk-status', text);
+  const bar = $('bk-bar');
+  if (bar) bar.style.width = ratio == null ? '0%' : `${Math.round(Math.min(1, ratio) * 100)}%`;
+}
+
+/**
+ * «نسخة احتياطية كاملة». Success is announced only once the system has taken
+ * the file (the share sheet or the download), never when it is merely built.
+ */
+export async function runFullBackup() {
+  if (!(await withFullInventory(t('export.reading')))) return false;
+  showBackupProgress(t('fullBackup.working'));
+  try {
+    const summary = await createFullBackup({
+      onProgress: ({ done, total }) => showBackupProgress(
+        total ? t('fullBackup.images', { done: formatNumber(done), total: formatNumber(total) }) : t('fullBackup.handoff'),
+        total ? done / total : null,
+      ),
+    });
+    closeSheet('bk');
+    toast(t('fullBackup.done', { items: formatNumber(summary.items), media: formatNumber(summary.media) }), '✓');
+    if (summary.missing.length) toast(t('fullBackup.missingImages', { count: summary.missing.length }), '⚠');
+    void paintLastBackup();
+    window.dispatchEvent(new CustomEvent('almakhzan:backup-made'));
+    return true;
+  } catch (error) {
+    closeSheet('bk');
+    toastError(error, 'backup.corrupt');
+    return false;
+  }
+}
+
+/** Picks a .nazmbackup, verifies all of it, then shows what it holds. */
+async function startFullRestore() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  // iOS greys out a custom extension it has no type for, so the picker is
+  // left open and the file is recognised by its content.
+  input.accept = '.nazmbackup,.zip,application/zip,application/octet-stream';
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    showBackupProgress(t('fullBackup.checking'));
+    try {
+      if (!(await looksLikeFullBackup(file))) throw new AppError('backup.notFullBackup', { code: 'backup/not-full' });
+      const archive = await openFullBackup(file);
+      await verifyFullBackupMedia(archive, {
+        onProgress: ({ done, total }) => showBackupProgress(t('fullBackup.checkingImages', { done: formatNumber(done), total: formatNumber(total) }), done / total),
+      });
+      closeSheet('bk');
+      pendingImport = { ok: true, data: archive.data, stats: archive.stats, warnings: archive.warnings, sourceFingerprint: archive.fingerprint, archive };
+      showImportSummary(pendingImport, file.name);
+    } catch (error) {
+      closeSheet('bk');
+      toastError(error, 'backup.corrupt');
+    }
+  };
+  input.click();
+}
+
 function renderDataPanel() {
   const panel = $('data-panel');
   if (!panel) return;
@@ -1303,6 +1443,9 @@ function renderDataPanel() {
     // these are absent rather than present and refusing.
     cloudSession && isFeatureAvailable(Feature.TEAM) ? row('👥', 'rgba(37,99,255,.15)', t('team.title'), t('settings.teamSub'), openTeamSheet) : null,
     cloudSession && isFeatureAvailable(Feature.TEAM) ? row('🗄', 'rgba(147,197,253,.25)', t('workspace.title'), t('settings.workspacesSub'), () => { void openWorkspaceSheet(); }) : null,
+    // The disaster-recovery copy first, and said to be the complete one.
+    repository.session.mode === 'cloud' ? null : row('🛟', 'rgba(37,99,255,.15)', t('fullBackup.title'), t('fullBackup.sub'), () => { void runFullBackup(); }, 'full-backup-sub'),
+    repository.session.mode === 'cloud' ? null : row('♻️', 'rgba(37,99,255,.12)', t('fullBackup.restore'), t('fullBackup.restoreSub'), () => { void startFullRestore(); }),
     row('📊', 'rgba(52,199,89,.15)', t('export.excel'), t('settings.excelSub'), () => { void runFullExcelExport(); }),
     // Honest about what the file holds. It is the records, never the image
     // files: on a device-only workspace those stay on the device, and on a
@@ -1330,6 +1473,7 @@ function renderDataPanel() {
       ]),
     ]),
   ]);
+  void paintLastBackup();
 
   void describeDeviceStorage();
   void repository.recordCounts().then((counts) => {
@@ -1486,5 +1630,6 @@ export function bindManageViews() {
   window.addEventListener('almakhzan:start-import', startImport);
   window.addEventListener('almakhzan:new-folder', () => openFolderSheet());
   window.addEventListener('almakhzan:open-classification', () => openClassificationManager());
+  window.addEventListener('almakhzan:run-full-backup', () => { void runFullBackup(); });
   window.addEventListener('almakhzan:edit-folder', (event) => openFolderSheet(event.detail));
 }

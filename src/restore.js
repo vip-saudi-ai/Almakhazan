@@ -32,6 +32,7 @@ import { repository } from './repository.js';
 import { AppError } from './utils.js';
 import { t } from './i18n.js';
 import { buildTaxonomy, reconcileClassification } from './taxonomy.js';
+import { reconcileAfterBulkWrite } from './media.js';
 
 // ── the restore job ──
 
@@ -114,7 +115,9 @@ export function stageLabel(stage) {
   return stage && Object.values(RestoreStage).includes(stage) ? t(`restore.stage.${stage}`) : '';
 }
 
-const COLLECTIONS = ['categories', 'locations', 'folders', 'items'];
+// Definitions before the records that use them: classification and field
+// definitions, then places, then records.
+const COLLECTIONS = ['categories', 'fieldDefinitions', 'locations', 'folders', 'items'];
 const CHUNK = 300;
 
 /**
@@ -131,6 +134,7 @@ export function buildSafetyBackup() {
     items: repo.state.items,
     folders: repo.state.folders,
     categories: repo.state.categories,
+    fieldDefinitions: repo.state.fieldDefinitions,
     locations: repo.state.locations,
   };
 
@@ -166,7 +170,7 @@ export function buildSafetyBackup() {
  *   finished only by the file with the same bytes, never by another backup
  *   of the same records.
  */
-export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup, sourceFingerprint }) {
+export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup, sourceFingerprint, beforeWrite = null }) {
   const repo = repository;
   repo.assertCanWrite();
   if (!sourceFingerprint) {
@@ -196,13 +200,13 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
   };
   activeRestoreId = job.id;
   try {
-    return await runRestore(repo, data, job, { onProgress, saveBackup });
+    return await runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite });
   } finally {
     activeRestoreId = null;
   }
 }
 
-async function runRestore(repo, data, job, { onProgress, saveBackup }) {
+async function runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite }) {
 
   // ── 0. the whole inventory, before anything else ──
   // The app browses on a window of the newest records. A safety backup taken
@@ -233,14 +237,29 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   // anything leaves nothing that looks like one that stopped half way.
   await saveJob(job);
 
+  // ── 1b. what the records will refer to ──
+  // A Full Backup writes its images here: after the safety backup, before any
+  // record that references them. Idempotent, so a resumed restore repeats it.
+  if (beforeWrite) await beforeWrite({ job });
+
   // ── 2. write the incoming records ──
   // Order: the classification (categories) first, then the records that
   // refer to it, then — in a future full backup — their images. Each record's
   // classification is made to agree with the classification it arrives with:
   // built-in ids resolve against this app's library, the backup's own nodes
   // against the backup; what does not fit keeps as much of itself as does.
-  const taxonomy = buildTaxonomy(data.categories || []);
+  const taxonomy = buildTaxonomy(data.categories || [], data.fieldDefinitions || []);
   for (const item of data.items || []) Object.assign(item, reconcileClassification(taxonomy, item).value);
+  // A value whose definition the backup does not carry is kept, under a
+  // recovered definition, rather than restored into invisibility.
+  data.fieldDefinitions = [
+    ...(data.fieldDefinitions || []),
+    ...repo.recoveredFieldOps(data.items || [], {
+      taxonomy,
+      // A definition this device already holds is better than an inferred one.
+      fallbackDefinitions: [...repo.state.fieldDefinitions, ...repo.state.categories.flatMap((c) => c.fields || [])],
+    }).map((op) => op.data),
+  ];
   const writes = [];
   for (const name of COLLECTIONS) {
     for (const record of data[name] || []) {
@@ -309,10 +328,18 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   // A backup from before the hierarchy carries flat categories: place them
   // exactly as an upgraded inventory's are placed.
   try { await repo.migrateTaxonomy(); } catch (error) { console.error('[restore] classification upgrade deferred', error); }
+  // The restored records reference images by id; the counts are made to
+  // agree now. Nothing is reclaimed here — only counted — so a file the
+  // restore still needs cannot be removed under it.
+  const media = await reconcileAfterBulkWrite(repo.session);
   onProgress({ stage: RestoreStage.DONE, done: 1, total: 1 });
   return {
     restored: data.items?.length || 0,
     removed: removals.length,
     written: writes.length,
+    // Images the restored records name but this device does not hold — a
+    // metadata-only backup restored onto another device. Reported, never
+    // invented.
+    missingMedia: media?.missing?.length || 0,
   };
 }

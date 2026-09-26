@@ -30,6 +30,7 @@ import { onLanguageChange, t } from '../i18n.js';
 import { categoryName, conditionLabel, locationName, unitLabel } from '../labels.js';
 import { openTaxonomyPicker } from './taxonomy-picker.js';
 import { renderTaxonomyCard } from './taxonomy-onboarding.js';
+import { renderBackupReminder } from './backup-reminder.js';
 
 // A language switch redraws the sheets this screen owns if they are open —
 // from what their controls show *now*, not from what was last applied, so a
@@ -1021,6 +1022,7 @@ function renderChrome() {
   void refreshCounts();
   renderQuotaBanner();
   renderTaxonomyCard();
+  renderBackupReminder();
   renderAssistantBanner();
   renderNavBar(folder);
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';

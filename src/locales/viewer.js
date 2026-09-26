@@ -19,6 +19,8 @@ export const messages = {
   'labels.withLocation': { ar: "أظهر الموقع", en: "Show location" },
   'labels.printMany': { ar: "طباعة {count} ملصقات", en: { one: "Print {count} label", other: "Print {count} labels" } },
   'labels.printOne': { ar: "طباعة الملصق", en: "Print label" },
+  'labels.sharePdf': { ar: "حفظ أو مشاركة الملصقات (PDF)", en: "Save or share labels (PDF)" },
+  'labels.pdfFailed': { ar: "تعذّر تجهيز ملف الملصقات. حاول مرة أخرى.", en: "Could not prepare the labels file. Try again." },
   'labels.printFailed': { ar: "تعذّر فتح الطباعة", en: "Could not open printing" },
   'labels.chooseFirst': { ar: "اختر قطعة أولاً", en: "Choose an item first" },
   'labels.openFailed': { ar: "تعذّر فتح القطع. حاول مرة أخرى.", en: "Could not open the items. Try again." },

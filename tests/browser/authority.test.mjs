@@ -817,9 +817,9 @@ async function open2(page, text) {
     nav.goTab('set');
     await new Promise((r) => setTimeout(r, 400));
     const text = document.getElementById('v-set').innerText;
-    return { cloudClaim: /التخزين السحابي/.test(text), honest: /لا يتضمن ملفات الصور/.test(text) };
+    return { cloudClaim: /التخزين السحابي/.test(text), honest: /دون الصور/.test(text) && /ليست نسخة احتياطية كاملة/.test(text) };
   });
-  check('E5 on a device, the JSON row never says images are in the cloud',
+  check('E5 on a device, the JSON row never says images are in the cloud, and says it is not a Full Backup',
     wording.cloudClaim === false && wording.honest === true, JSON.stringify(wording));
   check('E6 no JS errors', errs.length === 0, errs[0]);
   await context.close();

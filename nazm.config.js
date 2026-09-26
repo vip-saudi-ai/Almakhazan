@@ -42,9 +42,11 @@ window.NAZM_CONFIG = {
 
   auth: {
     /** Sign-in methods configured in the Firebase project. On iOS, Google is
-     *  offered only together with Sign in with Apple. Ignored while cloud is
-     *  off. */
-    providers: { email: true, apple: false, google: false },
+     *  offered only together with Sign in with Apple. All off in this
+     *  release: there are no accounts while cloud is off, and the
+     *  configuration says what the product shows. The sign-in code stays for
+     *  the cloud release (config/nazm.config.cloud.example.js). */
+    providers: { email: false, apple: false, google: false },
   },
 
   firebase: {

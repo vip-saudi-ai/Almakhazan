@@ -19,6 +19,7 @@ test('the shipped configuration switches every backend-dependent feature off', (
   assert.equal(config.environment, 'production');
   assert.deepEqual(config.features, { cloud: false, team: false, billing: false, cloudAi: false });
   assert.equal(config.auth.providers.apple, config.auth.providers.google, 'Apple and Google are enabled together or not at all');
+  assert.deepEqual(config.auth.providers, { email: false, apple: false, google: false }, 'no sign-in while there are no accounts');
   assert.equal(config.appCheck.siteKey, null);
   assert.equal(config.appCheck.debug, false, 'the App Check debug provider never ships on');
   for (const [key, value] of Object.entries(config.contact)) {
@@ -159,4 +160,13 @@ test('index.html and firebase.json carry the policy generated from the shipped c
   const firebase = JSON.parse(readFileSync(new URL('firebase.json', root), 'utf8'));
   const sent = Object.fromEntries(firebase.hosting.headers.find((rule) => rule.source === '**').headers.map((h) => [h.key, h.value]));
   assert.deepEqual(sent, securityHeaders(config));
+});
+
+test('the release report still names the missing public URLs as blockers', async () => {
+  globalThis.NAZM_CONFIG = shippedConfig();
+  const { configurationReport } = await import(`../../src/config-report.js?gaps=${Date.now()}`);
+  const { releaseGaps } = configurationReport();
+  assert.ok(releaseGaps.some((gap) => gap.startsWith('contact.supportUrl')), 'supportUrl is a release blocker while null');
+  assert.ok(releaseGaps.some((gap) => gap.startsWith('contact.privacyPolicyUrl')), 'privacyPolicyUrl is a release blocker while null');
+  delete globalThis.NAZM_CONFIG;
 });

@@ -84,6 +84,56 @@ export function normalizeCustomFieldDefs(list, max) {
   return out;
 }
 
+/**
+ * A definition kept in the field registry (the `fieldDefinitions` store).
+ *
+ * The registry is what keeps a value readable for as long as a record holds
+ * it: a Category's template can drop a field, a Category can be deleted or
+ * merged, and the definition stays here — `retired`, no longer offered for
+ * new records, still resolvable by id. A `recovered` definition was rebuilt
+ * from a value whose definition was never found (an old or damaged backup);
+ * it has no label of its own and is shown as «حقل مستعاد».
+ */
+export function normalizeFieldRecord(raw) {
+  if (!raw || typeof raw !== 'object' || !isFieldId(raw.id)) return null;
+  const recovered = raw.recovered === true;
+  const base = recovered
+    ? { id: raw.id, type: FIELD_TYPES.includes(raw.type) ? raw.type : 'text', label: cleanString(raw.label, TAXONOMY_LIMITS.fieldLabel), required: false, defaultVisible: true, source: 'custom' }
+    : normalizeCustomFieldDef(raw);
+  if (!base) return null;
+  if (recovered && Array.isArray(raw.options)) {
+    base.options = [...new Set(raw.options.map((o) => cleanString(o, TAXONOMY_LIMITS.optionLabel)).filter(Boolean))].slice(0, TAXONOMY_LIMITS.options);
+  }
+  if (recovered && typeof raw.unit === 'string') base.unit = cleanString(raw.unit, 16);
+  const record = {
+    ...base,
+    createdAt: Number.isFinite(raw.createdAt) ? raw.createdAt : Date.now(),
+    retired: raw.retired === true,
+    retiredAt: raw.retired === true && Number.isFinite(raw.retiredAt) ? raw.retiredAt : null,
+    originalTaxonomyNodeId: typeof raw.originalTaxonomyNodeId === 'string' ? raw.originalTaxonomyNodeId.slice(0, 128) : null,
+  };
+  if (recovered) record.recovered = true;
+  return record;
+}
+
+/**
+ * A definition for a value nothing defines, inferred from the value's shape so
+ * it can at least be shown faithfully. Never interprets the value: text stays
+ * text, a list stays a list, an amount keeps its currency.
+ */
+export function inferFieldDefinition(id, value) {
+  let type = 'text';
+  let options;
+  let unit;
+  if (typeof value === 'number') type = 'decimal';
+  else if (typeof value === 'boolean') type = 'boolean';
+  else if (Array.isArray(value)) { type = 'multiselect'; options = value.filter((v) => typeof v === 'string'); }
+  else if (value && typeof value === 'object' && 'amount' in value) type = 'currency';
+  else if (value && typeof value === 'object' && 'value' in value) { type = 'measurement'; unit = value.unit || ''; }
+  else if (typeof value === 'string' && value.length > 120) type = 'multiline';
+  return normalizeFieldRecord({ id, type, label: '', options, unit, recovered: true, retired: true, retiredAt: Date.now() });
+}
+
 /** The option ids a select accepts: a built-in option's id, or a custom option's own text. */
 function optionIds(def) {
   return (def.options || []).map((option) => (typeof option === 'string' ? option : option.id));

@@ -55,6 +55,34 @@ window.NazmNative = {
     }
   },
 
+  // ── large files, written a piece at a time (the Full Backup) ──
+  // The archive can be gigabytes; it never exists in the WebView's memory.
+  // Each call appends one base64 slice to a file in the cache directory;
+  // finishFile hands the file to the share sheet (Save to Files, iCloud
+  // Drive, AirDrop…) and resolves once the system has taken it — rejecting
+  // if the customer cancels, so the app never reports a backup it did not
+  // hand over. The cache copy is removed either way.
+  async beginFile({ filename }) {
+    // Its own folder, so the shared file keeps exactly the name it was given.
+    const path = `backup-${Date.now()}/${filename}`;
+    await Filesystem.writeFile({ path, data: '', directory: Directory.Cache, recursive: true });
+    return path;
+  },
+  appendFile({ handle, base64 }) {
+    return Filesystem.appendFile({ path: handle, data: base64, directory: Directory.Cache });
+  },
+  async finishFile({ handle }) {
+    const { uri } = await Filesystem.getUri({ path: handle, directory: Directory.Cache });
+    try {
+      await Share.share({ url: uri });
+    } finally {
+      Filesystem.deleteFile({ path: handle, directory: Directory.Cache }).catch(() => {});
+    }
+  },
+  abortFile({ handle }) {
+    return Filesystem.deleteFile({ path: handle, directory: Directory.Cache }).catch(() => {});
+  },
+
   openSettings() {
     return NativeSettings.openIOS({ option: IOSSettings.App });
   },

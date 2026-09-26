@@ -77,15 +77,22 @@ billing is switched on.
 | `platform`, `appVersion`, `buildNumber` | Settings → About; problem reports | web values |
 | `openUrl(url)` | Support website, public legal pages (https only) | `window.open` (web only) |
 | `composeEmail({ to, subject, body })` | Support, problem reports, privacy requests | `openUrl` with a validated, encoded `mailto:`, else a mailto link |
-| `shareFile({ filename, mimeType, base64 })` | Excel/JSON export, restore safety backup | exports refuse with a message (a WKWebView cannot follow a blob download) |
+| `shareFile({ filename, mimeType, base64 })` | Excel/JSON export, QR labels PDF, restore safety backup (small) | exports refuse with a message (a WKWebView cannot follow a blob download) |
+| `beginFile({ filename, mimeType })` → `{ id }`, `appendFile({ id, base64 })`, `finishFile({ id })`, `abortFile({ id })` | Full Backup (`.nazmbackup`) written in 512 KB pieces to a temporary file in Caches, then handed to the Share Sheet and deleted — the archive never sits whole in the WebView's memory | Full Backup falls back to `shareFile` and is refused above `FULL_BACKUP_LIMITS.nativeSingle` (64 MB) with a message |
 | `openSettings()` | "Open Settings" after the camera was refused | button hidden; the message says where |
-| `print()` | QR labels | label buttons hidden in the native app |
+| `print()` | not used by the labels any more: in the app they are a PDF (vector QR, four-module quiet zone) handed to the Share Sheet, which offers Print, Save to Files and AirDrop | — |
 | `setStatusBarStyle(theme)` | status bar follows light/dark | — |
 | `signIn(provider)` | Apple / Google in the app | those providers hidden in the app |
 | `purchase`, `restorePurchases`, `manageSubscriptions` | StoreKit (§7) | billing must stay off |
 
 `native/nazm-native-bridge.js` is a reference implementation with Capacitor
 plugins; adapt it to the versions you install.
+
+**Requires Xcode work (not done from this repository):** declaring the
+`.nazmbackup` type (an exported UTI conforming to `public.zip-archive`, and a
+document type) so that Files opens the backup with NAZM and the Share Sheet
+shows the right icon. Without it, restore still works through «استعادة نسخة
+احتياطية كاملة», which picks the file with the system file picker.
 
 ## 4. Service worker and updates
 

@@ -25,4 +25,7 @@ export const messages = {
   'importProblem.value': { ar: "قيمة غير مفهومة: «{value}»", en: "Unreadable value: “{value}”" },
   'importProblem.inverted': { ar: "أعلى قيمة ({max}) أقل من أدنى قيمة ({min}) — صحّح الملف أو المطابقة", en: "The max value ({max}) is below the min value ({min}) — correct the file or the mapping" },
   'importProblem.currency': { ar: "عملة غير معروفة: «{value}»", en: "Unknown currency: “{value}”" },
+  'importProblem.subWithoutCategory': { ar: 'يوجد صنف فرعي ولكن لم يتم تحديد الصنف الذي يتبعه.', en: 'A Subcategory is provided but its Category could not be determined.' },
+  'importProblem.categoryMismatch': { ar: 'الصنف «{category}» يتبع «{actual}» وليس «{main}». صحّح الملف، أو اختر إنشاءه تحت «{main}»، أو اترك الصف.', en: 'The Category “{category}” belongs to “{actual}”, not “{main}”. Correct the file, choose to create it under “{main}”, or leave the row out.' },
+  'simport.createUnderMain': { ar: 'إنشاء الصنف تحت الفئة الرئيسية المذكورة في الملف عند التعارض', en: 'When they conflict, create the Category under the Main Category the file names' },
 };

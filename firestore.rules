@@ -227,9 +227,22 @@ service cloud.firestore {
         allow delete: if canWrite(workspaceId);
       }
 
+      // Classification nodes. A built-in node's local settings (hidden,
+      // order, a display name) are stored under its id with no name of their
+      // own; the customer's own nodes must be named.
       match /categories/{categoryId} {
         allow read: if isMember(workspaceId);
-        allow create, update: if canWrite(workspaceId) && validName(request.resource.data.name, 120);
+        allow create, update: if canWrite(workspaceId)
+          && (validName(request.resource.data.name, 120)
+              || (request.resource.data.get('source', '') == 'builtin' && request.resource.data.name == ''));
+        allow delete: if canWrite(workspaceId);
+      }
+
+      // The customer's field definitions: kept for as long as any record may
+      // hold a value under them, retired rather than deleted.
+      match /fieldDefinitions/{fieldId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId) && validName(request.resource.data.get('label', 'x'), 80);
         allow delete: if canWrite(workspaceId);
       }
 

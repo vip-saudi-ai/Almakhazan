@@ -18,7 +18,9 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 9;
+const DB_VERSION = 10;
+/** The database schema version — carried in a Full Backup manifest. */
+export const DATABASE_VERSION = DB_VERSION;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -46,6 +48,10 @@ export const SCHEMA = {
       // transaction, and the classification migration then fills them in.
       mainCategoryId: 'mainCategoryId',
       subcategoryId: 'subcategoryId',
+      // Which field ids a record holds a value under (version 10). One index
+      // entry per id (multiEntry), so "how many records use this field" is a
+      // count, not a walk — the question asked before a field is retired.
+      customFieldIds: { keyPath: 'customFieldIds', multiEntry: true },
       locationId: 'locationId',
       sku: 'sku',
       barcode: 'barcode',
@@ -101,6 +107,9 @@ export const SCHEMA = {
   },
   folders: { key: 'id', indexes: {} },
   categories: { key: 'id', indexes: {} },
+  // The customer's field definitions, for as long as any record may hold a
+  // value under one (version 10). Retired, never silently deleted.
+  fieldDefinitions: { key: 'id', indexes: {} },
   locations: { key: 'id', indexes: {} },
   activity: { key: 'id', indexes: { timestamp: 'timestamp' } },
   images: { key: 'id', indexes: {} },
@@ -136,8 +145,13 @@ function open() {
         // Adding an index to a populated store backfills it from the existing
         // records inside this same upgrade transaction, so a database written
         // by an older version gains working indexes without a re-import.
-        for (const [indexName, keyPath] of Object.entries(spec.indexes)) {
-          if (!store.indexNames.contains(indexName)) store.createIndex(indexName, keyPath);
+        for (const [indexName, definition] of Object.entries(spec.indexes)) {
+          if (store.indexNames.contains(indexName)) continue;
+          if (definition && !Array.isArray(definition) && typeof definition === 'object') {
+            store.createIndex(indexName, definition.keyPath, { multiEntry: Boolean(definition.multiEntry) });
+          } else {
+            store.createIndex(indexName, definition);
+          }
         }
       }
     };

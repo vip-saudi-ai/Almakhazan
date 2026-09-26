@@ -140,6 +140,27 @@ export async function saveFile(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+/**
+ * A file written piece by piece by the native app — for a Full Backup, which
+ * can be far larger than a WebView can hold at once. The bridge writes each
+ * chunk to a file on disk (bridge.beginFile / appendFile) and, on finish,
+ * hands that file to the share sheet (bridge.finishFile), resolving once the
+ * system has taken it. Null when the bridge does not offer it.
+ *
+ * @returns {{begin: Function, append: Function, finish: Function, abort: Function}|null}
+ */
+export function nativeFileStream() {
+  const native = bridge();
+  if (typeof native?.beginFile !== 'function' || typeof native?.appendFile !== 'function'
+    || typeof native?.finishFile !== 'function') return null;
+  return {
+    begin: (filename, mimeType) => Promise.resolve(native.beginFile({ filename, mimeType })),
+    append: (handle, base64) => Promise.resolve(native.appendFile({ handle, base64 })),
+    finish: (handle) => Promise.resolve(native.finishFile({ handle })),
+    abort: (handle) => Promise.resolve(native.abortFile?.({ handle })).catch(() => {}),
+  };
+}
+
 /** Printing works in browsers; in the native app only through the bridge. */
 export function canPrint() {
   if (isNative()) return typeof bridge()?.print === 'function';

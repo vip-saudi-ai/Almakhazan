@@ -467,6 +467,7 @@ function renderBlocked(body, foot) {
 
 function basePlan() {
   return planImport({
+    resolved: state.resolved,
     rows: state.sheet.rows,
     lines: state.sheet.lines,
     mapping: state.mapping,
@@ -816,6 +817,26 @@ function renderConfirm(body, foot) {
     ]) : null,
 
     skuChecked ? null : el('div', { class: 'imp-warn', role: 'status', text: checkFailed ? t('simport.skuCheckFailed') : t('simport.skuChecking') }),
+
+    // Rows whose Category belongs to another Main Category are held back; the
+    // customer may instead create the Category under the Main Category the
+    // file names. Correcting the file, or leaving the rows out, stay open.
+    problems.some((p) => p.kind === 'category-mismatch') || state.resolved?.classification === 'create'
+      ? el('label', { class: 'frow cf-save-to imp-choice' }, [
+        el('input', {
+          type: 'checkbox', id: 'simport-create-under-main',
+          checked: state.resolved?.classification === 'create' || undefined,
+          disabled: state.mappingLocked || undefined,
+          onChange: (event) => {
+            const next = { ...(state.resolved || {}) };
+            if (event.target.checked) next.classification = 'create'; else delete next.classification;
+            state.resolved = next;
+            renderImport();
+          },
+        }),
+        el('span', { text: t('simport.createUnderMain') }),
+      ])
+      : null,
 
     problems.length ? section(t('simport.warnings', { count: problems.length }), [
       el('div', { class: 'imp-warnings' }, [

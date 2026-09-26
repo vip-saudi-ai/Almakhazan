@@ -321,7 +321,7 @@ export const ORPHAN_GRACE_MS = 30 * 60 * 1000;
  * @returns {Promise<{checked: number, corrected: Array, orphans: string[],
  *   reclaimed: string[], missing: Array}>}
  */
-export async function reconcileLocalMediaReferences({ reclaim = false, now = Date.now() } = {}) {
+export async function reconcileLocalMediaReferences({ reclaim = false, now = Date.now(), graceMs = ORPHAN_GRACE_MS } = {}) {
   const actual = new Map();
   const missing = [];
   await local.walk('items', {
@@ -359,7 +359,7 @@ export async function reconcileLocalMediaReferences({ reclaim = false, now = Dat
       corrected.push({ mediaId: asset.id, from: stored, to: 0 });
     }
     const orphanedFor = now - (asset.orphanedAt || asset.createdAt || now);
-    if (reclaim && orphanedFor >= ORPHAN_GRACE_MS && await store.discard(asset.id)) {
+    if (reclaim && orphanedFor >= graceMs && await store.discard(asset.id)) {
       reclaimed.push(asset.id);
     }
   }
@@ -370,6 +370,32 @@ export async function reconcileLocalMediaReferences({ reclaim = false, now = Dat
 }
 
 const RECONCILE_KEY = 'media.lastReconciledAt';
+
+/**
+ * After a write that changed many records at once — a restore, clearing the
+ * inventory, cancelling an import, a merge — the counts are made to agree
+ * with the records straight away, not at the next daily run. Those writes
+ * move references in bulk without adjusting each image's count.
+ *
+ * Only the device keeps counts here; a cloud workspace is reconciled by its
+ * backend. Never throws: the operation it follows has already succeeded.
+ *
+ * @param {{reclaimNow?: boolean}} options `reclaimNow` removes the files no
+ *   record references any more, without the grace window — for clearing the
+ *   inventory, where deleting them is what was asked. Files held by an open
+ *   form are never touched.
+ */
+export async function reconcileAfterBulkWrite(session, { reclaimNow = false } = {}) {
+  if (session?.mode === 'cloud') return null;
+  try {
+    const result = await reconcileLocalMediaReferences({ reclaim: reclaimNow, graceMs: reclaimNow ? 0 : ORPHAN_GRACE_MS });
+    await local.setMeta(RECONCILE_KEY, Date.now());
+    return result;
+  } catch (error) {
+    console.error('[media] reconciliation after a bulk write could not run', error);
+    return null;
+  }
+}
 
 /**
  * The reconciler, at most once a day, on a device-only workspace. Housekeeping:

@@ -10,10 +10,10 @@ import {
   FIELD_DEFINITIONS, FIELD_TEMPLATES, MAIN_CATEGORIES, PREVIOUS_MAIN,
 } from '../../src/locales/taxonomy-catalog.js';
 import {
-  LEVELS, buildTaxonomy, builtinIds, legacyPlacement, reconcileClassification,
+  LEVELS, buildTaxonomy, builtinIds, definitionFor, legacyPlacement, reconcileClassification, validateCatalog,
 } from '../../src/taxonomy.js';
 import {
-  newCustomFieldId, normalizeCustomFieldDef, normalizeFieldValue, sanitizeFieldValues,
+  inferFieldDefinition, newCustomFieldId, normalizeCustomFieldDef, normalizeFieldRecord, normalizeFieldValue, sanitizeFieldValues,
 } from '../../src/custom-fields.js';
 import { normalizeCategory, normalizeItem, validateImport } from '../../src/validation.js';
 import { guessMapping, planImport, attachTaxonomy } from '../../src/import-mapping.js';
@@ -24,7 +24,7 @@ import { askInventory } from '../../src/ask.js';
 test('every built-in id is unique, stable-looking, and labelled in both languages', () => {
   const ids = builtinIds();
   assert.equal(new Set(ids).size, ids.length, 'no id is used twice, across levels');
-  assert.equal(MAIN_CATEGORIES.length, 14);
+  assert.equal(MAIN_CATEGORIES.filter((m) => !m.deprecated).length, 14);
   for (const id of ids) assert.match(id, /^[a-z][a-z0-9_]*$/, id);
   const all = MAIN_CATEGORIES.concat([PREVIOUS_MAIN]).flatMap((m) => [m, ...m.categories, ...m.categories.flatMap((c) => c.subcategories || [])]);
   for (const node of all) {
@@ -43,6 +43,22 @@ test('templates only name defined fields, and every field has both labels', () =
     assert.ok(field.ar && field.en, field.id);
     for (const option of field.options || []) assert.ok(option.ar && option.en, `${field.id}/${option.id}`);
   }
+});
+
+test('the built-in library passes its own self-check', () => {
+  assert.deepEqual(validateCatalog(), []);
+});
+
+test('retired library nodes still resolve but are never offered', () => {
+  const tax = buildTaxonomy([]);
+  assert.equal(tax.label('products_returned', 'ar'), 'منتجات مرتجعة', 'an id already written somewhere still reads');
+  assert.ok(!tax.categories('products_merchandise').some((n) => n.id === 'products_returned'));
+  assert.ok(!tax.mainCategories({ includeHidden: true }).some((n) => n.id === 'assets_property'));
+  assert.ok(tax.mainCategories().some((n) => n.id === 'real_estate_property'));
+  assert.equal(tax.search('مرتجع').some((n) => n.id === 'products_returned'), false);
+  assert.equal(tax.check({ categoryId: 'assets_furniture' }).ok, true, 'a record already classified there stays valid');
+  assert.ok(tax.fieldsFor({ categoryId: 'products_finished' }).some((f) => f.id === 'inventory_status'), 'status is a field, not a kind');
+  assert.equal(tax.label('professional_equipment', 'en'), 'Specialized Equipment');
 });
 
 test('the schema version of the classification is its own', () => {
@@ -281,4 +297,61 @@ test('the assistant understands the hierarchy in Arabic and English', () => {
   assert.equal(ask('how many generators').total, 1);
   assert.equal(ask('How many Art & Collectibles?').total, 1);
   assert.deepEqual(ask('وش القطع بدون صنف؟').items.map((i) => i.id), []);
+});
+
+// ── the field registry ─────────────────────────────────────────────────────
+
+test('a field taken off every template stays resolvable through the registry', () => {
+  const retired = { id: 'custom_f_inv1', type: 'text', label: 'رقم الجرد', retired: true, retiredAt: 5, originalTaxonomyNodeId: 'equipment_generators' };
+  const tax = buildTaxonomy([], [retired]);
+  const def = definitionFor('custom_f_inv1', { taxonomy: tax });
+  assert.equal(def.label, 'رقم الجرد');
+  assert.equal(def.retired, true);
+  assert.ok(!tax.fieldsFor({ categoryId: 'equipment_generators' }).some((f) => f.id === 'custom_f_inv1'), 'no longer offered');
+});
+
+test('a value with no definition anywhere is never skipped, and never shows [object Object]', async () => {
+  const { fieldRows } = await import('../../src/field-format.js');
+  const tax = buildTaxonomy([]);
+  const item = {
+    categoryId: 'uncategorized',
+    customFields: { custom_f_lost1: 'قيمة', custom_f_lost2: { amount: 5, currency: 'SAR' }, custom_f_lost3: { value: 3, unit: 'kg' }, custom_f_lost4: ['a', 'b'] },
+  };
+  const { previous } = fieldRows(item, tax);
+  assert.equal(previous.length, 4);
+  for (const row of previous) {
+    assert.ok(row.text && !row.text.includes('[object'), row.text);
+    assert.ok(row.def.unresolved && row.label, 'a readable fallback label');
+  }
+});
+
+test('recovered definitions are inferred from the value, never interpreted', () => {
+  assert.equal(inferFieldDefinition('custom_f_a', 12).type, 'decimal');
+  assert.equal(inferFieldDefinition('custom_f_a', true).type, 'boolean');
+  assert.equal(inferFieldDefinition('custom_f_a', { amount: 1, currency: 'USD' }).type, 'currency');
+  assert.equal(inferFieldDefinition('custom_f_a', { value: 1, unit: 'g' }).unit, 'g');
+  assert.deepEqual(inferFieldDefinition('custom_f_a', ['x', 'y']).options, ['x', 'y']);
+  assert.equal(inferFieldDefinition('custom_f_a', 'x').recovered, true);
+  assert.equal(normalizeFieldRecord({ id: 'bad id', type: 'text', label: 'x' }), null);
+});
+
+test('a record lists the field ids it holds values under', () => {
+  const item = normalizeItem({ name: 'x', customFields: { custom_f_z: 'a', manufacturer: 'b' } });
+  assert.deepEqual(item.customFieldIds.sort(), ['custom_f_z', 'manufacturer']);
+});
+
+test('an import never drops a Subcategory or reinterprets a Main Category', () => {
+  const taxonomy = buildTaxonomy([]);
+  const mapping = { name: 0, mainCategory: 1, category: 2, subcategory: 3 };
+  const run = (rows, resolved) => planImport({ rows, mapping, existing: { taxonomy, locations: [], folders: [] }, resolved });
+  const orphanSub = run([['مولد', '', '', 'مولدات ديزل']]);
+  assert.equal(orphanSub.records.length, 0, 'held back, not imported without its Subcategory');
+  assert.equal(orphanSub.problems[0].kind, 'sub-without-category');
+  assert.equal(orphanSub.rowStatus.error.length, 1);
+  const wrongMain = run([['لوحة', 'معدات وأدوات', 'لوحات', '']]);
+  assert.equal(wrongMain.records.length, 0);
+  assert.equal(wrongMain.problems[0].kind, 'category-mismatch');
+  const chosen = run([['لوحة', 'معدات وأدوات', 'لوحات', '']], { classification: 'create' });
+  assert.equal(chosen.records[0].mainCategoryId, 'equipment_tools', 'the customer chose the Main Category the file names');
+  assert.ok(chosen.records[0].categoryKey, 'and a Category of their own under it');
 });

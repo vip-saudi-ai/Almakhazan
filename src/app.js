@@ -34,6 +34,7 @@ import {
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { bindTaxonomyPicker } from './views/taxonomy-picker.js';
 import { refreshTaxonomyNotice } from './views/taxonomy-onboarding.js';
+import { refreshBackupReminder } from './views/backup-reminder.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { bindAssistant, renderAssistant } from './views/assistant.js';
@@ -42,7 +43,7 @@ import {
   activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
 } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account', 'tax'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account', 'tax', 'bk'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -234,6 +235,8 @@ async function loadApplicationData(firebase, session) {
     // «طوّرنا التصنيفات…» after an existing inventory's categories were
     // upgraded at start; the first-run question for a new one.
     void refreshTaxonomyNotice();
+    // Once per launch: whether the inventory is due a Full Backup.
+    void refreshBackupReminder();
 
     // Before anything else reads the inventory: an import the last page
     // lifecycle left running is marked stopped (nothing can still be writing

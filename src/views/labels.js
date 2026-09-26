@@ -10,7 +10,9 @@ import { BRAND } from '../brand.js';
 import { encodeQr } from '../qr.js';
 import { SYMBOL, symbolPaths } from './symbol-geometry.js';
 import { $, el, render } from '../utils.js';
-import { onLanguageChange, t } from '../i18n.js';
+import { isRtl, onLanguageChange, t } from '../i18n.js';
+import { buildLabelsPdf, labelTextBox, LABEL_PDF_LAYOUT } from '../label-pdf.js';
+import { canPrint, isNative, saveFile } from '../platform.js';
 import { locationName } from '../labels.js';
 import { closeSheet, openSheet, toast, toastError } from '../ui.js';
 
@@ -21,7 +23,7 @@ const state = { itemIds: [], items: [], mono: false, withLocation: true };
 function qrNode(text, size = 120) {
   const code = encodeQr(text);
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', `-2 -2 ${code.size + 4} ${code.size + 4}`);
+  svg.setAttribute('viewBox', `-4 -4 ${code.size + 8} ${code.size + 8}`);
   svg.setAttribute('width', String(size));
   svg.setAttribute('height', String(size));
   svg.setAttribute('class', 'qr');
@@ -30,12 +32,12 @@ function qrNode(text, size = 120) {
   svg.setAttribute('shape-rendering', 'crispEdges');
 
   // The quiet zone is part of the symbol: without it a scanner may not find
-  // the finder patterns at all.
+  // the finder patterns at all. Four modules, as the standard asks.
   const quiet = document.createElementNS(NS, 'rect');
-  quiet.setAttribute('x', '-2');
-  quiet.setAttribute('y', '-2');
-  quiet.setAttribute('width', String(code.size + 4));
-  quiet.setAttribute('height', String(code.size + 4));
+  quiet.setAttribute('x', '-4');
+  quiet.setAttribute('y', '-4');
+  quiet.setAttribute('width', String(code.size + 8));
+  quiet.setAttribute('height', String(code.size + 8));
   quiet.setAttribute('fill', '#fff');
   svg.appendChild(quiet);
 
@@ -80,15 +82,22 @@ function markNode(size = 18) {
   return svg;
 }
 
+// The QR carries whatever identifies the record for certain — the id if no
+// code was ever reserved — never its classification, so re-filing an item
+// leaves every printed label valid. The printed line shows the code a person
+// would read out, and a raw internal id is not that.
+function labelParts(item) {
+  return {
+    qrValue: item.sku || item.barcode || item.id,
+    humanCode: item.sku || item.barcode || `#${item.id.slice(-6).toUpperCase()}`,
+    location: locationName(repository.location(item.locationId))
+      || repository.folder(item.folderId)?.name
+      || '',
+  };
+}
+
 function labelNode(item) {
-  // The QR carries whatever identifies the record for certain — the id if no
-  // code was ever reserved. The printed line shows the code a person would
-  // read out, and a raw internal id is not that.
-  const qrValue = item.sku || item.barcode || item.id;
-  const humanCode = item.sku || item.barcode || `#${item.id.slice(-6).toUpperCase()}`;
-  const location = locationName(repository.location(item.locationId))
-    || repository.folder(item.folderId)?.name
-    || '';
+  const { qrValue, humanCode, location } = labelParts(item);
 
   return el('div', { class: 'label-card' }, [
     el('div', { class: 'label-qr' }, [qrNode(qrValue, 118)]),
@@ -126,11 +135,115 @@ function renderLabels() {
     ]),
     el('div', { class: `label-sheet${state.mono ? ' mono' : ''}`, id: 'label-sheet' }, items.map(labelNode)),
     el('button', {
-      class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '14px' },
+      class: 'btn btn-p', type: 'button', style: { width: '100%', marginTop: '14px' }, id: 'labels-pdf',
+      text: t('labels.sharePdf'),
+      onClick: (event) => sharePdf(event.currentTarget),
+    }),
+    // A native shell prints only through its own bridge; the web keeps the
+    // browser's print dialog.
+    canPrint() && !isNative() ? el('button', {
+      class: 'btn btn-s', type: 'button', style: { width: '100%', marginTop: '8px' },
       text: items.length > 1 ? t('labels.printMany', { count: items.length }) : t('labels.printOne'),
       onClick: () => print(),
-    }),
+    }) : null,
   ]);
+}
+
+const TEXT_SCALE = 4; // canvas pixels per PDF point — about 290 dpi
+
+function fitLine(ctx, text, width) {
+  if (ctx.measureText(text).width <= width) return text;
+  let cut = text;
+  while (cut.length > 1 && ctx.measureText(`${cut}…`).width > width) cut = cut.slice(0, -1);
+  return `${cut}…`;
+}
+
+function wrapLines(ctx, text, width, max) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width <= width || !line) { line = next; continue; }
+    lines.push(line);
+    line = word;
+  }
+  if (line) lines.push(line);
+  if (lines.length > max) {
+    const kept = lines.slice(0, max);
+    kept[max - 1] = fitLine(ctx, `${kept[max - 1]} ${lines.slice(max).join(' ')}`, width);
+    return kept;
+  }
+  return lines.map((l) => fitLine(ctx, l, width));
+}
+
+/** The words of one label, drawn once at print resolution. */
+async function labelTextImage(item, rtl) {
+  const box = labelTextBox();
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(box.width * TEXT_SCALE);
+  canvas.height = Math.round(box.height * TEXT_SCALE);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas unavailable');
+  ctx.scale(TEXT_SCALE, TEXT_SCALE);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, box.width, box.height);
+  ctx.direction = rtl ? 'rtl' : 'ltr';
+  ctx.textAlign = rtl ? 'right' : 'left';
+  ctx.textBaseline = 'top';
+  const x = rtl ? box.width : 0;
+  const family = getComputedStyle(document.body).fontFamily || 'sans-serif';
+  const ink = state.mono ? '#000' : '#0B1F4B';
+  const { humanCode, location } = labelParts(item);
+
+  let y = 2;
+  ctx.fillStyle = state.mono ? '#000' : '#2563FF';
+  ctx.font = `700 8px ${family}`;
+  ctx.fillText(BRAND.name, x, y);
+  y += 14;
+  ctx.fillStyle = ink;
+  ctx.font = `700 12px ${family}`;
+  for (const line of wrapLines(ctx, item.name || '—', box.width, 2)) { ctx.fillText(line, x, y); y += 16; }
+  y += 2;
+  ctx.font = `700 10px ${family}`;
+  ctx.direction = 'ltr';
+  ctx.fillText(fitLine(ctx, humanCode, box.width), x, y);
+  ctx.direction = rtl ? 'rtl' : 'ltr';
+  y += 14;
+  if (state.withLocation && location) {
+    ctx.fillStyle = state.mono ? '#000' : '#475569';
+    ctx.font = `400 9px ${family}`;
+    ctx.fillText(fitLine(ctx, location, box.width), x, y);
+  }
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+  if (!blob) throw new Error('label image failed');
+  return { jpeg: new Uint8Array(await blob.arrayBuffer()), width: canvas.width, height: canvas.height };
+}
+
+export async function buildLabelsFile(items = state.items) {
+  const rtl = isRtl();
+  // A canvas draws with whatever font is ready at that instant.
+  await document.fonts?.ready;
+  const labels = [];
+  for (const item of items) {
+    labels.push({ code: encodeQr(labelParts(item).qrValue), text: await labelTextImage(item, rtl) });
+  }
+  const bytes = buildLabelsPdf(labels, { rtl, mono: state.mono, layout: LABEL_PDF_LAYOUT });
+  const day = new Date().toISOString().slice(0, 10);
+  return { blob: new Blob([bytes], { type: 'application/pdf' }), filename: `NAZM-Labels-${day}.pdf` };
+}
+
+async function sharePdf(button) {
+  if (button) button.disabled = true;
+  try {
+    const { blob, filename } = await buildLabelsFile();
+    await saveFile(blob, filename);
+  } catch (error) {
+    if (error?.name === 'AbortError') return; // the person closed the share sheet
+    toastError(error, 'labels.pdfFailed');
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function print() {

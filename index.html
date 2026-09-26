@@ -184,6 +184,7 @@
 
     <div class="vscroll" id="hscroll">
       <div id="tax-card"></div>
+      <div id="backup-card"></div>
       <!-- Two figures, not four: statistics guide a decision here, they do not
            compete with the inventory for attention. -->
       <div class="sgrid" id="statsrow">
@@ -535,12 +536,24 @@
         <div class="imp-mode-desc" data-i18n="backup.replaceDesc">يستبدل المخزون الحالي بمحتوى الملف. تُؤخذ نسخة أمان وتُتحقَّق قبل أي تغيير، والسجلات الجديدة تُكتب قبل إزالة أي سجل قديم.</div>
       </div>
     </div>
+    <p class="sheet-note" id="import-full-note" style="display:none" data-i18n="fullBackup.fullOnly">هذه نسخة احتياطية كاملة: تُستعاد باستبدال المخزون الحالي.</p>
     <div class="import-progress" id="import-progress" role="status" aria-live="polite"></div>
   </div>
   <div class="shfoot">
     <button class="btn btn-s" type="button" data-close style="flex:1;padding:12px" data-i18n="common.cancel">إلغاء</button>
     <button class="btn btn-g" id="import-merge" type="button" style="flex:1;padding:12px" data-i18n="backup.merge">دمج</button>
     <button class="btn btn-d" id="import-restore" type="button" style="flex:1;padding:12px" data-i18n="backup.replace">استبدال</button>
+  </div>
+</div>
+
+<!-- FULL BACKUP PROGRESS -->
+<div class="ov" id="ov-bk"></div>
+<div class="sh" id="sh-bk" tabindex="-1" aria-labelledby="bk-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="bk-title" data-i18n="fullBackup.title">نسخة احتياطية كاملة</h2></div>
+  <div class="shscroll">
+    <div class="img-progress" aria-hidden="true"><div class="img-progress-track"><div class="img-progress-bar" id="bk-bar"></div></div></div>
+    <p class="sheet-note" id="bk-status" role="status" aria-live="polite"></p>
   </div>
 </div>
 

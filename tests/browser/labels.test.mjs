@@ -4,6 +4,8 @@
 //   npx http-server -p 8123 -c-1 &
 //   node tests/browser/labels.test.mjs
 
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { autoChooseLanguage } from './language-gate.mjs';
 const { chromium } = await import('playwright')
   .catch(() => import('/opt/node22/lib/node_modules/playwright/index.mjs'));
@@ -14,7 +16,7 @@ autoChooseLanguage(browser);
 const pass = [], fail = [];
 const check = (n, ok, d = '') => (ok ? pass : fail).push(`${n}${d ? ' — ' + d : ''}`);
 
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 const errs = [];
 page.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
 page.on('console', m => { if (m.type() === 'error' && !/gstatic|ERR_|net::|firebase/.test(m.text())) errs.push('CONSOLE: ' + m.text()); });
@@ -50,7 +52,7 @@ check('L2 the printed code is the barcode when there is one', sheet.codes[0] ===
 check('L3 a record with no code still prints a readable one',
   /^#[A-Z0-9]{6}$/.test(sheet.codes[1]), sheet.codes[1]);
 check('L4 each label carries a real QR', sheet.modules.every(n => n > 50), JSON.stringify(sheet.modules));
-check('L5 the QR keeps its quiet zone', sheet.viewBoxes.every(v => v.startsWith('-2 -2')), JSON.stringify(sheet.viewBoxes));
+check('L5 the QR keeps its quiet zone', sheet.viewBoxes.every(v => v.startsWith('-4 -4')), JSON.stringify(sheet.viewBoxes));
 
 // The encoded value must be exactly the identifier, not a decorated version.
 const encoded = await page.evaluate(async () => {
@@ -59,7 +61,7 @@ const encoded = await page.evaluate(async () => {
   const item = repository.liveItems().find(i => i.barcode === 'BC-77421');
   const expected = encodeQr(item.sku || item.barcode).cells.map(r => r.join('')).join('|');
   const drawn = [...document.querySelectorAll('.label-qr')][0].querySelector('svg');
-  const size = Number(drawn.getAttribute('viewBox').split(' ')[2]) - 4;
+  const size = Number(drawn.getAttribute('viewBox').split(' ')[2]) - 8;
   const dark = new Set([...drawn.querySelectorAll('rect')].slice(1).map(r => `${r.getAttribute('x')},${r.getAttribute('y')}`));
   const rows = [];
   for (let y = 0; y < size; y++) {
@@ -95,6 +97,44 @@ const withoutLocation = await page.evaluate(() => document.querySelectorAll('.la
 check('L8 the location prints, and can be left off',
   withLocation === 1 && withoutLocation === 0, `${withLocation} → ${withoutLocation}`);
 
+// The PDF: rendered at print resolution and scanned back, every label must
+// decode to exactly the identifier it was made for.
+const expectedValues = await page.evaluate(async (itemIds) => {
+  const { repository } = await import('/src/repository.js');
+  const { items } = await repository.getItems(itemIds);
+  return items.map((item) => item.sku || item.barcode || item.id);
+}, ids);
+const [pdfDownload] = await Promise.all([
+  page.waitForEvent('download', { timeout: 15000 }),
+  page.click('#labels-pdf'),
+]);
+const pdfPath = await pdfDownload.path();
+const pdfBytes = readFileSync(pdfPath);
+check('L12 the labels arrive as a PDF file', pdfBytes.subarray(0, 5).toString() === '%PDF-' && /^NAZM-Labels-\d{4}-\d{2}-\d{2}\.pdf$/.test(pdfDownload.suggestedFilename()),
+  pdfDownload.suggestedFilename());
+const decoder = spawnSync('python3', ['-c', `
+import sys, json
+try:
+    import pymupdf, cv2, numpy as np
+except Exception as e:
+    print(json.dumps({"skipped": str(e)})); sys.exit(0)
+doc = pymupdf.open(sys.argv[1])
+found = []
+for page in doc:
+    pix = page.get_pixmap(dpi=300, colorspace=pymupdf.csGRAY)
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width)
+    ok, values, _, _ = cv2.QRCodeDetector().detectAndDecodeMulti(img)
+    found += [v for v in (values if ok else []) if v]
+print(json.dumps({"pages": len(doc), "found": sorted(found)}))
+`, pdfPath], { encoding: 'utf8' });
+const decoded = JSON.parse(decoder.stdout || '{"skipped":"python3 unavailable"}');
+if (decoded.skipped) {
+  console.log('  (L13 skipped — no PDF renderer/QR decoder here:', decoded.skipped, ')');
+} else {
+  check('L13 every QR in the PDF scans back to its identifier',
+    JSON.stringify(decoded.found) === JSON.stringify([...expectedValues].sort()), JSON.stringify({ decoded, expectedValues }));
+}
+
 // scanning: the app must not pretend
 const scanning = await page.evaluate(async () => {
   const { scanningSupported } = await import('/src/scanner.js');
@@ -121,6 +161,33 @@ check('L10 a device with no camera is told so in the scanner, with Choose Photo 
 check('L11 no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));
 
 await page.close();
+
+// Inside the iOS shell the PDF goes to the Share Sheet, and the browser print
+// button — which a WKWebView cannot honour — is not offered.
+const nativeContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await nativeContext.addInitScript(() => {
+  window.NazmNative = { platform: 'ios', shareFile: (file) => { window.__shared = { ...file, bytes: file.base64.length }; } };
+});
+const nativePage = await nativeContext.newPage();
+const nativeErrs = [];
+nativePage.on('pageerror', e => nativeErrs.push('PAGEERROR: ' + e.message));
+await nativePage.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+await nativePage.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
+const shared = await nativePage.evaluate(async () => {
+  const { repository } = await import('/src/repository.js');
+  const item = await repository.createItem({ name: 'ملصق أصلي', quantity: 1, categoryId: 'art_paintings' });
+  const { openLabels } = await import('/src/views/labels.js');
+  await openLabels([item.id]);
+  const buttons = [...document.querySelectorAll('#labels-body button.btn')].map((b) => b.id || b.textContent);
+  document.getElementById('labels-pdf').click();
+  for (let i = 0; i < 50 && !window.__shared; i++) await new Promise((r) => setTimeout(r, 100));
+  const file = window.__shared;
+  return { buttons, filename: file?.filename, mimeType: file?.mimeType, head: file ? atob(file.base64.slice(0, 12)).slice(0, 5) : '' };
+});
+check('L14 on iOS the PDF goes to the Share Sheet, and no browser print button is offered',
+  shared.mimeType === 'application/pdf' && shared.head === '%PDF-' && /\.pdf$/.test(shared.filename || '')
+  && shared.buttons.length === 1 && shared.buttons[0] === 'labels-pdf' && nativeErrs.length === 0, JSON.stringify({ shared, nativeErrs }));
+await nativeContext.close();
 await browser.close();
 console.log(`PASS ${pass.length}`);
 pass.forEach(p => console.log('  ✓', p));

@@ -29,7 +29,9 @@ import {
 } from './config.js';
 import { getLanguage, hasMessage, t, translateIn } from './i18n.js';
 import { normalizeArabic } from './search.js';
-import { normalizeCustomFieldDefs } from './custom-fields.js';
+import {
+  FIELD_TYPES, inferFieldDefinition, normalizeCustomFieldDefs, normalizeFieldRecord,
+} from './custom-fields.js';
 import {
   FIELD_DEFINITIONS, FIELD_TEMPLATES, FIELD_UNITS, LEGACY_CATEGORY_MAP, MAIN_CATEGORIES,
   ONBOARDING_MAIN_CATEGORIES, PREVIOUS_MAIN,
@@ -63,6 +65,8 @@ function addBuiltin(def, level, parentId, index, inherited) {
     template: 'template' in def ? def.template : inherited,
     other: Boolean(def.other),
     onlyWhenUsed: Boolean(def.onlyWhenUsed),
+    // Retired from the library: never offered, always resolvable.
+    deprecated: Boolean(def.deprecated),
   });
   BUILTIN.set(def.id, node);
   BUILTIN_ORDER.set(def.id, index);
@@ -136,6 +140,12 @@ function lang(language) {
 /** A field's label: the customer's own text, or the built-in one in the language. */
 export function fieldLabel(def, language) {
   if (!def) return '';
+  if (def.recovered && !def.label) {
+    // Shown by its situation, not its id: «حقل محفوظ سابقاً» for a value
+    // whose definition is missing, «حقل مستعاد» for one rebuilt on restore.
+    const key = def.unresolved ? 'fields.unknown' : 'fields.recovered';
+    return lang(language) === getLanguage() ? t(key) : translateIn(lang(language), key);
+  }
   if (def.source === 'custom') return def.label;
   return lang(language) === 'en' ? def.labelEn : def.labelAr;
 }
@@ -195,6 +205,7 @@ function buildNode(record, builtin) {
       other: builtin.other,
       template: builtin.template,
       fields: normalizeCustomFieldDefs(record?.fields, TAXONOMY_LIMITS.fieldsPerTemplate),
+      deprecated: builtin.deprecated,
       mergedInto: null,
       migrated: true,
       defaultIndex: BUILTIN_ORDER.get(builtin.id),
@@ -243,7 +254,7 @@ function compareNodes(a, b) {
  *
  * @param {Array<object>} records the `categories` collection
  */
-export function buildTaxonomy(records = []) {
+export function buildTaxonomy(records = [], fieldRecords = []) {
   const nodes = new Map();
   for (const builtin of BUILTIN.values()) nodes.set(builtin.id, null);
   const stored = new Map();
@@ -279,12 +290,19 @@ export function buildTaxonomy(records = []) {
   mains.sort(compareNodes);
   for (const list of children.values()) list.sort(compareNodes);
 
-  return new Taxonomy(nodes, mains, children);
+  const registry = new Map();
+  for (const record of fieldRecords || []) {
+    const def = normalizeFieldRecord(record);
+    if (def) registry.set(def.id, def);
+  }
+  return new Taxonomy(nodes, mains, children, registry);
 }
 
 class Taxonomy {
-  constructor(nodes, mains, children) {
+  constructor(nodes, mains, children, registry = new Map()) {
     this.nodes = nodes;
+    /** Every customer field definition ever saved, retired ones included. */
+    this.fieldRegistry = registry;
     this._mains = mains;
     this._children = children;
     this._search = new Map();
@@ -356,7 +374,7 @@ class Taxonomy {
   mainCategories({ includeHidden = false, keep = [] } = {}) {
     return this._mains.filter((node) => {
       if (keep.includes(node.id)) return true;
-      if (node.mergedInto) return false;
+      if (node.mergedInto || node.deprecated) return false;
       if (node.builtin?.onlyWhenUsed && !this.children(node.id).some((c) => !c.mergedInto)) return false;
       return includeHidden || !node.hidden;
     });
@@ -364,12 +382,12 @@ class Taxonomy {
 
   categories(mainId, { includeHidden = false, keep = [] } = {}) {
     return this.children(mainId).filter((node) => node.level === LEVELS.CATEGORY
-      && (keep.includes(node.id) || (!node.mergedInto && (includeHidden || !node.hidden))));
+      && (keep.includes(node.id) || (!node.mergedInto && !node.deprecated && (includeHidden || !node.hidden))));
   }
 
   subcategories(categoryId, { includeHidden = false, keep = [] } = {}) {
     return this.children(categoryId).filter((node) => node.level === LEVELS.SUB
-      && (keep.includes(node.id) || (!node.mergedInto && (includeHidden || !node.hidden))));
+      && (keep.includes(node.id) || (!node.mergedInto && !node.deprecated && (includeHidden || !node.hidden))));
   }
 
   /** Every Category, across Main Categories — the flat list some screens still need. */
@@ -464,7 +482,7 @@ class Taxonomy {
     else pool = [...this.nodes.values()];
     return pool.filter((node) => {
       if (level && node.level !== level) return false;
-      if (node.mergedInto) return false;
+      if (node.mergedInto || node.deprecated) return false;
       if (!includeHidden && node.hidden) return false;
       if (node.builtin?.onlyWhenUsed && !this.children(node.id).length) return false;
       if (!terms.length) return true;
@@ -485,7 +503,7 @@ class Taxonomy {
     const found = [];
     for (const node of pool) {
       if (level && node.level !== level) continue;
-      if (node.mergedInto) continue;
+      if (node.mergedInto || node.deprecated) continue;
       if (node.builtin?.onlyWhenUsed && !this.children(node.id).length) continue;
       const names = [node.name, node.builtin?.labels.ar, node.builtin?.labels.en,
         node.name && this.label(node, 'ar'), node.name && this.label(node, 'en'),
@@ -504,7 +522,7 @@ class Taxonomy {
     const wanted = normalizeLabel(name);
     if (!wanted) return null;
     const pool = level === LEVELS.MAIN ? this._mains : this.children(parentId);
-    return pool.find((node) => node.id !== exceptId && node.level === level && !node.mergedInto
+    return pool.find((node) => node.id !== exceptId && node.level === level && !node.mergedInto && !node.deprecated
       && [node.name, node.builtin?.labels.ar, node.builtin?.labels.en, this.label(node)]
         .some((candidate) => candidate && normalizeLabel(candidate) === wanted)) || null;
   }
@@ -581,9 +599,17 @@ class Taxonomy {
   }
 }
 
-/** Every field definition a record can refer to — for showing values whose
- *  field no longer applies («حقول سابقة»). */
-export function definitionFor(fieldId, { taxonomy, item } = {}) {
+/**
+ * The definition behind a field id, wherever it lives — never nothing.
+ *
+ * In order: the built-in library; the record's own fields; a Category's
+ * template; the field registry, which keeps retired definitions for as long as
+ * values may exist; and last, a definition inferred from the value itself
+ * (`recovered`), so a value whose definition was lost is still shown rather
+ * than skipped. Pass `value` to get that last fallback; without it, an unknown
+ * id returns null.
+ */
+export function definitionFor(fieldId, { taxonomy, item, value } = {}) {
   const builtin = FIELDS.get(fieldId);
   if (builtin) return builtin;
   const own = (item?.customFieldDefs || []).find((def) => def.id === fieldId);
@@ -593,6 +619,12 @@ export function definitionFor(fieldId, { taxonomy, item } = {}) {
       const saved = node.fields.find((def) => def.id === fieldId);
       if (saved) return saved;
     }
+    const kept = taxonomy.fieldRegistry?.get(fieldId);
+    if (kept) return kept;
+  }
+  if (value !== undefined) {
+    const inferred = inferFieldDefinition(fieldId, value);
+    return inferred ? { ...inferred, unresolved: true } : null;
   }
   return null;
 }
@@ -617,4 +649,86 @@ export function reconcileClassification(taxonomy, item) {
     if (result.ok) return { value: result.value, exact: index === 0 };
   }
   return { value: { mainCategoryId: null, categoryId: UNCATEGORIZED_ID, subcategoryId: null }, exact: false };
+}
+
+/**
+ * The built-in library checked against its own rules — run by the unit tests,
+ * so a catalog edit that breaks an assumption fails before it ships.
+ *
+ * @returns {string[]} problems; empty when the library is sound
+ */
+export function validateCatalog() {
+  const problems = [];
+  const ids = new Set();
+  const all = MAIN_CATEGORIES.concat([PREVIOUS_MAIN]);
+  const note = (text) => problems.push(text);
+  const checkAliases = (node) => {
+    for (const lang of ['ar', 'en']) {
+      const list = node.aliases?.[lang];
+      if (list !== undefined && (!Array.isArray(list) || list.some((a) => typeof a !== 'string' || !a.trim()))) note(`${node.id}: aliases.${lang} must be non-empty strings`);
+    }
+  };
+  const checkTemplate = (node) => {
+    if (node.template != null && !FIELD_TEMPLATES[node.template]) note(`${node.id}: unknown template ${node.template}`);
+  };
+  const siblingsUnique = (list, where) => {
+    const seen = new Map();
+    for (const node of list.filter((n) => !n.deprecated)) {
+      for (const label of [node.ar, node.en]) {
+        const key = normalizeLabel(label);
+        if (seen.has(key) && seen.get(key) !== node.id) note(`${where}: "${label}" is used by ${seen.get(key)} and ${node.id}`);
+        seen.set(key, node.id);
+      }
+    }
+  };
+  for (const main of all) {
+    for (const node of [main, ...main.categories, ...main.categories.flatMap((c) => c.subcategories || [])]) {
+      if (ids.has(node.id)) note(`duplicate id ${node.id}`);
+      ids.add(node.id);
+      if (!/^[a-z][a-z0-9_]*$/.test(node.id)) note(`${node.id}: not a stable id`);
+      if (!node.ar || !node.en) note(`${node.id}: needs Arabic and English`);
+      checkAliases(node);
+      checkTemplate(node);
+    }
+    if (!Array.isArray(main.categories)) note(`${main.id}: categories must be a list`);
+    siblingsUnique(main.categories, main.id);
+    for (const category of main.categories) {
+      siblingsUnique(category.subcategories || [], category.id);
+      if (main.deprecated && !category.deprecated) note(`${category.id}: active under a retired Main Category`);
+    }
+  }
+  siblingsUnique(MAIN_CATEGORIES, 'main categories');
+  for (const id of ONBOARDING_MAIN_CATEGORIES) {
+    const node = BUILTIN.get(id);
+    if (!node || node.level !== LEVELS.MAIN || node.deprecated) note(`onboarding: ${id} is not an active Main Category`);
+  }
+  // Fields
+  const fieldIds = new Set();
+  for (const field of FIELD_DEFINITIONS) {
+    if (fieldIds.has(field.id)) note(`duplicate field ${field.id}`);
+    fieldIds.add(field.id);
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(field.id) || field.id.startsWith('custom_f_')) note(`field ${field.id}: not a built-in field id`);
+    if (!FIELD_TYPES.includes(field.type)) note(`field ${field.id}: unsupported type ${field.type}`);
+    if (!field.ar || !field.en) note(`field ${field.id}: needs Arabic and English`);
+    if (field.type === 'measurement' && !FIELD_UNITS[field.unit]) note(`field ${field.id}: unknown unit ${field.unit}`);
+    if (field.type === 'select' || field.type === 'multiselect') {
+      const optionIds = (field.options || []).map((o) => o.id);
+      if (!optionIds.length) note(`field ${field.id}: no options`);
+      if (new Set(optionIds).size !== optionIds.length) note(`field ${field.id}: duplicate option ids`);
+      for (const option of field.options || []) {
+        if (!/^[a-z][a-z0-9_]*$/.test(option.id) || !option.ar || !option.en) note(`field ${field.id}: bad option ${option.id}`);
+      }
+    }
+  }
+  for (const [name, list] of Object.entries(FIELD_TEMPLATES)) {
+    for (const id of list) if (!fieldIds.has(id)) note(`template ${name}: missing field ${id}`);
+    if (new Set(list).size !== list.length) note(`template ${name}: a field twice`);
+  }
+  // Legacy placements point at live nodes.
+  for (const [legacyId, map] of Object.entries(LEGACY_CATEGORY_MAP)) {
+    const main = BUILTIN.get(map.main);
+    if (!main || main.level !== LEVELS.MAIN) note(`legacy ${legacyId}: unknown Main Category ${map.main}`);
+    if (map.category && BUILTIN.get(map.category)?.parentId !== map.main) note(`legacy ${legacyId}: ${map.category} is not under ${map.main}`);
+  }
+  return problems;
 }

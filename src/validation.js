@@ -8,7 +8,7 @@ import {
 import { normalizeDigits, parseNumber, toMillis, uid } from './utils.js';
 import { t } from './i18n.js';
 import { currencySymbol } from './labels.js';
-import { normalizeCustomFieldDefs, sanitizeFieldValues } from './custom-fields.js';
+import { normalizeCustomFieldDefs, normalizeFieldRecord, sanitizeFieldValues } from './custom-fields.js';
 import { MAIN_CATEGORIES, PREVIOUS_MAIN } from './locales/taxonomy-catalog.js';
 
 /** Every built-in classification id — a backup may refer to any of them
@@ -289,6 +289,8 @@ export function normalizeItem(raw, options = {}) {
     legacyCategoryId: cleanText(src.legacyCategoryId, 128) || null,
     // Values of category-specific and customer fields, keyed by field id.
     customFields: sanitizeFieldValues(src.customFields),
+    // Derived: the field ids above, for the index that counts a field's use.
+    customFieldIds: [],
     // Definitions of fields that belong to this record alone.
     customFieldDefs: normalizeCustomFieldDefs(src.customFieldDefs, TAXONOMY_LIMITS.fieldsPerItem),
     folderId: cleanText(src.folderId, 128) || null,
@@ -323,6 +325,7 @@ export function normalizeItem(raw, options = {}) {
     version: Number.isInteger(src.version) && src.version > 0 ? src.version : 1,
   };
 
+  item.customFieldIds = Object.keys(item.customFields);
   if (item.primaryImageId && !images.some((img) => img.id === item.primaryImageId)) {
     item.primaryImageId = images[0]?.id ?? null;
   }
@@ -433,6 +436,7 @@ export function validateImport(parsed) {
   const rawFolders = asArray(parsed.folders, 'folders');
   const rawCategories = asArray(parsed.categories, 'categories');
   const rawLocations = asArray(parsed.locations, 'locations');
+  const rawFieldDefinitions = asArray(parsed.fieldDefinitions, 'fieldDefinitions');
 
   if (errors.length) return { ok: false, errors, warnings, data: null };
   if (!rawItems.length && !rawFolders.length && !rawCategories.length && !rawLocations.length) {
@@ -440,6 +444,7 @@ export function validateImport(parsed) {
   }
 
   const categories = rawCategories.map(normalizeCategory).filter(isKeptCategory);
+  const fieldDefinitions = rawFieldDefinitions.map(normalizeFieldRecord).filter(Boolean);
   const locations = rawLocations.map(normalizeLocation).filter((l) => l.name);
   const folders = rawFolders.map((f) => normalizeFolder(f)).filter((f) => f.name);
 
@@ -493,11 +498,12 @@ export function validateImport(parsed) {
     ok: true,
     errors,
     warnings,
-    data: { items, folders, categories, locations },
+    data: { items, folders, categories, fieldDefinitions, locations },
     stats: {
       items: items.length,
       folders: folders.length,
       categories: categories.length,
+      fieldDefinitions: fieldDefinitions.length,
       locations: locations.length,
     },
   };

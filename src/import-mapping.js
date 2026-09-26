@@ -108,7 +108,7 @@ const cell = (row, index) => (index == null || index < 0 ? '' : String(row[index
  *   a blank row in the middle — and every warning after it points elsewhere.
  * @returns {{records: object[], problems: object[], newTaxonomy: {categories: string[], locations: string[], folders: string[]}}}
  */
-export function planImport({ rows, lines, mapping, existing, currency = 'SAR' }) {
+export function planImport({ rows, lines, mapping, existing, currency = 'SAR', resolved = {} }) {
   const lookup = {
     locations: byName(existing?.locations),
     folders: byName(existing?.folders),
@@ -238,11 +238,17 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
         record[`${key}Name`] = value;
       }
     }
-    classifyRow(record, {
+    // A classification the row cannot have as written holds the row back —
+    // it is never reinterpreted into something the file did not say.
+    const issue = classifyRow(record, {
       main: cell(row, mapping.mainCategory),
       category: cell(row, mapping.category),
       sub: cell(row, mapping.subcategory),
-    }, { taxonomy, freshNodes, fresh });
+    }, { taxonomy, freshNodes, fresh, createUnderGivenMain: resolved?.classification === 'create' });
+    if (issue) {
+      problems.push({ line, fatal: true, ...issue });
+      return;
+    }
     if (!record.categoryId && !record.categoryKey && !record.mainCategoryId && !record.mainCategoryKey) {
       record.categoryId = UNCATEGORIZED_ID;
     }
@@ -317,8 +323,29 @@ function planNode(freshNodes, fresh, { level, name, parentId = null, parentKey =
  * one («أخرى», «إكسسوارات»), becomes the customer's own Category under
  * «أخرى» — never a guess, and never a rejected row.
  */
-function classifyRow(record, names, { taxonomy, freshNodes, fresh }) {
+function classifyRow(record, names, { taxonomy, freshNodes, fresh, createUnderGivenMain = false }) {
   const one = (list) => (list.length === 1 ? list[0] : null);
+  // A Subcategory names a place under a Category; without one it has no
+  // place, and dropping it would lose what the row said.
+  if (names.sub && !names.category) {
+    return { field: 'subcategory', reason: t('importProblem.subWithoutCategory'), value: names.sub, kind: 'sub-without-category' };
+  }
+  // The Category exists, but under another Main Category than the row gives.
+  // Which one the row meant is the customer's call, not ours.
+  if (names.main && names.category) {
+    const main = one(taxonomy.findByName(names.main, { level: LEVELS.MAIN }));
+    if (main && !one(taxonomy.findByName(names.category, { level: LEVELS.CATEGORY, parentId: main.id }))) {
+      const elsewhere = one(taxonomy.findByName(names.category, { level: LEVELS.CATEGORY }));
+      if (elsewhere && taxonomy.mainOf(elsewhere)?.id !== main.id && !createUnderGivenMain) {
+        return {
+          field: 'category',
+          reason: t('importProblem.categoryMismatch', { category: names.category, main: names.main, actual: taxonomy.label(taxonomy.mainOf(elsewhere)) }),
+          value: names.category,
+          kind: 'category-mismatch',
+        };
+      }
+    }
+  }
   let mainId = null;
   let mainKey = null;
   if (names.main) {
@@ -364,6 +391,7 @@ function classifyRow(record, names, { taxonomy, freshNodes, fresh }) {
   if (categoryKey) { record.categoryKey = categoryKey; record.categoryName = names.category; }
   if (subId) record.subcategoryId = subId;
   if (subKey) record.subcategoryKey = subKey;
+  return null;
 }
 
 /**

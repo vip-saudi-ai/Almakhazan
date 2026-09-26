@@ -356,7 +356,9 @@ function groups() {
   const ids = new Set([...Object.keys(state.stored), ...Object.keys(state.raw)]);
   for (const id of ids) {
     if (templateIds.has(id) || ownIds.has(id) || state.removed.has(id)) continue;
-    const def = definitionFor(id, { taxonomy, item: { customFieldDefs: state.ownDefs } });
+    // A value whose definition is gone still gets a row (a definition
+    // inferred from the value), so nothing stored becomes invisible here.
+    const def = definitionFor(id, { taxonomy, item: { customFieldDefs: state.ownDefs }, value: state.stored[id] ?? state.raw[id] });
     if (!def) continue;
     const raw = id in state.raw ? state.raw[id] : toRaw(def, state.stored[id]);
     if (hasRawValue(raw)) previous.push(def);

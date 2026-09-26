@@ -12,6 +12,7 @@ import { t } from './i18n.js';
 import { actionLabel } from './labels.js';
 import { formatValuation, valuationMidpoint } from './validation.js';
 import { buildWorkbook } from './xlsx-writer.js';
+import { reconcileAfterBulkWrite } from './media.js';
 import { fieldRows } from './field-format.js';
 import { TAXONOMY_SCHEMA_VERSION, buildTaxonomy, reconcileClassification } from './taxonomy.js';
 import { isNative, saveFile } from './platform.js';
@@ -32,7 +33,11 @@ function classificationCells(repo, item) {
   return [main, category, sub].map((node) => (node ? taxonomy.label(node) : ''));
 }
 
-/** «تفاصيل إضافية» in one cell: "Label: value; Label: value". */
+/**
+ * «تفاصيل إضافية» in one cell: "Label: value; Label: value" — flattened for a
+ * person to read. It is not an import format: the spreadsheet import does not
+ * rebuild typed fields from it. The structured copy is the «الحقول» sheet.
+ */
 function additionalDetailsCell(repo, item) {
   const { current, previous } = fieldRows(item, repo.taxonomy());
   return [...current, ...previous].map((row) => `${row.label}: ${row.text}`).join('; ');
@@ -163,17 +168,37 @@ export async function exportExcel() {
         ],
       });
     }
-    // For a faithful round trip: the stable ids behind the labels above.
+    // Technical metadata: the stable ids behind the labels above, keyed by
+    // the record's own id (a SKU can be empty and a name repeated). For
+    // auditing and external systems. NAZM's spreadsheet import reads the
+    // first sheet only and does not consume this one — Excel is an
+    // interchange and reporting format here; the full-fidelity copy of an
+    // inventory is the Full Backup (.nazmbackup).
     sheets.push({
       name: t('export.classificationIds'),
       rows: [
-        ['field.sku', 'field.name', 'mainCategoryId', 'categoryId', 'subcategoryId'].map((key) => (key.startsWith('field.') ? t(key) : key)),
+        ['itemId', 'field.sku', 'field.name', 'mainCategoryId', 'categoryId', 'subcategoryId'].map((key) => (key.startsWith('field.') ? t(key) : key)),
         ...items.map((item) => {
           const { main, category, sub } = taxonomy.path(item);
-          return [item.sku || '', item.name || '', main?.id || '', category?.id || '', sub?.id || ''];
+          return [item.id, item.sku || '', item.name || '', main?.id || '', category?.id || '', sub?.id || ''];
         }),
       ],
     });
+    // The same values as «تفاصيل إضافية», one row per value, with the field's
+    // id and type — structured, for other systems. Also not read back by NAZM.
+    const fieldSheet = [];
+    for (const item of items) {
+      const { current, previous } = fieldRows(item, taxonomy);
+      for (const row of [...current, ...previous]) {
+        fieldSheet.push([item.id, item.sku || '', row.def.id, row.label, row.def.type, row.text]);
+      }
+    }
+    if (fieldSheet.length) {
+      sheets.push({
+        name: t('export.fieldsSheet'),
+        rows: [['itemId', t('field.sku'), 'fieldId', t('fields.label'), t('fields.type'), t('export.value')], ...fieldSheet],
+      });
+    }
   }
 
   if (repo.state.activity.length) {
@@ -229,6 +254,9 @@ export async function exportJSON() {
     items: repo.state.items,
     folders: repo.state.folders,
     categories: repo.state.categories,
+    // Every field definition, retired ones included: a value in `items` is
+    // only readable with its definition.
+    fieldDefinitions: repo.state.fieldDefinitions,
     locations: repo.state.locations,
   };
   let blob;
@@ -374,9 +402,9 @@ export async function applyMerge(data) {
   // inventories; merging a third into it would make that unrecoverable.
   await assertNoUnfinishedRestore();
   const operations = [];
-  const skipped = { items: 0, folders: 0, categories: 0, locations: 0 };
+  const skipped = { items: 0, folders: 0, categories: 0, fieldDefinitions: 0, locations: 0 };
 
-  for (const name of ['categories', 'locations', 'folders', 'items']) {
+  for (const name of ['categories', 'fieldDefinitions', 'locations', 'folders', 'items']) {
     const incoming = (data[name] || []).filter((record) => record?.id);
     const existing = await repo.backend.existingIds(name, incoming.map((record) => record.id));
     for (const record of incoming) {
@@ -392,10 +420,17 @@ export async function applyMerge(data) {
   const taxonomy = buildTaxonomy([
     ...repo.state.categories,
     ...operations.filter((op) => op.collection === 'categories').map((op) => op.data),
+  ], [
+    ...repo.state.fieldDefinitions,
+    ...operations.filter((op) => op.collection === 'fieldDefinitions').map((op) => op.data),
   ]);
   for (const op of operations) {
     if (op.collection === 'items') op.data = { ...op.data, ...reconcileClassification(taxonomy, op.data).value };
   }
+  // Values that arrive without any definition keep one (recovered).
+  operations.unshift(...repo.recoveredFieldOps(
+    operations.filter((op) => op.collection === 'items').map((op) => op.data), { taxonomy },
+  ).map((op) => ({ ...op, ifAbsent: true })));
 
   // Live SKUs stay unique. Checked for the records that will actually be
   // added — a record skipped by id is not new, so its own SKU is no conflict —
@@ -438,6 +473,7 @@ export async function applyMerge(data) {
   }
   // Flat categories from an older backup are placed as an upgrade places them.
   try { await repo.migrateTaxonomy(); } catch (error) { console.error('[merge] classification upgrade deferred', error); }
+  await reconcileAfterBulkWrite(repo.session);
   await repo.log(ACTIONS.IMPORT_MERGED, {
     added,
     skipped: Object.values(skipped).reduce((a, b) => a + b, 0),
