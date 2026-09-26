@@ -320,7 +320,7 @@ const expectedErrors = (errs, pattern) => errs.filter((line) => !pattern.test(li
     return { max: MAX_BACKUP_FILE_BYTES, big, empty, txt, none, read, ok: { items: ok.data.items.length, fp: ok.sourceFingerprint.length }, upper: upper.sourceFingerprint === ok.sourceFingerprint };
   });
   check('B1 a file past the limit is refused with the exact message, without its bytes being read',
-    files.big.code === 'backup/file-too-large' && files.big.message === 'حجم ملف البيانات أكبر من الحد المسموح.' && files.read === 0, JSON.stringify(files));
+    files.big.code === 'backup/file-too-large' && files.big.message === 'حجم الملف أكبر من 256 ميغابايت، وهو أقصى ما يستورده هذا الجهاز. صدّر نسخة أصغر، أو استوردها من متصفح على الحاسب.' && files.read === 0, JSON.stringify(files));
   check('B2 so are an empty file, a non-JSON extension and no file', files.empty.code === 'backup/empty-file'
     && files.txt.code === 'backup/not-json' && files.none.code === 'backup/no-file', JSON.stringify(files));
   check('B3 a valid .json file reads (MIME only a hint), with its SHA-256 identity',
