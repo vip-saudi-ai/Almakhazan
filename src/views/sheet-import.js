@@ -1200,7 +1200,7 @@ async function run() {
 
     for (const { collection, id, name, level, parentId } of toCreate) {
       if (collection === 'categories') {
-        if (!repository.taxonomy().node(id)) await repository.createTaxonomyNode({ id, level, parentId, name });
+        if (!repository.taxonomy().node(id)) await repository.saveCategory({ id, level, parentId, name });
       }
       else if (collection === 'locations') await repository.saveLocation({ id, name });
       else await repository.saveFolder({ id, name, icon: '🗂', color: '#2563FF' });

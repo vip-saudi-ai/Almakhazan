@@ -2450,8 +2450,9 @@ class Repository {
       return this.taxonomy().node(data.id);
     }
     const id = await this.createTaxonomyNode({
+      id: data?.id || null,
       level: data?.level || LEVELS.CATEGORY,
-      parentId: data?.parentId || OTHER_MAIN_ID,
+      parentId: data?.level === LEVELS.MAIN ? null : (data?.parentId || OTHER_MAIN_ID),
       name: data?.name,
       icon: data?.icon,
     });
