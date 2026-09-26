@@ -479,7 +479,7 @@ const sheetClosed = (page) => page.waitForFunction(
       for (let i = start; i < start + 1000; i += 1) {
         rows.push({
           id: 'x' + String(i).padStart(6, '0'), name: `قطعة ${i}`, quantity: 1, unit: 'قطعة',
-          categoryId: 'c1', folderId: null, locationId: null, condition: '', images: [],
+          categoryId: 'art_paintings', folderId: null, locationId: null, condition: '', images: [],
           deletedAt: null, createdAt: now - i * 1000, updatedAt: now - i * 1000, version: 1,
         });
       }
@@ -525,9 +525,9 @@ const sheetClosed = (page) => page.waitForFunction(
     const folder = await repository.saveFolder({ name: 'F1', icon: '🗂', color: '#2563FF' });
     const now = Date.now();
     await local.putMany('items', [
-      { id: 'root-a', name: 'قطعة الجذر', sku: 'ROOT-A', quantity: 1, categoryId: 'c1', folderId: null,
+      { id: 'root-a', name: 'قطعة الجذر', sku: 'ROOT-A', quantity: 1, categoryId: 'art_paintings', folderId: null,
         images: [], deletedAt: null, createdAt: now, updatedAt: now, version: 1 },
-      { id: 'folder-b', name: 'قطعة المجلد', sku: 'FOLDER-B', quantity: 1, categoryId: 'c1', folderId: folder.id,
+      { id: 'folder-b', name: 'قطعة المجلد', sku: 'FOLDER-B', quantity: 1, categoryId: 'art_paintings', folderId: folder.id,
         images: [], deletedAt: null, createdAt: now - 1, updatedAt: now - 1, version: 1 },
     ]);
     const base = emptyQuery();
@@ -564,7 +564,7 @@ const sheetClosed = (page) => page.waitForFunction(
     const rows = [];
     for (let i = 0; i < 2500; i += 1) {
       rows.push({
-        id: 'b' + String(i).padStart(5, '0'), name: `قطعة ${i}`, quantity: 1, categoryId: 'c1',
+        id: 'b' + String(i).padStart(5, '0'), name: `قطعة ${i}`, quantity: 1, categoryId: 'art_paintings',
         folderId: null, locationId: null, images: [], deletedAt: null,
         createdAt: now - i * 1000, updatedAt: now - i * 1000, version: 1,
       });

@@ -3,7 +3,7 @@
 
 import { CHART_COLORS, CONDITIONS, CONDITION_COLORS } from '../config.js';
 import { t } from '../i18n.js';
-import { actionLabel, activityDetail, categoryName, conditionLabel, currencySymbol } from '../labels.js';
+import { actionLabel, activityDetail, conditionLabel, currencySymbol } from '../labels.js';
 import { repository } from '../repository.js';
 import { totalsByCurrency } from '../money.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
@@ -41,7 +41,7 @@ function barRow(label, count, max, color) {
 function itemThumbNode(item) {
   const image = primaryImage(item);
   if (!image) {
-    return el('div', { class: 'ov-item-thumb', text: repository.category(item.categoryId).icon, 'aria-hidden': 'true' });
+    return el('div', { class: 'ov-item-thumb', text: repository.classificationDisplay(item).icon, 'aria-hidden': 'true' });
   }
   const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
   bindImageSrc(img, image, { tier: ImageTier.THUMB });
@@ -61,7 +61,7 @@ export function renderOverview() {
   const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
   const analyzed = items.filter((i) => i.aiData).length;
   const valued = items.filter((i) => i.valuation).length;
-  const categories = new Set(items.map((i) => i.categoryId).filter(Boolean)).size;
+  const categories = new Set(items.map((i) => i.categoryId).filter((id) => id && id !== 'uncategorized')).size;
   const totals = totalsByCurrency(items);
   const primaryTotal = totals[0];
 
@@ -123,18 +123,27 @@ export function renderOverview() {
     ]));
   }
 
-  // ── categories ──
-  const categoryStats = repository.state.categories
-    .map((category) => ({ category, count: items.filter((i) => i.categoryId === category.id).length }))
-    .filter((entry) => entry.count > 0)
+  // ── by Main Category, then by Category ──
+  // One pass over the records, counting each against its resolved path.
+  const taxonomy = repository.taxonomy();
+  const byMain = new Map();
+  const byCategory = new Map();
+  for (const item of items) {
+    const { main, category } = taxonomy.path(item);
+    if (main) byMain.set(main.id, (byMain.get(main.id) || 0) + 1);
+    if (category) byCategory.set(category.id, (byCategory.get(category.id) || 0) + 1);
+  }
+  const statsOf = (counts) => [...counts.entries()]
+    .map(([id, count]) => ({ node: taxonomy.node(id), count }))
+    .filter((entry) => entry.node)
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
-
-  if (categoryStats.length) {
-    const max = categoryStats[0].count;
-    blocks.push(section(t('overview.byCategory'), [
-      el('div', { class: 'gl-s ov-card' }, categoryStats.map((entry, index) => barRow(
-        `${entry.category.icon} ${categoryName(entry.category)}`,
+  for (const [titleKey, stats] of [['overview.byMainCategory', statsOf(byMain)], ['overview.byCategory', statsOf(byCategory)]]) {
+    if (!stats.length) continue;
+    const max = stats[0].count;
+    blocks.push(section(t(titleKey), [
+      el('div', { class: 'gl-s ov-card' }, stats.map((entry, index) => barRow(
+        `${taxonomy.icon(entry.node)} ${taxonomy.label(entry.node)}`,
         entry.count, max, CHART_COLORS[index % CHART_COLORS.length],
       ))),
     ]));
@@ -182,7 +191,7 @@ export function renderOverview() {
         itemThumbNode(item),
         el('div', { style: { flex: '1', minWidth: '0' } }, [
           el('div', { class: 'ov-act-name', text: item.name || '—', dir: 'auto' }),
-          el('div', { class: 'ov-act-meta', text: categoryName(repository.category(item.categoryId)), dir: 'auto' }),
+          el('div', { class: 'ov-act-meta', text: repository.classificationDisplay(item).name, dir: 'auto' }),
         ]),
         el('div', { style: { fontSize: '13px', fontWeight: '700', color: 'var(--green)', flexShrink: '0' }, text: formatValuation(item.valuation, { compact: true }) }),
       ]))),

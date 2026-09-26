@@ -68,7 +68,7 @@ async function open({ count = 3, width = 1400, height = 1800 } = {}) {
     await repository.bulkWrite([{
       type: 'set', collection: 'items', id: 'vitem',
       data: {
-        id: 'vitem', name: 'ساعة جيب ذهبية', quantity: 1, unit: 'قطعة', categoryId: 'c1',
+        id: 'vitem', name: 'ساعة جيب ذهبية', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
         images, primaryImageId: images[0].id, createdAt: now, updatedAt: now, version: 1,
       },
     }]);

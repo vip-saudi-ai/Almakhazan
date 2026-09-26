@@ -4,7 +4,7 @@ export const messages = {
   'importField.name': { ar: "الاسم", en: "Name" },
   'importField.quantity': { ar: "الكمية", en: "Quantity" },
   'importField.unit': { ar: "الوحدة", en: "Unit" },
-  'importField.category': { ar: "التصنيف", en: "Category" },
+  'importField.category': { ar: "الصنف", en: "Category" },
   'importField.location': { ar: "الموقع", en: "Location" },
   'importField.folder': { ar: "المجلد", en: "Folder" },
   'importField.condition': { ar: "الحالة", en: "Condition" },

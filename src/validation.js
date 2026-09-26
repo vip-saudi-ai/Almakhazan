@@ -2,12 +2,21 @@
 // an import file, or the AI passes through here before it is stored or rendered.
 
 import {
-  CONDITIONS, INTEGER_UNITS, SCHEMA_VERSION, TEXT_LIMITS,
+  CONDITIONS, INTEGER_UNITS, SCHEMA_VERSION, TAXONOMY_LIMITS, TAXONOMY_SCHEMA_VERSION, TEXT_LIMITS,
   UNCATEGORIZED_ID, VALUATION_SOURCES, VALUATION_TYPES, normalizeCurrencyCode,
 } from './config.js';
 import { normalizeDigits, parseNumber, toMillis, uid } from './utils.js';
 import { t } from './i18n.js';
 import { currencySymbol } from './labels.js';
+import { normalizeCustomFieldDefs, sanitizeFieldValues } from './custom-fields.js';
+import { MAIN_CATEGORIES, PREVIOUS_MAIN } from './locales/taxonomy-catalog.js';
+
+/** Every built-in classification id — a backup may refer to any of them
+ *  without carrying a record for it. */
+const BUILTIN_TAXONOMY_IDS = new Set(MAIN_CATEGORIES.concat([PREVIOUS_MAIN]).flatMap((main) => [
+  main.id,
+  ...main.categories.flatMap((category) => [category.id, ...(category.subcategories || []).map((sub) => sub.id)]),
+]));
 
 export function cleanText(value, maxLength = 500) {
   if (value == null) return '';
@@ -267,7 +276,21 @@ export function normalizeItem(raw, options = {}) {
     serialNumber: cleanText(src.serialNumber ?? src.serial ?? src.aiData?.serial, TEXT_LIMITS.serialNumber),
     modelNumber: cleanText(src.modelNumber ?? src.model, TEXT_LIMITS.modelNumber),
     referenceNumber: cleanText(src.referenceNumber ?? src.reference ?? src.ref, TEXT_LIMITS.referenceNumber),
+    // Classification: ids only, never labels. `categoryId` keeps its old
+    // meaning of "the record's Category" (UNCATEGORIZED_ID when none), so every
+    // index and every older record still reads correctly; the Main Category
+    // and the optional Subcategory sit beside it. Whether the three agree is
+    // the repository's check (src/taxonomy.js), made on every write.
+    mainCategoryId: cleanText(src.mainCategoryId, 128) || null,
     categoryId: cleanText(src.categoryId ?? src.cat, 128) || UNCATEGORIZED_ID,
+    subcategoryId: cleanText(src.subcategoryId, 128) || null,
+    // The id this record's Category had before the hierarchy, when the
+    // migration moved it to a built-in one — kept so nothing is lost.
+    legacyCategoryId: cleanText(src.legacyCategoryId, 128) || null,
+    // Values of category-specific and customer fields, keyed by field id.
+    customFields: sanitizeFieldValues(src.customFields),
+    // Definitions of fields that belong to this record alone.
+    customFieldDefs: normalizeCustomFieldDefs(src.customFieldDefs, TAXONOMY_LIMITS.fieldsPerItem),
     folderId: cleanText(src.folderId, 128) || null,
     locationId: cleanText(src.locationId ?? src.loc, 128) || null,
     quantity: quantityCheck.ok ? quantityCheck.value : 1,
@@ -325,14 +348,41 @@ export function normalizeFolder(raw, options = {}) {
   };
 }
 
+/**
+ * A stored classification node: the customer's own Main Category, Category or
+ * Subcategory, or the local settings of a built-in one (same id as the
+ * built-in). A record without `level` predates the hierarchy and is read as a
+ * Category (see src/taxonomy.js); it is kept exactly as it is.
+ */
 export function normalizeCategory(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
-  return {
+  const out = {
     id: cleanText(src.id, 128) || uid('cat'),
     name: cleanText(src.name, TEXT_LIMITS.categoryName),
     icon: cleanText(src.icon, 8) || '📦',
     createdAt: toMillis(src.createdAt) || Date.now(),
   };
+  if (['main', 'category', 'sub'].includes(src.level)) out.level = src.level;
+  if (src.source === 'builtin' || src.source === 'custom') out.source = src.source;
+  const parentId = cleanText(src.parentId, 128);
+  if (parentId) out.parentId = parentId;
+  if (src.hidden === true) out.hidden = true;
+  if (src.pinned === true) out.pinned = true;
+  if (Number.isFinite(src.order)) out.order = src.order;
+  const mergedInto = cleanText(src.mergedInto, 128);
+  if (mergedInto) out.mergedInto = mergedInto;
+  const template = cleanText(src.template, 32);
+  if (template) out.template = template;
+  const fields = normalizeCustomFieldDefs(src.fields, TAXONOMY_LIMITS.fieldsPerTemplate);
+  if (fields.length) out.fields = fields;
+  if (Number.isInteger(src.taxonomyVersion)) out.taxonomyVersion = src.taxonomyVersion;
+  return out;
+}
+
+/** Is this stored node worth keeping? A custom one needs a name; a built-in's
+ *  settings record needs nothing but its id. */
+export function isKeptCategory(category) {
+  return Boolean(category?.name) || category?.source === 'builtin';
 }
 
 export function normalizeLocation(raw) {
@@ -363,6 +413,13 @@ export function validateImport(parsed) {
     errors.push(t('backup.newerSchema', { version: String(version), current: String(SCHEMA_VERSION) }));
   }
 
+  // A classification written by a newer app may use levels or fields this one
+  // cannot place; restoring it would silently flatten them.
+  const taxonomyVersion = parsed.taxonomy?.schemaVersion;
+  if (Number.isInteger(taxonomyVersion) && taxonomyVersion > TAXONOMY_SCHEMA_VERSION) {
+    errors.push(t('backup.newerTaxonomy'));
+  }
+
   const asArray = (value, label) => {
     if (value == null) return [];
     if (!Array.isArray(value)) {
@@ -382,11 +439,11 @@ export function validateImport(parsed) {
     return { ok: false, errors: [t('backup.empty')], warnings, data: null };
   }
 
-  const categories = rawCategories.map(normalizeCategory).filter((c) => c.name);
+  const categories = rawCategories.map(normalizeCategory).filter(isKeptCategory);
   const locations = rawLocations.map(normalizeLocation).filter((l) => l.name);
   const folders = rawFolders.map((f) => normalizeFolder(f)).filter((f) => f.name);
 
-  const categoryIds = new Set([...categories.map((c) => c.id), UNCATEGORIZED_ID]);
+  const categoryIds = new Set([...categories.map((c) => c.id), ...BUILTIN_TAXONOMY_IDS, UNCATEGORIZED_ID]);
   const folderIds = new Set(folders.map((f) => f.id));
   const locationIds = new Set(locations.map((l) => l.id));
 
@@ -412,7 +469,13 @@ export function validateImport(parsed) {
     if (item.categoryId !== UNCATEGORIZED_ID && !categoryIds.has(item.categoryId)) {
       warnings.push(t('backup.missingCategory', { name: item.name }));
       item.categoryId = UNCATEGORIZED_ID;
+      item.subcategoryId = null;
     }
+    // Whether the three levels agree is decided against the merged hierarchy
+    // by the restore (src/taxonomy.js reconcileClassification); here only a
+    // reference to nothing at all is cleared.
+    if (item.mainCategoryId && !categoryIds.has(item.mainCategoryId)) item.mainCategoryId = null;
+    if (item.subcategoryId && !categoryIds.has(item.subcategoryId)) item.subcategoryId = null;
     if (item.locationId && !locationIds.has(item.locationId)) {
       item.locationId = null;
     }

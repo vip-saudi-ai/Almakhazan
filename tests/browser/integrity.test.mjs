@@ -54,7 +54,7 @@ async function open({ seed = 0, inFolder = 0, legacyDatabase = false } = {}) {
         const tx = db.transaction('items', 'readwrite');
         tx.objectStore('items').put({
           id: 'legacy-1', name: 'سجل قديم', quantity: 1, unit: 'قطعة',
-          categoryId: 'c1', folderId: 'old-folder', locationId: null,
+          categoryId: 'art_paintings', folderId: 'old-folder', locationId: null,
           sku: 'INV-2024-000001', barcode: '6281000000001',
           images: [], createdAt: 1, updatedAt: 1, version: 1, deletedAt: null,
         });
@@ -81,7 +81,7 @@ async function open({ seed = 0, inFolder = 0, legacyDatabase = false } = {}) {
       for (let i = 0; i < count; i += 1) {
         const id = 'k' + String(i).padStart(5, '0');
         rows.push({
-          id, name: `قطعة ${i}`, quantity: 1, unit: 'قطعة', categoryId: 'c1',
+          id, name: `قطعة ${i}`, quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
           // The folder members are the OLDEST records, so they sort to the far
           // side of the window and none of them is loaded.
           folderId: i >= count - folderCount ? folder.id : null,
@@ -164,7 +164,7 @@ const state = (page) => page.evaluate(async () => {
       for (let i = 0; i < 50; i += 1) {
         tx.objectStore('items').put({
           id: 'v4-' + i, name: `سجل قديم ${i}`, quantity: 1, unit: 'قطعة',
-          categoryId: 'c1', folderId: i < 12 ? 'f-old' : null, locationId: null,
+          categoryId: 'art_paintings', folderId: i < 12 ? 'f-old' : null, locationId: null,
           sku: `INV-2025-${String(i).padStart(6, '0')}`, barcode: String(600000 + i),
           serialNumber: `SN-OLD-${i}`, condition: i % 2 ? 'جيدة' : '',
           images: [], createdAt: 1700000000000 + i, updatedAt: 1700000000000 + i,
@@ -400,7 +400,7 @@ const state = (page) => page.evaluate(async () => {
           type: 'set', collection: 'items', id: 'burst' + i, merge: false,
           data: {
             id: 'burst' + i, name: 'دفعة ' + i, quantity: 1, unit: 'قطعة',
-            categoryId: 'c1', folderId: null, locationId: null, images: [],
+            categoryId: 'art_paintings', folderId: null, locationId: null, images: [],
             deletedAt: null, createdAt: Date.now(), updatedAt: Date.now(), version: 1,
           },
         }]);
@@ -459,7 +459,7 @@ const state = (page) => page.evaluate(async () => {
     // Two uploads: one abandoned, one saved onto a record.
     const abandoned = await upload('abandoned.png');
     const kept = await upload('kept.png');
-    await repository.createItem({ name: 'قطعة محفوظة', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [kept] });
+    await repository.createItem({ name: 'قطعة محفوظة', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', images: [kept] });
     await new Promise((r) => setTimeout(r, 300));
 
     const before = await local.count('images');
@@ -714,7 +714,7 @@ const state = (page) => page.evaluate(async () => {
     const { checkIntegrity } = await import('/src/integrity.js');
     const now = Date.now();
     const base = {
-      quantity: 1, unit: 'قطعة', categoryId: 'c1', folderId: null, locationId: null,
+      quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', folderId: null, locationId: null,
       images: [], deletedAt: null, createdAt: now, updatedAt: now, version: 1,
     };
 

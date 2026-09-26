@@ -27,11 +27,13 @@ import { isImageViewerOpen, reflowViewer } from './views/image-viewer.js';
 import { acceptInvitation, takeInvitationFromUrl } from './team.js';
 import { bindSheetDismiss, closeAllSheets, confirmAction, resolveConfirm, toast, toastError } from './ui.js';
 import {
-  applyFilterControls, bindContextActions, bindLongPress, bindSearch, closeContextMenu,
+  applyClassificationFilter, applyFilterControls, bindContextActions, bindLongPress, bindSearch, closeContextMenu,
   enterFolder, exitFolder, focusSearch, openFilterSheet, openSortSheet, renderHome,
   clearSearch, resetAllFilters, scanIntoSearch, setGridMode, syncFilterControls, view as homeView,
 } from './views/home.js';
 import { bindItemForm, openItemForm } from './views/item-form.js';
+import { bindTaxonomyPicker } from './views/taxonomy-picker.js';
+import { refreshTaxonomyNotice } from './views/taxonomy-onboarding.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { bindAssistant, renderAssistant } from './views/assistant.js';
@@ -40,7 +42,7 @@ import {
   activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
 } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account', 'tax'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -229,6 +231,9 @@ async function loadApplicationData(firebase, session) {
     startPlanWatch(cloudReady
       ? { mode: 'cloud', workspaceId: session.workspaceId }
       : { mode: 'local', workspaceId: null });
+    // «طوّرنا التصنيفات…» after an existing inventory's categories were
+    // upgraded at start; the first-run question for a new one.
+    void refreshTaxonomyNotice();
 
     // Before anything else reads the inventory: an import the last page
     // lifecycle left running is marked stopped (nothing can still be writing
@@ -370,6 +375,7 @@ function initializeUI() {
   bindLongPress();
   bindContextActions();
   bindItemForm();
+  bindTaxonomyPicker();
   bindManageViews();
   bindAssistant();
   bindToolbar();
@@ -453,6 +459,9 @@ function bindToolbar() {
 
   for (const id of ['fp-cond', 'fp-folder', 'fp-loc', 'fp-ai', 'fp-price']) {
     $(id)?.addEventListener('change', applyFilterControls);
+  }
+  for (const id of ['fp-main', 'fp-cat', 'fp-sub']) {
+    $(id)?.addEventListener('change', applyClassificationFilter);
   }
 }
 

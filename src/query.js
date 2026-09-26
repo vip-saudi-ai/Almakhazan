@@ -29,7 +29,8 @@ export function emptyQuery() {
   return {
     search: '',
     folderId: null,       // browsing scope
-    categoryId: 'all',    // the pill row
+    categoryId: 'all',    // the pill row, on a Category (or «غير مصنّف»)
+    mainCategoryId: 'all', // the pill row, on a Main Category
     filters: { ...EMPTY_FILTERS },
     sort: 'newest',
     page: 1,
@@ -50,6 +51,7 @@ export function isNarrowed(query) {
   return Boolean(
     query.search
     || query.categoryId !== 'all'
+    || (query.mainCategoryId && query.mainCategoryId !== 'all')
     || activeFilterCount(query.filters) > 0
     || query.sort !== 'newest'
     || query.folderId
@@ -140,6 +142,7 @@ export function queryKeyOf(query) {
     full.search || '',
     full.folderId || '',
     full.categoryId || 'all',
+    full.mainCategoryId || 'all',
     full.sort || 'newest',
     full.trashed ? 1 : 0,
     full.perPage || PAGE_SIZE,
@@ -330,6 +333,7 @@ function runInMemory(query) {
     sortMode: query.sort,
     scope: { folderId: query.folderId },
     categoryPill: query.categoryId,
+    mainPill: query.mainCategoryId,
     lookups: repository.lookups(),
   });
 
@@ -391,6 +395,8 @@ function summarizeInMemory(query = emptyQuery()) {
 
 function countsInMemory() {
   const categories = new Map();
+  const mains = new Map();
+  const subs = new Map();
   const folders = new Map();
   const locations = new Map();
   let live = 0;
@@ -401,11 +407,13 @@ function countsInMemory() {
     live += 1;
     const category = item.categoryId || UNCATEGORIZED_ID;
     categories.set(category, (categories.get(category) || 0) + 1);
+    if (item.mainCategoryId) mains.set(item.mainCategoryId, (mains.get(item.mainCategoryId) || 0) + 1);
+    if (item.subcategoryId) subs.set(item.subcategoryId, (subs.get(item.subcategoryId) || 0) + 1);
     if (item.folderId) folders.set(item.folderId, (folders.get(item.folderId) || 0) + 1);
     if (item.locationId) locations.set(item.locationId, (locations.get(item.locationId) || 0) + 1);
   }
 
-  return { categories, folders, locations, live, trashed, complete: repository.itemsComplete };
+  return { categories, mains, subs, folders, locations, live, trashed, complete: repository.itemsComplete };
 }
 
 /**

@@ -27,7 +27,12 @@ const YEAR = 365 * 24 * 60 * 60 * 1000;
 const has = {
   images: (item) => item.images?.length > 0,
   location: (item) => Boolean(item.locationId),
-  category: (item) => Boolean(item.categoryId) && item.categoryId !== UNCATEGORIZED_ID,
+  // Classified: a Main Category and a Category that belong together. A
+  // Subcategory is optional and never counts against the score.
+  category: (item, now, classify) => {
+    if (classify) { const c = classify(item); return Boolean(c.main && c.category); }
+    return Boolean(item.categoryId) && item.categoryId !== UNCATEGORIZED_ID;
+  },
   condition: (item) => Boolean(item.condition),
   recency: (item, now) => now - (item.updatedAt ?? 0) < YEAR,
   // A record is "sound" when it can actually be found and counted: it has a
@@ -59,7 +64,12 @@ function band(score) {
  * @param {Array} items live records (Trash excluded by the caller)
  * @returns {{score: number, band: object, signals: Array, counts: object, empty: boolean}}
  */
-export function inventoryHealth(items, { now = Date.now() } = {}) {
+/**
+ * @param {{now?: number, classify?: (item) => {main, category}}} [options]
+ *   `classify` resolves a record's classification (repository.classification);
+ *   without it only the flat Category is looked at.
+ */
+export function inventoryHealth(items, { now = Date.now(), classify = null } = {}) {
   const total = items.length;
   if (!total) {
     return {
@@ -73,8 +83,10 @@ export function inventoryHealth(items, { now = Date.now() } = {}) {
 
   const met = {};
   for (const key of Object.keys(WEIGHTS)) {
-    met[key] = items.filter((item) => has[key](item, now)).length;
+    met[key] = items.filter((item) => has[key](item, now, classify)).length;
   }
+  // Of the unclassified, how many lack even a Main Category — the first step.
+  const missingMain = classify ? items.filter((item) => !classify(item).main).length : 0;
 
   const score = Math.round(
     Object.entries(WEIGHTS).reduce((sum, [key, weight]) => sum + weight * (met[key] / total), 0) * 100,
@@ -102,6 +114,7 @@ export function inventoryHealth(items, { now = Date.now() } = {}) {
       missingImages: total - met.images,
       missingLocation: total - met.location,
       missingCategory: total - met.category,
+      missingMainCategory: missingMain,
       missingCondition: total - met.condition,
       stale: total - met.recency,
       duplicates: duplicateItems,
@@ -146,10 +159,11 @@ export function cleanupTasks(health, { valuableFrom = 10000 } = {}) {
     });
   }
   if (counts.missingCategory) {
+    const noMain = counts.missingMainCategory || 0;
     tasks.push({
       id: 'category',
-      title: t('health.task.category', { count: counts.missingCategory }),
-      detail: t('health.task.categoryDetail'),
+      title: noMain ? t('health.task.mainCategory', { count: noMain }) : t('health.task.category', { count: counts.missingCategory }),
+      detail: noMain ? t('health.task.mainCategoryDetail') : t('health.task.categoryDetail'),
       gain: points('category', counts.missingCategory),
       action: 'review-missing-category',
       cta: t('health.cta.suggestions'),

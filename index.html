@@ -183,6 +183,7 @@
     <div class="active-filters" id="active-filters" role="status" style="display:none"></div>
 
     <div class="vscroll" id="hscroll">
+      <div id="tax-card"></div>
       <!-- Two figures, not four: statistics guide a decision here, they do not
            compete with the inventory for attention. -->
       <div class="sgrid" id="statsrow">
@@ -264,6 +265,9 @@
 
       <div class="shdr" data-feature="cloudAi"><h2 class="stitle" data-i18n="settings.assistant">✦ مساعد نَظْم</h2></div>
       <div class="sgroup" id="ai-settings" data-feature="cloudAi"></div>
+
+      <div class="shdr"><h2 class="stitle" data-i18n="settings.classification">التصنيفات</h2></div>
+      <div class="sgroup" id="classification-panel"></div>
 
       <div class="shdr"><h2 class="stitle" data-i18n="settings.data">البيانات</h2></div>
       <div class="sgroup" id="data-panel"></div>
@@ -349,7 +353,9 @@
 
     <div class="fsec">
       <div class="fstitle" data-i18n="form.placeSection">التصنيف والموقع</div>
-      <div class="frow"><label for="f-cat" data-i18n="field.category">التصنيف</label><select id="f-cat"></select></div>
+      <!-- الفئة الرئيسية → الصنف → الصنف الفرعي: buttons that open the
+           classification picker (src/views/item-fields.js). -->
+      <div id="f-class" class="f-class"></div>
       <div class="frow"><label for="f-folder" data-i18n="field.folder">المجلد</label><select id="f-folder"></select></div>
       <div class="frow"><label for="f-loc" data-i18n="field.location">الموقع</label><select id="f-loc"></select></div>
     </div>
@@ -377,6 +383,12 @@
       </div>
       <div class="field-hint" id="f-valuation-preview"></div>
     </div>
+
+    <!-- Category-specific fields, disclosed on demand. -->
+    <details class="f-extra" id="f-extra">
+      <summary class="f-extra-sum"><span data-i18n="fields.additional">تفاصيل إضافية</span> <span class="f-extra-count" id="f-extra-count" aria-hidden="true"></span></summary>
+      <div id="f-extra-body"></div>
+    </details>
 
     <div class="fsec" id="desc-manual-sec">
       <div class="frow frowv"><label for="f-desc" data-i18n="field.descriptionNotes">الوصف / الملاحظات</label><textarea id="f-desc" dir="auto" placeholder="أي تفاصيل إضافية..." data-i18n-attr="placeholder:form.descriptionPlaceholder"></textarea></div>
@@ -447,10 +459,21 @@
   <div class="shhdr"><h2 class="shtitle" id="cat-sheet-title" data-i18n-js>تصنيف جديد</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
   <div class="shscroll">
     <div class="fsec"><div class="frow"><label for="cat-name" data-i18n="field.name">الاسم</label><input id="cat-name" dir="auto" placeholder="مثال: لوحات زيتية" data-i18n-attr="placeholder:category.namePlaceholder"></div></div>
+    <p class="sheet-note" id="cat-hint"></p>
     <div class="fstitle" data-i18n="field.icon">الأيقونة</div>
     <div class="pick-row" id="caticolist" role="group" aria-label="أيقونة التصنيف" data-i18n-attr="aria-label:category.icon"></div>
   </div>
   <div class="shfoot"><button class="btn btn-p" id="save-cat-btn" type="button" style="width:100%;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="check" data-icon-size="18"></span><span data-i18n="category.save">حفظ التصنيف</span></button></div>
+</div>
+
+<!-- CLASSIFICATION PICKER -->
+<div class="ov" id="ov-tax"></div>
+<div class="sh" id="sh-tax" tabindex="-1" aria-labelledby="tax-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="tax-title" data-i18n-js>اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="tax-searchbar"><input id="tax-search" type="search" dir="auto" autocomplete="off" enterkeyhint="search" aria-controls="tax-body" aria-describedby="tax-status" placeholder="بحث" aria-label="بحث" data-i18n-attr="placeholder:taxonomy.search;aria-label:taxonomy.search"></div>
+  <div class="visually-hidden" id="tax-status" role="status" aria-live="polite"></div>
+  <div class="shscroll" id="tax-body"></div>
 </div>
 
 <!-- REASSIGN BEFORE CATEGORY DELETE -->
@@ -543,6 +566,9 @@
   </div>
   <div class="shscroll" style="padding:0">
     <div class="sgroup" style="margin:0 20px 16px">
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-main" data-i18n="field.mainCategory">الفئة الرئيسية</label><select class="fsh-sel" id="fp-main"></select></div>
+      <div class="fsh-row"><label class="fsh-lbl" for="fp-cat" data-i18n="field.category">الصنف</label><select class="fsh-sel" id="fp-cat"></select></div>
+      <div class="fsh-row" id="fp-sub-row"><label class="fsh-lbl" for="fp-sub" data-i18n="field.subcategory">الصنف الفرعي</label><select class="fsh-sel" id="fp-sub"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-cond" data-i18n="field.condition">الحالة</label><select class="fsh-sel" id="fp-cond"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-folder" data-i18n="field.folder">المجلد</label><select class="fsh-sel" id="fp-folder"></select></div>
       <div class="fsh-row"><label class="fsh-lbl" for="fp-loc" data-i18n="field.location">الموقع</label><select class="fsh-sel" id="fp-loc"></select></div>

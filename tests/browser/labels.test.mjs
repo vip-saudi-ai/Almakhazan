@@ -25,8 +25,8 @@ await page.waitForFunction(() => document.body.classList.contains('ready'), null
 const ids = await page.evaluate(async () => {
   const { repository } = await import('/src/repository.js');
   const place = await repository.saveLocation({ name: 'خزنة A' });
-  const a = await repository.createItem({ name: 'ساعة جيب فضية', quantity: 1, unit: 'قطعة', categoryId: 'c1', barcode: 'BC-77421', locationId: place.id });
-  const b = await repository.createItem({ name: 'لوحة زيتية', quantity: 1, unit: 'قطعة', categoryId: 'c1' });
+  const a = await repository.createItem({ name: 'ساعة جيب فضية', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', barcode: 'BC-77421', locationId: place.id });
+  const b = await repository.createItem({ name: 'لوحة زيتية', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings' });
   return [a.id, b.id];
 });
 await page.waitForTimeout(300);

@@ -54,7 +54,7 @@ const seeded = await page.evaluate(async ({ count, inFolder, inCategory, inLocat
         id: 'q' + String(i).padStart(6, '0'),
         name: i === count - 1 ? 'أسطرلاب نحاسي نادر' : `قطعة ${i}`,
         quantity: 1, unit: 'قطعة',
-        categoryId: i < inCategory ? category.id : 'c1',
+        categoryId: i < inCategory ? category.id : 'art_paintings',
         // The folder sits at the far end of the inventory, so reaching it
         // from a newest-first window would mean reading everything.
         folderId: i >= count - inFolder ? folder.id : null,
@@ -241,7 +241,7 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
     for (let i = 0; i < 1000; i += 1) {
       rows.push({
         id: 'tie' + String(i).padStart(4, '0'),
-        name: 'مكرر ' + i, quantity: 1, unit: 'قطعة', categoryId: 'c1',
+        name: 'مكرر ' + i, quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
         folderId: null, locationId: null, images: [], deletedAt: null,
         createdAt: stamp, version: 1,
         // Five distinct values across a thousand records.
@@ -317,7 +317,7 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
       // reverse of chronological order.
       id: prefix + String(i).padStart(4, '0'),
       name: `مرتَّب ${i}`, quantity: 1, unit: 'قطعة',
-      categoryId: 'c1', folderId: null, locationId: null,
+      categoryId: 'art_paintings', folderId: null, locationId: null,
       condition: '', images: [], deletedAt: null,
       // Repeated on purpose: 100 distinct values across 500 records.
       createdAt: 1600000000000 + (500 - i) * 1000 - (i % 5),
@@ -477,12 +477,12 @@ const ask = (query, options = {}) => page.evaluate(async ({ query, options }) =>
         sku: 'ABC-123', barcode: '9990001', serialNumber: 'SNX-0001',
       },
       {
-        ...base, id: 'exB', name: 'ساعة جدة', categoryId: 'c1',
+        ...base, id: 'exB', name: 'ساعة جدة', categoryId: 'art_paintings',
         locationId: jeddah.id, condition: 'جيدة',
         sku: 'XYZ-789', barcode: '9990002', serialNumber: 'SNX-0002',
       },
       {
-        ...base, id: 'exC', name: 'ساعة محذوفة', categoryId: 'c1',
+        ...base, id: 'exC', name: 'ساعة محذوفة', categoryId: 'art_paintings',
         locationId: jeddah.id, condition: '',
         sku: 'DEL-555', barcode: '9990003', serialNumber: 'SNX-0003',
         deletedAt: now,

@@ -53,7 +53,7 @@ for (const size of SIZES) {
         rows.push({
           id: 's' + String(i).padStart(6, '0'),
           name: i === 0 ? 'أسطرلاب نحاسي نادر' : `قطعة ${i}`,
-          quantity: 1, unit: 'قطعة', categoryId: 'c1',
+          quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
           // Ten records in the folder, all at the far end of the window.
           folderId: i >= count - 10 ? folder.id : null,
           locationId: null,

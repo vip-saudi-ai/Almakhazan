@@ -36,6 +36,7 @@ const state = {
 function lookups() {
   return {
     categories: repository.state.categories,
+    taxonomy: repository.taxonomy(),
     locations: repository.state.locations,
     folders: repository.state.folders,
   };
@@ -259,7 +260,10 @@ const ACTIONS = {
   }),
   'review-missing-category': () => applyAssistantFilter({
     label: t('ask.titleNoCategory'),
-    ids: repository.liveItems().filter((i) => !i.categoryId || i.categoryId === 'uncategorized').map((i) => i.id),
+    ids: repository.liveItems().filter((i) => {
+      const { main, category } = repository.classification(i);
+      return !main || !category;
+    }).map((i) => i.id),
   }),
   'review-missing-location': () => applyAssistantFilter({
     label: t('ask.titleNoLocation'),
@@ -399,7 +403,7 @@ export function renderAssistant() {
   const root = $('ai-scroll');
   if (!root) return;
 
-  const health = inventoryHealth(repository.liveItems());
+  const health = inventoryHealth(repository.liveItems(), { classify: (item) => repository.classification(item) });
 
   if (state.screen === 'duplicates') {
     render(root, duplicatesScreen(health));

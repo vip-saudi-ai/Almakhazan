@@ -18,6 +18,7 @@ import { CONDITIONS, UNCATEGORIZED_ID, isCurrencyCode, normalizeCurrencyCode } f
 import { normalizeArabic } from './search.js';
 import { parseNumber } from './utils.js';
 import { t } from './i18n.js';
+import { LEVELS, OTHER_MAIN_ID, buildTaxonomy } from './taxonomy.js';
 
 /**
  * The id a given row of a given import becomes.
@@ -38,10 +39,14 @@ export function importItemId(importId, sourceLine) {
  * hold a path this app has no right to read, and a URL it cannot vouch for.
  */
 export const FIELDS = [
-  { key: 'name', get label() { return t('importField.name'); }, required: true, aliases: ['الاسم', 'اسم القطعة', 'القطعة', 'البيان', 'الصنف', 'name', 'item', 'title', 'product', 'item name'] },
+  { key: 'name', get label() { return t('importField.name'); }, required: true, aliases: ['الاسم', 'اسم القطعة', 'القطعة', 'البيان', 'name', 'item', 'title', 'product', 'item name'] },
   { key: 'quantity', get label() { return t('importField.quantity'); }, aliases: ['الكمية', 'العدد', 'كمية', 'qty', 'quantity', 'count'] },
   { key: 'unit', get label() { return t('importField.unit'); }, aliases: ['الوحدة', 'وحدة', 'unit', 'uom'] },
-  { key: 'category', get label() { return t('importField.category'); }, taxonomy: 'categories', aliases: ['التصنيف', 'الفئة', 'القسم', 'النوع', 'category', 'type', 'group'] },
+  // The three levels of the classification. A file with only the old single
+  // «التصنيف» column still maps to Category, and is placed safely below.
+  { key: 'mainCategory', get label() { return t('importField.mainCategory'); }, taxonomy: 'categories', aliases: ['الفئة الرئيسية', 'الفئه الرئيسيه', 'main category', 'main'] },
+  { key: 'category', get label() { return t('importField.category'); }, taxonomy: 'categories', aliases: ['الصنف', 'التصنيف', 'الفئة', 'القسم', 'النوع', 'category', 'type', 'group'] },
+  { key: 'subcategory', get label() { return t('importField.subcategory'); }, taxonomy: 'categories', aliases: ['الصنف الفرعي', 'التصنيف الفرعي', 'subcategory', 'sub category', 'sub-category'] },
   { key: 'location', get label() { return t('importField.location'); }, taxonomy: 'locations', aliases: ['الموقع', 'المكان', 'الرف', 'المخزن', 'location', 'place', 'shelf', 'room'] },
   { key: 'folder', get label() { return t('importField.folder'); }, taxonomy: 'folders', aliases: ['المجلد', 'المجموعة', 'folder', 'collection'] },
   { key: 'condition', get label() { return t('importField.condition'); }, aliases: ['الحالة', 'حالة القطعة', 'condition', 'state'] },
@@ -105,11 +110,13 @@ const cell = (row, index) => (index == null || index < 0 ? '' : String(row[index
  */
 export function planImport({ rows, lines, mapping, existing, currency = 'SAR' }) {
   const lookup = {
-    categories: byName(existing?.categories),
     locations: byName(existing?.locations),
     folders: byName(existing?.folders),
   };
   const fresh = { categories: new Map(), locations: new Map(), folders: new Map() };
+  const taxonomy = existing?.taxonomy || buildTaxonomy(existing?.categories || []);
+  /** Classification nodes this file would create, in creation order (parents first). */
+  const freshNodes = new Map();
 
   const records = [];
   const problems = [];
@@ -219,7 +226,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
     // Taxonomies arrive as names. An existing name is reused; a new one is
     // collected so the screen can say how many will be created, rather than
     // creating them as a side effect nobody was told about.
-    for (const [key, collection] of [['category', 'categories'], ['location', 'locations'], ['folder', 'folders']]) {
+    for (const [key, collection] of [['location', 'locations'], ['folder', 'folders']]) {
       const value = cell(row, mapping[key]);
       if (!value) continue;
       const normal = normalizeArabic(value);
@@ -231,7 +238,14 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
         record[`${key}Name`] = value;
       }
     }
-    if (!record.categoryId && !record.categoryName) record.categoryId = UNCATEGORIZED_ID;
+    classifyRow(record, {
+      main: cell(row, mapping.mainCategory),
+      category: cell(row, mapping.category),
+      sub: cell(row, mapping.subcategory),
+    }, { taxonomy, freshNodes, fresh });
+    if (!record.categoryId && !record.categoryKey && !record.mainCategoryId && !record.mainCategoryKey) {
+      record.categoryId = UNCATEGORIZED_ID;
+    }
 
     // The row this record came from. It is what makes a retry write the same
     // documents instead of a second copy of them — see `importItemId`.
@@ -270,8 +284,86 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR' })
       categories: [...fresh.categories.values()],
       locations: [...fresh.locations.values()],
       folders: [...fresh.folders.values()],
+      // What the category names above are: level, parent, and the key a record
+      // carries until the node has an id. Mains come before their Categories,
+      // Categories before their Subcategories.
+      nodes: [...freshNodes.values()],
     },
   };
+}
+
+/** The key a node this file creates is known by until it has an id. */
+function nodeKey(level, parentRef, name) {
+  return `${level}:${parentRef || ''}:${normalizeArabic(name)}`;
+}
+
+function planNode(freshNodes, fresh, { level, name, parentId = null, parentKey = null }) {
+  const key = nodeKey(level, parentId || parentKey, name);
+  if (!freshNodes.has(key)) {
+    freshNodes.set(key, { key, level, name, parentId, parentKey });
+    if (!fresh.categories.has(key)) fresh.categories.set(key, name);
+  }
+  return key;
+}
+
+/**
+ * A row's classification, from up to three names.
+ *
+ * Only an exact name — a label in Arabic or English, or an alias — reuses an
+ * existing node, and only when exactly one node answers to it. With a Main
+ * Category column the Category is looked for under it. With only the old
+ * single «التصنيف» column, a name that is exactly one Category anywhere is
+ * placed there (its Main Category derived); a name that is none, or more than
+ * one («أخرى», «إكسسوارات»), becomes the customer's own Category under
+ * «أخرى» — never a guess, and never a rejected row.
+ */
+function classifyRow(record, names, { taxonomy, freshNodes, fresh }) {
+  const one = (list) => (list.length === 1 ? list[0] : null);
+  let mainId = null;
+  let mainKey = null;
+  if (names.main) {
+    const found = one(taxonomy.findByName(names.main, { level: LEVELS.MAIN }));
+    if (found) mainId = found.id;
+    else mainKey = planNode(freshNodes, fresh, { level: LEVELS.MAIN, name: names.main });
+  }
+
+  let categoryId = null;
+  let categoryKey = null;
+  if (names.category) {
+    if (mainId) {
+      const found = one(taxonomy.findByName(names.category, { level: LEVELS.CATEGORY, parentId: mainId }));
+      if (found) categoryId = found.id;
+      else categoryKey = planNode(freshNodes, fresh, { level: LEVELS.CATEGORY, name: names.category, parentId: mainId });
+    } else if (mainKey) {
+      categoryKey = planNode(freshNodes, fresh, { level: LEVELS.CATEGORY, name: names.category, parentKey: mainKey });
+    } else {
+      const found = one(taxonomy.findByName(names.category, { level: LEVELS.CATEGORY }));
+      if (found) {
+        categoryId = found.id;
+        mainId = taxonomy.mainOf(found)?.id || null;
+      } else {
+        mainId = OTHER_MAIN_ID;
+        const existingUnderOther = one(taxonomy.findByName(names.category, { level: LEVELS.CATEGORY, parentId: OTHER_MAIN_ID }));
+        if (existingUnderOther) categoryId = existingUnderOther.id;
+        else categoryKey = planNode(freshNodes, fresh, { level: LEVELS.CATEGORY, name: names.category, parentId: OTHER_MAIN_ID });
+      }
+    }
+  }
+
+  let subId = null;
+  let subKey = null;
+  if (names.sub && (categoryId || categoryKey)) {
+    const found = categoryId ? one(taxonomy.findByName(names.sub, { level: LEVELS.SUB, parentId: categoryId })) : null;
+    if (found) subId = found.id;
+    else subKey = planNode(freshNodes, fresh, { level: LEVELS.SUB, name: names.sub, parentId: categoryId, parentKey: categoryKey });
+  }
+
+  if (mainId) record.mainCategoryId = mainId;
+  if (mainKey) record.mainCategoryKey = mainKey;
+  if (categoryId) record.categoryId = categoryId;
+  if (categoryKey) { record.categoryKey = categoryKey; record.categoryName = names.category; }
+  if (subId) record.subcategoryId = subId;
+  if (subKey) record.subcategoryKey = subKey;
 }
 
 /**
@@ -345,7 +437,21 @@ function byName(list) {
 export function attachTaxonomy(records, created) {
   return records.map((record) => {
     const out = { ...record };
-    for (const [key, collection] of [['category', 'categories'], ['location', 'locations'], ['folder', 'folders']]) {
+    for (const [field, keyField] of [['mainCategoryId', 'mainCategoryKey'], ['categoryId', 'categoryKey'], ['subcategoryId', 'subcategoryKey']]) {
+      const key = out[keyField];
+      if (!key) continue;
+      const id = created.categories?.[key]
+        // Resuming a job planned before the hierarchy, keyed by name alone.
+        ?? (field === 'categoryId' && out.categoryName ? created.categories?.[normalizeArabic(out.categoryName)] : undefined);
+      if (id) out[field] = id;
+      delete out[keyField];
+    }
+    if (out.categoryName && !out.categoryId) {
+      const id = created.categories?.[normalizeArabic(out.categoryName)];
+      if (id) out.categoryId = id;
+    }
+    delete out.categoryName;
+    for (const [key, collection] of [['location', 'locations'], ['folder', 'folders']]) {
       const name = out[`${key}Name`];
       if (name) {
         const id = created[collection]?.[normalizeArabic(name)];

@@ -31,6 +31,7 @@ import * as local from './local-store.js';
 import { repository } from './repository.js';
 import { AppError } from './utils.js';
 import { t } from './i18n.js';
+import { buildTaxonomy, reconcileClassification } from './taxonomy.js';
 
 // ── the restore job ──
 
@@ -233,6 +234,13 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   await saveJob(job);
 
   // ── 2. write the incoming records ──
+  // Order: the classification (categories) first, then the records that
+  // refer to it, then — in a future full backup — their images. Each record's
+  // classification is made to agree with the classification it arrives with:
+  // built-in ids resolve against this app's library, the backup's own nodes
+  // against the backup; what does not fit keeps as much of itself as does.
+  const taxonomy = buildTaxonomy(data.categories || []);
+  for (const item of data.items || []) Object.assign(item, reconcileClassification(taxonomy, item).value);
   const writes = [];
   for (const name of COLLECTIONS) {
     for (const record of data[name] || []) {
@@ -298,6 +306,9 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
     safetyBackup: safety.counts,
   });
 
+  // A backup from before the hierarchy carries flat categories: place them
+  // exactly as an upgraded inventory's are placed.
+  try { await repo.migrateTaxonomy(); } catch (error) { console.error('[restore] classification upgrade deferred', error); }
   onProgress({ stage: RestoreStage.DONE, done: 1, total: 1 });
   return {
     restored: data.items?.length || 0,

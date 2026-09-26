@@ -40,7 +40,7 @@ await page.evaluate(async () => {
   await repository.bulkWrite(rows.map(([name, img, loc, updated, barcode, serialNumber], i) => ({
     type: 'set', collection: 'items', id: 'a' + i,
     data: {
-      id: 'a' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'c1',
+      id: 'a' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
       locationId: loc ? 'l1' : null, condition: 'جيدة', barcode, serialNumber,
       valuation: { min: 5000 * (i + 1), max: 7000 * (i + 1), currency: 'SAR', source: 'manual', valuationType: 'estimate' },
       images: img ? [{ id: 'm' + i, storagePath: 'local:x', url: '' }] : [],

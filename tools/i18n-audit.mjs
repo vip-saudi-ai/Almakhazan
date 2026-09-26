@@ -121,6 +121,7 @@ const ALLOWED = [
   { file: 'src/plans.generated.js', why: 'plan data carrying its own { ar, en } pair' },
   { file: 'src/ask.js', why: 'Arabic question recognisers and example questions (English sets beside them)' },
   { file: 'src/import-mapping.js', why: 'Arabic column-header aliases and condition words (English beside them)' },
+  { file: 'src/custom-fields.js', why: 'Arabic yes/no words and the Arabic comma recognised in typed or imported field values' },
   { file: 'src/search.js', why: 'Arabic letter normalisation for search' },
   { file: 'src/utils.js', why: 'Arabic-Indic digit normalisation for input' },
   { file: 'src/money.js', why: 'currency words recognised in typed or imported amounts' },

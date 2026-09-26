@@ -104,8 +104,11 @@ export function plan(query) {
     ['folderId', filters.folderId === '__root__' ? null : filters.folderId, 'filters.folderId'],
     ['folderId', browsingFolder, 'scope.folderId'],
     ['locationId', filters.locationId, 'filters.locationId'],
+    ['subcategoryId', filters.subcategoryId, 'filters.subcategoryId'],
     ['categoryId', filters.categoryId, 'filters.categoryId'],
     ['categoryId', query.categoryId !== 'all' ? query.categoryId : null, 'pill.categoryId'],
+    ['mainCategoryId', filters.mainCategoryId, 'filters.mainCategoryId'],
+    ['mainCategoryId', mainPillOf(query), 'pill.mainCategoryId'],
     ['condition', filters.condition, 'filters.condition'],
   ];
   const scope = candidates.find(([, value]) => value != null && value !== '') || null;
@@ -176,6 +179,7 @@ export function plan(query) {
   if (query.categoryId && query.categoryId !== 'all' && !claimed.has('pill.categoryId')) {
     residualPredicates.push('pill.categoryId');
   }
+  if (mainPillOf(query) && !claimed.has('pill.mainCategoryId')) residualPredicates.push('pill.mainCategoryId');
   if (browsingFolder && !claimed.has('scope.folderId')) residualPredicates.push('scope.folderId');
   if (searching) residualPredicates.push('search');
   // Trash and browsing are opposites: everywhere but Trash, deleted records
@@ -212,10 +216,16 @@ export function plan(query) {
   };
 }
 
+/** The Main Category the pill row narrows to, or null. */
+function mainPillOf(query) {
+  return query.mainCategoryId && query.mainCategoryId !== 'all' ? query.mainCategoryId : null;
+}
+
 /** The scopes that carry their own chronological index. */
 const SCOPE_TIME_INDEX = {
   folderId: 'folderCreatedAt',
   categoryId: 'categoryCreatedAt',
+  mainCategoryId: 'mainCategoryCreatedAt',
   locationId: 'locationCreatedAt',
 };
 
@@ -223,6 +233,7 @@ const SCOPE_TIME_INDEX = {
 const SCOPE_FIELD = {
   folderCreatedAt: 'folderId',
   categoryCreatedAt: 'categoryId',
+  mainCategoryCreatedAt: 'mainCategoryId',
   locationCreatedAt: 'locationId',
 };
 
@@ -278,7 +289,7 @@ export function exactPredicate(query) {
   // here there is no cursor to have applied it.
   const residual = [...queryPlan.residualPredicates];
   for (const claimed of queryPlan.indexedPredicates) {
-    if (claimed.startsWith('filters.') || claimed === 'pill.categoryId') residual.push(claimed);
+    if (claimed.startsWith('filters.') || claimed.startsWith('pill.')) residual.push(claimed);
   }
   // The browsing scope is not an explicit restriction, and a search is meant
   // to cross it. Everything under `filters.` was chosen, and stays.
@@ -306,6 +317,9 @@ function predicateFor(query, queryPlan) {
       case 'filters.folderId': checks.push((item) => item.folderId === filters.folderId); break;
       case 'filters.locationId': checks.push((item) => item.locationId === filters.locationId); break;
       case 'filters.categoryId': checks.push((item) => item.categoryId === filters.categoryId); break;
+      case 'filters.mainCategoryId': checks.push((item) => item.mainCategoryId === filters.mainCategoryId); break;
+      case 'filters.subcategoryId': checks.push((item) => item.subcategoryId === filters.subcategoryId); break;
+      case 'pill.mainCategoryId': checks.push((item) => item.mainCategoryId === query.mainCategoryId); break;
       case 'filters.ai':
         checks.push(filters.ai === 'yes' ? (item) => Boolean(item.aiData) : (item) => !item.aiData);
         break;
@@ -638,11 +652,17 @@ export async function scopeCategories(query) {
   const size = await local.countRange('items', 'folderId', range);
   if (size > COUNTABLE_SCAN) return null;
 
+  // Category ids and Main Category ids share one set: they are distinct
+  // namespaces of the same hierarchy, and the pill row asks for either.
   const present = new Set();
   await local.walk('items', {
     index: 'folderId', range, batchSize: SCAN_BATCH,
     onBatch: (batch) => {
-      for (const item of batch) if (!item.deletedAt) present.add(item.categoryId || UNCATEGORIZED_ID);
+      for (const item of batch) {
+        if (item.deletedAt) continue;
+        present.add(item.categoryId || UNCATEGORIZED_ID);
+        if (item.mainCategoryId) present.add(item.mainCategoryId);
+      }
       return true;
     },
   });
@@ -695,20 +715,32 @@ export async function findByIdentifier(term, query = null) {
  * true because these numbers describe the database, not a window of it.
  */
 export async function counts() {
-  const [categories, folders, locations, total, trashed] = await Promise.all([
-    countBy('categoryId', repository.state.categories.map((c) => c.id).concat(UNCATEGORIZED_ID)),
+  // Only the values actually present are counted — read off the index keys,
+  // not the records — so a library of two hundred built-in Categories costs
+  // nothing for the hundred and ninety nobody has used.
+  const [categoryKeys, mainKeys, subKeys] = await Promise.all([
+    local.uniqueKeys('items', 'categoryId'),
+    local.uniqueKeys('items', 'mainCategoryId'),
+    local.uniqueKeys('items', 'subcategoryId'),
+  ]);
+  const [categories, mains, subs, folders, locations, total, trashed] = await Promise.all([
+    countBy('categoryId', categoryKeys),
+    countBy('mainCategoryId', mainKeys),
+    countBy('subcategoryId', subKeys),
     countBy('folderId', repository.state.folders.map((f) => f.id)),
     countBy('locationId', repository.state.locations.map((l) => l.id)),
     local.count('items'),
     local.countRange('items', 'deletedAt', null),
   ]);
-  return { categories, folders, locations, live: total - trashed, trashed, complete: true };
+  return { categories, mains, subs, folders, locations, live: total - trashed, trashed, complete: true };
 }
 
 /** The index holding only the trashed records of each scope value. */
 export const TRASH_INDEX = {
   folderId: 'folderDeleted',
   categoryId: 'categoryDeleted',
+  mainCategoryId: 'mainCategoryDeleted',
+  subcategoryId: 'subcategoryDeleted',
   locationId: 'locationDeleted',
 };
 

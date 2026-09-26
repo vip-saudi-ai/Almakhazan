@@ -99,8 +99,14 @@ const INTENTS = [
   },
   {
     id: 'missing-category',
-    test: (q) => /(بدون|بلا|ما ?لها) ?(تصنيف|فئة)/.test(q) || /\b(no|without|missing)\s+categor(y|ies)\b|\buncategori[sz]ed\b/.test(q),
-    build: () => ({ kind: 'list', title: t('ask.titleNoCategory'), match: (i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID }),
+    test: (q) => /(بدون|بلا|ما ?لها) ?(تصنيف|فئه|صنف)/.test(q) || /\b(no|without|missing)\s+categor(y|ies)\b|\buncategori[sz]ed\b/.test(q),
+    build: (q, ctx) => ({
+      kind: 'list',
+      title: t('ask.titleNoCategory'),
+      match: ctx.lookups.taxonomy
+        ? (i) => !ctx.lookups.taxonomy.path(i).category
+        : (i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID,
+    }),
   },
   {
     id: 'missing-location',
@@ -155,6 +161,11 @@ const INTENTS = [
     id: 'where',
     test: (q) => /^(وين|اين|فين)(\s|$)/.test(q) || /^where\b/.test(q),
     build: (q, ctx) => {
+      // «وين الأجهزة الإلكترونية؟» asks about a kind of thing, not one thing:
+      // the classification scope answers it.
+      if (classificationFrom(whereSubject(q), ctx.lookups.taxonomy, { exact: true })) {
+        return { kind: 'where', title: t('ask.titleWhereItem'), match: () => true };
+      }
       const subject = q.replace(/^(وين|أين|اين|فين)\s*/, '').replace(/^where\s+(is|are)?\s*(the|my)?\s*/i, '').replace(/[؟?]/g, '').trim();
       const terms = normalizeArabic(subject).split(' ').filter((t) => t.length > 1);
       return {
@@ -168,13 +179,68 @@ const INTENTS = [
   },
 ];
 
-/** Category and location mentioned anywhere in the question. */
-function scopeFrom(question, ctx) {
+/** What «وين …؟» / "where is …" asks about. */
+function whereSubject(question) {
+  return String(question).replace(/^(وين|أين|اين|فين)\s*/, '').replace(/^where\s+(is|are)?\s*(the|my)?\s*/i, '').replace(/[؟?]/g, '').trim();
+}
+
+/** Words with the Arabic definite article taken off: «المولدات» → «مولدات». */
+function words(text) {
+  return normalizeArabic(text).replace(/[؟?!.,،]/g, ' ').split(' ').filter(Boolean)
+    .map((word) => (word.length > 4 && word.startsWith('ال') ? word.slice(2) : word));
+}
+
+function containsRun(haystack, needle) {
+  if (!needle.length || needle.length > haystack.length) return false;
+  for (let i = 0; i + needle.length <= haystack.length; i += 1) {
+    if (needle.every((word, j) => haystack[i + j] === word)) return true;
+  }
+  return false;
+}
+
+/**
+ * The Main Category, Category or Subcategory a question names — by its label
+ * in either language or an alias, whole words only, the longest name winning:
+ * «كم عندي معدات؟» is Equipment & Tools, «اعرض المولدات» is Generators, and
+ * «وين الأجهزة الإلكترونية؟» is Electronics & Devices.
+ */
+function classificationFrom(question, taxonomy, { exact = false } = {}) {
+  if (!taxonomy) return null;
+  const q = words(question);
+  let best = null;
+  for (const node of taxonomy.nodes.values()) {
+    if (node.mergedInto) continue;
+    const names = [node.name, node.builtin?.labels.ar, node.builtin?.labels.en,
+      node.name && taxonomy.label(node, 'ar'), node.name && taxonomy.label(node, 'en'),
+      ...node.aliases.ar, ...node.aliases.en].filter(Boolean);
+    for (const name of names) {
+      const run = words(name);
+      if (run.join('').length < 3 || !containsRun(q, run)) continue;
+      // «وين ساعة الجيب؟» asks for one thing that happens to contain a
+      // Category's word; only a question that is the name alone is a kind.
+      if (exact && run.length !== q.length) continue;
+      const score = run.join(' ').length;
+      if (!best || score > best.score) best = { node, score };
+    }
+  }
+  return best?.node || null;
+}
+
+/** Classification, category and location mentioned anywhere in the question. */
+function scopeFrom(question, ctx, { exact = false } = {}) {
   const q = normalizeArabic(question);
   let match = () => true;
   const parts = [];
 
-  for (const category of ctx.lookups.categories) {
+  const taxonomy = ctx.lookups.taxonomy;
+  const node = classificationFrom(question, taxonomy, { exact });
+  if (node) {
+    const field = node.level === 'main' ? 'main' : node.level === 'sub' ? 'sub' : 'category';
+    match = (i) => taxonomy.path(i)[field]?.id === node.id;
+    parts.push(taxonomy.label(node));
+  }
+
+  for (const category of node || taxonomy ? [] : ctx.lookups.categories) {
     const name = normalizeArabic(category.name);
     if (name && name.length > 2 && q.includes(name)) {
       const id = category.id;
@@ -240,7 +306,7 @@ export function askInventory(question, { items, lookups, now = Date.now() }) {
   }
 
   const plan = intent.build(text, ctx);
-  const scope = scopeFrom(text, ctx);
+  const scope = intent.id === 'where' ? scopeFrom(whereSubject(text), ctx, { exact: true }) : scopeFrom(text, ctx);
   const found = items.filter((item) => plan.match(item) && scope.match(item));
   const title = scope.parts.length ? `${plan.title} — ${scope.parts.join(' · ')}` : plan.title;
 

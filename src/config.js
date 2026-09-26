@@ -22,6 +22,12 @@ export const FUNCTIONS_REGION = 'us-central1';
 export const APP_VERSION = '1.0.0';
 export const SCHEMA_VERSION = 2;
 
+/**
+ * The version of the classification data model (src/taxonomy.js) — separate
+ * from APP_VERSION and from the backup format, carried in every backup.
+ */
+export const TAXONOMY_SCHEMA_VERSION = 1;
+
 export const PAGE_SIZE = 20;
 
 export const ROLES = { OWNER: 'owner', ADMIN: 'admin', EDITOR: 'editor', VIEWER: 'viewer' };
@@ -141,6 +147,8 @@ export const IMPORT_LIMITS = {
   backupBytes: { web: 256 * 1024 * 1024, native: 64 * 1024 * 1024 },
 };
 
+const TEXT_LIMITS_CATEGORY_NAME = 120;
+
 export const TEXT_LIMITS = {
   name: 200,
   sku: 64,
@@ -155,8 +163,33 @@ export const TEXT_LIMITS = {
   description: 4000,
   folderName: 120,
   folderDesc: 300,
-  categoryName: 120,
+  categoryName: TEXT_LIMITS_CATEGORY_NAME,
   locationName: 120,
+};
+
+/**
+ * Classification and custom-field limits, in one place. Generous enough that
+ * no real inventory meets them; there to keep a malformed import or a runaway
+ * script from producing a picker nobody can use.
+ */
+export const TAXONOMY_LIMITS = {
+  // A Main Category, Category or Subcategory the customer names.
+  label: TEXT_LIMITS_CATEGORY_NAME,
+  customNodes: 2000,
+  aliases: 20,
+  // Field definitions saved on one Category (or Main Category) as a template.
+  fieldsPerTemplate: 50,
+  // Field definitions that belong to a single record.
+  fieldsPerItem: 50,
+  // Values one record carries, template and own fields together.
+  valuesPerItem: 120,
+  fieldLabel: 80,
+  fieldId: 64,
+  options: 50,
+  optionLabel: 80,
+  text: 500,
+  multiline: 4000,
+  url: 2000,
 };
 
 export const ACTIONS = {
@@ -174,6 +207,9 @@ export const ACTIONS = {
   CATEGORY_CREATED: 'CATEGORY_CREATED',
   CATEGORY_UPDATED: 'CATEGORY_UPDATED',
   CATEGORY_DELETED: 'CATEGORY_DELETED',
+  CATEGORY_MERGED: 'CATEGORY_MERGED',
+  TAXONOMY_MIGRATED: 'TAXONOMY_MIGRATED',
+  TAXONOMY_RESET: 'TAXONOMY_RESET',
   LOCATION_CREATED: 'LOCATION_CREATED',
   LOCATION_DELETED: 'LOCATION_DELETED',
   IMPORT_MERGED: 'IMPORT_MERGED',

@@ -471,6 +471,7 @@ function basePlan() {
     lines: state.sheet.lines,
     mapping: state.mapping,
     existing: {
+      taxonomy: repository.taxonomy(),
       categories: repository.state.categories,
       locations: repository.state.locations,
       folders: repository.state.folders,
@@ -1160,7 +1161,22 @@ async function run() {
     };
     const toCreate = [];
     const PREFIX = { categories: 'cat', locations: 'loc', folders: 'fld' };
-    for (const collection of ['categories', 'locations', 'folders']) {
+    // Classification nodes: parents first, each one reused if it exists by
+    // now (a resumed job, or a node made meanwhile), created otherwise.
+    const taxonomy = repository.taxonomy();
+    for (const node of newTaxonomy.nodes || []) {
+      const parentId = node.parentId || (node.parentKey ? created.categories[node.parentKey] : null);
+      const plannedId = planned.categories[node.key];
+      const already = (plannedId && taxonomy.node(plannedId))
+        || taxonomy.duplicateOf(node.name, { level: node.level, parentId });
+      if (already) { created.categories[node.key] = already.id; continue; }
+      const id = plannedId || uid('cat');
+      planned.categories[node.key] = id;
+      claimed.categories.add(id);
+      created.categories[node.key] = id;
+      toCreate.push({ collection: 'categories', id, name: node.name, level: node.level, parentId });
+    }
+    for (const collection of ['locations', 'folders']) {
       for (const name of newTaxonomy[collection]) {
         const key = normalizeArabic(name);
         const plannedId = planned[collection][key];
@@ -1182,8 +1198,10 @@ async function run() {
     };
     await persistJobCritical(job, resuming ? JOB.RUNNING : JOB.PREPARED);
 
-    for (const { collection, id, name } of toCreate) {
-      if (collection === 'categories') await repository.saveCategory({ id, name, icon: '📦' });
+    for (const { collection, id, name, level, parentId } of toCreate) {
+      if (collection === 'categories') {
+        if (!repository.taxonomy().node(id)) await repository.createTaxonomyNode({ id, level, parentId, name });
+      }
       else if (collection === 'locations') await repository.saveLocation({ id, name });
       else await repository.saveFolder({ id, name, icon: '🗂', color: '#2563FF' });
     }

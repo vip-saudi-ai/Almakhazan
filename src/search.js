@@ -45,6 +45,9 @@ export function buildHaystack(item, lookups) {
     // remembers when they go looking for it.
     item.serialNumber, item.modelNumber, item.referenceNumber,
     category?.name, folder?.name, location?.name,
+    // The whole classification path, in both languages, with its aliases:
+    // «مولد» and "generator" both find a record filed under مولدات.
+    lookups.classificationWords?.(item),
     item.condition, item.aiData?.description,
   ].filter(Boolean).join(' '));
 
@@ -65,7 +68,7 @@ export function parseQuery(query) {
 }
 
 export const EMPTY_FILTERS = Object.freeze({
-  condition: '', folderId: '', locationId: '', categoryId: '', ai: '', valuation: '',
+  condition: '', folderId: '', locationId: '', mainCategoryId: '', categoryId: '', subcategoryId: '', ai: '', valuation: '',
   // Narrowing to one currency is the honest way to get a list whose values can
   // be compared and added. Without it, "sort by value" over a mixed inventory
   // can only ever be grouped — see `sortByValuation`.
@@ -85,7 +88,9 @@ export function applyFilters(items, filters) {
       : out.filter((i) => i.folderId === filters.folderId);
   }
   if (filters.locationId) out = out.filter((i) => i.locationId === filters.locationId);
+  if (filters.mainCategoryId) out = out.filter((i) => i.mainCategoryId === filters.mainCategoryId);
   if (filters.categoryId) out = out.filter((i) => i.categoryId === filters.categoryId);
+  if (filters.subcategoryId) out = out.filter((i) => i.subcategoryId === filters.subcategoryId);
   if (filters.ai === 'yes') out = out.filter((i) => i.aiData);
   if (filters.ai === 'no') out = out.filter((i) => !i.aiData);
   if (filters.valuation === 'yes') out = out.filter((i) => i.valuation);
@@ -173,7 +178,7 @@ export function sortItems(items, mode) {
  * search query overrides it and runs across every live item, so a result inside
  * a folder is still reachable from the root search.
  */
-export function queryItems({ items, query, filters, sortMode, scope, categoryPill, lookups }) {
+export function queryItems({ items, query, filters, sortMode, scope, categoryPill, mainPill, lookups }) {
   const terms = parseQuery(query);
   const searching = terms.length > 0;
 
@@ -193,6 +198,7 @@ export function queryItems({ items, query, filters, sortMode, scope, categoryPil
   if (categoryPill && categoryPill !== 'all') {
     base = base.filter((i) => (i.categoryId || UNCATEGORIZED_ID) === categoryPill);
   }
+  if (mainPill && mainPill !== 'all') base = base.filter((i) => i.mainCategoryId === mainPill);
 
   const filtered = applyFilters(base, filters);
   const matched = searching

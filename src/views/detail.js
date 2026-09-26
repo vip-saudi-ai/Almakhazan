@@ -2,7 +2,8 @@
 
 import { aiDisclaimer, aiSubtitle, assistantName, isAnalysisStale } from '../ai.js';
 import { onLanguageChange, t } from '../i18n.js';
-import { categoryName, conditionLabel, locationName, unitLabel } from '../labels.js';
+import { conditionLabel, locationName, unitLabel } from '../labels.js';
+import { fieldRows } from '../field-format.js';
 import { repository } from '../repository.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import { openImageViewer } from './image-viewer.js';
@@ -67,7 +68,7 @@ function inspect(item, imageId) {
 
 function heroNode(item, { big = true } = {}) {
   const image = primaryImage(item);
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
   if (!image) {
     return el('div', { style: { fontSize: big ? '72px' : '64px' }, text: category.icon, 'aria-hidden': 'true' });
   }
@@ -155,10 +156,38 @@ onLanguageChange(() => {
   if (shown.qp && isSheetOpen('qp')) drawPreview(shown.qp);
 });
 
+/**
+ * «التصنيف»: one row per level the record has — no empty Subcategory row —
+ * or a single «غير مصنّف» row when it has none.
+ */
+function classificationRows(item) {
+  const display = repository.classificationDisplay(item);
+  const taxonomy = repository.taxonomy();
+  if (!display.main && !display.category) {
+    return [detailRow(t('field.classification'), `${display.icon} ${display.name}`)];
+  }
+  return [
+    display.main ? detailRow(t('field.mainCategory'), `${taxonomy.icon(display.main)} ${taxonomy.label(display.main)}`) : null,
+    display.category ? detailRow(t('field.category'), taxonomy.label(display.category)) : null,
+    display.sub ? detailRow(t('field.subcategory'), taxonomy.label(display.sub)) : null,
+  ];
+}
+
+/** «تفاصيل إضافية» and «حقول سابقة» — only the fields that hold something. */
+function fieldSections(item) {
+  const { current, previous } = fieldRows(item, repository.taxonomy());
+  const block = (title, rows) => (rows.length ? [
+    el('h3', { class: 'cf-title', text: title }),
+    el('div', { class: 'fsec' }, rows.map((row) => (row.def.type === 'identifier'
+      ? identifierRow(row.label, row.text, { copy: true })
+      : detailRow(row.label, row.text)))),
+  ] : []);
+  return [...block(t('detail.additional'), current), ...block(t('fields.previous'), previous)];
+}
+
 function drawDetail(item) {
   shown.det = item;
   const itemId = item.id;
-  const category = repository.category(item.categoryId);
   const folder = repository.folder(item.folderId);
   const location = repository.location(item.locationId);
 
@@ -182,8 +211,9 @@ function drawDetail(item) {
           el('div', { class: 'dplbl', text: t('field.valuation') }),
         ]),
       ]),
+      el('h3', { class: 'cf-title', text: t('detail.classification') }),
+      el('div', { class: 'fsec' }, classificationRows(item)),
       el('div', { class: 'fsec' }, [
-        detailRow(t('field.category'), `${category.icon} ${categoryName(category)}`),
         folder ? detailRow(t('field.folder'), `${folder.icon} ${folder.name}`) : null,
         location ? detailRow(t('field.location'), locationName(location)) : null,
         // Identifiers read left to right, can be selected, and have a Copy
@@ -202,6 +232,7 @@ function drawDetail(item) {
         item.valuation ? detailRow(t('field.valuation'), formatValuation(item.valuation)) : null,
         item.valuation ? detailRow(t('export.valuationSource'), item.valuation.source === 'ai' ? t('detail.estimateFrom', { name: assistantName() }) : t('form.manual')) : null,
       ]),
+      ...fieldSections(item),
       item.description ? el('div', {
         class: 'desc-block',
         dir: 'auto',
@@ -250,7 +281,7 @@ export async function openQuickPreview(itemId) {
 function drawPreview(item) {
   shown.qp = item;
   const itemId = item.id;
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
   const folder = repository.folder(item.folderId);
   const location = repository.location(item.locationId);
 
@@ -259,7 +290,7 @@ function drawPreview(item) {
     el('div', [
       el('div', { class: 'qp-hero gls' }, [heroNode(item, { big: false })]),
       el('div', { class: 'fsec' }, [
-        detailRow(t('field.category'), `${category.icon} ${categoryName(category)}`),
+        detailRow(t('field.classification'), `${category.icon} ${category.path || category.name}`),
         folder ? detailRow(t('field.folder'), `${folder.icon} ${folder.name}`) : null,
         location ? detailRow(t('field.location'), locationName(location)) : null,
         detailRow(t('field.quantity'), `${formatNumber(item.quantity)} ${unitLabel(item.unit)}`.trim()),

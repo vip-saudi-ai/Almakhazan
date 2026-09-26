@@ -12,12 +12,33 @@ import { t } from './i18n.js';
 import { actionLabel } from './labels.js';
 import { formatValuation, valuationMidpoint } from './validation.js';
 import { buildWorkbook } from './xlsx-writer.js';
+import { fieldRows } from './field-format.js';
+import { TAXONOMY_SCHEMA_VERSION, buildTaxonomy, reconcileClassification } from './taxonomy.js';
 import { isNative, saveFile } from './platform.js';
 
 // A download in a browser, the share sheet (Files, Mail, AirDrop) in the
 // native app: src/platform.js decides, and throws if the file cannot be handed
 // over — which the restore path depends on.
 const download = (blob, filename) => saveFile(blob, filename);
+
+/**
+ * The three classification columns, as the labels on screen — the spreadsheet
+ * import reads them back by name. Raw ids go to a technical sheet of their own
+ * rather than cluttering this one.
+ */
+function classificationCells(repo, item) {
+  const taxonomy = repo.taxonomy();
+  const { main, category, sub } = taxonomy.path(item);
+  return [main, category, sub].map((node) => (node ? taxonomy.label(node) : ''));
+}
+
+/** «تفاصيل إضافية» in one cell: "Label: value; Label: value". */
+function additionalDetailsCell(repo, item) {
+  const { current, previous } = fieldRows(item, repo.taxonomy());
+  return [...current, ...previous].map((row) => `${row.label}: ${row.text}`).join('; ');
+}
+
+const CLASSIFICATION_HEADINGS = ['field.mainCategory', 'field.category', 'field.subcategory'];
 
 /** Never carried from an imported file into a record. */
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -51,9 +72,9 @@ export async function exportExcel() {
     // Headings in the language on screen; the values are the records' own.
     // The spreadsheet import recognises both languages' headings.
     ...[
-      'field.sku', 'field.barcode', 'field.name', 'field.category', 'field.folder', 'field.location',
+      'field.sku', 'field.barcode', 'field.name', ...CLASSIFICATION_HEADINGS, 'field.folder', 'field.location',
       'field.quantity', 'field.unit', 'field.condition', 'field.brand',
-      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber',
+      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber', 'fields.additional',
       'export.minValuation', 'export.maxValuation', 'field.currency', 'export.valuationSource',
       'export.aiLocalScore', 'export.aiGlobalScore',
       'export.aiMinEstimate', 'export.aiMaxEstimate',
@@ -67,7 +88,7 @@ export async function exportExcel() {
       item.sku || '',
       item.barcode || '',
       item.name || '',
-      repo.category(item.categoryId).name,
+      ...classificationCells(repo, item),
       repo.folder(item.folderId)?.name || '',
       repo.location(item.locationId)?.name || '',
       item.quantity,
@@ -77,6 +98,7 @@ export async function exportExcel() {
       item.serialNumber || '',
       item.modelNumber || '',
       item.referenceNumber || '',
+      additionalDetailsCell(repo, item),
       item.valuation?.min ?? null,
       item.valuation?.max ?? null,
       item.valuation?.currency || '',
@@ -113,18 +135,42 @@ export async function exportExcel() {
     });
   }
 
-  if (repo.state.categories.length) {
+  // Items by classification, one row per Category in use (and one per Main
+  // Category holding records with no Category).
+  {
+    const taxonomy = repo.taxonomy();
+    const groups = new Map();
+    for (const item of items) {
+      const { main, category } = taxonomy.path(item);
+      if (!main && !category) continue;
+      const key = `${main?.id || ''}|${category?.id || ''}`;
+      const entry = groups.get(key) || { main, category, count: 0, quantity: 0 };
+      entry.count += 1;
+      entry.quantity += item.quantity || 0;
+      groups.set(key, entry);
+    }
+    if (groups.size) {
+      sheets.push({
+        name: t('export.sheetCategories'),
+        rows: [
+          ['field.mainCategory', 'field.category', 'export.itemCount', 'home.statQuantity'].map((key) => t(key)),
+          ...[...groups.values()].map((entry) => [
+            entry.main ? taxonomy.label(entry.main) : '',
+            entry.category ? taxonomy.label(entry.category) : '',
+            entry.count,
+            entry.quantity,
+          ]),
+        ],
+      });
+    }
+    // For a faithful round trip: the stable ids behind the labels above.
     sheets.push({
-      name: t('export.sheetCategories'),
+      name: t('export.classificationIds'),
       rows: [
-        ['field.category', 'export.itemCount', 'home.statQuantity'].map((key) => t(key)),
-        ...repo.state.categories.map((category) => {
-          const inCategory = items.filter((i) => i.categoryId === category.id);
-          return [
-            category.name,
-            inCategory.length,
-            inCategory.reduce((sum, i) => sum + (i.quantity || 0), 0),
-          ];
+        ['field.sku', 'field.name', 'mainCategoryId', 'categoryId', 'subcategoryId'].map((key) => (key.startsWith('field.') ? t(key) : key)),
+        ...items.map((item) => {
+          const { main, category, sub } = taxonomy.path(item);
+          return [item.sku || '', item.name || '', main?.id || '', category?.id || '', sub?.id || ''];
         }),
       ],
     });
@@ -175,6 +221,11 @@ export async function exportJSON() {
       ? t('export.noteCloud')
       : t('export.noteDevice'),
     workspaceId: repo.session.workspaceId,
+    // The classification this file was written with. Built-in nodes are not
+    // copied — the app that restores it has its own library and resolves the
+    // same ids against it; `categories` carries what this inventory added or
+    // changed (its own nodes, hidden and reordered built-ins, saved fields).
+    taxonomy: { schemaVersion: TAXONOMY_SCHEMA_VERSION },
     items: repo.state.items,
     folders: repo.state.folders,
     categories: repo.state.categories,
@@ -336,6 +387,16 @@ export async function applyMerge(data) {
     }
   }
 
+  // Each merged record's classification must agree with the hierarchy it
+  // lands in: this inventory's own nodes plus the ones this merge adds.
+  const taxonomy = buildTaxonomy([
+    ...repo.state.categories,
+    ...operations.filter((op) => op.collection === 'categories').map((op) => op.data),
+  ]);
+  for (const op of operations) {
+    if (op.collection === 'items') op.data = { ...op.data, ...reconcileClassification(taxonomy, op.data).value };
+  }
+
   // Live SKUs stay unique. Checked for the records that will actually be
   // added — a record skipped by id is not new, so its own SKU is no conflict —
   // against each other and against the live inventory, and before anything
@@ -375,6 +436,8 @@ export async function applyMerge(data) {
       else added += 1;
     }
   }
+  // Flat categories from an older backup are placed as an upgrade places them.
+  try { await repo.migrateTaxonomy(); } catch (error) { console.error('[merge] classification upgrade deferred', error); }
   await repo.log(ACTIONS.IMPORT_MERGED, {
     added,
     skipped: Object.values(skipped).reduce((a, b) => a + b, 0),
@@ -392,9 +455,9 @@ export async function exportSelection(items) {
 
   const rows = [[
     ...[
-      'field.sku', 'field.barcode', 'field.name', 'field.category', 'field.folder', 'field.location',
+      'field.sku', 'field.barcode', 'field.name', ...CLASSIFICATION_HEADINGS, 'field.folder', 'field.location',
       'field.quantity', 'field.unit', 'field.condition', 'field.brand',
-      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber',
+      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber', 'fields.additional',
       'export.minValuation', 'export.maxValuation', 'field.currency', 'field.description', 'export.updatedAt',
     ].map((key) => t(key)),
   ]];
@@ -403,7 +466,7 @@ export async function exportSelection(items) {
       item.sku || '',
       item.barcode || '',
       item.name || '',
-      repo.category(item.categoryId).name,
+      ...classificationCells(repo, item),
       repo.folder(item.folderId)?.name || '',
       repo.location(item.locationId)?.name || '',
       item.quantity,
@@ -413,6 +476,7 @@ export async function exportSelection(items) {
       item.serialNumber || '',
       item.modelNumber || '',
       item.referenceNumber || '',
+      additionalDetailsCell(repo, item),
       item.valuation?.min ?? null,
       item.valuation?.max ?? null,
       item.valuation?.currency || '',

@@ -4,9 +4,9 @@ import { icon } from '../icons.js';
 import { AiAvailability, aiAvailability, aiDisclaimer, aiSubtitle, analyzeItem, assistantName } from '../ai.js';
 import { ensureAiConsent, hasAiConsent } from '../ai-consent.js';
 import { onLanguageChange, t } from '../i18n.js';
-import { categoryName, conditionLabel, locationName, unitGroupLabel, unitLabel } from '../labels.js';
+import { conditionLabel, locationName, unitGroupLabel, unitLabel } from '../labels.js';
 import {
-  CONDITIONS, CURRENCIES, IMAGE_LIMITS, UNITS, UNCATEGORIZED_ID, VALUATION_SOURCES,
+  CONDITIONS, CURRENCIES, IMAGE_LIMITS, UNITS, VALUATION_SOURCES,
 } from '../config.js';
 import { currencySymbol } from '../money.js';
 import { repository, ConflictError } from '../repository.js';
@@ -23,6 +23,10 @@ import {
   closeSheet, confirmAction, isSheetOpen, onSheetClose, openSheet, optionList, toast, toastError, withBusy,
 } from '../ui.js';
 import { discardUnreferenced, markPending, releasePending } from '../media.js';
+import {
+  applySuggestedCategory, classificationLabelForAssistant, collectItemFields, currentClassification,
+  initItemFields, rememberChoice, renderClassification, renderFields,
+} from './item-fields.js';
 
 const form = {
   itemId: null,
@@ -49,11 +53,6 @@ const form = {
 
 // ── field helpers ──
 function fillSelects(item) {
-  optionList($('f-cat'), [
-    ...repository.state.categories.map((c) => ({ value: c.id, label: `${c.icon} ${categoryName(c)}` })),
-    { value: UNCATEGORIZED_ID, label: `📦 ${t('category.uncategorized')}` },
-  ], item?.categoryId || repository.state.categories[0]?.id || UNCATEGORIZED_ID);
-
   optionList($('f-folder'), [
     { value: '', label: `— ${t('home.mainInventory')} —` },
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
@@ -98,7 +97,6 @@ function fillSelects(item) {
  */
 function relocalizeForm() {
   const keep = {
-    categoryId: $('f-cat').value,
     folderId: $('f-folder').value,
     locationId: $('f-loc').value,
     condition: $('f-cond').value,
@@ -106,7 +104,8 @@ function relocalizeForm() {
     currency: $('f-currency').value,
   };
   fillSelects({ ...keep, valuation: keep.currency ? { currency: keep.currency } : null });
-  $('f-cat').value = keep.categoryId;
+  renderClassification();
+  renderFields();
   $('f-folder').value = keep.folderId;
   $('f-loc').value = keep.locationId;
   $('f-cond').value = keep.condition;
@@ -354,7 +353,7 @@ async function maybeAutoAnalyze() {
       image,
       name: '',
       categoryName: '',
-      categories: repository.state.categories.map((c) => c.name).filter(Boolean),
+      categories: repository.taxonomy().allCategories({ includeHidden: false }).map((node) => repository.taxonomy().label(node)).filter(Boolean),
     });
     refreshAiPanel();
     renderSuggestions();
@@ -384,11 +383,15 @@ function suggestionsFrom(aiData) {
   }
 
   if (aiData.suggestedCategory) {
-    const category = repository.state.categories.find((c) => c.name === aiData.suggestedCategory);
+    // Only a name that is exactly one Category, in either language: a guess
+    // that could mean two things is not offered.
+    const taxonomy = repository.taxonomy();
+    const matches = taxonomy.findByName(aiData.suggestedCategory, { level: 'category' });
+    const category = matches.length === 1 ? matches[0] : null;
     if (category) {
       rows.push({
-        key: 'category', label: t('field.category'), value: `${category.icon || ''} ${categoryName(category)}`.trim(),
-        apply: () => { $('f-cat').value = category.id; },
+        key: 'category', label: t('field.category'), value: `${taxonomy.icon(category)} ${taxonomy.label(category)}`.trim(),
+        apply: () => applySuggestedCategory(category.id),
       });
     }
   }
@@ -453,7 +456,7 @@ function followUpPrompt() {
   // Nothing to ask for once the object identifies itself.
   if (ai.visibleText) return null;
 
-  const category = repository.category($('f-cat').value)?.name || '';
+  const category = classificationLabelForAssistant() || '';
   const hint = EVIDENCE.find((entry) => entry.match.test(`${category} ${ai.suggestedName || ''}`));
   const ask = t(hint?.ask || 'form.evidenceDefault');
 
@@ -578,8 +581,8 @@ async function runAnalysis() {
         itemId: form.itemId,
         image,
         name: $('f-name').value.trim(),
-        categoryName: repository.category($('f-cat').value).name,
-        categories: repository.state.categories.map((c) => c.name).filter(Boolean),
+        categoryName: classificationLabelForAssistant(),
+        categories: repository.taxonomy().allCategories({ includeHidden: false }).map((node) => repository.taxonomy().label(node)).filter(Boolean),
       });
 
       form.aiData = aiData;
@@ -731,6 +734,7 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
 
   setText('addtitle', item ? t('form.editTitle') : t('form.addTitle'));
   fillSelects(item);
+  initItemFields(item);
 
   $('f-name').value = item?.name || '';
   form.provisionalSku = repository.provisionalSku();
@@ -797,6 +801,10 @@ async function saveItem() {
   // counter now — two devices saving at once must not land on the same SKU.
   // The reserved number is the one written, so it is the one checked: the
   // clash check above looked at the provisional placeholder.
+  const fields = collectItemFields();
+  if (!fields.ok) return;
+  const classification = currentClassification();
+
   const resolvedSku = (form.isNew && (!sku || sku === form.provisionalSku))
     ? await repository.reserveUniqueSku()
     : sku;
@@ -806,7 +814,9 @@ async function saveItem() {
     name,
     sku: resolvedSku,
     barcode,
-    categoryId: $('f-cat').value || UNCATEGORIZED_ID,
+    ...classification,
+    customFields: fields.customFields,
+    customFieldDefs: fields.customFieldDefs,
     folderId: $('f-folder').value || null,
     locationId: $('f-loc').value || null,
     quantity: quantity.value,
@@ -827,6 +837,7 @@ async function saveItem() {
     try {
       if (form.isNew) {
         await repository.createItem(payload);
+        rememberChoice(classification);
         toast(t('manage.added'), '✓');
       } else {
         await repository.updateItem(form.itemId, payload, form.baseVersion);

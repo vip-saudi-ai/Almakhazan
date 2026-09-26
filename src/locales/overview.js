@@ -19,7 +19,7 @@ export const messages = {
   'overview.currencyNote': { ar: "المجاميع منفصلة لكل عملة — لا يجري أي تحويل تلقائي بين العملات.", en: "Totals are kept per currency — nothing is converted between currencies." },
   'overview.conditions': { ar: "توزيع الحالة", en: "Condition breakdown" },
   'overview.unspecified': { ar: "غير محدد", en: "Not specified" },
-  'overview.byCategory': { ar: "السجلات حسب التصنيف", en: "Records by category" },
+  'overview.byCategory': { ar: "حسب الصنف", en: "By Category" },
   'overview.byFolder': { ar: "السجلات حسب المجلد", en: "Records by folder" },
   'overview.topValued': { ar: "أعلى السجلات تقييماً ({currency})", en: "Highest-valued records ({currency})" },
   'overview.aiSummary': { ar: "ملخص التحليل البصري", en: "Visual analysis summary" },

@@ -27,7 +27,7 @@ const ANALYSIS = {
   globalScore: 8,
   suggestedValuation: { min: 1200, max: 1800, currency: 'SAR', source: 'ai', valuationType: 'estimate' },
   suggestedName: 'ساعة جيب فضية',
-  suggestedCategory: 'الفنون الجميلة',
+  suggestedCategory: 'لوحات',
   brand: 'Elgin',
   visibleText: 'ELG-4471982',
   model: null,
@@ -126,7 +126,7 @@ async function addPhoto(page) {
   check('S2 name, category, brand, condition, price and the read text',
     panel.rows.length === 6
     && panel.rows[0].value === 'ساعة جيب فضية'
-    && panel.rows[1].value.includes('الفنون الجميلة')
+    && panel.rows[1].value.includes('لوحات')
     && panel.rows[2].value === 'Elgin'
     && panel.rows[3].value === 'جيدة جداً'
     && panel.rows[5].value === 'ELG-4471982',
@@ -162,7 +162,7 @@ async function addPhoto(page) {
   await page.click('.suggest-all');
   const applied = await page.evaluate(() => ({
     name: document.getElementById('f-name').value,
-    category: document.getElementById('f-cat').selectedOptions[0].textContent,
+    category: document.getElementById('f-cat').textContent,
     brand: document.getElementById('f-brand').value,
     cond: document.getElementById('f-cond').value,
     val: document.getElementById('f-valuation').value,
@@ -170,7 +170,7 @@ async function addPhoto(page) {
     barcode: document.getElementById('f-barcode').value,
   }));
   check('S6 apply-all fills every field it offered',
-    applied.name === 'ساعة جيب فضية' && applied.category.includes('الفنون الجميلة')
+    applied.name === 'ساعة جيب فضية' && applied.category.includes('لوحات')
     && applied.brand === 'Elgin' && applied.cond === 'جيدة جداً'
     && applied.val === '1200-1800' && applied.currency === 'SAR'
     && applied.barcode === 'ELG-4471982',
@@ -198,7 +198,7 @@ async function addPhoto(page) {
 
   const call = await page.evaluate(() => window.__aiCalls[0]);
   check('S8 the workspace taxonomy is what the assistant chooses from',
-    Array.isArray(call.categories) && call.categories.includes('الفنون الجميلة') && call.categories.length > 3,
+    Array.isArray(call.categories) && call.categories.includes('لوحات') && call.categories.length > 3,
     JSON.stringify(call.categories).slice(0, 100));
   check('S9 no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));
   await page.close();

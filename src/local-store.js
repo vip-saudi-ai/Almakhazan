@@ -18,7 +18,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 
 /**
  * The shape of the database in one place. `key` is the keyPath; `indexes` maps
@@ -40,6 +40,12 @@ export const SCHEMA = {
       createdAt: 'createdAt',
       folderId: 'folderId',
       categoryId: 'categoryId',
+      // The classification hierarchy (version 9). A record with no Main
+      // Category or no Subcategory carries null there and is simply absent
+      // from that index. An existing database backfills both in the upgrade
+      // transaction, and the classification migration then fills them in.
+      mainCategoryId: 'mainCategoryId',
+      subcategoryId: 'subcategoryId',
       locationId: 'locationId',
       sku: 'sku',
       barcode: 'barcode',
@@ -65,6 +71,7 @@ export const SCHEMA = {
       // created in the same millisecond.
       folderCreatedAt: ['folderId', 'createdAt'],
       categoryCreatedAt: ['categoryId', 'createdAt'],
+      mainCategoryCreatedAt: ['mainCategoryId', 'createdAt'],
       locationCreatedAt: ['locationId', 'createdAt'],
       // Which import wrote this record, so cancelling one can find its records
       // without reading the inventory. Null on everything else, and IndexedDB
@@ -86,6 +93,8 @@ export const SCHEMA = {
       currencyDeleted: ['valuation.currency', 'deletedAt'],
       folderDeleted: ['folderId', 'deletedAt'],
       categoryDeleted: ['categoryId', 'deletedAt'],
+      mainCategoryDeleted: ['mainCategoryId', 'deletedAt'],
+      subcategoryDeleted: ['subcategoryId', 'deletedAt'],
       locationDeleted: ['locationId', 'deletedAt'],
       deletedAt: 'deletedAt',
     },

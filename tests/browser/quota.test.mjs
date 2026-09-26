@@ -113,7 +113,7 @@ const banner = (page) => page.evaluate(() => {
   await page.waitForTimeout(400);
   const edited = await page.evaluate(async () => {
     const { repository } = await import('/src/repository.js');
-    const item = await repository.createItem({ name: 'قطعة قائمة', quantity: 1, unit: 'قطعة', categoryId: 'c1' });
+    const item = await repository.createItem({ name: 'قطعة قائمة', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings' });
     const { openItemForm } = await import('/src/views/item-form.js');
     openItemForm({ itemId: item.id });
     await new Promise(r => setTimeout(r, 400));

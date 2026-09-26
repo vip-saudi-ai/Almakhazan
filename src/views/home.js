@@ -28,6 +28,8 @@ import { openLabels } from './labels.js';
 import { exportSelection } from '../exporting.js';
 import { onLanguageChange, t } from '../i18n.js';
 import { categoryName, conditionLabel, locationName, unitLabel } from '../labels.js';
+import { openTaxonomyPicker } from './taxonomy-picker.js';
+import { renderTaxonomyCard } from './taxonomy-onboarding.js';
 
 // A language switch redraws the sheets this screen owns if they are open —
 // from what their controls show *now*, not from what was last applied, so a
@@ -61,10 +63,16 @@ export const view = {
 
 /** This screen's state, as the query the data layer answers. */
 function currentQuery() {
+  // The pill row narrows by Main Category; «غير مصنّف», or a Category handed
+  // over from Settings, narrows by Category.
+  const pill = view.categoryPill;
+  const pillNode = pill && pill !== 'all' ? repository.taxonomy().node(pill) : null;
+  const byMain = pillNode?.level === 'main';
   return {
     search: view.query,
     folderId: view.folderId,
-    categoryId: view.categoryPill,
+    categoryId: byMain ? 'all' : pill,
+    mainCategoryId: byMain ? pill : 'all',
     filters: view.filters,
     sort: view.sortMode,
     page: view.page,
@@ -236,7 +244,10 @@ let pillFallback = new Set();
 async function refreshCounts() {
   try {
     folderCounts = await inventoryCounts();
-    pillFallback = new Set(folderCounts.categories.keys());
+    pillFallback = new Set([
+      ...(folderCounts.mains ? folderCounts.mains.keys() : []),
+      ...(folderCounts.categories.has(UNCATEGORIZED_ID) ? [UNCATEGORIZED_ID] : []),
+    ]);
     renderFolders();
   } catch (error) {
     console.error('[home] counts unavailable', error);
@@ -330,9 +341,14 @@ function attachImageFallback(img, image, category, onRetry) {
 }
 
 // ── item cards ──
+/** A card's classification line: the Category, or the whole path while searching. */
+function classificationLine(display) {
+  return `${display.icon} ${view.query && display.path ? display.path : display.name}`;
+}
+
 function itemThumb(item, className) {
   const image = primaryImage(item);
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
   if (!image) {
     return el('div', { class: className, text: category.icon, 'aria-hidden': 'true' });
   }
@@ -342,7 +358,7 @@ function itemThumb(item, className) {
 }
 
 function cardNode(item) {
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
   const image = primaryImage(item);
 
   let imageNode;
@@ -404,7 +420,7 @@ function cardNode(item) {
     ]),
     el('div', { class: 'icbody' }, [
       el('div', { class: 'icname', dir: 'auto', text: item.name || '—' }),
-      el('div', { class: 'iccat', dir: 'auto', text: `${category.icon} ${categoryName(category)}` }),
+      el('div', { class: 'iccat', dir: 'auto', text: classificationLine(category) }),
       el('div', { class: 'icft' }, [
         el('div', { class: 'qbadge', text: `${formatNumber(item.quantity)} ${unitLabel(item.unit)}`.trim() }),
         item.valuation ? el('div', { class: 'tag tb', style: { fontSize: '10px' }, text: formatValuation(item.valuation, { compact: true }) }) : null,
@@ -414,9 +430,9 @@ function cardNode(item) {
 }
 
 function rowNode(item) {
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
   const folder = repository.folder(item.folderId);
-  const subtitle = [`${category.icon} ${categoryName(category)}`, item.sku, folder ? `${folder.icon} ${folder.name}` : null]
+  const subtitle = [classificationLine(category), item.sku, folder ? `${folder.icon} ${folder.name}` : null]
     .filter(Boolean).join(' · ');
 
   const selected = view.selection?.has(item.id) === true;
@@ -473,13 +489,18 @@ function renderPills(result) {
   if (result?.scopeCategories instanceof Set) {
     present = result.scopeCategories;
   } else if (result?.scopeItems?.length) {
-    present = new Set(result.scopeItems.map((item) => item.categoryId || UNCATEGORIZED_ID));
+    present = new Set(result.scopeItems.flatMap((item) => [item.categoryId || UNCATEGORIZED_ID, item.mainCategoryId].filter(Boolean)));
   } else {
     present = pillFallback;
   }
 
-  const used = repository.state.categories.filter((c) => present.has(c.id));
+  // One pill per Main Category in use, in the customer's order — a row of
+  // two hundred Categories would be a list, not a filter.
+  const taxonomy = repository.taxonomy();
+  const used = taxonomy.mainCategories({ includeHidden: true }).filter((node) => present.has(node.id));
   const hasUncategorized = present.has(UNCATEGORIZED_ID);
+  const pillNode = view.categoryPill !== 'all' ? taxonomy.node(view.categoryPill) : null;
+  const extra = pillNode && pillNode.level !== 'main' ? pillNode : null;
 
   const pill = (id, label) => el('button', {
     class: `cpill${view.categoryPill === id ? ' on' : ''}`,
@@ -491,7 +512,8 @@ function renderPills(result) {
 
   render(container, [
     pill('all', t('common.all')),
-    ...used.map((c) => pill(c.id, `${c.icon} ${categoryName(c)}`)),
+    ...used.map((node) => pill(node.id, `${taxonomy.icon(node)} ${taxonomy.label(node)}`)),
+    extra ? pill(extra.id, `${taxonomy.icon(extra)} ${taxonomy.label(extra)}`) : null,
     hasUncategorized ? pill(UNCATEGORIZED_ID, `📦 ${t('category.uncategorized')}`) : null,
   ]);
 }
@@ -703,7 +725,7 @@ function renderSelectionBar(visibleItems) {
     ]),
     el('div', { class: 'selbar-acts' }, [
       action(t('bulk.move'), 'move', () => bulkMove()),
-      action(t('bulk.category'), 'category', () => bulkField('categoryId')),
+      action(t('bulk.category'), 'category', () => bulkClassify()),
       action(t('bulk.location'), 'location', () => bulkField('locationId')),
       action(t('bulk.export'), 'download', () => bulkExport()),
       action(t('common.delete'), 'trash', () => bulkDelete(), true),
@@ -758,6 +780,35 @@ function bulkMove() {
     ...repository.state.folders.map((f) => ({ value: f.id, label: `${f.icon} ${f.name}` })),
   ];
   pickOne(t('item.moveToFolder'), options, (value) => applyToSelection('bulk.outcomeMoved', { folderId: value || null }));
+}
+
+/**
+ * «تغيير التصنيف» for a selection: Main Category, then Category (or none).
+ * The repository checks the pair for every record before writing any.
+ */
+function bulkClassify() {
+  openTaxonomyPicker({
+    level: 'main',
+    onPick: (picked, level) => {
+      if (!picked) return;
+      if (level === 'category') {
+        const taxonomy = repository.taxonomy();
+        void applyToSelection('bulk.outcomeUpdated', {
+          mainCategoryId: taxonomy.mainOf(taxonomy.node(picked))?.id, categoryId: picked, subcategoryId: null,
+        });
+        return;
+      }
+      const mainCategoryId = picked;
+      const apply = (categoryId) => applyToSelection('bulk.outcomeUpdated', {
+        mainCategoryId, categoryId: categoryId || UNCATEGORIZED_ID, subcategoryId: null,
+      });
+      if (!repository.taxonomy().categories(mainCategoryId).length) { void apply(null); return; }
+      openTaxonomyPicker({
+        level: 'category', parentId: mainCategoryId, clearLabel: t('taxonomy.clearCategory'),
+        onPick: (categoryId) => { void apply(categoryId); },
+      });
+    },
+  });
 }
 
 function bulkField(field) {
@@ -969,6 +1020,7 @@ function renderChrome() {
   renderFolders();
   void refreshCounts();
   renderQuotaBanner();
+  renderTaxonomyCard();
   renderAssistantBanner();
   renderNavBar(folder);
   $('statsrow').style.display = view.folderId ? 'none' : 'grid';
@@ -1159,6 +1211,9 @@ function renderNavBar(folder) {
 
 /** Every control in the filter sheet, and the field of `view.filters` it edits. */
 const FILTER_CONTROLS = [
+  ['mainCategoryId', 'fp-main'],
+  ['categoryId', 'fp-cat'],
+  ['subcategoryId', 'fp-sub'],
   ['condition', 'fp-cond'],
   ['folderId', 'fp-folder'],
   ['locationId', 'fp-loc'],
@@ -1186,8 +1241,46 @@ export function openFilterSheet() {
   openSheet('filter');
 }
 
+/**
+ * The three classification filters, each limited by the one above it: with a
+ * Main Category chosen, the Category list holds only its Categories — no
+ * «لوحات» under «معدات وأدوات». A value that stops fitting is cleared.
+ */
+function paintClassificationFilters(values) {
+  const taxonomy = repository.taxonomy();
+  const main = values.mainCategoryId || '';
+  const mains = taxonomy.mainCategories({ includeHidden: true, keep: main ? [main] : [] });
+  optionList($('fp-main'), [
+    { value: '', label: t('filter.anyMain') },
+    ...mains.map((node) => ({ value: node.id, label: `${taxonomy.icon(node)} ${taxonomy.label(node)}` })),
+  ], main);
+
+  const categories = main
+    ? taxonomy.categories(main, { includeHidden: true })
+    : taxonomy.allCategories({ includeHidden: true });
+  const categoryId = categories.some((node) => node.id === values.categoryId) ? values.categoryId : '';
+  optionList($('fp-cat'), [
+    { value: '', label: t('filter.anyCategory') },
+    ...categories.map((node) => ({
+      value: node.id,
+      // Without a Main Category the same word («أخرى») exists in many places;
+      // the path tells them apart.
+      label: main ? taxonomy.label(node) : `${taxonomy.label(taxonomy.mainOf(node))} › ${taxonomy.label(node)}`,
+    })),
+  ], categoryId);
+
+  const subs = categoryId ? taxonomy.subcategories(categoryId, { includeHidden: true }) : [];
+  const subcategoryId = subs.some((node) => node.id === values.subcategoryId) ? values.subcategoryId : '';
+  $('fp-sub-row').style.display = subs.length ? '' : 'none';
+  optionList($('fp-sub'), [
+    { value: '', label: t('filter.anySubcategory') },
+    ...subs.map((node) => ({ value: node.id, label: taxonomy.label(node) })),
+  ], subcategoryId);
+}
+
 /** Draws the filter controls showing `values`. Draws only: applies nothing. */
 function paintFilterSheet(values) {
+  paintClassificationFilters(values);
   optionList($('fp-cond'), [
     { value: '', label: t('common.all') },
     ...CONDITIONS.map((c) => ({ value: c, label: conditionLabel(c) })),
@@ -1244,12 +1337,18 @@ function paintFilterSheet(values) {
   });
 }
 
+/** A classification filter changed: the levels below it follow, then it applies. */
+export function applyClassificationFilter() {
+  paintClassificationFilters(captureFilterDraft());
+  applyFilterControls();
+}
+
 export function applyFilterControls() {
   void narrowing(() => applyFilterControlsNow());
 }
 
 function applyFilterControlsNow() {
-  view.filters = { ...captureFilterDraft(), categoryId: '' };
+  view.filters = captureFilterDraft();
   resetPage();
   syncFilterControls();
 }
@@ -1261,6 +1360,7 @@ export function syncFilterControls() {
   if (button) button.className = `fsact-btn gl-s${count ? ' has-filters' : ''}`;
   if (badge) badge.textContent = String(count);
 
+  if ($('fp-main')) paintClassificationFilters(view.filters);
   const fields = {
     'fp-cond': view.filters.condition,
     'fp-folder': view.filters.folderId,
@@ -1418,10 +1518,10 @@ export async function openContextMenu(itemId) {
   }
   contextItemId = itemId;
   contextVersion = item.version;
-  const category = repository.category(item.categoryId);
+  const category = repository.classificationDisplay(item);
 
   setText('ctx-name', item.name || '—');
-  setText('ctx-cat', `${category.icon} ${categoryName(category)}`);
+  setText('ctx-cat', `${category.icon} ${category.path || category.name}`);
 
   const thumb = $('ctx-thumb');
   const image = primaryImage(item);

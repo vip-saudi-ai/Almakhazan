@@ -48,7 +48,7 @@ async function open() {
         type: 'set', collection: 'items', id,
         data: {
           id, name: i === 0 ? 'أسطرلاب نحاسي' : `قطعة ${i}`,
-          quantity: 1, unit: 'قطعة', categoryId: 'c1',
+          quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
           folderId: i < 5 ? folder.id : null,
           images: i % 2 ? [{ id: 'im' + i, url: 'x' }] : [],
           // The oldest record is the one that falls outside the window.
@@ -214,7 +214,7 @@ const repoState = (page) => page.evaluate(async () => {
     const { restoreFromBackup } = await import('/src/restore.js');
     const before = repository.itemsComplete;
     let backedUp = 0;
-    const data = { items: [{ id: 'only', name: 'القطعة الوحيدة', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [], version: 1 }],
+    const data = { items: [{ id: 'only', name: 'القطعة الوحيدة', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', images: [], version: 1 }],
                    folders: [], categories: [], locations: [] };
     await restoreFromBackup(data, { sourceFingerprint: (await (await import('/src/exporting.js')).readBackupFile(new File([JSON.stringify(data)], 'b.json'))).sourceFingerprint, 
       saveBackup: (text) => { backedUp = JSON.parse(text).items.length; },

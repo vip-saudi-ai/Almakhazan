@@ -11,7 +11,7 @@
 //  - deletes are soft by default (Trash), purge is a separate deliberate step;
 //  - every meaningful change appends an activity-log entry.
 
-import { ACTIONS, DEFAULT_CATEGORIES, DEFAULT_LOCATIONS, ROLES, UNCATEGORIZED_ID, roleAtLeast } from './config.js';
+import { ACTIONS, DEFAULT_LOCATIONS, ROLES, TAXONOMY_LIMITS, UNCATEGORIZED_ID, roleAtLeast } from './config.js';
 import { firebaseContext } from './firebase.js';
 import * as local from './local-store.js';
 import { applyReferenceDelta, releaseAll, retainAll } from './media.js';
@@ -23,6 +23,10 @@ import {
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
 import { t } from './i18n.js';
+import {
+  LEVELS, OTHER_MAIN_ID, TAXONOMY_SCHEMA_VERSION, buildTaxonomy, isBuiltinId, legacyPlacement,
+  reconcileClassification,
+} from './taxonomy.js';
 import {
   normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation, normalizeSku,
 } from './validation.js';
@@ -48,6 +52,20 @@ export class ConflictError extends AppError {
 }
 
 const COLLECTIONS = ['items', 'folders', 'categories', 'locations'];
+
+/** The index holding only the trashed records of each scope value. */
+const TRASH_INDEX_BY_FIELD = {
+  folderId: 'folderDeleted',
+  categoryId: 'categoryDeleted',
+  mainCategoryId: 'mainCategoryDeleted',
+  subcategoryId: 'subcategoryDeleted',
+  locationId: 'locationDeleted',
+};
+
+/** The item fields that make up a classification. */
+const CLASSIFICATION_FIELDS = ['mainCategoryId', 'categoryId', 'subcategoryId'];
+
+const TAXONOMY_MIGRATION_KEY = 'taxonomy.migration';
 
 // The taxonomies are small by design and stay whole. Records are not: a
 // workspace at the Business limit is 20,000 of them, and loading all of it to
@@ -525,7 +543,7 @@ export class FirestoreBackend {
       for (const op of operations.slice(i, i + 450)) {
         const ref = this.ref(op.collection, op.id);
         if (op.type === 'set') {
-          batch.set(ref, { ...op.data, updatedAt: this.serverTime }, { merge: op.merge !== false });
+          batch.set(ref, op.preserveUpdatedAt ? { ...op.data } : { ...op.data, updatedAt: this.serverTime }, { merge: op.merge !== false });
         } else if (op.type === 'delete') {
           batch.delete(ref);
         }
@@ -581,7 +599,7 @@ export class FirestoreBackend {
               throw new ConflictError({ id: op.id, ...current });
             }
           }
-          const data = { ...op.data, updatedAt: this.serverTime };
+          const data = op.preserveUpdatedAt ? { ...op.data } : { ...op.data, updatedAt: this.serverTime };
           if (op.bumpVersion) data.version = ((snap.exists() ? snap.data().version : 0) ?? 0) + 1;
           tx.set(ref, data, { merge: op.merge !== false });
           attempt.applied += 1;
@@ -874,7 +892,9 @@ export class LocalBackend {
           ...(op.merge !== false ? existing : null),
           ...op.data,
           id: op.id,
-          updatedAt: Date.now(),
+          // A migration that fills in a derived field is not an edit, and must
+          // not make every record look as if it had just been changed.
+          updatedAt: op.preserveUpdatedAt && existing?.updatedAt ? existing.updatedAt : Date.now(),
         };
         // The next version is the stored one plus one, never the caller's.
         if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
@@ -937,7 +957,9 @@ export class LocalBackend {
           ...(op.merge !== false ? existing : null),
           ...op.data,
           id: op.id,
-          updatedAt: Date.now(),
+          // A migration that fills in a derived field is not an edit, and must
+          // not make every record look as if it had just been changed.
+          updatedAt: op.preserveUpdatedAt && existing?.updatedAt ? existing.updatedAt : Date.now(),
         };
         if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
         await local.request(store.put(record));
@@ -999,7 +1021,7 @@ export class LocalBackend {
    *  Trash, which have an index of their own per scope (see local-store). */
   async countLiveItemsByField(field, value) {
     if (value == null) return 0;
-    const trashIndex = { folderId: 'folderDeleted', categoryId: 'categoryDeleted', locationId: 'locationDeleted' }[field];
+    const trashIndex = TRASH_INDEX_BY_FIELD[field];
     const [all, trashed] = await Promise.all([
       local.countByIndex('items', field, value),
       trashIndex ? local.countByIndex('items', trashIndex, IDBKeyRange.bound([value], [value, []])) : 0,
@@ -1176,6 +1198,7 @@ class Repository {
     });
 
     await this._seedDefaults();
+    await this.migrateTaxonomy();
     this.ready = true;
     this.emit();
   }
@@ -1195,13 +1218,16 @@ class Repository {
     }
   }
 
-  /** First run in an empty workspace gets the default taxonomy, nothing else. */
+  /**
+   * First run in an empty workspace gets the default locations, nothing else.
+   * Classification needs no seed: the built-in library lives in the bundle
+   * (src/taxonomy.js), and a new inventory starts with all of it available.
+   */
   async _seedDefaults() {
     if (!this.canWrite()) return;
     if (this.state.categories.length || this.state.locations.length || this.state.items.length) return;
     try {
       await this.backend.runBatch([
-        ...DEFAULT_CATEGORIES.map((c) => ({ type: 'set', collection: 'categories', id: c.id, data: normalizeCategory(c) })),
         ...DEFAULT_LOCATIONS.map((l) => ({ type: 'set', collection: 'locations', id: l.id, data: normalizeLocation(l) })),
       ]);
     } catch (error) {
@@ -1450,9 +1476,66 @@ class Repository {
     return item;
   }
   folder(id) { return id ? this.state.folders.find((f) => f.id === id) || null : null; }
+  /**
+   * The classification hierarchy: the built-in library merged with what this
+   * inventory stored. Rebuilt only when the stored nodes change.
+   */
+  taxonomy() {
+    if (this._taxonomySource !== this.state.categories) {
+      this._taxonomySource = this.state.categories;
+      this._taxonomy = buildTaxonomy(this.state.categories);
+    }
+    return this._taxonomy;
+  }
+
+  /**
+   * A node for display: `name` is its label in the current language. Any
+   * level — a Main Category, a Category or a Subcategory. An id that names
+   * nothing any more reads as a deleted category rather than disappearing.
+   */
   category(id) {
-    if (!id || id === UNCATEGORIZED_ID) return { id: UNCATEGORIZED_ID, name: t('category.uncategorized'), icon: '📦' };
-    return this.state.categories.find((c) => c.id === id) || { id, name: t('category.deleted'), icon: '❓' };
+    if (!id || id === UNCATEGORIZED_ID) {
+      return { id: UNCATEGORIZED_ID, name: t('category.uncategorized'), icon: '📦', resolved: true };
+    }
+    const taxonomy = this.taxonomy();
+    const node = taxonomy.resolve(id);
+    if (!node) return { id, name: t('category.deleted'), icon: '❓', resolved: true };
+    return { id: node.id, name: taxonomy.label(node), icon: taxonomy.icon(node), level: node.level, resolved: true };
+  }
+
+  /** The classification of a record, resolved (see Taxonomy.path). */
+  classification(item) {
+    return this.taxonomy().path(item);
+  }
+
+  /**
+   * What a list card shows for a record: its Category — or its Main Category
+   * when that is all it has — with that node's icon, and the full path.
+   */
+  classificationDisplay(item) {
+    const taxonomy = this.taxonomy();
+    const { main, category, sub } = taxonomy.path(item);
+    const primary = category || main;
+    if (!primary) {
+      // A reference to something that no longer exists reads as such.
+      const dangling = item?.categoryId && item.categoryId !== UNCATEGORIZED_ID;
+      return {
+        id: dangling ? item.categoryId : UNCATEGORIZED_ID,
+        name: t(dangling ? 'category.deleted' : 'category.uncategorized'),
+        icon: dangling ? '❓' : '📦',
+        path: '',
+        main: null, category: null, sub: null,
+        resolved: true,
+      };
+    }
+    return {
+      id: primary.id,
+      name: taxonomy.label(primary),
+      icon: taxonomy.icon(primary),
+      path: [main, category, sub].filter(Boolean).map((node) => taxonomy.label(node)).join(' › '),
+      main, category, sub,
+      resolved: true,
+    };
   }
   location(id) { return id ? this.state.locations.find((l) => l.id === id) || null : null; }
 
@@ -1462,6 +1545,7 @@ class Repository {
   lookups() {
     return {
       category: (id) => this.category(id),
+      classificationWords: (item) => this.taxonomy().searchWords(item),
       folder: (id) => this.folder(id),
       location: (id) => this.location(id),
     };
@@ -1825,6 +1909,7 @@ class Repository {
     const item = normalizeItem({ ...data, createdBy: this.session.userId, updatedBy: this.session.userId }, {
       userId: this.session.userId,
     });
+    this._classifyNew(item);
     this.setSync(SyncState.SAVING);
     // Refused here, at the write, before the images are claimed or anything is
     // logged — not only when the form opened, which may have been before
@@ -1841,6 +1926,7 @@ class Repository {
   async updateItem(id, patch, expectedVersion) {
     this.assertCanWrite();
     const before = await this._current(id);
+    patch = this._classificationPatch(before, patch);
     this.setSync(SyncState.SAVING);
     await this.backend.update('items', id, { ...patch, updatedBy: this.session.userId }, expectedVersion);
 
@@ -1852,9 +1938,9 @@ class Repository {
     }
 
     const changes = Repository.diff(before, { ...before, ...patch }, [
-      'name', 'sku', 'barcode', 'categoryId', 'folderId', 'locationId',
+      'name', 'sku', 'barcode', 'mainCategoryId', 'categoryId', 'subcategoryId', 'folderId', 'locationId',
       'quantity', 'unit', 'condition', 'brand', 'valuation', 'description',
-      'images', 'primaryImageId', 'aiData',
+      'images', 'primaryImageId', 'aiData', 'customFields',
     ]);
     await this.log(ACTIONS.ITEM_UPDATED, { itemId: id, itemName: patch.name ?? before?.name, changes });
   }
@@ -2173,51 +2259,447 @@ class Repository {
     return affected.length;
   }
 
-  // ── categories ──
+  // ── classification ──
+  //
+  // The hierarchy itself is read through `taxonomy()` (src/taxonomy.js). What
+  // follows writes it: the customer's own nodes, the local settings of the
+  // built-in ones (hidden, order, pinned, a preferred display name, fields
+  // saved to them), and the records whose classification a change moves.
+  // Every write validates the hierarchy here, not only in the picker.
+
+  _storedNode(id) {
+    return this.state.categories.find((c) => c.id === id) || null;
+  }
+
+  _taxonomyError(key) {
+    return new AppError(key, { code: 'taxonomy/invalid' });
+  }
+
+  /**
+   * A classification patch made canonical, or refused. Changing the Main
+   * Category clears the Category and Subcategory beneath it unless the patch
+   * says what they become; changing the Category clears the Subcategory. A
+   * patch that leaves the classification as it was is not re-checked, so a
+   * record whose Category was removed elsewhere can still be edited.
+   */
+  _classificationPatch(before, patch) {
+    if (!CLASSIFICATION_FIELDS.some((field) => field in patch)) return patch;
+    const was = {
+      mainCategoryId: before?.mainCategoryId ?? null,
+      categoryId: before?.categoryId || UNCATEGORIZED_ID,
+      subcategoryId: before?.subcategoryId ?? null,
+    };
+    const next = { ...was };
+    for (const field of CLASSIFICATION_FIELDS) if (field in patch) next[field] = patch[field] || null;
+    if (!next.categoryId) next.categoryId = UNCATEGORIZED_ID;
+    if ('categoryId' in patch && !('subcategoryId' in patch) && next.categoryId !== was.categoryId) next.subcategoryId = null;
+    if ('categoryId' in patch && !('mainCategoryId' in patch) && next.categoryId !== UNCATEGORIZED_ID) next.mainCategoryId = null;
+    if ('mainCategoryId' in patch && !('categoryId' in patch) && next.mainCategoryId !== was.mainCategoryId) {
+      next.categoryId = UNCATEGORIZED_ID;
+      next.subcategoryId = null;
+    }
+    if (CLASSIFICATION_FIELDS.every((field) => next[field] === was[field])) return { ...patch, ...next };
+    const result = this.taxonomy().check(next);
+    if (!result.ok) throw this._taxonomyError(result.error);
+    return { ...patch, ...result.value };
+  }
+
+  /** A new record's classification, made canonical or refused. */
+  _classifyNew(item) {
+    const result = this.taxonomy().check(item);
+    if (!result.ok) throw this._taxonomyError(result.error);
+    Object.assign(item, result.value);
+    return item;
+  }
+
+  /**
+   * Creates the customer's own Main Category, Category or Subcategory.
+   * @param {{level: string, parentId?: string, name: string, icon?: string}} data
+   * @returns {Promise<string>} the new node's id
+   */
+  async createTaxonomyNode({ level, parentId = null, name, icon = null, id = null }) {
+    this.assertCanWrite();
+    const taxonomy = this.taxonomy();
+    const label = normalizeCategory({ name }).name;
+    if (!label) throw this._taxonomyError('taxonomy.error.nameRequired');
+    if (![LEVELS.MAIN, LEVELS.CATEGORY, LEVELS.SUB].includes(level)) throw this._taxonomyError('taxonomy.error.unknown');
+    if (level !== LEVELS.MAIN) {
+      const parent = taxonomy.resolve(parentId);
+      const wanted = level === LEVELS.CATEGORY ? LEVELS.MAIN : LEVELS.CATEGORY;
+      if (!parent || parent.level !== wanted) throw this._taxonomyError('taxonomy.error.unknown');
+      parentId = parent.id;
+    } else {
+      parentId = null;
+    }
+    if (taxonomy.duplicateOf(label, { level, parentId })) throw this._taxonomyError('taxonomy.error.duplicate');
+    if (taxonomy.customNodes().length >= TAXONOMY_LIMITS.customNodes) throw this._taxonomyError('taxonomy.error.limit');
+
+    const record = normalizeCategory({
+      // A caller may fix the id in advance — an import that must land on the
+      // same node if it is resumed.
+      id: id || uid('cat'), name: label, icon: icon || undefined, level, parentId,
+      source: 'custom', taxonomyVersion: TAXONOMY_SCHEMA_VERSION,
+    });
+    if (!icon) delete record.icon;
+    await this.backend.create('categories', record);
+    await this.log(ACTIONS.CATEGORY_CREATED, { categoryId: record.id, categoryName: record.name });
+    return record.id;
+  }
+
+  /**
+   * Writes settings onto a node. A built-in node gets (or updates) the record
+   * that holds its local settings; the built-in definition is never changed.
+   */
+  async _patchNode(id, patch) {
+    const taxonomy = this.taxonomy();
+    const node = taxonomy.node(id);
+    if (!node) throw this._taxonomyError('taxonomy.error.unknown');
+    const existing = this._storedNode(id);
+    if (existing) {
+      await this.backend.update('categories', id, patch, existing.version);
+    } else {
+      await this.backend.create('categories', {
+        ...normalizeCategory({ id, name: '', source: 'builtin' }), ...patch, source: 'builtin',
+      });
+    }
+  }
+
+  /**
+   * Renames a node. The customer's own node takes the name; a built-in one
+   * keeps its definition and shows the name as a local display name. An empty
+   * name on a built-in node goes back to the built-in label.
+   */
+  async renameTaxonomyNode(id, name) {
+    this.assertCanWrite();
+    const taxonomy = this.taxonomy();
+    const node = taxonomy.node(id);
+    if (!node) throw this._taxonomyError('taxonomy.error.unknown');
+    const label = normalizeCategory({ name }).name;
+    if (!label && node.source === 'custom') throw this._taxonomyError('taxonomy.error.nameRequired');
+    if (label && taxonomy.duplicateOf(label, { level: node.level, parentId: node.parentId, exceptId: id })) {
+      throw this._taxonomyError('taxonomy.error.duplicate');
+    }
+    const value = node.source === 'builtin' && label === taxonomy.defaultLabel(node) ? '' : label;
+    await this._patchNode(id, { name: value });
+    await this.log(ACTIONS.CATEGORY_UPDATED, { categoryId: id, categoryName: value || taxonomy.label(node) });
+  }
+
+  async setTaxonomyNodeHidden(id, hidden) {
+    this.assertCanWrite();
+    await this._patchNode(id, { hidden: Boolean(hidden) });
+  }
+
+  async setTaxonomyNodePinned(id, pinned) {
+    this.assertCanWrite();
+    await this._patchNode(id, { pinned: Boolean(pinned) });
+  }
+
+  /** The customer's order for one level of the hierarchy, by id. */
+  async reorderTaxonomyNodes(orderedIds) {
+    this.assertCanWrite();
+    const taxonomy = this.taxonomy();
+    const operations = [];
+    orderedIds.forEach((id, order) => {
+      const node = taxonomy.node(id);
+      if (!node) return;
+      const existing = this._storedNode(id);
+      operations.push({
+        type: 'set', collection: 'categories', id, merge: true,
+        data: existing ? { order } : { ...normalizeCategory({ id, name: '', source: 'builtin' }), source: 'builtin', order },
+      });
+    });
+    if (operations.length) await this._runRelational(operations);
+  }
+
+  /** Field definitions the customer saves to a node, for every record under it. */
+  async saveTaxonomyNodeFields(id, fields) {
+    this.assertCanWrite();
+    const clean = normalizeCategory({ id, fields }).fields || [];
+    if (Array.isArray(fields) && fields.length > TAXONOMY_LIMITS.fieldsPerTemplate) throw this._taxonomyError('taxonomy.error.limit');
+    await this._patchNode(id, { fields: clean });
+  }
+
+  /** The records field holding a node of this level. */
+  _levelField(level) {
+    return { [LEVELS.MAIN]: 'mainCategoryId', [LEVELS.CATEGORY]: 'categoryId', [LEVELS.SUB]: 'subcategoryId' }[level];
+  }
+
+  /**
+   * How many records reference this node — asked of the backend, so the
+   * number in the dialog is the number a deletion or merge will rewrite.
+   */
+  taxonomyNodeUsage(id) {
+    const node = this.taxonomy().node(id);
+    if (!node) return Promise.resolve(0);
+    return this.countItemsReferencing(this._levelField(node.level), id);
+  }
+
+  /** Kept for callers of the flat model: the records in one Category. */
+  categoryUsage(id) {
+    return this.taxonomyNodeUsage(id);
+  }
+
+  /**
+   * Kept for callers of the flat model: an existing node is renamed, a new one
+   * is created as a Category (under «أخرى» unless a Main Category is given).
+   */
   async saveCategory(data) {
     this.assertCanWrite();
-    const category = normalizeCategory(data);
-    const existing = this.state.categories.find((c) => c.id === category.id);
-    if (existing) {
-      await this.backend.update('categories', category.id, { name: category.name, icon: category.icon }, existing.version);
-      await this.log(ACTIONS.CATEGORY_UPDATED, { categoryId: category.id, categoryName: category.name });
-    } else {
-      await this.backend.create('categories', category);
-      await this.log(ACTIONS.CATEGORY_CREATED, { categoryId: category.id, categoryName: category.name });
+    if (data?.id && this.taxonomy().node(data.id)) {
+      await this.renameTaxonomyNode(data.id, data.name);
+      return this.taxonomy().node(data.id);
     }
-    return category;
+    const id = await this.createTaxonomyNode({
+      level: data?.level || LEVELS.CATEGORY,
+      parentId: data?.parentId || OTHER_MAIN_ID,
+      name: data?.name,
+      icon: data?.icon,
+    });
+    return { id, name: data?.name };
   }
 
   /**
-   * How many records reference this category — asked of the backend, not of
-   * the window, so the number in the confirmation dialog is the number of
-   * records the deletion will actually rewrite.
-   */
-  categoryUsage(id) {
-    return this.countItemsReferencing('categoryId', id);
-  }
-
-  /**
+   * Deletes one of the customer's own nodes. Built-in nodes cannot be deleted;
+   * they are hidden.
+   *
+   * A Category in use: `reassign` moves its records to `targetId` (another
+   * Category, whose Main Category they take), `uncategorize` keeps their Main
+   * Category and clears the Category. A Subcategory in use: its records keep
+   * their Category. A Main Category must be empty of records first — its
+   * records' Categories would otherwise have nowhere to be.
+   *
    * @param {'reassign'|'uncategorize'} strategy
-   * @param {string} [targetId] required when reassigning
    */
-  async deleteCategory(id, strategy, targetId) {
+  async deleteTaxonomyNode(id, strategy = 'uncategorize', targetId = null) {
     this.assertCanWrite();
-    const category = this.state.categories.find((c) => c.id === id);
-    const affected = await this.itemsReferencing('categoryId', id);
-    if (affected.length && strategy === 'reassign' && !targetId) {
-      throw new AppError('error.repo/needs-target', { code: 'repo/needs-target' });
+    const taxonomy = this.taxonomy();
+    const node = taxonomy.node(id);
+    if (!node) throw this._taxonomyError('taxonomy.error.unknown');
+    if (node.source !== 'custom') throw this._taxonomyError('taxonomy.error.builtinDelete');
+
+    const field = this._levelField(node.level);
+    const affected = await this.itemsReferencing(field, id);
+    let patch = null;
+    if (affected.length) {
+      if (node.level === LEVELS.MAIN) throw this._taxonomyError('taxonomy.error.mainInUse');
+      if (strategy === 'reassign') {
+        const target = taxonomy.resolve(targetId);
+        if (!target || target.id === id || target.level !== node.level) throw new AppError('error.repo/needs-target', { code: 'repo/needs-target' });
+        patch = node.level === LEVELS.CATEGORY
+          ? { mainCategoryId: taxonomy.mainOf(target)?.id || null, categoryId: target.id, subcategoryId: null }
+          : { mainCategoryId: taxonomy.mainOf(target)?.id || null, categoryId: target.parentId, subcategoryId: target.id };
+      } else {
+        patch = node.level === LEVELS.CATEGORY
+          ? { categoryId: UNCATEGORIZED_ID, subcategoryId: null }
+          : { subcategoryId: null };
+      }
     }
-    const newCategory = strategy === 'reassign' ? targetId : UNCATEGORIZED_ID;
+
+    // The customer's nodes beneath it go with it; built-in ones are not below
+    // a custom node by construction.
+    const below = [];
+    const collect = (parentId) => {
+      for (const child of taxonomy.children(parentId)) {
+        if (child.source !== 'custom') continue;
+        below.push(child);
+        collect(child.id);
+      }
+    };
+    collect(id);
+    for (const child of below) {
+      if (await this.countItemsReferencing(this._levelField(child.level), child.id)) {
+        if (node.level === LEVELS.MAIN) throw this._taxonomyError('taxonomy.error.mainInUse');
+      }
+    }
+
     await this._runRelational([
-      ...this._clearReferenceOps(affected, { categoryId: newCategory }),
+      ...(patch ? this._clearReferenceOps(affected, patch) : []),
+      ...below.map((child) => ({ type: 'delete', collection: 'categories', id: child.id })),
       { type: 'delete', collection: 'categories', id },
     ]);
-    this._patchLoaded(affected, { categoryId: newCategory });
+    if (patch) this._patchLoaded(affected, patch);
     await this.log(ACTIONS.CATEGORY_DELETED, {
-      categoryId: id, categoryName: category?.name, reassigned: affected.length, newCategoryId: newCategory,
+      categoryId: id, categoryName: taxonomy.label(node), reassigned: affected.length, newCategoryId: targetId || null,
     });
     return affected.length;
+  }
+
+  /** Kept for callers of the flat model. */
+  deleteCategory(id, strategy, targetId) {
+    return this.deleteTaxonomyNode(id, strategy, targetId);
+  }
+
+  /**
+   * Merges one of the customer's nodes into another of the same level: its
+   * records move to the target, the nodes beneath it move under the target,
+   * and the source stays behind as a retired record pointing at the target —
+   * so an old reference (a backup, another device) still resolves. One
+   * transaction on the device whenever the change fits in one.
+   */
+  async mergeTaxonomyNodes(sourceId, targetId) {
+    this.assertCanWrite();
+    const taxonomy = this.taxonomy();
+    const source = taxonomy.node(sourceId);
+    const target = taxonomy.resolve(targetId);
+    if (!source || !target || source.id === target.id) throw this._taxonomyError('taxonomy.error.unknown');
+    if (source.source !== 'custom') throw this._taxonomyError('taxonomy.error.builtinDelete');
+    if (source.level !== target.level) throw this._taxonomyError('taxonomy.error.mergeLevel');
+
+    const field = this._levelField(source.level);
+    const affected = await this.itemsReferencing(field, sourceId);
+    const targetMain = taxonomy.mainOf(target)?.id || null;
+    let patch;
+    if (source.level === LEVELS.MAIN) patch = { mainCategoryId: target.id };
+    else if (source.level === LEVELS.CATEGORY) patch = { mainCategoryId: targetMain, categoryId: target.id };
+    else patch = { mainCategoryId: targetMain, categoryId: target.parentId, subcategoryId: target.id };
+
+    const children = taxonomy.children(sourceId).filter((child) => child.source === 'custom');
+    const operations = [
+      ...this._clearReferenceOps(affected, patch),
+      ...children.map((child) => ({ type: 'set', collection: 'categories', id: child.id, merge: true, data: { parentId: target.id } })),
+      { type: 'set', collection: 'categories', id: sourceId, merge: true, data: { mergedInto: target.id, hidden: true } },
+    ];
+    // Records under a moved Category keep it, but their Main Category moves.
+    if (source.level === LEVELS.MAIN) {
+      for (const child of children) {
+        const under = await this.itemsReferencing('categoryId', child.id);
+        const extra = under.filter((item) => !affected.some((a) => a.id === item.id));
+        operations.unshift(...this._clearReferenceOps(extra, { mainCategoryId: target.id }));
+      }
+    }
+    await this._runRelational(operations);
+    this._patchLoaded(affected, patch);
+    await this.log(ACTIONS.CATEGORY_MERGED, {
+      categoryId: sourceId, categoryName: taxonomy.label(source), reassigned: affected.length, newCategoryId: target.id,
+    });
+    return affected.length;
+  }
+
+  /**
+   * «استعادة التصنيفات الافتراضية»: every built-in node visible again, in its
+   * default order and under its built-in name; the customer's own nodes
+   * visible and in creation order. No record is touched, no custom node is
+   * removed, and fields saved to a node stay.
+   */
+  async restoreDefaultTaxonomy() {
+    this.assertCanWrite();
+    const operations = [];
+    for (const record of this.state.categories) {
+      if (record.mergedInto) continue;
+      if (isBuiltinId(record.id)) {
+        operations.push(record.fields?.length
+          ? { type: 'set', collection: 'categories', id: record.id, merge: false, data: normalizeCategory({ id: record.id, name: '', source: 'builtin', fields: record.fields, createdAt: record.createdAt }) }
+          : { type: 'delete', collection: 'categories', id: record.id });
+      } else if (record.level) {
+        operations.push({ type: 'set', collection: 'categories', id: record.id, merge: true, data: { hidden: false, order: null, pinned: false } });
+      }
+    }
+    if (operations.length) await this._runRelational(operations);
+    await this.log(ACTIONS.TAXONOMY_RESET, {});
+  }
+
+  /**
+   * The first-run choice «ما أنواع الأشياء التي تديرها عادة؟»: the chosen Main
+   * Categories are shown in the picker, the rest are hidden — not removed, and
+   * one tap away in Settings.
+   */
+  async applyMainCategoryChoice(chosenIds) {
+    this.assertCanWrite();
+    const chosen = new Set(chosenIds);
+    const taxonomy = this.taxonomy();
+    const operations = [];
+    for (const main of taxonomy.mainCategories({ includeHidden: true })) {
+      if (main.source !== 'builtin' || main.builtin.onlyWhenUsed) continue;
+      const hidden = !chosen.has(main.id);
+      if (main.hidden === hidden) continue;
+      operations.push({
+        type: 'set', collection: 'categories', id: main.id, merge: true,
+        data: this._storedNode(main.id) ? { hidden } : { ...normalizeCategory({ id: main.id, name: '', source: 'builtin' }), source: 'builtin', hidden },
+      });
+    }
+    if (operations.length) await this._runRelational(operations);
+  }
+
+  /**
+   * Places the categories written before the hierarchy existed, once.
+   *
+   * Versioned and idempotent: it looks only for stored categories with no
+   * `level`, so a second run finds nothing to do, and a run interrupted half
+   * way resumes where it stopped (each category's records are written before
+   * the category itself is marked). Nothing is deleted:
+   *
+   *   • a category the catalog's explicit table maps to a built-in Category
+   *     (and the customer never renamed) has its records moved there — the
+   *     old id kept on each record as `legacyCategoryId` — and stays as a
+   *     retired record pointing at the built-in one;
+   *   • a category the table places under a Main Category stays, with its id
+   *     and name, as the customer's Category there, and its records gain that
+   *     Main Category;
+   *   • anything else stays, unchanged, under «تصنيفات سابقة».
+   *
+   * A record's `updatedAt` is left alone: filling in a derived field is not
+   * an edit.
+   */
+  async migrateTaxonomy() {
+    if (!this.backend || !this.canWrite()) return { categories: 0, items: 0 };
+    const legacy = this.state.categories.filter((c) => !c.level && !isBuiltinId(c.id) && c.id !== UNCATEGORIZED_ID);
+    if (!legacy.length) return { categories: 0, items: 0 };
+
+    let items = 0;
+    try {
+      for (const record of legacy) {
+        const placement = legacyPlacement(record);
+        const mergedToMain = placement.mergedInto && placement.mergedInto === placement.parentId;
+        let data;
+        if (mergedToMain) {
+          data = { mainCategoryId: placement.parentId, categoryId: UNCATEGORIZED_ID, subcategoryId: null, legacyCategoryId: record.id };
+        } else if (placement.mergedInto) {
+          data = { mainCategoryId: placement.parentId, categoryId: placement.mergedInto, legacyCategoryId: record.id };
+        } else {
+          data = { mainCategoryId: placement.parentId };
+        }
+        const affected = await this.itemsReferencing('categoryId', record.id);
+        const itemOps = affected.map((item) => ({
+          type: 'set', collection: 'items', id: item.id, merge: true, bumpVersion: true, preserveUpdatedAt: true, data,
+        }));
+        for (let i = 0; i < itemOps.length; i += ATOMIC_BULK_MAX) {
+          await this._runRelational(itemOps.slice(i, i + ATOMIC_BULK_MAX));
+        }
+        this._patchLoaded(affected, data);
+        items += affected.length;
+        await this._runRelational([{
+          type: 'set', collection: 'categories', id: record.id, merge: true,
+          data: {
+            level: LEVELS.CATEGORY,
+            parentId: placement.parentId,
+            source: 'custom',
+            taxonomyVersion: TAXONOMY_SCHEMA_VERSION,
+            ...(placement.mergedInto ? { mergedInto: placement.mergedInto, hidden: true } : {}),
+          },
+        }]);
+      }
+      await this.log(ACTIONS.TAXONOMY_MIGRATED, { items, categories: legacy.length });
+      await local.setMeta(TAXONOMY_MIGRATION_KEY, {
+        version: TAXONOMY_SCHEMA_VERSION, at: Date.now(), categories: legacy.length, items, notice: 'pending',
+      });
+    } catch (error) {
+      // Nothing is lost by stopping: the records not yet written still read
+      // correctly (the same placement rule applies on display), and the next
+      // start resumes.
+      console.error('[repo] classification migration stopped; it resumes on the next start', error);
+    }
+    return { categories: legacy.length, items };
+  }
+
+  /** Whether to show «طوّرنا التصنيفات…» — once, after an existing inventory was migrated. */
+  async taxonomyNotice() {
+    const state = await local.getMeta(TAXONOMY_MIGRATION_KEY, null);
+    return state?.notice === 'pending';
+  }
+
+  async dismissTaxonomyNotice() {
+    const state = await local.getMeta(TAXONOMY_MIGRATION_KEY, null);
+    if (state) await local.setMeta(TAXONOMY_MIGRATION_KEY, { ...state, notice: 'dismissed' });
   }
 
   // ── locations ──
@@ -2261,7 +2743,7 @@ class Repository {
    */
   async bulkUpdate(ids, patch, { versions = null } = {}) {
     this.assertCanWrite();
-    const allowed = new Set(['folderId', 'categoryId', 'locationId', 'condition', 'unit']);
+    const allowed = new Set(['folderId', 'mainCategoryId', 'categoryId', 'subcategoryId', 'locationId', 'condition', 'unit']);
     for (const key of Object.keys(patch)) {
       if (!allowed.has(key)) {
         throw new AppError('error.repo/bulk-field', { code: 'repo/bulk-field' });
@@ -2284,7 +2766,11 @@ class Repository {
       // stored, never from the copy this screen is holding.
       expectedVersion: versions?.get(item.id) ?? shown.get(item.id) ?? item.version ?? 1,
       bumpVersion: true,
-      data: { ...patch, updatedBy: this.session.userId },
+      // Each record's own classification decides what a new Main Category or
+      // Category leaves valid, so the patch is made canonical per record — and
+      // an invalid combination refuses the whole change before anything is
+      // written.
+      data: { ...this._classificationPatch(item, patch), updatedBy: this.session.userId },
     }));
 
     this.setSync(SyncState.SAVING);
@@ -2497,10 +2983,17 @@ class Repository {
   async bulkCreateItems(records, { log = true } = {}) {
     this.assertCanWrite();
     if (!records.length) return { created: 0, skippedExisting: [], processed: 0 };
-    const items = records.map((record) => normalizeItem(
-      { ...record, createdBy: this.session.userId, updatedBy: this.session.userId },
-      { userId: this.session.userId },
-    ));
+    const taxonomy = this.taxonomy();
+    const items = records.map((record) => {
+      const item = normalizeItem(
+        { ...record, createdBy: this.session.userId, updatedBy: this.session.userId },
+        { userId: this.session.userId },
+      );
+      // An import row is never refused for its classification: what does not
+      // fit the hierarchy keeps as much of it as does (see reconcileClassification).
+      Object.assign(item, reconcileClassification(taxonomy, item).value);
+      return item;
+    });
     this.setSync(SyncState.SAVING);
     // Create, never replace. An import's ids are deterministic so that a
     // chunk replayed after a crash lands on the same records — and a record
@@ -2569,7 +3062,7 @@ class Repository {
 
     const orphans = [];
     for (const [collection, field] of [
-      ['categories', 'categoryId'],
+      ['categories', null],
       ['locations', 'locationId'],
       ['folders', 'folderId'],
     ]) {
@@ -2578,9 +3071,24 @@ class Repository {
         // A row that is already gone is not one this run removed. Counting it
         // would make a second cancellation report work it did not do.
         if (!id || id === UNCATEGORIZED_ID || !present.has(id)) continue;
-        if (await this.countItemsReferencing(field, id)) continue;
+        const used = field ? await this.countItemsReferencing(field, id) : await this.taxonomyNodeUsage(id);
+        if (used) continue;
         orphans.push({ type: 'delete', collection, id });
       }
+    }
+    // A classification node stays while something below it stays: a Main
+    // Category the import made is kept if a Category under it is still in use.
+    const leaving = new Set(orphans.filter((op) => op.collection === 'categories').map((op) => op.id));
+    const taxonomy = this.taxonomy();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const id of [...leaving]) {
+        if (taxonomy.children(id).some((child) => !leaving.has(child.id))) { leaving.delete(id); changed = true; }
+      }
+    }
+    for (let i = orphans.length - 1; i >= 0; i -= 1) {
+      if (orphans[i].collection === 'categories' && !leaving.has(orphans[i].id)) orphans.splice(i, 1);
     }
     if (orphans.length) await this._runRelational(orphans);
 

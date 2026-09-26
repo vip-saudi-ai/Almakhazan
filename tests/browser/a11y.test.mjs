@@ -25,7 +25,7 @@ async function open(colorScheme) {
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 15000 });
   await page.evaluate(async () => {
     const { repository } = await import('/src/repository.js');
-    await repository.createItem({ name: 'ساعة جيب فضية', quantity: 1, unit: 'قطعة', categoryId: 'c1' });
+    await repository.createItem({ name: 'ساعة جيب فضية', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings' });
   });
   await page.waitForTimeout(400);
   return { page, context };
@@ -204,7 +204,7 @@ async function open(colorScheme) {
     const { repository } = await import('/src/repository.js');
     const now = Date.now();
     await repository.bulkWrite([{ type: 'set', collection: 'items', id: 'dk1', data: {
-      id: 'dk1', name: 'ساعة جيب', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [],
+      id: 'dk1', name: 'ساعة جيب', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', images: [],
       condition: 'جيدة', valuation: { min: 1000, max: 2000, currency: 'SAR' },
       createdAt: now, updatedAt: now, version: 1 } }]);
   });

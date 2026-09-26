@@ -29,7 +29,7 @@ const SEED = `
   ];
   await repository.bulkWrite(names.map((name, i) => ({
     type: 'set', collection: 'items', id: 'r' + i,
-    data: { id: 'r' + i, name, quantity: i + 1, unit: 'قطعة', categoryId: 'c1', images: [],
+    data: { id: 'r' + i, name, quantity: i + 1, unit: 'قطعة', categoryId: 'art_paintings', images: [],
       condition: i % 2 ? 'ممتازة' : 'جيدة',
       valuation: { min: 1500 * (i + 1), max: 999999 * (i + 1), currency: 'SAR' },
       createdAt: now - i * 1000, updatedAt: now - i * 1000, version: 1 } })));

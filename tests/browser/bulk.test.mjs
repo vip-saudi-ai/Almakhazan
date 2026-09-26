@@ -35,7 +35,7 @@ async function open({ bulk = true } = {}) {
     const now = Date.now();
     await repository.bulkWrite(['ساعة جيب', 'لوحة زيتية', 'خاتم ذهب', 'سيف عثماني'].map((name, i) => ({
       type: 'set', collection: 'items', id: 'b' + i,
-      data: { id: 'b' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [],
+      data: { id: 'b' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', images: [],
               createdAt: now - i * 1000, updatedAt: now, version: 1 },
     })));
     window.__folderId = folder.id;

@@ -2,11 +2,11 @@
 
 import { icon } from '../icons.js';
 import {
-  CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS, UNCATEGORIZED_ID,
+  CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS,
 } from '../config.js';
 import { aiAvailability, aiStatusLabel } from '../ai.js';
 import { LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
-import { categoryName, locationName, roleLabel } from '../labels.js';
+import { locationName, roleLabel } from '../labels.js';
 import {
   currentSession, registerWithEmail, sendPasswordReset,
   signInWithApple, signInWithEmail, signInWithGoogle, signOutUser,
@@ -19,7 +19,7 @@ import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
 } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
-import { queryInventory } from '../query.js';
+import { inventoryCounts, queryInventory } from '../query.js';
 import { storageEstimate } from '../local-store.js';
 import { openTeamSheet, openWorkspaceSheet } from './team.js';
 import { startSpreadsheetImport } from './sheet-import.js';
@@ -68,127 +68,318 @@ function applyExactCounts(root, group) {
   });
 }
 
-// ── categories ──
+// ── classification (Settings → التصنيفات) ──
+//
+// One screen, three depths: the Main Categories; the Categories of one; the
+// Subcategories of one Category. Every row can be reordered with buttons (not
+// only by dragging), hidden or shown, renamed; the customer's own rows can be
+// merged or deleted — never with records left pointing at nothing.
+
 let selectedCategoryIcon = '📦';
-let editingCategoryId = null;
+/** What the rename/new sheet is doing: { mode: 'rename'|'create', id?, level?, parentId? }. */
+let categorySheet = null;
+/** Where the management screen is. */
+const manager = { mainId: null, categoryId: null, fields: false };
+let managerCounts = { mains: new Map(), categories: new Map(), subs: new Map() };
+
+function countFor(node) {
+  const map = node.level === 'main' ? managerCounts.mains : node.level === 'sub' ? managerCounts.subs : managerCounts.categories;
+  return map?.get(node.id) || 0;
+}
+
+function managedRow(node, siblings, index) {
+  const taxonomy = repository.taxonomy();
+  const name = taxonomy.label(node);
+  const canWrite = repository.canWrite();
+  const drill = node.level === 'main' || (node.level === 'category' && (taxonomy.subcategories(node.id, { includeHidden: true }).length || canWrite));
+  const count = countFor(node);
+  const act = (label, aria, onClick, disabled = false) => el('button', {
+    type: 'button', class: 'tx-act', text: label, 'aria-label': aria, disabled: disabled || undefined, onClick,
+  });
+  const move = async (delta) => {
+    const ids = siblings.map((n) => n.id);
+    const [moved] = ids.splice(index, 1);
+    ids.splice(index + delta, 0, moved);
+    try { await repository.reorderTaxonomyNodes(ids); } catch (error) { toastError(error); }
+  };
+  return el('div', { class: 'tx-row', dataset: { node: node.id } }, [
+    el('button', {
+      type: 'button', class: 'tx-open', disabled: drill ? undefined : true,
+      'aria-label': drill ? t('taxonomy.open', { name }) : name,
+      onClick: () => {
+        if (node.level === 'main') { manager.mainId = node.id; manager.categoryId = null; }
+        else if (node.level === 'category') manager.categoryId = node.id;
+        renderCategories();
+        $('catgrid')?.querySelector('.tx-row .tx-open')?.focus();
+      },
+    }, [
+      el('span', { class: 'tax-ico', 'aria-hidden': 'true', text: taxonomy.icon(node) }),
+      el('span', {}, [
+        el('div', { class: 'tx-name', dir: 'auto', text: name }),
+        el('div', { class: 'tx-sub', text: t('taxonomy.itemsCount', { count }) }),
+      ]),
+      node.source === 'custom' ? el('span', { class: 'tx-badge', text: t('taxonomy.customBadge') }) : null,
+      node.hidden ? el('span', { class: 'tx-badge', text: t('taxonomy.hiddenBadge') }) : null,
+    ]),
+    canWrite ? el('div', { class: 'tx-acts' }, [
+      act('↑', t('taxonomy.moveUp', { name }), () => move(-1), index === 0),
+      act('↓', t('taxonomy.moveDown', { name }), () => move(1), index === siblings.length - 1),
+      act(node.hidden ? t('taxonomy.show') : t('taxonomy.hide'), t(node.hidden ? 'taxonomy.showAria' : 'taxonomy.hideAria', { name }),
+        async () => { try { await repository.setTaxonomyNodeHidden(node.id, !node.hidden); } catch (error) { toastError(error); } }),
+      node.level !== 'sub' ? el('button', {
+        type: 'button', class: 'tx-act', 'aria-pressed': String(node.pinned),
+        'aria-label': t(node.pinned ? 'taxonomy.unpin' : 'taxonomy.pin', { name }), text: node.pinned ? '★' : '☆',
+        onClick: async () => { try { await repository.setTaxonomyNodePinned(node.id, !node.pinned); } catch (error) { toastError(error); } },
+      }) : null,
+      act(t('taxonomy.rename'), t('taxonomy.renameAria', { name }), () => openCategorySheet({ mode: 'rename', id: node.id })),
+      node.source === 'custom' ? act(t('taxonomy.merge'), t('taxonomy.mergeAria', { name }), () => mergeFlow(node.id)) : null,
+      node.source === 'custom' ? act(t('taxonomy.delete'), t('taxonomy.deleteAria', { name }), () => deleteCategoryFlow(node.id)) : null,
+    ]) : null,
+  ]);
+}
+
+function managedList(nodes) {
+  return el('div', { class: 'sgroup' }, nodes.map((node, index) => managedRow(node, nodes, index)));
+}
 
 export function renderCategories() {
   const grid = $('catgrid');
   if (!grid) return;
-  // Drawn immediately from nothing and corrected a moment later by
-  // `applyExactCounts`, which asks the backend for an index range count per
-  // category. Drawing a number first and correcting it would flash a wrong
-  // one; drawing none and filling it in does not.
-  render(grid, [
-    ...repository.state.categories.map((category) => {
-      const count = 0;
-      return el('div', { class: 'catcell' }, [
-        el('button', {
-          class: 'catcell-main', type: 'button',
-          'aria-label': t('home.folderAria', { name: categoryName(category), items: t('count.items', { count }) }),
-          'data-count-label': category.id,
-          'data-count-name': categoryName(category),
-          onClick: () => { filterHomeByCategory(category.id); },
-        }, [
-          el('div', { class: 'catcico', text: category.icon, 'aria-hidden': 'true' }),
-          el('div', { class: 'catcname', dir: 'auto', text: categoryName(category) }),
-          el('div', { class: 'catccount', 'data-count-for': category.id, text: t('count.items', { count }) }),
-        ]),
-        repository.canWrite() ? el('div', { class: 'catcell-acts' }, [
-          el('button', {
-            class: 'catcell-act', type: 'button', 'aria-label': t('manage.editNamed', { name: categoryName(category) }),
-            onClick: () => openCategorySheet(category.id),
-          }, [icon('edit', { size: 15 })]),
-          el('button', {
-            class: 'catcell-act danger', type: 'button', 'aria-label': t('manage.deleteNamed', { name: categoryName(category) }),
-            onClick: () => deleteCategoryFlow(category.id),
-          }, [icon('trash', { size: 15 })]),
-        ]) : null,
-      ]);
-    }),
-    repository.canWrite() ? el('button', {
-      class: 'catcell catcell-add', type: 'button', onClick: () => openCategorySheet(),
-    }, [
-      el('div', { class: 'catcico' }, [icon('plus', { size: 20 })]),
-      el('div', { class: 'catcname', text: t('category.newTitle') }),
-    ]) : null,
+  // The old grid of category tiles is now a list with levels.
+  grid.className = 'tx-manager';
+  const taxonomy = repository.taxonomy();
+  if (manager.categoryId && !taxonomy.node(manager.categoryId)) manager.categoryId = null;
+  if (manager.mainId && !taxonomy.node(manager.mainId)) manager.mainId = null;
+  const canWrite = repository.canWrite();
+  const children = [];
+
+  if (manager.fields) {
+    render(grid, fieldsOverview());
+    return;
+  }
+  if (!manager.mainId) {
+    const all = taxonomy.mainCategories({ includeHidden: true });
+    const shown = all.filter((node) => !node.hidden);
+    const hidden = all.filter((node) => node.hidden);
+    children.push(el('h2', { class: 'cf-title', text: t('taxonomy.mains') }));
+    children.push(managedList(shown));
+    if (canWrite) children.push(el('button', { type: 'button', class: 'tax-add', text: t('taxonomy.addMain'), onClick: () => openCategorySheet({ mode: 'create', level: 'main' }) }));
+    if (hidden.length) {
+      children.push(el('h2', { class: 'cf-title', text: t('taxonomy.hidden') }));
+      children.push(managedList(hidden));
+    }
+  } else {
+    const main = taxonomy.node(manager.mainId);
+    const category = manager.categoryId ? taxonomy.node(manager.categoryId) : null;
+    children.push(el('button', {
+      type: 'button', class: 'tax-add', id: 'tx-back',
+      text: `‹ ${category ? taxonomy.label(main) : t('taxonomy.back')}`,
+      onClick: () => { if (manager.categoryId) manager.categoryId = null; else manager.mainId = null; renderCategories(); $('tx-back')?.focus(); },
+    }));
+    children.push(el('div', { class: 'tx-crumb', dir: 'auto', text: [main, category].filter(Boolean).map((n) => taxonomy.label(n)).join(' › ') }));
+    if (!category) {
+      const list = taxonomy.categories(main.id, { includeHidden: true });
+      children.push(el('h2', { class: 'cf-title', text: t('taxonomy.categories') }));
+      if (list.length) children.push(managedList(list));
+      else children.push(el('p', { class: 'tax-empty', text: t('taxonomy.emptyCategories') }));
+      if (canWrite) children.push(el('button', { type: 'button', class: 'tax-add', text: t('taxonomy.addCategory'), onClick: () => openCategorySheet({ mode: 'create', level: 'category', parentId: main.id }) }));
+    } else {
+      const list = taxonomy.subcategories(category.id, { includeHidden: true });
+      children.push(el('h2', { class: 'cf-title', text: t('taxonomy.subcategories') }));
+      if (list.length) children.push(managedList(list));
+      if (canWrite) children.push(el('button', { type: 'button', class: 'tax-add', text: t('taxonomy.addSubcategory'), onClick: () => openCategorySheet({ mode: 'create', level: 'sub', parentId: category.id }) }));
+      children.push(savedFieldsBlock(category));
+    }
+  }
+  render(grid, children);
+  void inventoryCounts().then((counts) => {
+    managerCounts = { mains: counts.mains || new Map(), categories: counts.categories || new Map(), subs: counts.subs || new Map() };
+    for (const row of grid.querySelectorAll('[data-node]')) {
+      const node = repository.taxonomy().node(row.dataset.node);
+      const sub = row.querySelector('.tx-sub');
+      if (node && sub) sub.textContent = t('taxonomy.itemsCount', { count: countFor(node) });
+    }
+  }).catch(() => {});
+}
+
+/** The fields the customer saved to a Category, with a way to take one off. */
+function savedFieldsBlock(category) {
+  const fields = repository.taxonomy().savedFields(category.id);
+  return el('div', {}, [
+    el('h2', { class: 'cf-title', text: t('taxonomy.savedFields') }),
+    fields.length ? el('div', { class: 'sgroup' }, fields.map((def) => el('div', { class: 'tx-row' }, [
+      el('span', { class: 'tx-open' }, [el('span', { class: 'tx-name', dir: 'auto', text: def.label }), el('span', { class: 'tx-sub', text: t(`fieldType.${def.type}`) })]),
+      repository.canWrite() ? el('button', {
+        type: 'button', class: 'tx-act', text: t('fields.removeValue'), 'aria-label': t('taxonomy.removeSavedField', { name: def.label }),
+        onClick: async () => {
+          try { await repository.saveTaxonomyNodeFields(category.id, fields.filter((f) => f.id !== def.id)); } catch (error) { toastError(error); }
+        },
+      }) : null,
+    ]))) : el('p', { class: 'tax-empty', text: t('taxonomy.noSavedFields') }),
   ]);
-  applyExactCounts(grid, 'categories');
 }
 
-/** Jumps to the inventory tab showing only this category, across all folders. */
-function filterHomeByCategory(categoryId) {
-  homeView.folderId = null;
-  homeView.categoryPill = categoryId;
-  homeView.page = 1;
-  goTab('home');
-  renderHome();
+/** Opens Settings → التصنيفات, optionally on one node's list. */
+export function openClassificationManager({ mainId = null, fields = false } = {}) {
+  manager.mainId = mainId;
+  manager.categoryId = null;
+  manager.fields = fields;
+  goTab('cats');
 }
 
-export function openCategorySheet(categoryId = null) {
-  editingCategoryId = categoryId;
-  const category = categoryId ? repository.state.categories.find((c) => c.id === categoryId) : null;
-  selectedCategoryIcon = category?.icon || '📦';
+/** «الحقول المخصصة»: every node that carries saved fields, and the way to each. */
+function fieldsOverview() {
+  const taxonomy = repository.taxonomy();
+  const withFields = taxonomy.storedNodes().filter((node) => node.fields.length && !node.mergedInto);
+  return [
+    el('button', { type: 'button', class: 'tax-add', id: 'tx-back', text: `‹ ${t('taxonomy.back')}`, onClick: () => { manager.fields = false; renderCategories(); $('tx-back')?.focus(); } }),
+    el('h2', { class: 'cf-title', text: t('taxonomy.customFields') }),
+    withFields.length ? el('div', { class: 'sgroup' }, withFields.map((node) => el('div', { class: 'tx-row' }, [
+      el('button', {
+        type: 'button', class: 'tx-open', 'aria-label': t('taxonomy.open', { name: taxonomy.label(node) }),
+        onClick: () => {
+          manager.fields = false;
+          const main = taxonomy.mainOf(node);
+          manager.mainId = main?.id || null;
+          manager.categoryId = node.level === 'category' ? node.id : null;
+          renderCategories();
+        },
+      }, [
+        el('span', { class: 'tax-ico', 'aria-hidden': 'true', text: taxonomy.icon(node) }),
+        el('span', {}, [
+          el('div', { class: 'tx-name', dir: 'auto', text: taxonomy.breadcrumb({ categoryId: node.level === 'category' ? node.id : null, mainCategoryId: node.level === 'main' ? node.id : taxonomy.mainOf(node)?.id }) }),
+          el('div', { class: 'tx-sub', text: node.fields.map((def) => def.label).join(t('common.listSeparator')) }),
+        ]),
+      ]),
+    ]))) : el('p', { class: 'tax-empty', text: t('taxonomy.noCustomFields') }),
+  ];
+}
 
-  setText('cat-sheet-title', category ? t('category.editTitle') : t('category.newTitle'));
-  $('cat-name').value = category?.name || '';
-  renderIconPicker($('caticolist'), CAT_ICONS, selectedCategoryIcon, (icon) => {
-    selectedCategoryIcon = icon;
-  });
+/**
+ * The rename / new-node sheet. A built-in node's rename is a local display
+ * name; clearing it goes back to the built-in label.
+ */
+export function openCategorySheet(options = null) {
+  const taxonomy = repository.taxonomy();
+  categorySheet = options?.mode ? options : { mode: 'create', level: manager.categoryId ? 'sub' : manager.mainId ? 'category' : 'main', parentId: manager.categoryId || manager.mainId };
+  const node = categorySheet.mode === 'rename' ? taxonomy.node(categorySheet.id) : null;
+  selectedCategoryIcon = node?.icon || '📦';
+  setText('cat-sheet-title', node ? t('taxonomy.renameTitle') : t(categorySheet.level === 'main' ? 'taxonomy.addMain' : categorySheet.level === 'sub' ? 'taxonomy.addSubcategory' : 'taxonomy.addCategory').replace(/^\+\s*/, ''));
+  $('cat-name').value = node ? (node.source === 'builtin' ? node.name : taxonomy.label(node)) : '';
+  $('cat-name').placeholder = node?.source === 'builtin' ? taxonomy.defaultLabel(node) : t('category.namePlaceholder');
+  const hint = $('cat-hint');
+  if (hint) hint.textContent = node?.source === 'builtin' ? t('taxonomy.renameBuiltinHint', { name: taxonomy.defaultLabel(node) }) : '';
+  // Icons belong to Main Categories the customer creates; a built-in keeps its own.
+  const iconsVisible = categorySheet.mode === 'create' && categorySheet.level === 'main';
+  $('caticolist').style.display = iconsVisible ? '' : 'none';
+  $('caticolist').previousElementSibling.style.display = iconsVisible ? '' : 'none';
+  renderIconPicker($('caticolist'), CAT_ICONS, selectedCategoryIcon, (picked) => { selectedCategoryIcon = picked; });
   openSheet('cat', { focus: '#cat-name' });
 }
 
 async function saveCategory() {
   const name = $('cat-name').value.trim();
-  if (!name) { toast(t('category.nameRequired'), '⚠'); return; }
+  const sheet = categorySheet || { mode: 'create', level: 'category', parentId: 'other' };
   try {
-    await repository.saveCategory({ id: editingCategoryId || undefined, name, icon: selectedCategoryIcon });
-    toast(editingCategoryId ? t('manage.updated') : t('manage.added'), '✓');
+    if (sheet.mode === 'rename') {
+      await repository.renameTaxonomyNode(sheet.id, name);
+      toast(t('manage.updated'), '✓');
+    } else {
+      if (!name) { toast(t('taxonomy.error.nameRequired'), '⚠'); return; }
+      await repository.createTaxonomyNode({
+        level: sheet.level, parentId: sheet.parentId, name,
+        icon: sheet.level === 'main' ? selectedCategoryIcon : null,
+      });
+      toast(t('taxonomy.created', { name }), '✓');
+    }
     closeSheet('cat');
   } catch (error) {
     toastError(error, 'category.saveFailed');
   }
 }
 
-async function deleteCategoryFlow(categoryId) {
-  const category = repository.state.categories.find((c) => c.id === categoryId);
-  const usage = await repository.categoryUsage(categoryId);
+/** Same-level nodes a node could merge into, or its records move to. */
+function sameLevelTargets(node) {
+  const taxonomy = repository.taxonomy();
+  if (node.level === 'main') return taxonomy.mainCategories({ includeHidden: true }).filter((n) => n.id !== node.id);
+  if (node.level === 'sub') return taxonomy.subcategories(node.parentId, { includeHidden: true }).filter((n) => n.id !== node.id);
+  return taxonomy.allCategories({ includeHidden: true }).filter((n) => n.id !== node.id);
+}
+
+function targetLabel(node) {
+  const taxonomy = repository.taxonomy();
+  if (node.level !== 'category') return `${taxonomy.icon(node)} ${taxonomy.label(node)}`;
+  return `${taxonomy.label(taxonomy.mainOf(node))} › ${taxonomy.label(node)}`;
+}
+
+async function mergeFlow(nodeId) {
+  const taxonomy = repository.taxonomy();
+  const node = taxonomy.node(nodeId);
+  const targets = sameLevelTargets(node);
+  if (!targets.length) { toast(t('taxonomy.noMergeTarget'), '⚠'); return; }
+  const usage = await repository.taxonomyNodeUsage(nodeId);
+  const name = taxonomy.label(node);
+  optionList($('reassign-target'), targets.map((target) => ({ value: target.id, label: targetLabel(target) })), targets[0].id);
+  setText('reassign-title', t('taxonomy.mergeTitle'));
+  setText('reassign-message', t('taxonomy.mergeMessage', { name, count: usage }));
+  $('reassign-confirm').textContent = t('taxonomy.mergeConfirm');
+  $('reassign-confirm').onclick = async () => {
+    try {
+      await repository.mergeTaxonomyNodes(nodeId, $('reassign-target').value);
+      closeSheet('reassign');
+      toast(t('taxonomy.mergeDone', { name }), '✓');
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  openSheet('reassign');
+}
+
+/**
+ * Deleting one of the customer's own nodes. Unused: a plain confirmation. In
+ * use: «يستخدم هذا الصنف في {count} قطعة» with three ways on — move the
+ * records to another Category, delete and leave them without one, or keep it.
+ */
+async function deleteCategoryFlow(nodeId) {
+  const taxonomy = repository.taxonomy();
+  const node = taxonomy.node(nodeId);
+  if (!node) return;
+  const name = taxonomy.label(node);
+  const usage = await repository.taxonomyNodeUsage(nodeId);
 
   if (!usage) {
     const confirmed = await confirmAction({
-      // categoryName() localises a seeded category, so it is asked again on a switch.
-      title: () => t('category.deleteConfirm', { name: categoryName(category) }),
-      messageKey: 'category.deleteEmpty',
+      title: () => t('taxonomy.deleteConfirmTitle', { name }),
+      messageKey: 'taxonomy.deleteUnused',
       icon: '◈',
       confirmLabelKey: 'common.delete',
     });
     if (!confirmed) return;
     try {
-      await repository.deleteCategory(categoryId, 'uncategorize');
-      toast(t('category.deletedToast'), '✓');
+      await repository.deleteTaxonomyNode(nodeId, 'uncategorize');
+      toast(t('taxonomy.deleted', { name }), '✓');
     } catch (error) {
       toastError(error, 'category.deleteFailed');
     }
     return;
   }
+  if (node.level === 'main') { toast(t('taxonomy.error.mainInUse'), '⚠'); return; }
 
-  // Referential integrity: the user chooses where the affected items go.
-  const alternatives = repository.state.categories.filter((c) => c.id !== categoryId);
+  const targets = sameLevelTargets(node);
   optionList($('reassign-target'), [
-    { value: '__uncategorized__', label: `📦 ${t('category.moveToUncategorized', { name: t('category.uncategorized') })}` },
-    ...alternatives.map((c) => ({ value: c.id, label: `↳ ${c.icon} ${categoryName(c)}` })),
-  ], '__uncategorized__');
-
-  setText('reassign-title', t('category.reassignTitle', { name: categoryName(category) }));
-  setText('reassign-message', t('category.reassignMessage', { count: usage }));
-
+    { value: '__none__', label: t('taxonomy.removeFromItems') },
+    ...targets.map((target) => ({ value: target.id, label: `↳ ${targetLabel(target)}` })),
+  ], targets.length ? targets[0].id : '__none__');
+  setText('reassign-title', t('taxonomy.deleteConfirmTitle', { name }));
+  setText('reassign-message', `${t(node.level === 'sub' ? 'taxonomy.inUseSub' : 'taxonomy.inUse', { count: usage })} ${t('taxonomy.moveItems')} — ${t('taxonomy.keep')}: ${t('common.cancel')}`);
+  $('reassign-confirm').textContent = t('category.deleteAndMove');
   $('reassign-confirm').onclick = async () => {
     const target = $('reassign-target').value;
     try {
-      const moved = await repository.deleteCategory(
-        categoryId,
-        target === '__uncategorized__' ? 'uncategorize' : 'reassign',
-        target === '__uncategorized__' ? null : target,
+      const moved = await repository.deleteTaxonomyNode(
+        nodeId,
+        target === '__none__' ? 'uncategorize' : 'reassign',
+        target === '__none__' ? null : target,
       );
       closeSheet('reassign');
       toast(t('category.deletedMoved', { count: moved }), '✓');
@@ -710,6 +901,7 @@ export function renderSettings() {
   renderAuthPanel();
   renderPlanPanel();
   renderAiPanel();
+  renderClassificationPanel();
   renderDataPanel();
   renderMigrationPanel();
   renderLegalPanel();
@@ -1043,6 +1235,46 @@ async function describeDeviceStorage() {
   }
 }
 
+/**
+ * Settings → التصنيفات: manage the hierarchy, see the fields saved to it, and
+ * put the built-in library back the way it shipped. Three rows, no more.
+ */
+function renderClassificationPanel() {
+  const panel = $('classification-panel');
+  if (!panel) return;
+  const row = (glyph, background, title, subtitle, onClick) => el('button', { class: 'srow srow-btn', type: 'button', onClick }, [
+    el('div', { class: 'srowiw', style: { background }, text: glyph, 'aria-hidden': 'true' }),
+    el('div', { style: { flex: '1' } }, [
+      el('div', { class: 'srowl', text: title }),
+      el('div', { class: 'srowd', text: subtitle }),
+    ]),
+    el('div', { class: 'srowc', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
+  ]);
+  const savedCount = repository.taxonomy().storedNodes().reduce((sum, node) => sum + node.fields.length, 0);
+  render(panel, [
+    row('◈', 'rgba(99,102,241,.15)', t('taxonomy.manage'), t('taxonomy.manageSub'), () => openClassificationManager()),
+    row('✎', 'rgba(52,199,89,.15)', t('taxonomy.customFields'), t('taxonomy.fieldsIn', { count: savedCount }), () => openClassificationManager({ fields: true })),
+    repository.canWrite() ? row('↺', 'rgba(255,149,0,.15)', t('taxonomy.restoreDefaults'), t('taxonomy.restoreDefaultsSub'), restoreDefaultsFlow) : null,
+  ]);
+}
+
+async function restoreDefaultsFlow() {
+  const confirmed = await confirmAction({
+    titleKey: 'taxonomy.restoreConfirmTitle',
+    messageKey: 'taxonomy.restoreConfirm',
+    icon: '↺',
+    confirmLabelKey: 'taxonomy.restoreDefaults',
+    tone: 'neutral',
+  });
+  if (!confirmed) return;
+  try {
+    await repository.restoreDefaultTaxonomy();
+    toast(t('taxonomy.restoreDone'), '✓');
+  } catch (error) {
+    toastError(error);
+  }
+}
+
 function renderDataPanel() {
   const panel = $('data-panel');
   if (!panel) return;
@@ -1067,8 +1299,6 @@ function renderDataPanel() {
   ]);
 
   render(panel, [
-    // Categories lost their tab to the assistant; they live here now.
-    row('◈', 'rgba(99,102,241,.15)', t('settings.taxonomy'), t('settings.taxonomySub'), () => goTab('cats')),
     // Device-only mode has no members and no other workspace to move to, so
     // these are absent rather than present and refusing.
     cloudSession && isFeatureAvailable(Feature.TEAM) ? row('👥', 'rgba(37,99,255,.15)', t('team.title'), t('settings.teamSub'), openTeamSheet) : null,
@@ -1255,5 +1485,6 @@ export function bindManageViews() {
   $('cats-back')?.addEventListener('click', () => goTab('set'));
   window.addEventListener('almakhzan:start-import', startImport);
   window.addEventListener('almakhzan:new-folder', () => openFolderSheet());
+  window.addEventListener('almakhzan:open-classification', () => openClassificationManager());
   window.addEventListener('almakhzan:edit-folder', (event) => openFolderSheet(event.detail));
 }

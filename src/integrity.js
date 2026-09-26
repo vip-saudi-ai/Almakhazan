@@ -15,6 +15,7 @@
 // costs a walk rather than a copy of it.
 
 import { UNCATEGORIZED_ID } from './config.js';
+import { buildTaxonomy } from './taxonomy.js';
 import { isCurrencyCode } from './config.js';
 import * as local from './local-store.js';
 
@@ -40,7 +41,14 @@ export async function checkIntegrity({ onProgress } = {}) {
   ]);
 
   const folderIds = new Set(folders.map((f) => f.id));
-  const categoryIds = new Set(categories.map((c) => c.id));
+  // Built-in classification ids live in the bundle, not in the store.
+  const taxonomy = buildTaxonomy(categories);
+  for (const node of taxonomy.nodes.values()) {
+    if (node.orphan) {
+      findings.push(finding('warning', 'orphan-classification',
+        'تصنيف مخصص بلا أصل', { categoryId: node.id }));
+    }
+  }
   const locationIds = new Set(locations.map((l) => l.id));
   const assetById = new Map(mediaAssets.map((a) => [a.id, a]));
   const referencedMedia = new Map();
@@ -64,9 +72,15 @@ export async function checkIntegrity({ onProgress } = {}) {
           findings.push(finding('error', 'dangling-location',
             'سجل يشير إلى موقع غير موجود', { itemId: item.id, locationId: item.locationId }));
         }
-        if (item.categoryId && item.categoryId !== UNCATEGORIZED_ID && !categoryIds.has(item.categoryId)) {
+        if (item.categoryId && item.categoryId !== UNCATEGORIZED_ID && !taxonomy.resolve(item.categoryId)) {
           findings.push(finding('error', 'dangling-category',
             'سجل يشير إلى تصنيف غير موجود', { itemId: item.id, categoryId: item.categoryId }));
+        }
+        // The three levels must agree. A missing Subcategory is not a finding.
+        const classification = { mainCategoryId: item.mainCategoryId, categoryId: item.categoryId, subcategoryId: item.subcategoryId };
+        if ((item.mainCategoryId || item.subcategoryId) && !taxonomy.check(classification).ok) {
+          findings.push(finding('warning', 'invalid-classification',
+            'تصنيف القطعة غير متسق', { itemId: item.id, ...classification }));
         }
 
         // ── images ──

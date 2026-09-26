@@ -78,7 +78,7 @@ const seed = (page) => page.evaluate(async () => {
   const { repository } = await import('/src/repository.js');
   const made = [];
   for (const [name, sku] of [['Pocket watch', 'W-1'], ['Oil painting', 'P-1'], ['Brass lamp', 'L-1']]) {
-    made.push(await repository.createItem({ name, sku, quantity: 1, categoryId: 'c1', locationId: 'l1', condition: 'ممتازة' }));
+    made.push(await repository.createItem({ name, sku, quantity: 1, categoryId: 'art_paintings', locationId: 'l1', condition: 'ممتازة' }));
   }
   return made.map((item) => item.id);
 });
@@ -256,7 +256,7 @@ const ids = await seed(page);
     const row = await local.get('items', id);
     return { name: row.name, condition: row.condition, categoryId: row.categoryId };
   }, ids[0]);
-  check('I22 switching language changes nothing stored', stored.name === 'Pocket watch' && stored.condition === 'ممتازة' && stored.categoryId === 'c1', JSON.stringify(stored));
+  check('I22 switching language changes nothing stored', stored.name === 'Pocket watch' && stored.condition === 'ممتازة' && stored.categoryId === 'art_paintings', JSON.stringify(stored));
 
   const activity = await page.evaluate(async () => {
     const { repository } = await import('/src/repository.js');

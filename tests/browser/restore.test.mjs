@@ -30,7 +30,7 @@ async function freshPage() {
     const now = Date.now();
     await repository.bulkWrite(['ساعة جيب', 'لوحة زيتية', 'خاتم ذهب', 'سيف عثماني'].map((name, i) => ({
       type: 'set', collection: 'items', id: 'old' + i,
-      data: { id: 'old' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'c1',
+      data: { id: 'old' + i, name, quantity: 1, unit: 'قطعة', categoryId: 'art_paintings',
               images: [], createdAt: now - i * 1000, updatedAt: now, version: 1 },
     })));
   });
@@ -40,8 +40,8 @@ async function freshPage() {
 
 const INCOMING = {
   items: [
-    { id: 'new1', name: 'قطعة مستعادة أولى', quantity: 1, unit: 'قطعة', categoryId: 'c1', images: [], version: 1 },
-    { id: 'new2', name: 'قطعة مستعادة ثانية', quantity: 2, unit: 'قطعة', categoryId: 'c1', images: [], version: 1 },
+    { id: 'new1', name: 'قطعة مستعادة أولى', quantity: 1, unit: 'قطعة', categoryId: 'art_paintings', images: [], version: 1 },
+    { id: 'new2', name: 'قطعة مستعادة ثانية', quantity: 2, unit: 'قطعة', categoryId: 'art_paintings', images: [], version: 1 },
   ],
   folders: [], categories: [], locations: [],
 };
@@ -157,6 +157,9 @@ const names = (page) => page.evaluate(async () => {
     const { restoreFromBackup } = await import('/src/restore.js');
     const { repository } = await import('/src/repository.js');
     const existing = repository.liveItems().find(i => i.id === 'old0');
+    // The built-in classification needs no stored record; a node of the
+    // customer's own does, and is what a backup must carry through.
+    await repository.createTaxonomyNode({ level: 'category', parentId: 'art_collectibles', name: 'ساعات جيب' });
     // Carry the taxonomy through, so this isolates what happens to items.
     const data = {
       items: [{ ...existing, name: 'ساعة جيب (محدّثة)' }],

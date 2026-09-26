@@ -60,6 +60,9 @@ export function currencySymbol(code) {
  *  the customer has not renamed them; everything else exactly as written. */
 export function categoryName(category) {
   if (!category) return '';
+  // Already resolved through the classification service (repository.category):
+  // its name is the label in the current language.
+  if (category.resolved) return category.name || '';
   if (category.id === UNCATEGORIZED_ID) return t('category.uncategorized');
   if (DEFAULT_CATEGORY_NAME.get(category.id) === category.name) return t(`category.${category.id}`);
   return category.name || '';
