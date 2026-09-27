@@ -5,10 +5,11 @@ import { CHART_COLORS, CONDITIONS, CONDITION_COLORS } from '../config.js';
 import { t } from '../i18n.js';
 import { actionLabel, activityDetail, conditionLabel, currencySymbol } from '../labels.js';
 import { repository } from '../repository.js';
-import { totalsByCurrency } from '../money.js';
+import { NONE } from '../aggregates.js';
+import { queryInventory } from '../query.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import { $, el, formatCompact, formatNumber, render, timeAgo } from '../utils.js';
-import { formatValuation, primaryImage, valuationMidpoint } from '../validation.js';
+import { formatValuation, primaryImage } from '../validation.js';
 import { emptyState, section } from '../ui.js';
 import { openDetail } from './detail.js';
 import { enterFolder } from './home.js';
@@ -48,31 +49,55 @@ function itemThumbNode(item) {
   return el('div', { class: 'ov-item-thumb' }, [img]);
 }
 
-export function renderOverview() {
+let renderToken = 0;
+
+/**
+ * The Overview reads the inventory's aggregate (repository.getInventoryOverview)
+ * — the same numbers whether the device keeps them or, later, a server does —
+ * and never the records themselves. Only the five highest-valued records are
+ * fetched, through an ordinary query of five rows.
+ */
+export async function renderOverview() {
   const scroll = $('ov-scroll');
   if (!scroll) return;
+  const token = ++renderToken;
 
-  const items = repository.liveItems();
-  if (!items.length) {
+  let overview;
+  try {
+    overview = await repository.getInventoryOverview();
+  } catch (error) {
+    console.error('[overview] aggregate unavailable', error);
+    overview = null;
+  }
+  if (token !== renderToken) return;
+  if (!overview || !overview.totalItems) {
     render(scroll, [emptyState('📊', t('overview.emptyTitle'), t('overview.emptySub'))]);
     return;
   }
 
-  const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
-  const analyzed = items.filter((i) => i.aiData).length;
-  const valued = items.filter((i) => i.valuation).length;
-  const categories = new Set(items.map((i) => i.categoryId).filter((id) => id && id !== 'uncategorized')).size;
-  const totals = totalsByCurrency(items);
+  const records = overview.totalItems;
+  const totalQuantity = overview.totalQuantity;
+  const analyzed = overview.analyzedCount;
+  const valued = overview.valuedCount;
+  const categories = Object.keys(overview.byCategory).filter((id) => id !== NONE && id !== 'uncategorized').length;
+  const totals = overview.valuationByCurrency;
   const primaryTotal = totals[0];
+
+  // The five highest-valued records in the dominant currency: an index read of
+  // five rows, not a sort of every priced record.
+  const ranked = primaryTotal
+    ? ((await queryInventory({ sort: 'value-high', filters: { currency: primaryTotal.currency }, perPage: 5 }))?.rows || [])
+    : [];
+  if (token !== renderToken) return;
 
   const blocks = [];
 
   // ── KPIs ──
   blocks.push(el('div', { class: 'ov-kpi-grid' }, [
-    kpi('📦', formatNumber(items.length), t('overview.records'),
+    kpi('📦', formatNumber(records), t('overview.records'),
       `${t('overview.folders', { count: repository.state.folders.length })} · ${t('overview.categories', { count: categories })}`, 'var(--blue)'),
     kpi('🔢', formatNumber(totalQuantity), t('overview.totalQuantity'),
-      t('overview.average', { value: formatNumber(totalQuantity / items.length, { maximumFractionDigits: 1, minimumFractionDigits: 1 }) }), 'var(--purple)'),
+      t('overview.average', { value: formatNumber(totalQuantity / records, { maximumFractionDigits: 1, minimumFractionDigits: 1 }) }), 'var(--purple)'),
     // One tile cannot hold three currencies, and picking the biggest and
     // calling it "the total" would be the lie this whole module avoids. The
     // tile names its own currency and says how many others there are; the
@@ -84,7 +109,7 @@ export function renderOverview() {
         ? t('overview.otherCurrencies', { count: totals.length - 1 })
         : t('overview.valuedRecords', { count: valued }), 'var(--green)'),
     kpi('✦', formatNumber(analyzed), t('overview.analyzed'),
-      t('overview.percentOfRecords', { percent: formatNumber(analyzed / items.length, { style: 'percent' }) }), 'var(--teal)'),
+      t('overview.percentOfRecords', { percent: formatNumber(analyzed / records, { style: 'percent' }) }), 'var(--teal)'),
   ]));
 
   // ── valuation by currency ──
@@ -104,9 +129,9 @@ export function renderOverview() {
 
   // ── condition distribution ──
   const conditionCounts = CONDITIONS
-    .map((condition) => ({ condition, count: items.filter((i) => i.condition === condition).length }))
+    .map((condition) => ({ condition, count: overview.byCondition[condition] || 0 }))
     .filter((entry) => entry.count > 0);
-  const unspecified = items.filter((i) => !i.condition).length;
+  const unspecified = overview.byCondition[NONE] || 0;
 
   if (conditionCounts.length || unspecified) {
     blocks.push(section(t('overview.conditions'), [
@@ -124,15 +149,20 @@ export function renderOverview() {
   }
 
   // ── by Main Category, then by Category ──
-  // One pass over the records, counting each against its resolved path.
+  // The aggregate counts stored ids; a merged node's count is added to the
+  // node it was merged into, as the records themselves are read.
   const taxonomy = repository.taxonomy();
-  const byMain = new Map();
-  const byCategory = new Map();
-  for (const item of items) {
-    const { main, category } = taxonomy.path(item);
-    if (main) byMain.set(main.id, (byMain.get(main.id) || 0) + 1);
-    if (category) byCategory.set(category.id, (byCategory.get(category.id) || 0) + 1);
-  }
+  const resolved = (counts) => {
+    const out = new Map();
+    for (const [id, count] of Object.entries(counts)) {
+      if (id === NONE) continue;
+      const node = taxonomy.resolve(id);
+      if (node) out.set(node.id, (out.get(node.id) || 0) + count);
+    }
+    return out;
+  };
+  const byMain = resolved(overview.byMainCategory);
+  const byCategory = resolved(overview.byCategory);
   const statsOf = (counts) => [...counts.entries()]
     .map(([id, count]) => ({ node: taxonomy.node(id), count }))
     .filter((entry) => entry.node)
@@ -151,7 +181,7 @@ export function renderOverview() {
 
   // ── folders ──
   const folderStats = repository.state.folders
-    .map((folder) => ({ folder, count: items.filter((i) => i.folderId === folder.id).length }))
+    .map((folder) => ({ folder, count: overview.byFolder[folder.id] || 0 }))
     .filter((entry) => entry.count > 0)
     .sort((a, b) => b.count - a.count);
 
@@ -175,11 +205,7 @@ export function renderOverview() {
   }
 
   // ── top valued (within the dominant currency, so the ranking is meaningful) ──
-  if (primaryTotal) {
-    const ranked = items
-      .filter((i) => i.valuation?.currency === primaryTotal.currency)
-      .sort((a, b) => valuationMidpoint(b.valuation) - valuationMidpoint(a.valuation))
-      .slice(0, 5);
+  if (primaryTotal && ranked.length) {
     const medals = ['🥇', '🥈', '🥉'];
     const rankClasses = ['gold', 'silver', 'bronze'];
 
@@ -199,18 +225,16 @@ export function renderOverview() {
   }
 
   // ── AI summary ──
-  const withLocal = items.filter((i) => i.aiData?.localScore != null);
-  const withGlobal = items.filter((i) => i.aiData?.globalScore != null);
-  if (withLocal.length) {
-    const avgLocal = withLocal.reduce((s, i) => s + i.aiData.localScore, 0) / withLocal.length;
-    const avgGlobal = withGlobal.length
-      ? withGlobal.reduce((s, i) => s + i.aiData.globalScore, 0) / withGlobal.length
-      : null;
+  const withLocal = overview.aiLocal;
+  const withGlobal = overview.aiGlobal;
+  if (withLocal.count) {
+    const avgLocal = withLocal.average;
+    const avgGlobal = withGlobal.count ? withGlobal.average : null;
 
     blocks.push(section(t('overview.aiSummary'), [
       el('div', { class: 'ov-kpi-grid' }, [
-        kpi('🏠', `${formatNumber(avgLocal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.localAverage'), t('overview.recordCount', { count: withLocal.length }), 'var(--teal)'),
-        avgGlobal !== null ? kpi('🌍', `${formatNumber(avgGlobal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.globalAverage'), t('overview.recordCount', { count: withGlobal.length }), 'var(--purple)') : null,
+        kpi('🏠', `${formatNumber(avgLocal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.localAverage'), t('overview.recordCount', { count: withLocal.count }), 'var(--teal)'),
+        avgGlobal !== null ? kpi('🌍', `${formatNumber(avgGlobal, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/10`, t('overview.globalAverage'), t('overview.recordCount', { count: withGlobal.count }), 'var(--purple)') : null,
       ]),
       el('div', { class: 'ov-note', text: t('overview.aiNote') }),
     ]));

@@ -76,6 +76,17 @@ function hideOverlay() {
   overlay = null;
 }
 
+/** The same box, for another long operation (an export) and its progress line. */
+export function showProgress(text) {
+  showOverlay();
+  const node = $('loadtext');
+  if (node) node.textContent = text;
+}
+
+export function hideProgress() {
+  hideOverlay();
+}
+
 /**
  * Ensures `repository.state.items` is the whole inventory.
  *

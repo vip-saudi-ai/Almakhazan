@@ -58,8 +58,10 @@ function toExcelSerial(date) {
  * as an inline string cell, which Excel, Numbers and LibreOffice display as
  * text and never evaluate — so an item called "=HYPERLINK(…)" or "-5% lot"
  * arrives exactly as typed, neither executed nor rewritten with a leading
- * quote. There is deliberately no CSV export, where that guarantee would not
- * hold. tests/unit/release.test.mjs pins this.
+ * quote. CSV has no such cell type, so the CSV export (export-service.js)
+ * prefixes formula-like text with an apostrophe instead — the OWASP rule —
+ * and is offered for inventories too large to build this way.
+ * tests/unit/release.test.mjs pins this writer's behaviour.
  */
 function sheetXml(sheet) {
   const rows = sheet.rows.map((cells, rowIndex) => {

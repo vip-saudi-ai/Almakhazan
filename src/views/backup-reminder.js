@@ -16,7 +16,8 @@ export function refreshBackupReminder() {
   checking = (async () => {
     try {
       const counts = await repository.recordCounts().catch(() => null);
-      const liveCount = counts?.live ?? repository.liveItems().length;
+      // Never the window's length: that is a fraction of the inventory.
+      const liveCount = counts?.live ?? (await repository.getInventoryOverview().catch(() => null))?.totalItems ?? 0;
       due = await backupReminderDue({ liveCount });
       await paint();
     } finally {

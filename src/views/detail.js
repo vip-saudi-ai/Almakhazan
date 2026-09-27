@@ -5,6 +5,7 @@ import { onLanguageChange, t } from '../i18n.js';
 import { conditionLabel, locationName, unitLabel } from '../labels.js';
 import { fieldRows } from '../field-format.js';
 import { repository } from '../repository.js';
+import { NONE } from '../aggregates.js';
 import { ImageTier, bindImageSrc } from '../storage.js';
 import { openImageViewer } from './image-viewer.js';
 import { $, el, formatDate, formatNumber, render, setText } from '../utils.js';
@@ -322,15 +323,13 @@ export async function openMoveSheet(itemId, { version } = {}) {
     ...repository.state.folders,
   ];
 
+  // Counts per folder from the inventory's aggregate, never from the window of
+  // records the screen holds: a count taken from a window is a fraction
+  // wearing a total's clothes. Unknown (no aggregate) shows no count.
+  const overview = await repository.getInventoryOverview().catch(() => null);
   render($('mvlist'), targets.map((target) => {
     const isCurrent = (target.id || null) === (item.folderId || null);
-    // Same rule as the folder cards on the home screen: a count taken from a
-    // window is a fraction wearing a total's clothes, so there is no count
-    // until there is an inventory to count.
-    const count = !repository.itemsComplete ? null
-      : target.id
-        ? repository.liveItems().filter((i) => i.folderId === target.id).length
-        : repository.liveItems().filter((i) => !i.folderId).length;
+    const count = overview ? (overview.byFolder[target.id || NONE] || 0) : null;
     const color = target.color || '#007AFF';
 
     return el('button', {

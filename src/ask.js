@@ -13,7 +13,9 @@ import { UNCATEGORIZED_ID } from './config.js';
 import { normalizeArabic } from './search.js';
 import { normalizeDigits } from './utils.js';
 import { valuationMidpoint } from './validation.js';
-import { describeTotals, formatAmount, resolveCurrency, totalsByCurrency } from './money.js';
+import { currenciesPresent, currencyInText, describeTotals, formatAmount, totalsByCurrency } from './money.js';
+import { compareForSort, matchesSpec, validateQuerySpec } from './query-spec.js';
+import { searchTokensOf } from './item-index.js';
 import { getLanguage, t } from './i18n.js';
 
 const YEAR = 365 * 24 * 60 * 60 * 1000;
@@ -90,38 +92,34 @@ function readNumber(text) {
   return Number.isFinite(value) ? value : null;
 }
 
+// Each intent turns a question into a *plan*: serializable filters in the
+// query contract (query-spec.js), never a function over records. The same plan
+// is executed against the device's indexes (ask-run.js), against a server
+// later, or — in the tests — against an array (`askInventory`). A cloud model
+// that one day interprets questions will produce this same plan, so it will
+// never need the inventory to answer one.
 const INTENTS = [
   {
     id: 'missing-images',
     test: (q) => /(بدون|بلا|ما ?لها|ماله[اا]?|بدون) ?(صور|صوره|صورة)/.test(q) || /(صور|صورة).*(ناقص|مفقود)/.test(q)
       || /\b(no|without|missing)\s+(photos?|images?|pictures?)\b/.test(q),
-    build: () => ({ kind: 'list', title: t('ask.titleNoImages'), match: (i) => !i.images?.length }),
+    build: () => ({ kind: 'list', title: t('ask.titleNoImages'), filters: { hasImages: false } }),
   },
   {
     id: 'missing-category',
     test: (q) => /(بدون|بلا|ما ?لها) ?(تصنيف|فئه|صنف)/.test(q) || /\b(no|without|missing)\s+categor(y|ies)\b|\buncategori[sz]ed\b/.test(q),
-    build: (q, ctx) => ({
-      kind: 'list',
-      title: t('ask.titleNoCategory'),
-      match: ctx.lookups.taxonomy
-        ? (i) => !ctx.lookups.taxonomy.path(i).category
-        : (i) => !i.categoryId || i.categoryId === UNCATEGORIZED_ID,
-    }),
+    build: () => ({ kind: 'list', title: t('ask.titleNoCategory'), filters: { categoryId: UNCATEGORIZED_ID } }),
   },
   {
     id: 'missing-location',
     test: (q) => /(بدون|بلا|ما ?لها) ?(موقع|مكان)/.test(q) || /\b(no|without|missing)\s+locations?\b/.test(q),
-    build: () => ({ kind: 'list', title: t('ask.titleNoLocation'), match: (i) => !i.locationId }),
+    build: () => ({ kind: 'list', title: t('ask.titleNoLocation'), filters: { locationId: { exists: false } } }),
   },
   {
     id: 'stale',
     test: (q) => /(ما ?تم|لم) ?(تحديث|تحدث|تراجع|مراجعة)|من سنة|منذ سنة|قديمة المراجعة/.test(q)
       || /\bnot (been )?(updated|reviewed)\b|\bin (a|over a) year\b|\bstale\b/.test(q),
-    build: (q, ctx) => ({
-      kind: 'list',
-      title: t('ask.titleStale'),
-      match: (i) => ctx.now - (i.updatedAt ?? 0) > YEAR,
-    }),
+    build: (q, ctx) => ({ kind: 'list', title: t('ask.titleStale'), filters: { updatedAt: { lt: ctx.now - YEAR } } }),
   },
   {
     id: 'value-above',
@@ -132,29 +130,30 @@ const INTENTS = [
       // "Worth more than 100,000" is not one question when the inventory
       // holds several currencies — it is one question per currency, and they
       // have different answers. Rather than pick one, say so.
-      const currency = resolveCurrency(q, ctx.items);
-      if (!currency.ok) {
-        return { kind: 'currency-choice', title: t('ask.titleWhichCurrency'), threshold, options: currency.options, match: () => false };
+      const named = currencyInText(q);
+      const currency = named || (ctx.currencies.length <= 1 ? ctx.currencies[0] || 'SAR' : null);
+      if (!currency) {
+        return { kind: 'currency-choice', title: t('ask.titleWhichCurrency'), threshold, options: ctx.currencies };
       }
       return {
         kind: 'list',
-        title: t('ask.titleValueAbove', { amount: formatAmount(threshold ?? 0, currency.currency) }),
-        match: (i) => i.valuation?.currency === currency.currency
-          && (valuationMidpoint(i.valuation) ?? 0) > (threshold ?? Infinity),
+        title: t('ask.titleValueAbove', { amount: formatAmount(threshold ?? 0, currency) }),
+        filters: { valuationCurrency: currency, valuationMidpoint: { gt: threshold ?? Number.MAX_SAFE_INTEGER } },
+        sort: { field: 'valuation', direction: 'desc' },
       };
     },
   },
   {
     id: 'total-value',
     test: (q) => /(إجمالي|اجمالي|مجموع|كم).*(قيمة|قيم|تقييم)/.test(q) || /\b(total|sum|how much)\b.*\b(value|worth)\b/.test(q),
-    build: () => ({ kind: 'sum', title: t('ask.titleTotal'), match: () => true }),
+    build: () => ({ kind: 'sum', title: t('ask.titleTotal'), filters: {} }),
   },
   {
     id: 'count',
     test: (q) => (/^(كم|عدد)(\s|$)/.test(q) && !/(قيمة|قيم)/.test(q)) || (/^(how many|count)\b/.test(q) && !/\b(value|worth)\b/.test(q)),
     build: (q, ctx) => {
       const scope = scopeFrom(q, ctx);
-      return { kind: 'count', title: scope.title || t('ask.titleCount'), match: scope.match };
+      return { kind: 'count', title: scope.title || t('ask.titleCount'), filters: {}, scoped: true };
     },
   },
   {
@@ -164,16 +163,15 @@ const INTENTS = [
       // «وين الأجهزة الإلكترونية؟» asks about a kind of thing, not one thing:
       // the classification scope answers it.
       if (classificationFrom(whereSubject(q), ctx.lookups.taxonomy, { exact: true })) {
-        return { kind: 'where', title: t('ask.titleWhereItem'), match: () => true };
+        return { kind: 'where', title: t('ask.titleWhereItem'), filters: {} };
       }
-      const subject = q.replace(/^(وين|أين|اين|فين)\s*/, '').replace(/^where\s+(is|are)?\s*(the|my)?\s*/i, '').replace(/[؟?]/g, '').trim();
-      const terms = normalizeArabic(subject).split(' ').filter((t) => t.length > 1);
+      const subject = whereSubject(q);
       return {
         kind: 'where',
         title: subject ? t('ask.titleWhere', { subject }) : t('ask.titleWhereItem'),
-        match: (i) => terms.length > 0 && terms.every((t) => normalizeArabic(
-          [i.name, i.brand, i.description, byId(ctx.lookups.categories, i.categoryId)?.name].join(' '),
-        ).includes(t)),
+        filters: {},
+        // A word of the name or brand, or an identifier (query-spec.js).
+        text: subject || '\u0000',
       };
     },
   },
@@ -226,26 +224,24 @@ function classificationFrom(question, taxonomy, { exact = false } = {}) {
   return best?.node || null;
 }
 
-/** Classification, category and location mentioned anywhere in the question. */
+/** Classification, category and location mentioned anywhere in the question — as filters. */
 function scopeFrom(question, ctx, { exact = false } = {}) {
   const q = normalizeArabic(question);
-  let match = () => true;
+  const filters = {};
   const parts = [];
 
   const taxonomy = ctx.lookups.taxonomy;
   const node = classificationFrom(question, taxonomy, { exact });
   if (node) {
-    const field = node.level === 'main' ? 'main' : node.level === 'sub' ? 'sub' : 'category';
-    match = (i) => taxonomy.path(i)[field]?.id === node.id;
+    const field = node.level === 'main' ? 'mainCategoryId' : node.level === 'sub' ? 'subcategoryId' : 'categoryId';
+    filters[field] = node.id;
     parts.push(taxonomy.label(node));
   }
 
   for (const category of node || taxonomy ? [] : ctx.lookups.categories) {
     const name = normalizeArabic(category.name);
     if (name && name.length > 2 && q.includes(name)) {
-      const id = category.id;
-      const previous = match;
-      match = (i) => previous(i) && i.categoryId === id;
+      filters.categoryId = category.id;
       parts.push(category.name);
       break;
     }
@@ -253,133 +249,140 @@ function scopeFrom(question, ctx, { exact = false } = {}) {
   for (const location of ctx.lookups.locations) {
     const name = normalizeArabic(location.name);
     if (name && name.length > 2 && q.includes(name)) {
-      const id = location.id;
-      const previous = match;
-      match = (i) => previous(i) && i.locationId === id;
+      filters.locationId = location.id;
       parts.push(location.name);
       break;
     }
   }
 
-  return { match, title: parts.length ? t('ask.titleIn', { place: parts.join(' · ') }) : null, parts };
+  return { filters, title: parts.length ? t('ask.titleIn', { place: parts.join(' · ') }) : null, parts };
 }
 
 /**
+ * A question as a plan — no records involved.
+ *
  * @param {string} question
- * @param {{items: Array, lookups: {categories: Array, locations: Array, folders: Array}, now?: number}} context
- * @returns {{understood: boolean, kind: string, title: string, answer: string, items: Array, total?: number}}
+ * @param {{lookups: object, currencies: string[], now?: number}} context
+ *   `currencies` are the currencies the inventory holds values in (from an
+ *   index or an aggregate, never by reading records).
+ * @returns {{understood: boolean, kind: string, title: string,
+ *   query?: {filters: object, text?: string, sort?: object}, operation?: string,
+ *   threshold?, options?}}
  */
-export function askInventory(question, { items, lookups, now = Date.now() }) {
+export function interpretQuestion(question, { lookups, currencies = [], now = Date.now() }) {
   const text = normalizeDigits(String(question || '')).trim();
-  if (!text) {
-    return { understood: false, kind: 'empty', title: '', answer: t('ask.empty'), items: [], suggestions: suggestions() };
-  }
-
+  if (!text) return { understood: false, kind: 'empty' };
   const q = normalizeArabic(text);
-  const ctx = { items, lookups, now };
+  const ctx = { lookups, currencies, now };
   const intent = INTENTS.find((candidate) => candidate.test(q));
 
   if (!intent) {
     // A scope on its own is still a useful answer: "الساعات في مستودع الرياض".
     const scope = scopeFrom(text, ctx);
     if (scope.parts.length) {
-      const found = items.filter(scope.match);
-      return {
-        understood: true,
-        kind: 'list',
-        title: scope.title,
-        answer: t('ask.count', { count: found.length }),
-        items: found,
-      };
+      return { understood: true, kind: 'list', operation: 'list', title: scope.title, query: { filters: scope.filters } };
     }
-    // A failure is still allowed to be useful: it says what *is* answerable
-    // rather than only that this was not.
-    return {
-      understood: false,
-      kind: 'unknown',
-      title: '',
-      answer: t('ask.unknown'),
-      items: [],
-      capabilities: capabilities(),
-      suggestions: suggestions(),
-    };
+    return { understood: false, kind: 'unknown' };
   }
 
   const plan = intent.build(text, ctx);
-  const scope = intent.id === 'where' ? scopeFrom(whereSubject(text), ctx, { exact: true }) : scopeFrom(text, ctx);
-  const found = items.filter((item) => plan.match(item) && scope.match(item));
-  const title = scope.parts.length ? `${plan.title} — ${scope.parts.join(' · ')}` : plan.title;
-
-  // The question was answerable except for one missing fact. Asking for it is
-  // a better answer than picking a currency on the customer's behalf.
   if (plan.kind === 'currency-choice') {
+    return { understood: true, kind: 'currency-choice', title: plan.title, threshold: plan.threshold, options: plan.options };
+  }
+  const scope = intent.id === 'where' ? scopeFrom(whereSubject(text), ctx, { exact: true }) : scopeFrom(text, ctx);
+  const title = scope.parts.length && !plan.scoped ? `${plan.title} — ${scope.parts.join(' · ')}` : plan.title;
+  const filters = { ...plan.filters, ...scope.filters };
+  // A place or kind named in a «where» question already is the subject.
+  const textQuery = intent.id === 'where' && scope.parts.length ? undefined : plan.text;
+  return {
+    understood: true,
+    kind: plan.kind,
+    operation: plan.kind,
+    title,
+    query: { filters, ...(textQuery ? { text: textQuery } : {}), ...(plan.sort ? { sort: plan.sort } : {}) },
+  };
+}
+
+/**
+ * The customer-facing answer, from a plan and what executing it found.
+ *
+ * @param {object} plan from `interpretQuestion`
+ * @param {{items: Array, total: number, totals?: Array, priced?: number}} found
+ */
+export function answerFor(plan, found, { lookups }) {
+  if (plan.kind === 'empty') {
+    return { understood: false, kind: 'empty', title: '', answer: t('ask.empty'), items: [], suggestions: suggestions() };
+  }
+  if (!plan.understood) {
+    // A failure is still allowed to be useful: it says what *is* answerable
+    // rather than only that this was not.
     return {
-      understood: true,
-      kind: 'currency-choice',
-      title: plan.title,
-      answer: t('ask.whichCurrency', { amount: plan.threshold ?? 0 }),
-      options: plan.options,
-      threshold: plan.threshold,
-      items: [],
+      understood: false, kind: 'unknown', title: '', answer: t('ask.unknown'), items: [],
+      capabilities: capabilities(), suggestions: suggestions(),
     };
   }
-
+  if (plan.kind === 'currency-choice') {
+    // The question was answerable except for one missing fact. Asking for it
+    // is a better answer than picking a currency on the customer's behalf.
+    return {
+      understood: true, kind: 'currency-choice', title: plan.title,
+      answer: t('ask.whichCurrency', { amount: plan.threshold ?? 0 }),
+      options: plan.options, threshold: plan.threshold, items: [],
+    };
+  }
+  const title = plan.title;
   if (plan.kind === 'sum') {
     // One total per currency. Adding SAR to USD would produce a number that
     // looks authoritative and means nothing.
-    const totals = totalsByCurrency(found);
-    const priced = totals.reduce((n, t) => n + t.count, 0);
+    const totals = found.totals || [];
+    const priced = totals.reduce((n, entry) => n + entry.count, 0);
     return {
-      understood: true,
-      kind: 'sum',
-      title,
-      totals,
-      answer: totals.length
-        ? t('ask.total', { totals: describeTotals(totals), count: priced })
-        : t('ask.noPriced'),
-      items: found.filter((item) => item.valuation).slice(0, 12),
-      note: found.length > priced ? t('ask.unpricedNote', { count: found.length - priced }) : null,
+      understood: true, kind: 'sum', title, totals,
+      answer: totals.length ? t('ask.total', { totals: describeTotals(totals), count: priced }) : t('ask.noPriced'),
+      items: found.items.slice(0, 12),
+      note: found.total > priced ? t('ask.unpricedNote', { count: found.total - priced }) : null,
+      query: plan.query,
     };
   }
-
   if (plan.kind === 'count') {
     return {
-      understood: true,
-      kind: 'count',
-      title,
-      answer: t('ask.count', { count: found.length }),
-      items: found.slice(0, 12),
-      total: found.length,
+      understood: true, kind: 'count', title, answer: t('ask.count', { count: found.total }),
+      items: found.items.slice(0, 12), total: found.total, query: plan.query,
     };
   }
-
   if (plan.kind === 'where') {
-    if (!found.length) {
-      return { understood: true, kind: 'where', title, answer: t('ask.notFound'), items: [] };
-    }
-    const first = found[0];
-    const where = byId(lookups.locations, first.locationId)?.name
-      || byId(lookups.folders, first.folderId)?.name
-      || null;
+    if (!found.items.length) return { understood: true, kind: 'where', title, answer: t('ask.notFound'), items: [] };
+    const first = found.items[0];
+    const where = byId(lookups.locations, first.locationId)?.name || byId(lookups.folders, first.folderId)?.name || null;
     return {
-      understood: true,
-      kind: 'where',
-      title,
-      answer: where
-        ? t('ask.whereAnswer', { name: first.name, where })
-        : t('ask.whereUnknown', { name: first.name }),
-      items: found.slice(0, 6),
+      understood: true, kind: 'where', title,
+      answer: where ? t('ask.whereAnswer', { name: first.name, where }) : t('ask.whereUnknown', { name: first.name }),
+      items: found.items.slice(0, 6), total: found.total, query: plan.query,
     };
   }
-
   return {
-    understood: true,
-    kind: 'list',
-    title,
-    answer: found.length
-      ? t('ask.count', { count: found.length })
-      : t('ask.noneMatch'),
-    items: found,
-    total: found.length,
+    understood: true, kind: 'list', title,
+    answer: found.total ? t('ask.count', { count: found.total }) : t('ask.noneMatch'),
+    items: found.items, total: found.total, query: plan.query,
   };
+}
+
+/**
+ * The plan executed against an array of records, with the contract's own
+ * semantics (query-spec.js `matchesSpec`) — for tests and small in-memory
+ * sets. The app executes plans through the repository instead (ask-run.js),
+ * and must give the same answers.
+ */
+export function askInventory(question, { items, lookups, now = Date.now() }) {
+  const plan = interpretQuestion(question, { lookups, currencies: currenciesPresent(items), now });
+  if (!plan.understood || !plan.query) return answerFor(plan, { items: [], total: 0 }, { lookups });
+  const spec = validateQuerySpec({ filters: plan.query.filters, text: plan.query.text });
+  const found = items.filter((item) => matchesSpec(item, spec, searchTokensOf));
+  if (plan.query.sort) found.sort(compareForSort(plan.query.sort));
+  const priced = found.filter((item) => item.valuation && valuationMidpoint(item.valuation) != null);
+  return answerFor(plan, {
+    items: plan.kind === 'sum' ? priced : found,
+    total: found.length,
+    totals: plan.kind === 'sum' ? totalsByCurrency(found) : undefined,
+  }, { lookups });
 }

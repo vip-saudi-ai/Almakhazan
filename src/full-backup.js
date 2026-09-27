@@ -120,8 +120,8 @@ export function verifyFullBackup(archive, { onProgress, signal } = {}) {
 }
 
 /** Replaces the inventory with a verified backup (restore-engine.js). */
-export function restoreFullBackup(archive, { onProgress } = {}) {
-  return exclusive('restore', () => engine.restoreFullBackup(archive, { onProgress }));
+export function restoreFullBackup(archive, { onProgress, recoveryCheckpoint = false } = {}) {
+  return exclusive('restore', () => engine.restoreFullBackup(archive, { onProgress, recoveryCheckpoint }));
 }
 
 /**

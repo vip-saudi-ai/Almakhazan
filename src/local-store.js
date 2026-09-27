@@ -18,7 +18,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 11;
+const DB_VERSION = 12;
 /** The database schema version — carried in a Full Backup manifest. */
 export const DATABASE_VERSION = DB_VERSION;
 
@@ -103,6 +103,17 @@ export const SCHEMA = {
       subcategoryDeleted: ['subcategoryId', 'deletedAt'],
       locationDeleted: ['locationId', 'deletedAt'],
       deletedAt: 'deletedAt',
+      // ── ordering and finding (version 12) ──
+      //
+      // Derived fields (item-index.js), written with every record and
+      // back-filled for older ones. `nameSortKey` orders by name without
+      // sorting records in memory; `valueSort` orders by value within one
+      // currency — [currency, midpoint], never the bare number across
+      // currencies — and holds only priced records; `searchTokens` finds a
+      // record by a word of its name or by an identifier without reading it.
+      nameSortKey: 'nameSortKey',
+      valueSort: ['valuation.currency', 'valuationMidpoint'],
+      searchTokens: { keyPath: 'searchTokens', multiEntry: true },
     },
   },
   folders: { key: 'id', indexes: {} },
@@ -132,6 +143,13 @@ export const SCHEMA = {
   // references a backup is writing, the reference counts a reconciliation is
   // adding up — [run, kind, id] with a value. Each run removes its own keys.
   workIndex: { key: ['run', 'kind', 'id'], indexes: {} },
+  // The inventory's aggregate numbers (version 12): one record, kept in step
+  // with the items in the same transactions that write them (aggregates.js).
+  aggregates: { key: 'key', indexes: {} },
+  // Writes waiting to reach the cloud (version 12). Serializable records only
+  // — never a function — and dormant while cloud is off: nothing is queued
+  // and nothing reads it. See sync-queue.js.
+  mutations: { key: 'mutationId', indexes: { status: 'status', createdAt: 'createdAt', entity: ['entityType', 'entityId'] } },
 };
 
 export const STORES = Object.keys(SCHEMA);
@@ -370,6 +388,33 @@ export function uniqueKeys(storeName, indexName) {
       const cursor = cursorRequest.result;
       if (!cursor) { resolve(keys); return; }
       keys.push(cursor.key);
+      cursor.continue();
+    };
+    cursorRequest.onerror = () => reject(storageError(cursorRequest.error));
+  }));
+}
+
+/**
+ * The primary keys of records whose key in `indexName` is shared with at least
+ * one other record — found by walking the index's keys alone, never the
+ * records. What duplicate detection needs as candidates: a serial number, a
+ * barcode, a SKU or a name that occurs twice. Stops at `limit` keys.
+ */
+export function sharedKeyIds(storeName, indexName, { limit = 5000 } = {}) {
+  return run(storeName, 'readonly', (store) => new Promise((resolve, reject) => {
+    const ids = new Set();
+    let previous;
+    let previousId;
+    const cursorRequest = store.index(indexName).openKeyCursor();
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor || ids.size >= limit) { resolve({ ids: [...ids], truncated: Boolean(cursor) }); return; }
+      if (previous !== undefined && indexedDB.cmp(previous, cursor.key) === 0) {
+        ids.add(previousId);
+        ids.add(cursor.primaryKey);
+      }
+      previous = cursor.key;
+      previousId = cursor.primaryKey;
       cursor.continue();
     };
     cursorRequest.onerror = () => reject(storageError(cursorRequest.error));

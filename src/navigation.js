@@ -44,7 +44,9 @@ export function renderActiveTab() {
 // Categories screen now gets an exact count per category from an index range
 // rather than by counting an array. Trash has its own index too, and reads it
 // on the way in. What remains are the two screens that genuinely aggregate
-// over every record, and for those the wait is the honest price of the answer.
+// over every record — and they need the whole inventory only on a backend
+// that does not keep the inventory's aggregate itself. The device backend
+// does (aggregates.js): its Overview and Assistant read counts, never records.
 const NEEDS_WHOLE_INVENTORY = new Set(['ov', 'ai']);
 
 export function goTab(name) {
@@ -66,7 +68,7 @@ export function goTab(name) {
   const render = renderers.get(name);
   if (!render) return;
 
-  if (NEEDS_WHOLE_INVENTORY.has(name) && !repository.itemsComplete) {
+  if (NEEDS_WHOLE_INVENTORY.has(name) && !repository.keepsAggregates && !repository.itemsComplete) {
     // Nothing is drawn from a fraction: the screen appears once the numbers on
     // it are the real ones. If the load fails, go back rather than show a
     // total that is wrong.

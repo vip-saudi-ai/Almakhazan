@@ -23,6 +23,13 @@ import {
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
 import { inferFieldDefinition, normalizeFieldRecord } from './custom-fields.js';
+import { INDEX_FIELDS_VERSION, hasCurrentIndexFields, withIndexFields } from './item-index.js';
+import { decodeSpecCursor, encodeSpecCursor, project, specKey, validateQuerySpec } from './query-spec.js';
+import { aggregateItemsLocal, countItemsLocal, queryItemsLocal } from './query-local.js';
+import {
+  AGGREGATE_KEY, AGGREGATE_SCHEMA, AggregateBuilder, AggregateDelta, emptyAggregate, isCurrentAggregate,
+  overviewFromAggregate,
+} from './aggregates.js';
 import { t } from './i18n.js';
 import {
   LEVELS, OTHER_MAIN_ID, TAXONOMY_SCHEMA_VERSION, buildTaxonomy, definitionFor, isBuiltinId, legacyPlacement,
@@ -175,6 +182,54 @@ function skuConflictError({ sku, id, existingId, existingName = '' }) {
   });
 }
 
+/** A transaction's store list with the aggregate store added when items are written. */
+function withAggregates(names) {
+  return names.includes('items') && !names.includes('aggregates') ? [...names, 'aggregates'] : names;
+}
+
+/**
+ * The item changes one transaction makes, in order. A record written twice in
+ * one batch counts once, from what it was before the batch to what it is after.
+ */
+class ItemChanges {
+  constructor() {
+    this.state = new Map();
+    this.delta = new AggregateDelta();
+  }
+
+  change(id, before, after) {
+    const previous = this.state.has(id) ? this.state.get(id) : (before || null);
+    this.delta.change(previous, after || null);
+    this.state.set(id, after || null);
+  }
+}
+
+/**
+ * Moves the stored aggregate by a transaction's change, inside that
+ * transaction. An aggregate that is missing or from an older shape is left
+ * alone: it cannot be moved from a value nobody knows, and it is rebuilt from
+ * the records instead (aggregates.js).
+ */
+/**
+ * How many item transactions this tab has written through the device backend
+ * — what a cached query answer is checked against (Repository.queryItems).
+ */
+let itemWrites = 0;
+function noteItemWrite() { itemWrites += 1; }
+
+async function applyAggregate(stores, delta) {
+  if (delta?.changed) noteItemWrite();
+  if (!delta?.changed || !stores.aggregates) return;
+  const current = await local.request(stores.aggregates.get(AGGREGATE_KEY));
+  if (current && current.complete === false) {
+    // Being rebuilt: the rebuild must know it has missed a write.
+    await local.request(stores.aggregates.put({ ...current, writesDuring: (current.writesDuring || 0) + 1 }));
+    return;
+  }
+  if (!isCurrentAggregate(current)) return;
+  await local.request(stores.aggregates.put(delta.applyTo(current)));
+}
+
 /**
  * Whether two stored records are the same data: the same keys with the same
  * values, in any key order (a record written by the app and the same record
@@ -218,6 +273,13 @@ const KEYED_BATCH = 100;
  *  item a context menu was opened on. Small on purpose: this is a cache, not a
  *  second copy of the inventory. */
 const ITEM_CACHE_MAX = 100;
+/**
+ * Answers to recent queries (queryItems), so going back to a page already
+ * seen does not ask the backend again. Bounded, and emptied by any item write
+ * — an answer is only reused while nothing it could depend on has changed.
+ */
+const QUERY_CACHE_MAX = 30;
+const QUERY_CACHE_TTL = 30000;
 
 /** What a bulk edit did, named for the activity log rather than inferred from
  *  its patch by whoever reads the log later. */
@@ -245,6 +307,8 @@ const SCAN_PAGE = 500;
 const LEGACY_SKU_MARKER = 'sku-legacy-migration';
 /** SKUs asked of the local index per read transaction. */
 const SKU_LOOKUP_BATCH = 500;
+/** Where the ordering-fields back-fill keeps its position (item-index.js). */
+const INDEX_FIELDS_KEY = 'items.indexFields';
 /** Firestore's ceiling on the values of one `in` query. */
 const FIRESTORE_IN_LIMIT = 30;
 /** How many of those queries run at once. */
@@ -269,6 +333,121 @@ export class FirestoreBackend {
 
   get serverTime() {
     return this.fs.serverTimestamp();
+  }
+
+  /**
+   * Clears items and folders a page at a time, server-side queries and batched
+   * deletes — never the collection held in memory. For very large workspaces
+   * this becomes a server clear job; the repository contract is the same.
+   */
+  async clearItems() {
+    let removed = 0;
+    for (const name of ['items', 'folders']) {
+      for (;;) {
+        const snapshot = await this.fs.getDocs(this.fs.query(this.col(name), this.fs.limit(400)));
+        if (snapshot.empty) break;
+        const batch = this.fs.writeBatch(this.db);
+        for (const doc of snapshot.docs) batch.delete(doc.ref);
+        await batch.commit();
+        if (name === 'items') removed += snapshot.size;
+      }
+    }
+    return { removed };
+  }
+
+  // ── the query contract (query-spec.js), translated to Firestore ──
+  //
+  // Every query is inside workspaces/{workspaceId}/items by construction: the
+  // workspace scope is this backend's, never the caller's to remember. What
+  // Firestore cannot express — text search, the derived booleans until they
+  // are stored denormalized — is refused as `query/unsupported`, to be served
+  // by a search service or a server query later without any caller changing.
+
+  _specQuery(spec, { ordered = true } = {}) {
+    const fs = this.fs;
+    const PATH = {
+      id: fs.documentId(), valuationCurrency: 'valuation.currency', valuationMidpoint: 'valuationMidpoint',
+    };
+    const OP = { eq: '==', in: 'in', gt: '>', gte: '>=', lt: '<', lte: '<=' };
+    const parts = [];
+    for (const f of spec.filters) {
+      if (f.field === 'deleted') { parts.push(fs.where('deletedAt', f.value ? '!=' : '==', null)); continue; }
+      if (['hasImages', 'valued', 'analyzed'].includes(f.field)) {
+        throw new AppError('query.unsupported', { code: 'query/unsupported', field: f.field });
+      }
+      const path = PATH[f.field] || f.field;
+      if (f.op === 'exists') parts.push(fs.where(path, f.value ? '!=' : '==', null));
+      else parts.push(fs.where(path, OP[f.op], f.value));
+    }
+    if (spec.text) throw new AppError('query.unsupported', { code: 'query/unsupported', field: 'text' });
+    if (ordered) {
+      const SORT = { createdAt: 'createdAt', updatedAt: 'updatedAt', name: 'nameSortKey', valuation: 'valuationMidpoint' };
+      const direction = spec.sort.direction;
+      parts.push(fs.orderBy(SORT[spec.sort.field], direction), fs.orderBy(fs.documentId(), direction));
+    }
+    return { parts, sortPath: { createdAt: 'createdAt', updatedAt: 'updatedAt', name: 'nameSortKey', valuation: 'valuationMidpoint' }[spec.sort.field] };
+  }
+
+  async queryItems(spec) {
+    const { parts, sortPath } = this._specQuery(spec);
+    const position = decodeSpecCursor(spec);
+    if (position) parts.push(this.fs.startAfter(position.v, position.id));
+    parts.push(this.fs.limit(spec.limit + 1));
+    const snapshot = await this.fs.getDocs(this.fs.query(this.col('items'), ...parts));
+    const docs = snapshot.docs.slice(0, spec.limit);
+    const items = docs.map((doc) => project(normalizeItem({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) }), spec.projection));
+    const last = docs[docs.length - 1];
+    const more = snapshot.docs.length > spec.limit;
+    return {
+      items,
+      nextCursor: more && last ? encodeSpecCursor(spec, { v: last.get(sortPath), id: last.id }) : null,
+      hasMore: more,
+      total: null,
+      meta: { source: 'firestore', strategy: 'server-query', scanned: snapshot.size, returned: items.length },
+    };
+  }
+
+  async countItemsMatching(spec) {
+    const { parts } = this._specQuery(spec, { ordered: false });
+    const snapshot = await this.fs.getCountFromServer(this.fs.query(this.col('items'), ...parts));
+    return { count: snapshot.data().count, meta: { source: 'firestore', strategy: 'server-count' } };
+  }
+
+  async aggregateItems(spec) {
+    const { parts } = this._specQuery(spec, { ordered: false });
+    const q = this.fs.query(this.col('items'), ...parts);
+    const snapshot = await this.fs.getAggregateFromServer(q, {
+      count: this.fs.count(), quantity: this.fs.sum('quantity'),
+    });
+    const byCurrency = {};
+    const currency = spec.filters.find((f) => f.field === 'valuationCurrency' && f.op === 'eq')?.value;
+    // Valuation is summed per currency, one server aggregation each; without a
+    // currency in the query the per-currency totals come from the workspace
+    // aggregate document instead.
+    if (currency) {
+      const sums = await this.fs.getAggregateFromServer(q, { count: this.fs.count(), total: this.fs.sum('valuationMidpoint') });
+      byCurrency[currency] = { count: sums.data().count, total: sums.data().total };
+    }
+    return { count: snapshot.data().count, quantity: snapshot.data().quantity, byCurrency, meta: { source: 'firestore', strategy: 'server-aggregate' } };
+  }
+
+  /**
+   * The workspace aggregate a Cloud Function keeps (workspaces/{id}/aggregates/
+   * inventory, same shape as aggregates.js). Null until the server keeps one;
+   * the client never rebuilds it by reading the collection.
+   */
+  /**
+   * Duplicate detection over a whole workspace is a server job in the cloud
+   * (see docs/CLOUD-ARCHITECTURE.md); until it exists the answer is "unknown",
+   * never a guess from whatever pages happen to be cached.
+   */
+  async duplicateCandidates() {
+    return null;
+  }
+
+  async inventoryAggregate() {
+    const snap = await this.fs.getDoc(this.ref('aggregates', 'inventory'));
+    return snap.exists() ? snap.data() : null;
   }
 
   /** Realtime listeners keep other devices' edits flowing in without a refresh. */
@@ -644,6 +823,9 @@ export class FirestoreBackend {
 // relational operations that depend on them are correct only on small data,
 // which is the same as being wrong.
 export class LocalBackend {
+  /** The aggregate is kept in step with every write (aggregates.js). */
+  keepsAggregates = true;
+
   constructor() {
     this.watchers = new Map();
   }
@@ -735,12 +917,15 @@ export class LocalBackend {
     } else {
       // Capacity, SKU and the write in one transaction: nothing can commit
       // between the checks and the put, and a refusal writes nothing.
-      await local.transaction(name, 'readwrite', async (stores) => {
+      await local.transaction([name, 'aggregates'], 'readwrite', async (stores) => {
         const store = stores[name];
         if (liveLimit != null) await assertLiveRoom(store, liveLimit, 1);
         const before = (await local.request(store.get(row.id))) || null;
         await assertLiveSkusInStore(store, [{ id: row.id, before, after: row }]);
-        await local.request(store.put(row));
+        await local.request(store.put(withIndexFields(row)));
+        const delta = new AggregateDelta();
+        delta.change(before, row);
+        await applyAggregate(stores, delta);
       });
     }
     await this._notify(name);
@@ -753,7 +938,7 @@ export class LocalBackend {
    * check then passes against a record that no longer exists as read.
    */
   async update(name, id, patch, expectedVersion, { liveLimit = null } = {}) {
-    await local.transaction(name, 'readwrite', async (stores) => {
+    await local.transaction(name === 'items' ? [name, 'aggregates'] : name, 'readwrite', async (stores) => {
       const store = stores[name];
       const current = await local.request(store.get(id));
       if (!current) throw new AppError('error.repo/missing', { code: 'repo/missing' });
@@ -769,13 +954,28 @@ export class LocalBackend {
       // whatever another tab committed a moment ago. Leaving for the Trash
       // claims nothing.
       if (name === 'items') await assertLiveSkusInStore(store, [{ id, before: current, after: next }]);
-      await local.request(store.put(next));
+      await local.request(store.put(name === 'items' ? withIndexFields(next) : next));
+      if (name === 'items') {
+        const delta = new AggregateDelta();
+        delta.change(current, next);
+        await applyAggregate(stores, delta);
+      }
     });
     await this._notify(name);
   }
 
   async purge(name, id) {
-    await local.remove(name, id);
+    if (name !== 'items') {
+      await local.remove(name, id);
+    } else {
+      await local.transaction(['items', 'aggregates'], 'readwrite', async (stores) => {
+        const before = await local.request(stores.items.get(id));
+        await local.request(stores.items.delete(id));
+        const delta = new AggregateDelta();
+        delta.change(before || null, null);
+        await applyAggregate(stores, delta);
+      });
+    }
     await this._notify(name);
   }
 
@@ -867,7 +1067,7 @@ export class LocalBackend {
     const touched = [...new Set([...operations.map((op) => op.collection), ...(liveLimit != null ? ['items'] : [])])];
     const skippedExisting = [];
     let applied = 0;
-    await local.transaction(touched, 'readwrite', async (stores) => {
+    await local.transaction(withAggregates(touched), 'readwrite', async (stores) => {
       // ── phase one: read and check ──
       const plan = [];
       for (const op of operations) {
@@ -908,9 +1108,15 @@ export class LocalBackend {
       if (stores.items) await assertLiveSkusInStore(stores.items, finalItemStates(plan));
 
       // ── phase two: write ──
+      const items = new ItemChanges();
       for (const { op, existing } of plan) {
         const store = stores[op.collection];
-        if (op.type === 'delete') { await local.request(store.delete(op.id)); applied += 1; continue; }
+        if (op.type === 'delete') {
+          await local.request(store.delete(op.id));
+          if (op.collection === 'items') items.change(op.id, existing, null);
+          applied += 1;
+          continue;
+        }
         const record = {
           ...(op.merge !== false ? existing : null),
           ...op.data,
@@ -921,9 +1127,15 @@ export class LocalBackend {
         };
         // The next version is the stored one plus one, never the caller's.
         if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
-        await local.request(store.put(record));
+        if (op.collection === 'items') {
+          await local.request(store.put(withIndexFields(record)));
+          items.change(op.id, existing, record);
+        } else {
+          await local.request(store.put(record));
+        }
         applied += 1;
       }
+      await applyAggregate(stores, items.delta);
     });
     for (const name of touched) await this._notify(name);
     return { applied, skippedExisting };
@@ -946,7 +1158,7 @@ export class LocalBackend {
     if (!operations.length) return { applied: 0 };
     const touched = [...new Set(operations.map((op) => op.collection))];
 
-    await local.transaction(touched, 'readwrite', async (stores) => {
+    await local.transaction(withAggregates(touched), 'readwrite', async (stores) => {
       // Phase one: read and validate. No writes yet.
       const current = [];
       for (const op of operations) {
@@ -968,10 +1180,12 @@ export class LocalBackend {
       }
 
       // Phase two: write. Every check has passed.
+      const items = new ItemChanges();
       for (const [index, op] of operations.entries()) {
         const store = stores[op.collection];
         if (op.type === 'delete') {
           await local.request(store.delete(op.id));
+          if (op.collection === 'items') items.change(op.id, current[index], null);
           continue;
         }
         if (op.type !== 'set') continue;
@@ -985,8 +1199,14 @@ export class LocalBackend {
           updatedAt: op.preserveUpdatedAt && existing?.updatedAt ? existing.updatedAt : Date.now(),
         };
         if (op.bumpVersion) record.version = (existing?.version ?? 0) + 1;
-        await local.request(store.put(record));
+        if (op.collection === 'items') {
+          await local.request(store.put(withIndexFields(record)));
+          items.change(op.id, existing, record);
+        } else {
+          await local.request(store.put(record));
+        }
       }
+      await applyAggregate(stores, items.delta);
     });
 
     for (const name of touched) await this._notify(name);
@@ -1067,6 +1287,100 @@ export class LocalBackend {
   async countItems() {
     return this._liveCount('items');
   }
+
+  // ── the query contract (query-spec.js) ──
+
+  queryItems(spec, context) { return queryItemsLocal(spec, context); }
+
+  countItemsMatching(spec, context) { return countItemsLocal(spec, context); }
+
+  aggregateItems(spec, context) { return aggregateItemsLocal(spec, context); }
+
+  // ── aggregates ──
+
+  /** The persisted aggregate, rebuilt first when it is missing or stale. */
+  /**
+   * Live records that share a serial number, barcode, SKU or name with another
+   * record — found by walking those indexes' keys, then reading only the
+   * records that collide. Duplicate grouping (duplicates.js) runs on these.
+   */
+  async duplicateCandidates({ limit = 5000 } = {}) {
+    const ids = new Set();
+    let truncated = false;
+    for (const index of ['serialNumber', 'barcode', 'sku', 'nameSortKey']) {
+      const found = await local.sharedKeyIds('items', index, { limit: limit - ids.size });
+      for (const id of found.ids) ids.add(id);
+      truncated ||= found.truncated;
+      if (ids.size >= limit) { truncated = true; break; }
+    }
+    const records = [];
+    const list = [...ids];
+    for (let i = 0; i < list.length; i += 400) {
+      for (const row of await local.getMany('items', list.slice(i, i + 400))) {
+        if (row && !row.deletedAt) records.push(normalizeItem(row));
+      }
+    }
+    return { items: records, truncated };
+  }
+
+  async inventoryAggregate() {
+    const stored = await local.get('aggregates', AGGREGATE_KEY);
+    // One count guards the kept numbers against a write that bypassed the
+    // repository (an older build, a tool): if the aggregate does not account
+    // for every stored record, it is rebuilt rather than shown.
+    if (isCurrentAggregate(stored) && stored.live + stored.trashed === await local.countFresh('items')) return stored;
+    return this.rebuildAggregates();
+  }
+
+  /**
+   * The aggregate rebuilt from the records, a page at a time.
+   *
+   * The stored record is marked incomplete before the walk, so writes made
+   * meanwhile do not move it — they count themselves on it instead
+   * (`writesDuring`). The result is stored only if no write happened during
+   * the walk, checked and written in one transaction; otherwise the walk runs
+   * again. Idempotent; never loads the inventory.
+   */
+  async rebuildAggregates({ attempts = 5 } = {}) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      await local.put('aggregates', { key: AGGREGATE_KEY, schema: AGGREGATE_SCHEMA, complete: false, writesDuring: 0 });
+      const builder = new AggregateBuilder();
+      await local.walk('items', {
+        batchSize: 500,
+        onBatch: (rows) => { for (const row of rows) builder.add(row); return true; },
+      });
+      const result = builder.result({ complete: true, builtAt: Date.now() });
+      const stored = await local.transaction('aggregates', 'readwrite', async ({ aggregates }) => {
+        const current = await local.request(aggregates.get(AGGREGATE_KEY));
+        if (current && current.complete === false && !current.writesDuring) {
+          await local.request(aggregates.put(result));
+          return true;
+        }
+        return false;
+      });
+      if (stored) return result;
+    }
+    throw new AppError('error.repo/aggregate-busy', { code: 'repo/aggregate-busy' });
+  }
+
+  /**
+   * Every item and folder removed, in one transaction per store, without
+   * reading them: the stores are cleared, and the aggregate becomes the empty
+   * one. Classification, places and field definitions stay.
+   */
+  async clearItems() {
+    let removed = 0;
+    await local.transaction(['items', 'folders', 'aggregates'], 'readwrite', async (stores) => {
+      removed = await local.request(stores.items.count());
+      await local.request(stores.items.clear());
+      await local.request(stores.folders.clear());
+      noteItemWrite();
+      await local.request(stores.aggregates.put({ ...emptyAggregate(), complete: true, builtAt: Date.now() }));
+    });
+    await this._notify('items');
+    await this._notify('folders');
+    return { removed };
+  }
 }
 
 // ── Repository facade ──────────────────────────────────────────────────────
@@ -1093,6 +1407,8 @@ class Repository {
     // is "the newest N", this is "the ones somebody just asked for", and
     // mixing them would turn a bounded window into an unbounded one.
     this.itemCache = new Map();
+    this.queryCache = new Map();
+    this.queryGeneration = 0;
     this.itemsComplete = false;
     this.itemsTotal = null;
     this.itemsTotalFromBackend = false;
@@ -1225,6 +1541,13 @@ class Repository {
     await this._maintainFieldIndex();
     this.ready = true;
     this.emit();
+    // Housekeeping that must not hold the app shell: records written before
+    // the ordering indexes existed gain their fields, a page at a time and
+    // resumably; the aggregate is built once if this device has none yet.
+    if (this.session.mode === 'local') {
+      void this._maintainIndexFields();
+      void this.backend.inventoryAggregate().catch((error) => console.error('[repo] aggregate build deferred', error));
+    }
   }
 
   _listenerMessage(error) {
@@ -1293,6 +1616,8 @@ class Repository {
   _invalidateAggregates() {
     this._taxonomyCounts = null;
     this._currencies = null;
+    this.queryCache?.clear();
+    this.queryGeneration = (this.queryGeneration || 0) + 1;
   }
 
   _composeItems() {
@@ -2592,22 +2917,81 @@ class Repository {
       if (this.session.mode !== 'local') return;
       const done = await local.getMeta(FIELD_INDEX_KEY, null);
       if (done) return;
-      const ops = [];
+      // A page of records, then that page's writes: never a list for the
+      // whole inventory.
+      let written = 0;
       await local.walk('items', {
         batchSize: 500,
-        onBatch: (batch) => {
+        onBatch: async (batch) => {
+          const ops = [];
           for (const item of batch) {
             const ids = Object.keys(item.customFields || {});
             if (!ids.length || (Array.isArray(item.customFieldIds) && item.customFieldIds.length === ids.length)) continue;
             ops.push({ type: 'set', collection: 'items', id: item.id, merge: true, preserveUpdatedAt: true, data: { customFieldIds: ids } });
           }
+          for (let i = 0; i < ops.length; i += ATOMIC_BULK_MAX) await this._runRelational(ops.slice(i, i + ATOMIC_BULK_MAX));
+          written += ops.length;
           return true;
         },
       });
-      for (let i = 0; i < ops.length; i += ATOMIC_BULK_MAX) await this._runRelational(ops.slice(i, i + ATOMIC_BULK_MAX));
-      await local.setMeta(FIELD_INDEX_KEY, { at: Date.now(), items: ops.length });
+      await local.setMeta(FIELD_INDEX_KEY, { at: Date.now(), items: written });
     } catch (error) {
       console.error('[repo] field index maintenance deferred', error);
+    }
+  }
+
+  /**
+   * Older records gain the derived ordering fields (item-index.js), a page of
+   * records per transaction, with the position saved after each page so an
+   * interrupted pass resumes where it stopped. `updatedAt` is left alone —
+   * nothing about the record changed. Until the pass completes, the views
+   * that order by these indexes keep their previous, exact behaviour
+   * (`indexFieldsReady`), so no record is ever missing from a list.
+   */
+  async _maintainIndexFields({ pageSize = 50, pauseMs = 25 } = {}) {
+    // Background work, so it yields: small write transactions (an overwrite
+    // re-indexes every index of the store, and a long one holds the store
+    // against the screen's reads) with a pause between them.
+    if (this.session?.mode !== 'local' || !this.canWrite()) return;
+    let state = await local.getMeta(INDEX_FIELDS_KEY, null).catch(() => null);
+    if (state?.version === INDEX_FIELDS_VERSION && state.done) {
+      // Every stored record has a name key (item-index.js), so the index and
+      // the store are the same size unless something wrote records past the
+      // repository — an older build, a tool, a test. Two counts, no walk; a
+      // difference starts the pass again rather than trusting the flag.
+      const [indexed, stored] = await Promise.all([
+        local.countRange('items', 'nameSortKey', null), local.countFresh('items'),
+      ]).catch(() => [0, 0]);
+      if (indexed === stored) { this.indexFieldsReady = true; return; }
+      state = null;
+    }
+    this.indexFieldsReady = false;
+    let after = state?.version === INDEX_FIELDS_VERSION ? state.after : undefined;
+    const workspace = this.session.workspaceId;
+    try {
+      for (;;) {
+        if (this.session?.workspaceId !== workspace) return;
+        const { rows, done } = await local.page('items', { limit: pageSize, after });
+        const stale = rows.filter((row) => !hasCurrentIndexFields(row));
+        if (stale.length) {
+          await local.transaction('items', 'readwrite', async ({ items }) => {
+            for (const row of stale) {
+              // Re-read inside the transaction: an edit since the page was read wins.
+              const current = await local.request(items.get(row.id));
+              if (current && !hasCurrentIndexFields(current)) await local.request(items.put(withIndexFields(current)));
+            }
+          });
+        }
+        if (rows.length) after = rows[rows.length - 1].id;
+        await local.setMeta(INDEX_FIELDS_KEY, { version: INDEX_FIELDS_VERSION, after, done: false });
+        if (done || rows.length < pageSize) break;
+        await new Promise((resolve) => setTimeout(resolve, stale.length ? pauseMs : 0));
+      }
+      await local.setMeta(INDEX_FIELDS_KEY, { version: INDEX_FIELDS_VERSION, after: null, done: true, at: Date.now() });
+      this.indexFieldsReady = true;
+      this.emit();
+    } catch (error) {
+      console.error('[repo] ordering fields back-fill deferred', error);
     }
   }
 
@@ -3443,14 +3827,19 @@ class Repository {
     // a restore onto the same device, a resumed restore and a repair pass are
     // mostly such records.
     let written = 0;
-    await local.transaction(collection, 'readwrite', async (stores) => {
+    const isItems = collection === 'items';
+    await local.transaction(isItems ? [collection, 'aggregates'] : collection, 'readwrite', async (stores) => {
       const store = stores[collection];
       const existing = await Promise.all(records.map((record) => local.request(store.get(record.id))));
-      for (const [index, record] of records.entries()) {
+      const items = new ItemChanges();
+      for (const [index, given] of records.entries()) {
+        const record = isItems ? withIndexFields(given) : given;
         if (existing[index] && sameStoredRecord(existing[index], record)) continue;
         await local.request(store.put(record));
+        if (isItems) items.change(record.id, existing[index] || null, record);
         written += 1;
       }
+      if (isItems) await applyAggregate(stores, items.delta);
     });
     if (collection === 'items') for (const record of records) this.itemCache.delete(record.id);
     return { written, unchanged: records.length - written };
@@ -3461,8 +3850,20 @@ class Repository {
     this.assertCanWrite();
     if (this.session.mode === 'cloud') throw new AppError('backup.fullLocalOnly', { code: 'backup/local-only' });
     if (!ids.length) return 0;
-    await local.removeMany(collection, ids);
-    if (collection === 'items') for (const id of ids) this.itemCache.delete(id);
+    if (collection !== 'items') {
+      await local.removeMany(collection, ids);
+      return ids.length;
+    }
+    await local.transaction(['items', 'aggregates'], 'readwrite', async (stores) => {
+      const items = new ItemChanges();
+      for (const id of ids) {
+        const before = await local.request(stores.items.get(id));
+        await local.request(stores.items.delete(id));
+        items.change(id, before || null, null);
+      }
+      await applyAggregate(stores, items.delta);
+    });
+    for (const id of ids) this.itemCache.delete(id);
     return ids.length;
   }
 
@@ -3486,23 +3887,149 @@ class Repository {
   }
 
   /** Removes every item and folder. Categories and locations are kept. */
+  /**
+   * Every item and folder removed — by the backend, as one operation on the
+   * whole store, never by loading the records and deleting them one by one.
+   * On the device that is a store clear inside one transaction; in the cloud a
+   * paged server-side deletion (a workspace-clear job when that exists). The
+   * confirmation that precedes this is the screen's.
+   */
   async clearInventory() {
     this.assertCanAdmin();
-    // Every item — not every loaded item. On a window this would delete the
-    // newest 200 and leave the rest behind, reporting success.
-    await this.completeItems();
-    this.assertItemsComplete('partial.clearInventory');
-    const operations = [
-      ...this.state.items.map((i) => ({ type: 'delete', collection: 'items', id: i.id })),
-      ...this.state.folders.map((f) => ({ type: 'delete', collection: 'folders', id: f.id })),
-    ];
-    await this.backend.runBatch(operations);
+    const folders = this.state.folders.length;
+    const { removed } = await this.backend.clearItems();
+    this.itemCache.clear();
+    this._invalidateAggregates();
+    this.invalidateSkuFloor();
     // The records are gone; so are the images only they referenced. Their
     // counts were not moved one by one, so the store is asked what is left.
     await reconcileAfterBulkWrite(this.session, { reclaimNow: true });
-    await this.log(ACTIONS.WORKSPACE_CLEARED, {
-      itemsRemoved: this.state.items.length, foldersRemoved: this.state.folders.length,
-    });
+    await this.log(ACTIONS.WORKSPACE_CLEARED, { itemsRemoved: removed, foldersRemoved: folders });
+  }
+
+  // ── aggregates ──
+
+  /**
+   * The Overview's numbers, from the backend's aggregate — the device keeps
+   * one in step with every write; the cloud will keep one server-side. Never
+   * computed by loading records here.
+   *
+   * @returns {Promise<object|null>} null when the backend cannot say
+   */
+  async getInventoryOverview() {
+    const aggregate = await this.backend.inventoryAggregate?.();
+    if (aggregate) return overviewFromAggregate(aggregate);
+    // A backend without a kept aggregate (the cloud one, until its server-side
+    // aggregation is deployed) is answered from the records only when all of
+    // them are already held; otherwise "not known", never a partial count.
+    if (!this.itemsComplete) return null;
+    const builder = new AggregateBuilder();
+    for (const item of this.state.items) builder.add(item);
+    return overviewFromAggregate(builder.result({ complete: true, builtAt: Date.now() }));
+  }
+
+  /**
+   * Whether the backend keeps the inventory's aggregate itself. When it does,
+   * no screen needs the whole inventory in hand to show totals.
+   */
+  get keepsAggregates() {
+    return Boolean(this.backend?.keepsAggregates);
+  }
+
+  // ── the query contract ──
+
+  /**
+   * One page of records matching a query (query-spec.js). Validated here, so
+   * no backend ever receives a field or operator outside the contract; the
+   * workspace scope is the backend's. Backend errors come back as
+   * application errors, never as a database's own message.
+   *
+   * @returns {Promise<{items, nextCursor, hasMore, total, meta}>}
+   */
+  async queryItems(input) {
+    const spec = validateQuerySpec(input);
+    const indexReady = Boolean(this.indexFieldsReady);
+    const key = `${specKey(spec)}|${spec.limit}|${spec.projection}|${spec.cursor || ''}|${indexReady}`;
+    // Only a backend whose every write passes through this tab can be cached
+    // this way; a server shared with others is asked every time.
+    const cacheable = Boolean(this.backend?.keepsAggregates);
+    const cached = cacheable && this.queryCache.get(key);
+    // Another tab writing the same database is not seen by the counter, so an
+    // answer is also only kept for a short while.
+    if (cached && cached.writes === itemWrites && cached.generation === this.queryGeneration && Date.now() - cached.at < QUERY_CACHE_TTL) {
+      this.queryCache.delete(key);
+      this.queryCache.set(key, cached);
+      return structuredClone(cached.answer);
+    }
+    const generation = this.queryGeneration;
+    const writes = itemWrites;
+    const answer = await this._backendCall(() => this.backend.queryItems(spec, { indexReady }));
+    // A write that landed while this was being answered: returned, not kept.
+    if (cacheable && generation === this.queryGeneration && writes === itemWrites) {
+      this.queryCache.set(key, { answer: structuredClone(answer), writes, generation, at: Date.now() });
+      while (this.queryCache.size > QUERY_CACHE_MAX) this.queryCache.delete(this.queryCache.keys().next().value);
+    }
+    return answer;
+  }
+
+  /** How many records match — exact. */
+  async countItemsMatching(input) {
+    const spec = validateQuerySpec({ ...input, sort: undefined, cursor: undefined });
+    return this._backendCall(() => this.backend.countItemsMatching(spec, { indexReady: Boolean(this.indexFieldsReady) }));
+  }
+
+  /**
+   * Count, quantity and valuation per currency over the matching records. The
+   * whole live inventory is answered from the aggregate, not by a walk.
+   */
+  async aggregateItems(input = {}) {
+    const spec = validateQuerySpec({ ...input, sort: undefined, cursor: undefined });
+    const onlyLive = !spec.text && spec.filters.length === 1 && spec.filters[0].field === 'deleted' && spec.filters[0].value === false;
+    if (onlyLive) {
+      const overview = await this.getInventoryOverview();
+      if (overview) {
+        return {
+          count: overview.totalItems,
+          quantity: overview.totalQuantity,
+          byCurrency: Object.fromEntries(overview.valuationByCurrency.map((c) => [c.currency, { count: c.count, total: c.total }])),
+          meta: { source: 'aggregate' },
+        };
+      }
+    }
+    return this._backendCall(() => this.backend.aggregateItems(spec, { indexReady: Boolean(this.indexFieldsReady) }));
+  }
+
+  /**
+   * Records found by a word of their name or brand, or by an identifier —
+   * the search contract every backend can serve (a token index here, a search
+   * service in the cloud). Full-text search of descriptions stays the
+   * inventory screen's own fallback.
+   */
+  async searchItems(text, { filters = {}, limit = 20, cursor = null, sort = { field: 'updatedAt', direction: 'desc' } } = {}) {
+    return this.queryItems({ filters, text, limit, cursor, sort });
+  }
+
+  async _backendCall(work) {
+    try {
+      return await work();
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      console.error('[repo] backend query failed', error);
+      throw new AppError('error.query/failed', { code: 'query/failed', cause: error });
+    }
+  }
+
+  /**
+   * Records that may be duplicates of one another (never the whole
+   * inventory); null when the backend cannot answer it.
+   */
+  async duplicateCandidates(options) {
+    return this._backendCall(() => this.backend.duplicateCandidates?.(options) ?? null);
+  }
+
+  /** Rebuilds the aggregate from the records (maintenance). */
+  async rebuildAggregates() {
+    return this.backend.rebuildAggregates?.() ?? null;
   }
 }
 

@@ -78,10 +78,18 @@ function setU64(view, at, value) { view.setBigUint64(at, BigInt(value), true); }
 /**
  * The central directory is a few dozen bytes per entry and is written last, so
  * it has to be kept until the end — for hundreds of thousands of images, tens
- * of megabytes. It is moved out of the page's heap into Blobs as it grows, and
- * read back a Blob at a time when the archive is finished.
+ * of megabytes. Where it is kept is a spool, any object with:
+ *
+ *   push(record: Uint8Array)          one directory record, in order
+ *   size: bigint                      bytes pushed so far
+ *   drainTo(write): Promise<void>     every record, in order, then empty
+ *
+ * The default moves records out of the page's heap into Blobs as it grows and
+ * reads them back a Blob at a time (browsers may keep large Blobs on disk). A
+ * spool backed by the origin-private file system, or by a temporary file in
+ * the native app, can be passed to Zip64Writer without changing it.
  */
-class DirectorySpool {
+export class BlobDirectorySpool {
   constructor(flushBytes = 512 * 1024) {
     this.flushBytes = flushBytes;
     this.pending = [];
@@ -119,12 +127,12 @@ class DirectorySpool {
  * with a few kilobytes instead of a 4 GB fixture. Production never sets it.
  */
 export class Zip64Writer {
-  constructor(sink, { startOffset = 0n, date = new Date(), maxEntries = Infinity } = {}) {
+  constructor(sink, { startOffset = 0n, date = new Date(), maxEntries = Infinity, spool = null } = {}) {
     this.sink = sink;
     this.offset = BigInt(startOffset);
     this.count = 0;
     this.maxEntries = maxEntries;
-    this.spool = new DirectorySpool();
+    this.spool = spool || new BlobDirectorySpool();
     this.usedZip64 = false;
     this.finished = false;
     Object.assign(this, dosDateTime(date));

@@ -20,7 +20,7 @@ import { PAGE_SIZE, UNCATEGORIZED_ID } from './config.js';
 import * as local from './local-store.js';
 import { repository } from './repository.js';
 import { matchesQuery, parseQuery, sortItems, sortByValuation } from './search.js';
-import { normalizeItem } from './validation.js';
+import { normalizeItem, valuationMidpoint } from './validation.js';
 
 /**
  * The largest batch a scan reads at once.
@@ -42,6 +42,13 @@ const YIELD_EVERY = 1200;
  * next/previous rather than numbered pages.
  */
 const COUNTABLE_SCAN = 4000;
+/**
+ * Name and value orders are read from their own indexes (nameSortKey,
+ * valueSort) unless the records in scope are few enough to sort in memory —
+ * at most this many. Above it, no order is ever produced by holding every
+ * match: the index is walked in order and the page is filled as it goes.
+ */
+const MEMORY_SORT_LIMIT = 2000;
 
 const yieldToTab = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -357,7 +364,146 @@ export async function execute(query, context = {}) {
   if (queryPlan.paginationStrategy === 'offset') {
     return byOffset(query, queryPlan, perPage);
   }
+  const ordered = await orderedByIndex(query, queryPlan, perPage, context);
+  if (ordered) return ordered;
   return byScan(query, queryPlan, predicate, perPage, context);
+}
+
+const NAME_SORTS = { 'name-az': 'next', 'name-za': 'prev' };
+const VALUE_SORTS = { 'value-high': 'prev', 'value-low': 'next' };
+
+/**
+ * Name and value orders, from their indexes — when the in-memory path would
+ * have to hold more than MEMORY_SORT_LIMIT records to produce them. Null when
+ * the in-memory path is right: a small scope, the Trash, or a device whose
+ * older records have not yet been given their ordering fields (until then the
+ * index would not hold them, and a list must never be missing records).
+ */
+async function orderedByIndex(query, queryPlan, perPage, context) {
+  if (queryPlan.sortStrategy !== 'memory' || query.trashed) return null;
+  const nameDirection = NAME_SORTS[query.sort];
+  const valueDirection = VALUE_SORTS[query.sort];
+  if (!nameDirection && !valueDirection) return null;
+  if (!repository.indexFieldsReady) return null;
+  if (queryPlan.baseIndex) {
+    const size = await local.countRange('items', queryPlan.baseIndex, rangeFor(queryPlan));
+    if (size <= MEMORY_SORT_LIMIT) return null;
+  }
+  // The scope the base index answered becomes a test on the ordered walk.
+  const residual = [...queryPlan.residualPredicates, ...queryPlan.indexedPredicates.filter((name) => !name.startsWith('sort:'))];
+  const walkPlan = {
+    ...queryPlan, baseIndex: null, baseValue: undefined, indexedPredicates: [], residualPredicates: residual,
+  };
+  const predicate = predicateFor(query, walkPlan);
+  // The total is whatever the scope's own indexes can size, exactly as before.
+  const total = await cheapTotal(query, { ...queryPlan, sortStrategy: 'index' });
+  const phases = nameDirection
+    ? [{ index: 'nameSortKey', range: null, direction: nameDirection, keyOf: (item) => item.nameSortKey }]
+    : await valuePhases(query, valueDirection);
+  const result = await byPhases(query, phases.phases || phases, predicate, perPage, context, total);
+  if (!result) return null;
+  return {
+    ...result,
+    plan: { ...walkPlan, sortStrategy: 'index', orderIndex: phases.phases ? 'valueSort' : 'nameSortKey' },
+    valueCurrencies: phases.currencies || [],
+    groupedByCurrency: Boolean(phases.currencies && phases.currencies.length > 1),
+  };
+}
+
+/**
+ * Value order, one currency block at a time — [currency, midpoint] is the
+ * index, so values are only ever compared within their currency — then the
+ * records with no valuation, newest first, as the in-memory order has them.
+ * Blocks are laid out most-priced currency first, as `sortByValuation` does.
+ */
+async function valuePhases(query, direction) {
+  const filters = query.filters || {};
+  const codes = filters.currency ? [filters.currency] : await local.uniqueKeys('items', 'valuationCurrency');
+  const sized = await Promise.all(codes.map(async (code) => ({
+    code, size: await local.countRange('items', 'valueSort', IDBKeyRange.bound([code], [code, []])),
+  })));
+  const order = sized.filter((entry) => entry.size > 0)
+    .sort((a, b) => b.size - a.size || a.code.localeCompare(b.code))
+    .map((entry) => entry.code);
+  const phases = order.map((code) => ({
+    index: 'valueSort',
+    range: IDBKeyRange.bound([code], [code, []]),
+    direction,
+    keyOf: (item) => [item.valuation.currency, item.valuationMidpoint],
+  }));
+  if (!filters.currency && filters.valuation !== 'yes') {
+    phases.push({
+      index: 'createdAt',
+      range: null,
+      direction: 'prev',
+      keyOf: (item) => item.createdAt,
+      // Exactly the records the value index does not hold.
+      only: (item) => !(item.valuation?.currency && valuationMidpoint(item.valuation) != null),
+    });
+  }
+  return { phases, currencies: order };
+}
+
+/**
+ * Walks a sequence of index ranges in order, keeping one page. The cursor is
+ * [phase, index key] and the record's id, so the next page continues exactly
+ * after the last record shown, even across a phase boundary.
+ */
+async function byPhases(query, phases, predicate, perPage, context, total) {
+  const resuming = Boolean(query.cursor) && Array.isArray(query.cursor.key);
+  const pageNumber = Math.max(1, query.page || 1);
+  const skip = resuming ? 0 : (pageNumber - 1) * perPage;
+  const kept = [];
+  let matched = 0;
+  let examined = 0;
+  let more = false;
+  const startPhase = resuming ? query.cursor.key[0] : 0;
+
+  for (let p = startPhase; p < phases.length && !more; p += 1) {
+    const phase = phases[p];
+    const fromHere = resuming && p === startPhase;
+    await local.walk('items', {
+      index: phase.index,
+      range: phase.range,
+      direction: phase.direction,
+      after: fromHere ? query.cursor.key[1] : undefined,
+      afterPrimary: fromHere ? query.cursor.primaryKey : undefined,
+      batchSize: SCAN_BATCH,
+      onBatch: async (batch) => {
+        if (context.signal?.aborted) return false;
+        for (const item of batch) {
+          examined += 1;
+          if (phase.only && !phase.only(item)) continue;
+          if (predicate && !predicate(item)) continue;
+          matched += 1;
+          if (matched <= skip) continue;
+          if (kept.length < perPage) { kept.push({ item, phase: p }); continue; }
+          more = true;
+          return false;
+        }
+        if (examined % YIELD_EVERY < SCAN_BATCH) await yieldToTab();
+        return true;
+      },
+    });
+    if (context.signal?.aborted) return null;
+  }
+
+  const last = kept[kept.length - 1];
+  const cursor = last && more
+    ? { key: [last.phase, phases[last.phase].keyOf(last.item)], primaryKey: last.item.id }
+    : null;
+  const totalPages = total == null ? null : Math.max(1, Math.ceil(total / perPage));
+  return {
+    rows: present(kept.map((entry) => entry.item)),
+    total,
+    page: pageNumber,
+    totalPages,
+    searching: false,
+    hasMore: more,
+    cursor,
+    exhausted: !more,
+    examined,
+  };
 }
 
 /**

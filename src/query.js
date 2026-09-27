@@ -39,6 +39,13 @@ export function emptyQuery() {
     trashed: false,
     /** An explicit set of ids, when the assistant hands over an answer. */
     ids: null,
+    /**
+     * A query in the repository contract (query-spec.js) — how the assistant
+     * hands over an answer that is a question rather than a short list: "items
+     * without a location" stays a question, answered a page at a time by
+     * whichever backend is authoritative.
+     */
+    spec: null,
   };
 }
 
@@ -56,7 +63,8 @@ export function isNarrowed(query) {
     || query.sort !== 'newest'
     || query.folderId
     || query.trashed
-    || query.ids,
+    || query.ids
+    || query.spec,
   );
 }
 
@@ -148,6 +156,7 @@ export function queryKeyOf(query) {
     full.perPage || PAGE_SIZE,
     Object.keys(filters).sort().map((key) => [key, filters[key] || '']),
     full.ids ? [...(full.ids instanceof Set ? full.ids : full.ids)].slice().sort() : null,
+    full.spec ? JSON.stringify(full.spec) : null,
   ]);
 }
 
@@ -257,6 +266,7 @@ export function currentAdapter() {
 export async function queryInventory(query, options = {}) {
   const full = { ...emptyQuery(), ...query };
   const queryKey = queryKeyOf(full);
+  if (full.spec) return bySpec(full, queryKey, options);
   const answerable = await ensureFor(full, options.ensure);
   if (options.signal?.aborted) return null;
 
@@ -302,6 +312,55 @@ export async function queryInventory(query, options = {}) {
  * unanswerable rather than computed from a fraction, because a filter applied
  * to part of an inventory answers confidently and wrongly.
  */
+/** The home screen's orders in the contract's terms; value orders need a currency. */
+const SPEC_SORTS = {
+  newest: { field: 'createdAt', direction: 'desc' },
+  oldest: { field: 'createdAt', direction: 'asc' },
+  'name-az': { field: 'name', direction: 'asc' },
+  'name-za': { field: 'name', direction: 'desc' },
+};
+
+/**
+ * A handed-over question, answered through the repository's query contract —
+ * the same call whether the device or a server is authoritative. Pages follow
+ * the contract's own cursor; a page reached without one (a jump) is walked to
+ * a page at a time, never by loading the inventory.
+ */
+async function bySpec(full, queryKey, options) {
+  const perPage = full.perPage || PAGE_SIZE;
+  const currency = full.spec.filters?.valuationCurrency;
+  const sort = SPEC_SORTS[full.sort]
+    || (typeof currency === 'string' && full.sort === 'value-high' ? { field: 'valuation', direction: 'desc' } : null)
+    || (typeof currency === 'string' && full.sort === 'value-low' ? { field: 'valuation', direction: 'asc' } : null)
+    || full.spec.sort
+    || SPEC_SORTS.newest;
+  const base = { filters: full.spec.filters || {}, text: full.spec.text || undefined, sort, limit: perPage, projection: 'full' };
+  const pageNumber = Math.max(1, full.page || 1);
+
+  let cursor = options.cursor || null;
+  let answer;
+  if (cursor) {
+    answer = await repository.queryItems({ ...base, cursor });
+  } else {
+    answer = await repository.queryItems(base);
+    for (let n = 1; n < pageNumber && answer.nextCursor; n += 1) {
+      if (options.signal?.aborted) return null;
+      answer = await repository.queryItems({ ...base, cursor: answer.nextCursor });
+    }
+  }
+  if (options.signal?.aborted) return null;
+  const total = answer.total ?? (await repository.countItemsMatching({ filters: base.filters, text: base.text })).count;
+  if (options.signal?.aborted) return null;
+  return canonical({
+    rows: answer.items,
+    total,
+    page: pageNumber,
+    searching: true,
+    nextCursor: answer.nextCursor,
+    hasMore: answer.hasMore,
+  }, { query: full, queryKey, answerable: true, complete: true, summary: await adapter.summarize(full) });
+}
+
 async function ensureFor(query, ensure) {
   if (!adapter.needsEverything(query)) return true;
   if (repository.itemsComplete) return true;

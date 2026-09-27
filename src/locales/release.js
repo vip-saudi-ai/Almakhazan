@@ -203,6 +203,7 @@ export const messages = {
   'fullBackup.reminderLater': { ar: 'لاحقاً', en: 'Later' },
   'backup.tooLarge': { ar: 'النسخة الاحتياطية أكبر من المسموح على هذا الجهاز ({size} م.ب، والحد {limit} م.ب).', en: 'The backup is larger than this device allows ({size} MB; the limit is {limit} MB).' },
   'backup.corrupt': { ar: 'تعذّر التحقق من سلامة النسخة الاحتياطية.', en: 'The backup could not be verified.' },
+  'backup.invalidRecord': { ar: 'تحتوي النسخة الاحتياطية على سجل لا يمكن استعادته كاملاً، فلم تُستعد ولم يتغير شيء في مخزونك.', en: 'The backup holds a record that cannot be restored whole, so it was not restored and nothing in your inventory changed.' },
   'backup.integrity': { ar: 'تعذّر التحقق من سلامة النسخة الاحتياطية: محتواها لا يطابق ما سُجّل فيها.', en: 'The backup could not be verified: its contents do not match what it recorded.' },
   'backup.notFullBackup': { ar: 'هذا الملف ليس نسخة احتياطية كاملة من نَظْم.', en: 'This file is not a NAZM Full Backup.' },
   'backup.newerVersion': { ar: 'تم إنشاء النسخة الاحتياطية بواسطة إصدار أحدث من نَظْم. حدّث التطبيق ثم أعد المحاولة.', en: 'This backup was created by a newer version of NAZM. Update the app and try again.' },

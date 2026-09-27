@@ -335,7 +335,7 @@ function sampled() {
  *   referencedCount: number}>}
  */
 export async function reconcileLocalMediaReferences({
-  reclaim = false, now = Date.now(), graceMs = ORPHAN_GRACE_MS, dryRun = false, pageSize = 500,
+  reclaim = false, now = Date.now(), graceMs = ORPHAN_GRACE_MS, dryRun = false, pageSize = 500, onMissing = null,
 } = {}) {
   const run = uid('rec');
   const refs = (id) => [run, 'ref', id];
@@ -415,14 +415,22 @@ export async function reconcileLocalMediaReferences({
         if (!keys.length) break;
         afterKey = keys[keys.length - 1];
         const present = await local.existingKeys('mediaAssets', keys.map((key) => key[2]));
-        for (const key of keys) if (!present.has(key[2])) missing.add({ mediaId: key[2] });
+        const page = [];
+        for (const key of keys) if (!present.has(key[2])) { missing.add({ mediaId: key[2] }); page.push(key[2]); }
+        // Every missing id, a page at a time — not the report's sample — for a
+        // caller that must check the whole set (the restore's verification).
+        if (onMissing && page.length) await onMissing(page);
         if (keys.length < pageSize) break;
       }
     } else {
       await local.walk('workIndex', {
         range: local.prefixRange(run, 'ref'),
         batchSize: pageSize,
-        onBatch: (rows) => { for (const row of rows) missing.add({ mediaId: row.id, references: row.value }); return true; },
+        onBatch: async (rows) => {
+          for (const row of rows) missing.add({ mediaId: row.id, references: row.value });
+          if (onMissing && rows.length) await onMissing(rows.map((row) => row.id));
+          return true;
+        },
       });
     }
   } finally {

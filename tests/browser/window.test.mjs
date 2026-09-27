@@ -168,18 +168,19 @@ const repoState = (page) => page.evaluate(async () => {
   await context.close();
 }
 
-// ── everything that states a total waits for the total ────────────────────
+// ── a screen that states a total reads it from the aggregate ──────────────
+// It used to load every record before it would draw; the device backend now
+// keeps the inventory's aggregate, so the Assistant states exact totals while
+// holding only the window.
 {
   const { page, context, errs } = await open();
   await page.click('#t-ai');
-  await page.waitForFunction(async () => {
-    const { repository } = await import('/src/repository.js');
-    return repository.itemsComplete;
-  }, null, { timeout: 15000 });
+  await page.waitForFunction(() => /\d/.test(document.querySelector('.health-number')?.textContent || ''), null, { timeout: 15000 });
   await page.waitForTimeout(400);
   const assistant = await repoState(page);
-  check('W17 the assistant tab does not open on a fraction of the inventory',
-    assistant.complete && assistant.loaded === COUNT, JSON.stringify(assistant));
+  const overview = await page.evaluate(async () => (await (await import('/src/repository.js')).repository.getInventoryOverview()).totalItems);
+  check('W17 the assistant states the whole inventory without loading it',
+    !assistant.complete && assistant.loaded <= 200 && overview === COUNT, JSON.stringify({ ...assistant, overview }));
   check('W18 no JS errors', errs.length === 0, errs.join(' / '));
   await context.close();
 }

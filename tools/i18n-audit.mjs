@@ -123,6 +123,7 @@ const ALLOWED = [
   { file: 'src/import-mapping.js', why: 'Arabic column-header aliases and condition words (English beside them)' },
   { file: 'src/custom-fields.js', why: 'Arabic yes/no words and the Arabic comma recognised in typed or imported field values' },
   { file: 'src/search.js', why: 'Arabic letter normalisation for search' },
+  { file: 'src/item-index.js', why: 'Arabic comma and definite article in search tokens' },
   { file: 'src/utils.js', why: 'Arabic-Indic digit normalisation for input' },
   { file: 'src/money.js', why: 'currency words recognised in typed or imported amounts' },
   { file: 'src/validation.js', why: 'currency and range words recognised in input; the canonical stored unit' },

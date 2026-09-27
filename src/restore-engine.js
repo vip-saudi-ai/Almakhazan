@@ -27,9 +27,10 @@
 // The job records its stage and how far it got (the last committed chunk, the
 // last image, the last key examined for removal), saved after each unit is
 // committed. Every step is idempotent, so a restore interrupted anywhere is
-// finished by running it again with the same backup — which first takes a new
-// safety backup of the mixed state, because that is now what must not be
-// lost. A different backup is refused until then. From step 2 on, any
+// finished by running it again with the same backup. The safety backup taken
+// on the first run (`originalSafetyBackup`) is kept as recorded and is not
+// taken again; a resume may add a separate `recoveryCheckpointBackup` of the
+// mixed state when asked. A different backup is refused until then. From step 2 on, any
 // failure leaves the job in recovery-required, never in an untracked state.
 
 import { ACTIONS } from './config.js';
@@ -336,15 +337,30 @@ async function verifyResult(archive, job) {
 
   // Reference counts agree with the records, and the only images records
   // reference without holding are the ones the backup declared missing.
-  const check = await reconcileLocalMediaReferences({ dryRun: true });
+  //
+  // The whole set, not a sample: every id the records reference and no image
+  // holds is looked up in the backup's own declared-missing list, a page at a
+  // time as the reconciliation finds them (its scratch is on disk, so the set
+  // can be any size). One undeclared id fails the restore.
+  let undeclared = 0;
+  let firstUndeclared = null;
+  const check = await reconcileLocalMediaReferences({
+    dryRun: true,
+    onMissing: async (ids) => {
+      const known = await restoreIndex.presentIn(key, ['media-missing'], ids);
+      for (const id of ids) {
+        if (known.has(id)) continue;
+        undeclared += 1;
+        firstUndeclared ??= id;
+      }
+    },
+  });
   if (check.correctedCount) throw verificationFailed(`reference counts ${check.correctedCount}`);
+  if (undeclared) throw verificationFailed(`undeclared missing media ${undeclared} (${firstUndeclared})`);
   const declared = await restoreIndex.countOf(key, 'media-missing');
   if (check.missingCount > declared) throw verificationFailed('undeclared missing media');
-  const sample = check.missing.map((m) => m.mediaId);
-  const known = await restoreIndex.presentIn(key, ['media-missing'], sample);
-  if (sample.some((id) => !known.has(id))) throw verificationFailed('undeclared missing media');
   await checkpoint('verify');
-  return { missingMedia: check.missingCount };
+  return { missingMedia: check.missingCount, missingChecked: check.missingCount };
 }
 
 // ── the restore ────────────────────────────────────────────────────────────
@@ -355,7 +371,30 @@ async function verifyResult(archive, job) {
  * @param {object} archive from `openFullBackup`, verified by `verifyFullBackup`
  * @param {{onProgress?: Function}} options
  */
-export async function restoreFullBackup(archive, { onProgress = () => {} } = {}) {
+/** A Full Backup of what is on the device now, handed to the customer — or the restore stops. */
+async function takeSafetyBackup(repo, purpose, report) {
+  try {
+    const counts = await repo.recordCounts().catch(() => null);
+    const safety = await writeBackupV2({
+      purpose: 'safety',
+      itemCount: counts?.total || 0,
+      onProgress: (p) => report('safety', { step: p }),
+    });
+    return { filename: safety.filename, items: safety.items, media: safety.media, integrity: safety.integrityStatus, at: Date.now(), purpose };
+  } catch (error) {
+    console.error(`[restore] ${purpose} backup failed — aborting`, error);
+    throw new AppError('error.restore/aborted', { code: 'restore/aborted', cause: error });
+  }
+}
+
+/**
+ * @param {object} archive
+ * @param {{onProgress?: Function, recoveryCheckpoint?: boolean}} options
+ *   `recoveryCheckpoint` — on a resumed restore only: also back up the
+ *   current (mixed) state before continuing. Never required, never replaces
+ *   the original safety backup.
+ */
+export async function restoreFullBackup(archive, { onProgress = () => {}, recoveryCheckpoint = false } = {}) {
   const repo = repository;
   repo.assertCanWrite();
   if (repo.session?.mode === 'cloud') throw new AppError('backup.fullLocalOnly', { code: 'backup/local-only' });
@@ -400,20 +439,30 @@ export async function restoreFullBackup(archive, { onProgress = () => {} } = {})
     await assertSpace(archive);
 
     // ── 1. the safety backup: nothing continues without it ──
-    report('safety');
-    let safety;
-    try {
-      const counts = await repo.recordCounts().catch(() => null);
-      safety = await writeBackupV2({
-        purpose: 'safety',
-        itemCount: counts?.total || 0,
-        onProgress: (p) => report('safety', { step: p }),
-      });
-    } catch (error) {
-      console.error('[restore] safety backup failed — aborting', error);
-      throw new AppError('error.restore/aborted', { code: 'restore/aborted', cause: error });
+    //
+    // `originalSafetyBackup` is the inventory as it was before this restore
+    // first wrote anything — the one copy that matters if the customer wants
+    // their old inventory back. It is taken once, on the first run, and never
+    // replaced: a resumed restore keeps it exactly as recorded, and does not
+    // need a new one to continue (the device holds only a mix of that
+    // inventory and the backup being restored, both of which exist as files).
+    // A resume may still ask for a `recoveryCheckpointBackup` of the mixed
+    // state; it is kept separately and never stands in for the original.
+    const original = previous?.originalSafetyBackup || previous?.safetyBackup || null;
+    if (!resuming || !original) {
+      report('safety');
+      const safety = await takeSafetyBackup(repo, 'safety', report);
+      job.originalSafetyBackup = Object.freeze({ ...safety, kind: 'original' });
+    } else {
+      job.originalSafetyBackup = original;
+      if (recoveryCheckpoint) {
+        report('safety');
+        const checkpointBackup = await takeSafetyBackup(repo, 'recovery-checkpoint', report);
+        job.recoveryCheckpointBackup = { ...checkpointBackup, kind: 'recovery-checkpoint' };
+      }
     }
-    job.safetyBackup = { filename: safety.filename, items: safety.items, media: safety.media, integrity: safety.integrityStatus, at: Date.now() };
+    // The name older readers of the job look for; always the original.
+    job.safetyBackup = job.originalSafetyBackup;
 
     // ── 2. the job, before the first write ──
     await save(job, { status: RestoreStatus.PREPARED });
@@ -444,7 +493,8 @@ export async function restoreFullBackup(archive, { onProgress = () => {} } = {})
       folders: archive.metadata.folders.length,
       images: archive.verification.media,
       removed: removed.items || 0,
-      safetyBackup: job.safetyBackup,
+      safetyBackup: job.originalSafetyBackup,
+      recoveryCheckpointBackup: job.recoveryCheckpointBackup || null,
     });
     report('done');
     return {
@@ -459,6 +509,8 @@ export async function restoreFullBackup(archive, { onProgress = () => {} } = {})
       unchanged: job.progress.itemsUnchanged || 0,
       resumed: job.resumed,
       jobId: job.id,
+      originalSafetyBackup: job.originalSafetyBackup,
+      recoveryCheckpointBackup: job.recoveryCheckpointBackup || null,
     };
   } catch (error) {
     if (recorded) {

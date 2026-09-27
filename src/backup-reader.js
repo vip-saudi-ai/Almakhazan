@@ -25,7 +25,8 @@ import { APP_VERSION, SCHEMA_VERSION, TAXONOMY_SCHEMA_VERSION } from './config.j
 import { mediaIdsOf } from './media.js';
 import { isNative } from './platform.js';
 import { AppError } from './utils.js';
-import { importItemContext, normalizeBackupMetadata, normalizeImportedItem, validateImport } from './validation.js';
+import { validateImport } from './validation.js';
+import { backupItemContext, validateBackupItem, validateBackupMetadata } from './backup-validate.js';
 import { ZipReader } from './zip64.js';
 import * as restoreIndex from './restore-index.js';
 import {
@@ -171,7 +172,8 @@ async function readV2Backup(archive) {
   if (await sha256Hex(metadataBytes) !== descriptor.sha256) throw integrity('backup/metadata-checksum');
   const rawMetadata = parseJsonEntry(metadataBytes, 'backup/metadata');
   if (Number.isInteger(rawMetadata?.schemaVersion) && rawMetadata.schemaVersion > SCHEMA_VERSION) throw new AppError('backup.newerVersion', { code: 'backup/newer' });
-  const metadata = normalizeBackupMetadata(rawMetadata);
+  // Every record whole, or the backup is refused (backup-validate.js).
+  const metadata = validateBackupMetadata(rawMetadata);
   for (const name of ['categories', 'fieldDefinitions', 'folders', 'locations']) {
     if (!Array.isArray(rawMetadata?.[name]) || rawMetadata[name].length !== counts[name]) throw integrity('backup/count');
   }
@@ -336,27 +338,33 @@ async function readV1Backup(archive) {
 
   const fingerprint = `full:${archive.manifestHash}`;
   const assets = new Map((Array.isArray(raw.mediaAssets) ? raw.mediaAssets : []).map((a) => [a?.id, a]));
-  const items = checked.data.items;
+  // The raw records: each is validated whole when its chunk is read, exactly
+  // as a version 2 chunk is — never dropped by the general import rules.
+  const items = Array.isArray(raw.items) ? raw.items : [];
+  const v1Metadata = validateBackupMetadata(raw);
   const chunkSize = 2000;
-  const warnings = checked.warnings.slice(0, WARNING_SAMPLE);
   return {
     ...archive,
     version: 1,
     fingerprint,
     restoreKey: await restoreKeyFor(fingerprint),
-    metadata: {
-      categories: checked.data.categories,
-      fieldDefinitions: checked.data.fieldDefinitions,
-      folders: checked.data.folders,
-      locations: checked.data.locations,
-    },
+    metadata: v1Metadata,
     // The parsed records, cut into the same chunks the restore writes.
     v1: { items, media, mediaByPath, assets, missingMedia: Array.isArray(manifest.missingMedia) ? manifest.missingMedia : [], chunkSize },
     itemChunks: Array.from({ length: Math.ceil(items.length / chunkSize) }, (_, i) => ({ sequence: i + 1, count: Math.min(chunkSize, items.length - i * chunkSize) })),
     integrityStatus: (manifest.missingMedia || []).length ? 'degraded' : 'complete',
-    stats: { ...checked.stats, media: media.length, missingMedia: (manifest.missingMedia || []).length },
-    warnings,
-    warningCount: checked.warnings.length,
+    stats: {
+      ...checked.stats,
+      items: items.length,
+      folders: v1Metadata.folders.length,
+      categories: v1Metadata.categories.length,
+      fieldDefinitions: v1Metadata.fieldDefinitions.length,
+      locations: v1Metadata.locations.length,
+      media: media.length,
+      missingMedia: (manifest.missingMedia || []).length,
+    },
+    warnings: [],
+    warningCount: 0,
     verified: false,
   };
 }
@@ -405,21 +413,14 @@ export function mediaEntries(archive, options) {
  * them. `sequence` is 1-based.
  */
 export async function readItems(archive, sequence) {
-  const context = archive.context || (archive.context = importItemContext(archive.metadata));
-  if (archive.version === 1) {
-    const { items, chunkSize } = archive.v1;
-    return { items: items.slice((sequence - 1) * chunkSize, sequence * chunkSize), skipped: 0, warnings: [] };
-  }
-  const records = await readItemChunk(archive, archive.itemChunks[sequence - 1]);
-  const items = [];
-  const warnings = [];
-  let skipped = 0;
-  for (const raw of records) {
-    const { item, warnings: found } = normalizeImportedItem(raw, context);
-    warnings.push(...found);
-    if (item) items.push(item); else skipped += 1;
-  }
-  return { items, skipped, warnings };
+  const context = archive.context || (archive.context = backupItemContext(archive.metadata));
+  const records = archive.version === 1
+    ? archive.v1.items.slice((sequence - 1) * archive.v1.chunkSize, sequence * archive.v1.chunkSize)
+    : await readItemChunk(archive, archive.itemChunks[sequence - 1]);
+  // A record that would not be restored whole refuses the backup: a Full
+  // Restore never skips (backup-validate.js).
+  const items = records.map((raw) => validateBackupItem(raw, context));
+  return { items, skipped: 0, warnings: [] };
 }
 
 /** One image's bytes from the archive, checked against its descriptor. */
@@ -478,15 +479,13 @@ export async function verifyFullBackup(archive, { onProgress = () => {}, signal,
 
     // ── every item chunk ──
     let items = 0;
-    let skipped = 0;
     let largestChunk = 0;
     const total = archive.stats.items;
     report('items', { done: 0, total });
     for (const chunk of archive.itemChunks) {
       checkAbort(signal);
       const read = await readItems(archive, chunk.sequence);
-      largestChunk = Math.max(largestChunk, read.items.length + read.skipped);
-      skipped += read.skipped;
+      largestChunk = Math.max(largestChunk, read.items.length);
       for (const warning of read.warnings) {
         archive.warningCount += 1;
         if (archive.warnings.length < WARNING_SAMPLE) archive.warnings.push(warning);
@@ -496,7 +495,7 @@ export async function verifyFullBackup(archive, { onProgress = () => {}, signal,
       const referenced = read.items.flatMap((item) => mediaIdsOf(item));
       const present = await restoreIndex.presentIn(key, ['media', 'media-missing'], referenced);
       if (referenced.some((id) => !present.has(id))) throw new AppError('backup.missingImage', { code: 'backup/unlisted-image' });
-      items += read.items.length + read.skipped;
+      items += read.items.length;
       report('items', { done: items, total });
     }
     if (items !== total) throw integrity('backup/count');
@@ -515,8 +514,10 @@ export async function verifyFullBackup(archive, { onProgress = () => {}, signal,
 
     archive.verified = true;
     archive.verification = {
-      items: items - skipped,
-      skipped,
+      items,
+      // A Full Restore never skips a record: one that would not survive whole
+      // refuses the backup (backup-validate.js). Kept for older callers.
+      skipped: 0,
       media,
       missingMedia: missing,
       mediaBytes,

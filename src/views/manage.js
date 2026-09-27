@@ -19,7 +19,8 @@ import {
 import {
   RESTORE_BLOCKED_MESSAGE, RestoreStage, restoreFromBackup, stageLabel, unfinishedRestore,
 } from '../restore.js';
-import { withFullInventory } from '../inventory-load.js';
+import { hideProgress, showProgress, withFullInventory } from '../inventory-load.js';
+import { exportAdvice, exportCsv } from '../export-service.js';
 import {
   createFullBackup, lastBackupInfo, looksLikeFullBackup, openFullBackup, restoreFullBackup, verifyFullBackup,
 } from '../full-backup.js';
@@ -934,7 +935,42 @@ function showMergeSkuConflicts(conflicts) {
 // a short file that looks complete. Settings used to call the exporter
 // directly against the window and fail with "the inventory is incomplete".
 
+/**
+ * A format built whole in memory, asked for an inventory above its limit:
+ * say so and offer CSV, which is written a page at a time. True when the
+ * caller should go ahead with the format it was asked for.
+ */
+async function sizeAllows(format) {
+  const advice = await exportAdvice(format).catch(() => null);
+  if (!advice?.overLimit) return true;
+  const csv = await confirmAction({
+    titleKey: 'export.largeTitle',
+    messageKey: 'export.largeMessage',
+    messageParams: { count: formatNumber(advice.count), limit: formatNumber(advice.limit) },
+    icon: '📄',
+    tone: 'neutral',
+    confirmLabelKey: 'export.useCsv',
+  });
+  if (csv) await runCsvExport();
+  return false;
+}
+
+/** The inventory as CSV — a page at a time, never the whole inventory in hand. */
+export async function runCsvExport() {
+  const job = await exportCsv({
+    onProgress: ({ done, total }) => showProgress(t('export.csvProgress', { done: formatNumber(done), total: formatNumber(total) })),
+  });
+  hideProgress();
+  if (job.status === 'completed') {
+    toast(t('export.csvDone', { count: formatNumber(job.result.rows) }), '📄');
+    return true;
+  }
+  if (job.error?.code !== 'export/cancelled') toastError(job.error, 'error.export/failed');
+  return false;
+}
+
 export async function runFullExcelExport() {
+  if (!(await sizeAllows('xlsx'))) return false;
   if (!(await withFullInventory(t('export.reading')))) return false;
   try {
     await exportExcel();
@@ -947,6 +983,7 @@ export async function runFullExcelExport() {
 }
 
 export async function runFullJsonExport() {
+  if (!(await sizeAllows('json'))) return false;
   if (!(await withFullInventory(t('export.reading')))) return false;
   try {
     const { bytes, restorable } = await exportJSON();
@@ -1491,6 +1528,7 @@ function renderDataPanel() {
     repository.session.mode === 'cloud' ? null : row('🛟', 'rgba(37,99,255,.15)', t('fullBackup.title'), t('fullBackup.sub'), () => { void runFullBackup(); }, 'full-backup-sub'),
     repository.session.mode === 'cloud' ? null : row('♻️', 'rgba(37,99,255,.12)', t('fullBackup.restore'), t('fullBackup.restoreSub'), () => { void startFullRestore(); }),
     row('📊', 'rgba(52,199,89,.15)', t('export.excel'), t('settings.excelSub'), () => { void runFullExcelExport(); }),
+    row('📄', 'rgba(52,199,89,.12)', t('export.csv'), t('settings.csvSub'), () => { void runCsvExport(); }),
     // Honest about what the file holds. It is the records, never the image
     // files: on a device-only workspace those stay on the device, and on a
     // cloud workspace they stay in cloud storage.

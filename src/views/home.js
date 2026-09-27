@@ -78,7 +78,8 @@ function currentQuery() {
     sort: view.sortMode,
     page: view.page,
     perPage: PAGE_SIZE,
-    ids: view.assistantSet ? view.assistantSet.ids : null,
+    ids: view.assistantSet?.ids || null,
+    spec: view.assistantSet?.query || null,
   };
 }
 
@@ -866,8 +867,14 @@ function pickOne(title, options, onPick) {
 }
 
 // ── an answer handed over by the assistant ──
-export function applyAssistantFilter({ label, ids }) {
-  view.assistantSet = { label, ids: new Set(ids) };
+/**
+ * @param {{label: string, ids?: string[], query?: {filters: object, text?: string}}} answer
+ *   a question (`query`, in the repository's query contract) — preferred, since
+ *   it is answered a page at a time however large the answer — or a short
+ *   explicit list of records (`ids`), such as one duplicate group.
+ */
+export function applyAssistantFilter({ label, ids = null, query = null }) {
+  view.assistantSet = { label, ids: query ? null : new Set(ids || []), query: query || null };
   view.query = '';
   view.folderId = null;
   view.categoryPill = 'all';

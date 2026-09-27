@@ -16,6 +16,13 @@ import { reconcileAfterBulkWrite } from './media.js';
 import { fieldRows } from './field-format.js';
 import { TAXONOMY_SCHEMA_VERSION, buildTaxonomy, reconcileClassification } from './taxonomy.js';
 import { isNative, saveFile } from './platform.js';
+import { INDEX_ONLY_FIELDS } from './item-index.js';
+
+function withoutIndexFields(item) {
+  const out = { ...item };
+  for (const field of INDEX_ONLY_FIELDS) delete out[field];
+  return out;
+}
 
 // A download in a browser, the share sheet (Files, Mail, AirDrop) in the
 // native app: src/platform.js decides, and throws if the file cannot be handed
@@ -65,6 +72,53 @@ export async function saveBackupFile(text, prefix = 'nazm_backup') {
   await download(blob, `${prefix}_${stamp()}.json`);
 }
 
+/** The inventory sheet's headings, in the language on screen. */
+export function itemHeadings() {
+  // The spreadsheet import recognises both languages' headings.
+  return [
+    'field.sku', 'field.barcode', 'field.name', ...CLASSIFICATION_HEADINGS, 'field.folder', 'field.location',
+    'field.quantity', 'field.unit', 'field.condition', 'field.brand',
+    'field.serialNumber', 'field.modelNumber', 'field.referenceNumber', 'fields.additional',
+    'export.minValuation', 'export.maxValuation', 'field.currency', 'export.valuationSource',
+    'export.aiLocalScore', 'export.aiGlobalScore',
+    'export.aiMinEstimate', 'export.aiMaxEstimate',
+    'export.aiDescription', 'field.description', 'export.createdAt', 'export.updatedAt',
+  ].map((key) => t(key));
+}
+
+/** One record as a row of the inventory sheet (Excel and CSV alike). */
+export function itemCells(repo, item) {
+  const ai = item.aiData;
+  return [
+    item.sku || '',
+    item.barcode || '',
+    item.name || '',
+    ...classificationCells(repo, item),
+    repo.folder(item.folderId)?.name || '',
+    repo.location(item.locationId)?.name || '',
+    item.quantity,
+    item.unit || '',
+    item.condition || '',
+    item.brand || '',
+    item.serialNumber || '',
+    item.modelNumber || '',
+    item.referenceNumber || '',
+    additionalDetailsCell(repo, item),
+    item.valuation?.min ?? null,
+    item.valuation?.max ?? null,
+    item.valuation?.currency || '',
+    item.valuation?.source || '',
+    ai?.localScore ?? null,
+    ai?.globalScore ?? null,
+    ai?.suggestedValuation?.min ?? null,
+    ai?.suggestedValuation?.max ?? null,
+    ai?.description || '',
+    item.description || '',
+    toDate(item.createdAt),
+    toDate(item.updatedAt),
+  ];
+}
+
 export async function exportExcel() {
   const repo = repository;
   // An export is a statement about the whole inventory. If only a window is
@@ -73,51 +127,8 @@ export async function exportExcel() {
   repo.assertItemsComplete('partial.export');
   const items = repo.liveItems();
 
-  const itemRows = [[
-    // Headings in the language on screen; the values are the records' own.
-    // The spreadsheet import recognises both languages' headings.
-    ...[
-      'field.sku', 'field.barcode', 'field.name', ...CLASSIFICATION_HEADINGS, 'field.folder', 'field.location',
-      'field.quantity', 'field.unit', 'field.condition', 'field.brand',
-      'field.serialNumber', 'field.modelNumber', 'field.referenceNumber', 'fields.additional',
-      'export.minValuation', 'export.maxValuation', 'field.currency', 'export.valuationSource',
-      'export.aiLocalScore', 'export.aiGlobalScore',
-      'export.aiMinEstimate', 'export.aiMaxEstimate',
-      'export.aiDescription', 'field.description', 'export.createdAt', 'export.updatedAt',
-    ].map((key) => t(key)),
-  ]];
-
-  for (const item of items) {
-    const ai = item.aiData;
-    itemRows.push([
-      item.sku || '',
-      item.barcode || '',
-      item.name || '',
-      ...classificationCells(repo, item),
-      repo.folder(item.folderId)?.name || '',
-      repo.location(item.locationId)?.name || '',
-      item.quantity,
-      item.unit || '',
-      item.condition || '',
-      item.brand || '',
-      item.serialNumber || '',
-      item.modelNumber || '',
-      item.referenceNumber || '',
-      additionalDetailsCell(repo, item),
-      item.valuation?.min ?? null,
-      item.valuation?.max ?? null,
-      item.valuation?.currency || '',
-      item.valuation?.source || '',
-      ai?.localScore ?? null,
-      ai?.globalScore ?? null,
-      ai?.suggestedValuation?.min ?? null,
-      ai?.suggestedValuation?.max ?? null,
-      ai?.description || '',
-      item.description || '',
-      toDate(item.createdAt),
-      toDate(item.updatedAt),
-    ]);
-  }
+  const itemRows = [itemHeadings()];
+  for (const item of items) itemRows.push(itemCells(repo, item));
 
   const sheets = [{ name: t('export.sheetInventory'), rows: itemRows }];
 
@@ -251,7 +262,8 @@ export async function exportJSON() {
     // same ids against it; `categories` carries what this inventory added or
     // changed (its own nodes, hidden and reordered built-ins, saved fields).
     taxonomy: { schemaVersion: TAXONOMY_SCHEMA_VERSION },
-    items: repo.state.items,
+    // The records, without the device's derived index fields (item-index.js).
+    items: repo.state.items.map(withoutIndexFields),
     folders: repo.state.folders,
     categories: repo.state.categories,
     // Every field definition, retired ones included: a value in `items` is

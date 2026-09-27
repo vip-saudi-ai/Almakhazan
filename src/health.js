@@ -12,6 +12,7 @@
 import { UNCATEGORIZED_ID } from './config.js';
 import { findDuplicateGroups } from './duplicates.js';
 import { t } from './i18n.js';
+import { classRefs, isSound } from './aggregates.js';
 
 export const WEIGHTS = Object.freeze({
   images: 0.30,
@@ -38,10 +39,7 @@ const has = {
   // A record is "sound" when it can actually be found and counted: it has a
   // name, a usable quantity, and at least one way to identify it beyond the
   // name — a value, a code or a description.
-  integrity: (item) => Boolean(item.name)
-    && Number.isFinite(item.quantity)
-    && item.quantity >= 0
-    && Boolean(item.valuation || item.sku || item.barcode || item.description),
+  integrity: isSound,
 };
 
 /** Each signal is shown as the `health.signal.<key>` message. */
@@ -88,11 +86,46 @@ export function inventoryHealth(items, { now = Date.now(), classify = null } = {
   // Of the unclassified, how many lack even a Main Category — the first step.
   const missingMain = classify ? items.filter((item) => !classify(item).main).length : 0;
 
+  return healthFrom({ total, met, missingMain, duplicates: findDuplicateGroups(items) });
+}
+
+/**
+ * The same score from counts alone — what the app computes, from the
+ * persisted aggregate (repository.getInventoryOverview), one ranged count for
+ * recency, and duplicate candidates found through the identifier indexes. No
+ * record is read to produce it, so it costs the same for 100 records as for
+ * 500,000, and a server can produce the same inputs.
+ *
+ * @param {object} overview repository.getInventoryOverview()
+ * @param {{stale: number, duplicates: Array, classify?: Function}} extra
+ *   `classify` resolves a (Main Category, Category) pair (repository.classification).
+ */
+export function inventoryHealthFromOverview(overview, { stale = 0, duplicates = [], classify = null } = {}) {
+  const total = overview.totalItems;
+  if (!total) return inventoryHealth([]);
+  let classified = 0;
+  let missingMain = 0;
+  for (const [key, count] of Object.entries(overview.byClassification || {})) {
+    const refs = classRefs(key);
+    const ok = has.category(refs, 0, classify);
+    if (ok) classified += count;
+    if (classify && !classify(refs).main) missingMain += count;
+  }
+  const met = {
+    images: overview.itemsWithImages,
+    location: total - overview.withoutLocationCount,
+    category: classified,
+    condition: total - (overview.withoutConditionCount || 0),
+    recency: Math.max(0, total - stale),
+    integrity: overview.soundCount ?? total,
+  };
+  return healthFrom({ total, met, missingMain, duplicates });
+}
+
+function healthFrom({ total, met, missingMain, duplicates }) {
   const score = Math.round(
     Object.entries(WEIGHTS).reduce((sum, [key, weight]) => sum + weight * (met[key] / total), 0) * 100,
   );
-
-  const duplicates = findDuplicateGroups(items);
   const duplicateItems = duplicates.reduce((sum, group) => sum + group.items.length, 0);
 
   const signals = Object.entries(WEIGHTS).map(([key, weight]) => ({

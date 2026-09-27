@@ -13,11 +13,12 @@
 import { icon } from '../icons.js';
 import { repository } from '../repository.js';
 import { BRAND, assistantTitle } from '../brand.js';
-import { askInventory, capabilities, suggestions } from '../ask.js';
+import { capabilities, suggestions } from '../ask.js';
+import { askRepository, healthQuery, inventoryHealthSnapshot } from '../insights.js';
 import { onLanguageChange, t } from '../i18n.js';
 import { locationName } from '../labels.js';
 import { formatAmount } from '../money.js';
-import { cleanupTasks, inventoryHealth } from '../health.js';
+import { cleanupTasks } from '../health.js';
 import { $, el, formatNumber, render } from '../utils.js';
 import { emptyState, toast } from '../ui.js';
 import { formatValuation, primaryImage } from '../validation.js';
@@ -31,7 +32,13 @@ const state = {
   question: '',
   result: null,
   screen: 'home',   // home | duplicates
+  /** The last health computed; the screen draws it while a fresh one is worked out. */
+  health: null,
 };
+
+/** Tickets, so an answer that arrives after a newer question paints nothing. */
+let askGeneration = 0;
+let healthGeneration = 0;
 
 function lookups() {
   return {
@@ -43,10 +50,24 @@ function lookups() {
 }
 
 // ── ask ────────────────────────────────────────────────────────────────────
-function runQuestion(question) {
+async function answer(question) {
+  const ticket = ++askGeneration;
+  let result;
+  try {
+    result = await askRepository(question, { lookups: lookups() });
+  } catch (error) {
+    console.error('[assistant] question could not be answered', error);
+    result = { understood: true, kind: 'list', title: '', answer: t('error.query/failed'), items: [], total: 0 };
+  }
+  return ticket === askGeneration ? result : null;
+}
+
+async function runQuestion(question) {
   state.question = question;
-  state.result = askInventory(question, { items: repository.liveItems(), lookups: lookups() });
-  renderAssistant();
+  const result = await answer(question);
+  if (!result) return;
+  state.result = result;
+  paint();
   $('ask-input')?.focus();
 }
 
@@ -131,9 +152,9 @@ function answerBlock(result) {
     el('p', { class: 'ask-text', text: result.answer }),
     result.note ? el('p', { class: 'ask-note', text: result.note }) : null,
     shown.length ? el('div', { class: 'ask-results' }, shown.map(resultCard)) : null,
-    result.items.length > shown.length ? el('button', {
+    (result.total ?? result.items.length) > shown.length ? el('button', {
       class: 'ask-more', type: 'button',
-      text: t('assistant.showAll', { count: result.items.length }),
+      text: t('assistant.showAll', { count: result.total ?? result.items.length }),
       onClick: () => showAll(result),
     }) : null,
   ]);
@@ -170,10 +191,11 @@ function resultCard(item) {
 
 /** Hands the answer to the inventory screen, which is built to show lists. */
 function showAll(result) {
-  applyAssistantFilter({
-    label: result.title || t('assistant.results'),
-    ids: result.items.map((item) => item.id),
-  });
+  // The question itself is handed over, not the dozen records the answer
+  // shows: the inventory screen pages through the whole answer.
+  applyAssistantFilter(result.query
+    ? { label: result.title || t('assistant.results'), query: result.query }
+    : { label: result.title || t('assistant.results'), ids: result.items.map((item) => item.id) });
 }
 
 // ── health ─────────────────────────────────────────────────────────────────
@@ -253,31 +275,18 @@ function healthBlock(health) {
 }
 
 // ── cleanup ────────────────────────────────────────────────────────────────
+/** Each task hands its question to the inventory screen, never an id list. */
+async function handOver(action, label) {
+  const query = await healthQuery(action);
+  if (query) applyAssistantFilter({ label, query });
+}
+
 const ACTIONS = {
-  'review-missing-images': (health) => applyAssistantFilter({
-    label: t('ask.titleNoImages'),
-    ids: repository.liveItems().filter((i) => !i.images?.length).map((i) => i.id),
-  }),
-  'review-missing-category': () => applyAssistantFilter({
-    label: t('ask.titleNoCategory'),
-    ids: repository.liveItems().filter((i) => {
-      const { main, category } = repository.classification(i);
-      return !main || !category;
-    }).map((i) => i.id),
-  }),
-  'review-missing-location': () => applyAssistantFilter({
-    label: t('ask.titleNoLocation'),
-    ids: repository.liveItems().filter((i) => !i.locationId).map((i) => i.id),
-  }),
-  'review-stale': () => {
-    const year = 365 * 24 * 60 * 60 * 1000;
-    const now = Date.now();
-    applyAssistantFilter({
-      label: t('ask.titleStale'),
-      ids: repository.liveItems().filter((i) => now - (i.updatedAt ?? 0) > year).map((i) => i.id),
-    });
-  },
-  'review-duplicates': () => { state.screen = 'duplicates'; renderAssistant(); },
+  'review-missing-images': () => handOver('review-missing-images', t('ask.titleNoImages')),
+  'review-missing-category': () => handOver('review-missing-category', t('ask.titleNoCategory')),
+  'review-missing-location': () => handOver('review-missing-location', t('ask.titleNoLocation')),
+  'review-stale': () => handOver('review-stale', t('ask.titleStale')),
+  'review-duplicates': () => { state.screen = 'duplicates'; paint(); },
 };
 
 function cleanupBlock(health) {
@@ -302,7 +311,7 @@ function cleanupBlock(health) {
         task.gain ? el('span', { class: 'task-gain', text: t('assistant.points', { count: task.gain }) }) : null,
         el('button', {
           class: 'btn btn-s task-cta', type: 'button', text: task.cta,
-          onClick: () => ACTIONS[task.action]?.(health),
+          onClick: () => ACTIONS[task.action]?.(),
         }),
       ]),
     ]))),
@@ -314,7 +323,7 @@ function duplicatesScreen(health) {
   const groups = (health.duplicates || []).filter((group) => !dismissed.has(group.key));
   return [
     el('div', { class: 'asec-nav' }, [
-      el('button', { class: 'nback', type: 'button', onClick: () => { state.screen = 'home'; renderAssistant(); } }, [
+      el('button', { class: 'nback', type: 'button', onClick: () => { state.screen = 'home'; paint(); } }, [
         icon('nav-back', { size: 18 }), el('span', { text: t('assistant.back') }),
       ]),
     ]),
@@ -364,7 +373,7 @@ function duplicateGroup(group) {
       }) : null,
       el('button', {
         class: 'chipbtn', type: 'button', text: t('assistant.keepSeparate'),
-        onClick: () => { dismissed.add(group.key); renderAssistant(); },
+        onClick: () => { dismissed.add(group.key); paint(); },
       }),
     ]),
   ]);
@@ -393,7 +402,7 @@ function quickActions() {
 
   return el('div', { class: 'qa-row' }, [
     action('image', t('assistant.qaPhoto'), () => openItemForm({})),
-    action('duplicate', t('assistant.qaDuplicates'), () => { state.screen = 'duplicates'; renderAssistant(); }),
+    action('duplicate', t('assistant.qaDuplicates'), () => { state.screen = 'duplicates'; paint(); }),
     action('eye', t('assistant.qaNoPhotos'), () => ACTIONS['review-missing-images']()),
   ]);
 }
@@ -403,18 +412,47 @@ export function renderAssistant() {
   const root = $('ai-scroll');
   if (!root) return;
 
-  const health = inventoryHealth(repository.liveItems(), { classify: (item) => repository.classification(item) });
+  paint();
+  void refreshHealth();
+}
+
+/**
+ * The score from counts (insights.js): the aggregate, a ranged count and the
+ * identifier indexes — never the records. Drawn when it arrives; until then
+ * the last score, or a placeholder.
+ */
+async function refreshHealth() {
+  const ticket = ++healthGeneration;
+  let health;
+  try {
+    health = await inventoryHealthSnapshot();
+  } catch (error) {
+    console.error('[assistant] health unavailable', error);
+    return;
+  }
+  if (ticket !== healthGeneration || !health) return;
+  state.health = health;
+  paint();
+}
+
+function paint() {
+  const root = $('ai-scroll');
+  if (!root) return;
+  const health = state.health;
 
   if (state.screen === 'duplicates') {
-    render(root, duplicatesScreen(health));
+    render(root, health ? duplicatesScreen(health) : []);
     return;
   }
 
   render(root, [
     askBlock(),
     quickActions(),
-    healthBlock(health),
-    cleanupBlock(health),
+    health ? healthBlock(health) : el('section', { class: 'asec gl', 'aria-busy': 'true' }, [
+      el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.healthTitle') })]),
+      el('p', { class: 'ask-text', text: t('sync.loading') }),
+    ]),
+    health ? cleanupBlock(health) : null,
   ]);
 }
 
@@ -434,7 +472,11 @@ export function bindAssistant() {
 onLanguageChange(() => {
   bindAssistant();
   if (state.result) {
-    state.result = askInventory(state.question, { items: repository.liveItems(), lookups: lookups() });
+    void answer(state.question).then((result) => {
+      if (!result) return;
+      state.result = result;
+      paint();
+    });
   }
   if ($('ai-scroll')?.childElementCount) renderAssistant();
 });

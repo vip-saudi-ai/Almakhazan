@@ -78,6 +78,15 @@ const seeded = await page.evaluate(async ({ count, inFolder, inCategory, inLocat
 await page.reload({ waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 30000 });
 await page.evaluate((ids) => Object.assign(window, { __ids: ids }), seeded);
+// The records were written straight to the store, as an older version would
+// have left them: the app gives them their ordering fields in the background.
+// Timings below are taken once that pass is over.
+for (let tries = 0; ; tries += 1) {
+  const ready = await page.evaluate(async () => (await import('/src/repository.js')).repository.indexFieldsReady === true);
+  if (ready) break;
+  if (tries > 480) throw new Error('index fields never became ready');
+  await page.waitForTimeout(250);
+}
 await page.waitForTimeout(600);
 
 const ask = (query, options = {}) => page.evaluate(async ({ query, options }) => {

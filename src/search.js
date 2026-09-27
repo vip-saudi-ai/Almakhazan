@@ -26,6 +26,20 @@ export function normalizeArabic(input) {
 }
 
 /**
+ * The ordering key of a name: folded as search folds it, every run of digits
+ * zero-padded so «قطعة 2» sorts before «قطعة 10». Byte order of this key is
+ * the name order everywhere — in memory, in the device index, on a server —
+ * with no locale collation involved.
+ */
+export function nameSortKey(name) {
+  const folded = normalizeArabic(name || '');
+  if (!folded) return '\uffff';
+  return folded.replace(/\d+/g, (run) => run.padStart(12, '0')).slice(0, 256);
+}
+
+const byNameKey = (item) => item.nameSortKey ?? nameSortKey(item.name);
+
+/**
  * Precomputes the searchable text for an item. Cached on a WeakMap keyed by the
  * item object, so re-rendering the same list does not rebuild the haystack.
  */
@@ -104,7 +118,8 @@ export function applyFilters(items, filters) {
 /** The sort orders, by stable id; their labels are the `sort.<mode>` messages. */
 export const SORT_MODES = ['newest', 'oldest', 'name-az', 'name-za', 'value-high', 'value-low'];
 
-const collator = new Intl.Collator('ar', { numeric: true, sensitivity: 'base' });
+/** Byte order — what an index compares strings by. */
+const compareKeys = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * Ordering by value, when the records are not all in one currency.
@@ -162,8 +177,10 @@ export function sortItems(items, mode) {
 
   switch (mode) {
     case 'oldest': return sorted.sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt));
-    case 'name-az': return sorted.sort((a, b) => collator.compare(a.name || '', b.name || ''));
-    case 'name-za': return sorted.sort((a, b) => collator.compare(b.name || '', a.name || ''));
+    // The same key the name index orders by, so a list sorted in memory and a
+    // list read from the index agree record for record.
+    case 'name-az': return sorted.sort((a, b) => compareKeys(byNameKey(a), byNameKey(b)) || compareKeys(a.id, b.id));
+    case 'name-za': return sorted.sort((a, b) => compareKeys(byNameKey(b), byNameKey(a)) || compareKeys(b.id, a.id));
     case 'value-high': return sortByValuation(sorted, 1).rows;
     case 'value-low': return sortByValuation(sorted, -1).rows;
     case 'newest':

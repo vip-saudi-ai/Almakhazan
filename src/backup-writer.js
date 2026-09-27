@@ -25,6 +25,7 @@ import { mediaIdsOf } from './media.js';
 import { availableDiskSpace, isNative, nativeFileStream, saveFile } from './platform.js';
 import { AppError, uid } from './utils.js';
 import { Zip64Writer } from './zip64.js';
+import { INDEX_ONLY_FIELDS } from './item-index.js';
 import {
   BACKUP_FORMAT, BACKUP_FORMAT_VERSION, BACKUP_MIME, CHUNK_LIMITS, READ_LIMITS,
   backupFilename, paths, sha256Hex,
@@ -178,7 +179,11 @@ class ItemChunkWriter {
     this.largestChunk = 0;
   }
 
-  async add(item) {
+  async add(stored) {
+    // Derived index fields are the device's, recomputed wherever a record is
+    // stored (item-index.js); the backup carries the record, not its indexes.
+    const item = { ...stored };
+    for (const field of INDEX_ONLY_FIELDS) delete item[field];
     const line = encoder.encode(JSON.stringify(item));
     if (line.length > READ_LIMITS.itemBytes) {
       throw new AppError('backup.itemTooLarge', { code: 'backup/item-too-large', itemId: item.id });
