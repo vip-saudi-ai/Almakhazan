@@ -487,7 +487,8 @@ async function open(ctx, path = '/index.html') {
         if (a.n.contains(c.n) || c.n.contains(a.n)) continue;
         // The tab bar and selection bar float above the scrolling list: a row
         // passing under them is covered, not competing (the bar takes the tap).
-        const layer = (n) => Boolean(n.closest('.tbar, .select-bar'));
+        // A sheet's fixed footer is the same kind of layer over its body.
+        const layer = (n) => (n.closest('.tbar, .select-bar') ? 'bar' : n.closest('.shfoot') ? 'foot' : '');
         if (layer(a.n) !== layer(c.n)) continue;
         const ox = Math.min(a.box.r, c.box.r) - Math.max(a.box.l, c.box.l);
         const oy = Math.min(a.box.b, c.box.b) - Math.max(a.box.t, c.box.t);

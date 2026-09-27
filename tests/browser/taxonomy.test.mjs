@@ -132,9 +132,15 @@ function watch(page) {
   await page.waitForTimeout(300);
   check('N7 a Category with Subcategories offers the optional third level', await page.locator('#f-sub').count() === 1);
   await page.evaluate(() => { document.getElementById('f-extra').open = true; });
-  const fields = await page.locator('#f-extra-body').innerText();
-  check('N8 equipment fields appear under «تفاصيل إضافية»', fields.includes('الشركة المصنعة') && fields.includes('ساعات التشغيل') && fields.includes('الصيانة القادمة'));
-  await page.fill('#cf-manufacturer', 'Caterpillar');
+  // The manufacturer is a catalog picker shown up front; the rest are details.
+  const fields = (await page.locator('#f-quick').innerText()) + (await page.locator('#f-extra-body').innerText());
+  check('N8 equipment fields appear: the manufacturer up front, the rest under the details', fields.includes('الشركة المصنعة') && fields.includes('ساعات التشغيل') && fields.includes('الصيانة القادمة'));
+  await page.click('#cf-generator_manufacturer');
+  await page.waitForSelector('#ov-catpick.open');
+  await page.fill('#catpick-search', 'Caterpillar');
+  await page.waitForTimeout(250);
+  await page.press('#catpick-search', 'Enter');
+  await page.waitForTimeout(250);
   await page.fill('#cf-operating_hours', 'abc');
   await page.click('#save-item-btn');
   await page.waitForTimeout(400);
@@ -162,7 +168,7 @@ function watch(page) {
   });
   check('N11 the record stores ids and values, never labels',
     gen.mainCategoryId === 'equipment_tools' && gen.categoryId === 'equipment_generators' && gen.subcategoryId === null
-    && gen.customFields.manufacturer === 'Caterpillar' && gen.customFields.operating_hours.value === 1200
+    && gen.customFields.generator_manufacturer?.ref === 'mfr_caterpillar' && gen.brand === 'Caterpillar' && gen.customFields.operating_hours.value === 1200
     && gen.customFields[customId] === 'INV-77', JSON.stringify(gen.customFields));
 
   // Art, in the same inventory: the form remembers nothing wrong
@@ -180,10 +186,16 @@ function watch(page) {
   const note = await page.locator('#f-class-note').innerText();
   check('N13 changing the Main Category clears the Category and says so', note.includes('أُفرغ الصنف'), note);
   await page.evaluate(() => { document.getElementById('f-extra').open = true; });
-  const artFields = await page.locator('#f-extra-body').innerText();
+  const artFields = (await page.locator('#f-quick').innerText()) + (await page.locator('#f-extra-body').innerText());
   check('N14 art fields replace equipment ones', artFields.includes('الفنان') && !artFields.includes('ساعات التشغيل'));
   check('N15 no Subcategory row where there is none', await page.locator('#f-sub').count() === 0);
-  await page.fill('#cf-artist', 'عبدالحليم رضوي');
+  // The artist is a catalog picker, found by the Arabic name.
+  await page.click('#cf-art_artist');
+  await page.waitForSelector('#ov-catpick.open');
+  await page.fill('#catpick-search', 'عبدالحليم رضوي');
+  await page.waitForTimeout(250);
+  await page.press('#catpick-search', 'Enter');
+  await page.waitForTimeout(250);
   await page.click('#save-item-btn');
   await page.waitForTimeout(700);
 
@@ -200,8 +212,8 @@ function watch(page) {
   await page.click('#tax-body .tax-opt[data-id="art_sculptures"]');
   await page.waitForTimeout(300);
   await page.evaluate(() => { document.getElementById('f-extra').open = true; });
-  const kept = await page.inputValue('#cf-artist');
-  check('N17 a value stays when the Category changes', kept === 'عبدالحليم رضوي');
+  const kept = await page.locator('#f-quick').innerText();
+  check('N17 a value stays when the Category changes', kept.includes('عبدالحليم رضوي'), kept);
   // move to jewellery: the art value becomes «حقول سابقة», not lost
   await page.click('#f-main');
   await page.waitForTimeout(300);
@@ -219,7 +231,7 @@ function watch(page) {
     const { repository } = await import('/src/repository.js');
     return repository.getItem(id, { fresh: true });
   }, artId);
-  check('N19 nothing typed is destroyed by a change of classification', moved.customFields.artist === 'عبدالحليم رضوي', JSON.stringify(moved.customFields));
+  check('N19 nothing typed is destroyed by a change of classification', moved.customFields.art_artist?.ref === 'artist_abdulhalim_radwi', JSON.stringify(moved.customFields));
 
   // Detail and card
   await page.evaluate((id) => import('/src/views/detail.js').then((m) => m.openDetail(id)), gen.id);
