@@ -357,6 +357,9 @@
       <!-- الفئة الرئيسية → الصنف → الصنف الفرعي: buttons that open the
            classification picker (src/views/item-fields.js). -->
       <div id="f-class" class="f-class"></div>
+      <!-- The first one or two catalog fields of the chosen Category — the
+           brand, the model — within reach, still optional. -->
+      <div id="f-quick" class="f-class f-quick"></div>
       <div class="frow"><label for="f-folder" data-i18n="field.folder">المجلد</label><select id="f-folder"></select></div>
       <div class="frow"><label for="f-loc" data-i18n="field.location">الموقع</label><select id="f-loc"></select></div>
     </div>
@@ -387,7 +390,7 @@
 
     <!-- Category-specific fields, disclosed on demand. -->
     <details class="f-extra" id="f-extra">
-      <summary class="f-extra-sum"><span data-i18n="fields.additional">تفاصيل إضافية</span> <span class="f-extra-count" id="f-extra-count" aria-hidden="true"></span></summary>
+      <summary class="f-extra-sum"><span id="f-extra-title" data-i18n-js>تفاصيل إضافية</span> <span class="f-extra-count" id="f-extra-count" aria-hidden="true"></span></summary>
       <div id="f-extra-body"></div>
     </details>
 
@@ -397,6 +400,7 @@
   </div>
   <div class="shfoot">
     <button class="btn btn-d" type="button" data-close style="flex:1;padding:12px" data-i18n="common.cancel">إلغاء</button>
+    <button class="btn btn-g" id="save-next-btn" type="button" style="flex:2;padding:12px" data-i18n="form.saveAndNext">حفظ وإضافة التالي</button>
     <button class="btn btn-p" id="save-item-btn" type="button" style="flex:2;padding:12px"><span class="ico-inline" aria-hidden="true" data-icon="check" data-icon-size="18"></span><span data-i18n="common.save">حفظ</span></button>
   </div>
 </div>
@@ -475,6 +479,16 @@
   <div class="tax-searchbar"><input id="tax-search" type="search" dir="auto" autocomplete="off" enterkeyhint="search" aria-controls="tax-body" aria-describedby="tax-status" placeholder="بحث" aria-label="بحث" data-i18n-attr="placeholder:taxonomy.search;aria-label:taxonomy.search"></div>
   <div class="visually-hidden" id="tax-status" role="status" aria-live="polite"></div>
   <div class="shscroll" id="tax-body"></div>
+</div>
+
+<!-- CATALOG PICKER: brand, model, reference, artist… and years (src/views/catalog-picker.js) -->
+<div class="ov" id="ov-catpick"></div>
+<div class="sh" id="sh-catpick" tabindex="-1" aria-labelledby="catpick-title">
+  <div class="shhnd" aria-hidden="true"></div>
+  <div class="shhdr"><h2 class="shtitle" id="catpick-title" data-i18n-js>اختر</h2><button class="shclose" type="button" data-close aria-label="إغلاق" data-i18n-attr="aria-label:common.close"><span aria-hidden="true" data-icon="close" data-icon-size="16"></span></button></div>
+  <div class="tax-searchbar"><input id="catpick-search" type="search" dir="auto" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-controls="catpick-body" aria-describedby="catpick-status" placeholder="بحث" aria-label="بحث" data-i18n-attr="placeholder:taxonomy.search;aria-label:taxonomy.search"></div>
+  <div class="visually-hidden" id="catpick-status" role="status" aria-live="polite"></div>
+  <div class="shscroll" id="catpick-body"></div>
 </div>
 
 <!-- REASSIGN BEFORE CATEGORY DELETE -->

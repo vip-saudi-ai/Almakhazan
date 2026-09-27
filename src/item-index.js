@@ -24,10 +24,22 @@ import { nameSortKey, normalizeArabic } from './search.js';
 import { valuationMidpoint } from './validation.js';
 
 /** Bumped when any derivation below changes, so the backfill runs again. */
-export const INDEX_FIELDS_VERSION = 1;
+export const INDEX_FIELDS_VERSION = 2;
 
 const MAX_TOKENS = 32;
 const MAX_TOKEN_LENGTH = 64;
+
+/**
+ * The catalog entities a record points at, from its catalog field values
+ * (`{ ref, label }`, custom-fields.js). Sorted, so equal sets compare equal.
+ */
+export function catalogRefsOf(item) {
+  const refs = new Set();
+  for (const value of Object.values(item?.customFields || {})) {
+    if (value && typeof value === 'object' && typeof value.ref === 'string' && value.ref) refs.add(value.ref);
+  }
+  return [...refs].sort().slice(0, 32);
+}
 
 /** The folded words a record can be found by without reading it. */
 export function searchTokensOf(item) {
@@ -50,6 +62,22 @@ export function searchTokensOf(item) {
   }
   add(item.name);
   add(item.brand);
+  // Catalog selections — a brand, a model, a reference — are how a collector
+  // or a fleet manager looks a record up: «Rolex», «126500LN», «320 GX».
+  // References and model codes are also kept whole, like identifiers.
+  for (const value of Object.values(item.customFields || {})) {
+    // A code typed into a specialised field — a VIN, a part or report number
+    // — is found whole, like the record's own identifiers.
+    if (typeof value === 'string' && /\d/.test(value) && !/\s/.test(value.trim()) && value.length <= MAX_TOKEN_LENGTH) {
+      const folded = normalizeArabic(value);
+      if (folded.length >= 3) tokens.add(folded);
+      continue;
+    }
+    if (!value || typeof value !== 'object' || typeof value.label !== 'string') continue;
+    const folded = normalizeArabic(value.label);
+    if (folded.length >= 2) tokens.add(folded.replace(/\s+/g, '').slice(0, MAX_TOKEN_LENGTH));
+    add(value.label);
+  }
   return [...tokens].slice(0, MAX_TOKENS);
 }
 
@@ -65,6 +93,7 @@ export function withIndexFields(record) {
   if (mid == null || !record.valuation?.currency) delete out.valuationMidpoint;
   else out.valuationMidpoint = mid;
   out.searchTokens = searchTokensOf(record);
+  out.catalogRefs = catalogRefsOf(record);
   return out;
 }
 
@@ -73,10 +102,9 @@ export function hasCurrentIndexFields(record) {
   const expected = withIndexFields(record);
   if (record.nameSortKey !== expected.nameSortKey) return false;
   if ((record.valuationMidpoint ?? null) !== (expected.valuationMidpoint ?? null)) return false;
-  const a = record.searchTokens || [];
-  const b = expected.searchTokens;
-  return a.length === b.length && a.every((token, i) => token === b[i]);
+  const same = (a = [], b = []) => a.length === b.length && a.every((token, i) => token === b[i]);
+  return same(record.searchTokens, expected.searchTokens) && same(record.catalogRefs, expected.catalogRefs);
 }
 
 /** The fields a copy of a record for export or display does not need. */
-export const INDEX_ONLY_FIELDS = Object.freeze(['nameSortKey', 'valuationMidpoint', 'searchTokens']);
+export const INDEX_ONLY_FIELDS = Object.freeze(['nameSortKey', 'valuationMidpoint', 'searchTokens', 'catalogRefs']);

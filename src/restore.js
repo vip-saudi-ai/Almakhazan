@@ -138,7 +138,7 @@ export function stageLabel(stage) {
 
 // Definitions before the records that use them: classification and field
 // definitions, then places, then records.
-const COLLECTIONS = ['categories', 'fieldDefinitions', 'locations', 'folders', 'items'];
+const COLLECTIONS = ['categories', 'fieldDefinitions', 'catalogEntities', 'locations', 'folders', 'items'];
 const CHUNK = 300;
 
 /**
@@ -156,6 +156,7 @@ export function buildSafetyBackup() {
     folders: repo.state.folders,
     categories: repo.state.categories,
     fieldDefinitions: repo.state.fieldDefinitions,
+    catalogEntities: repo.state.catalogEntities,
     locations: repo.state.locations,
   };
 

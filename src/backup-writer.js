@@ -26,6 +26,7 @@ import { availableDiskSpace, isNative, nativeFileStream, saveFile } from './plat
 import { AppError, uid } from './utils.js';
 import { Zip64Writer } from './zip64.js';
 import { INDEX_ONLY_FIELDS } from './item-index.js';
+import { BUILTIN_CATALOG_DATA_VERSION, CATALOG_SCHEMA_VERSION } from './catalog/model.js';
 import {
   BACKUP_FORMAT, BACKUP_FORMAT_VERSION, BACKUP_MIME, CHUNK_LIMITS, READ_LIMITS,
   backupFilename, paths, sha256Hex,
@@ -277,14 +278,20 @@ export async function writeBackupV2({ onProgress = () => {}, purpose = 'backup',
 
   // The small collections: classification, field definitions, places,
   // folders. Read from the database itself, not from the page's copy.
-  const [categories, fieldDefinitions, folders, locations] = await Promise.all([
+  const [categories, fieldDefinitions, folders, locations, catalogEntities] = await Promise.all([
     local.getAll('categories'), local.getAll('fieldDefinitions'), local.getAll('folders'), local.getAll('locations'),
+    local.getAll('catalogEntities'),
   ]);
   const metadata = {
     format: 'nazm-metadata',
     schemaVersion: SCHEMA_VERSION,
     taxonomy: { schemaVersion: TAXONOMY_SCHEMA_VERSION },
     categories, fieldDefinitions, folders, locations,
+    // The customer's own catalog entries, in full. The bundled catalog is
+    // not copied: items keep each selection's id and a display snapshot,
+    // which is enough to read them under any catalog version.
+    catalogEntities,
+    catalog: { schemaVersion: CATALOG_SCHEMA_VERSION, catalogDataVersion: BUILTIN_CATALOG_DATA_VERSION },
   };
   const metadataBytes = encoder.encode(JSON.stringify(metadata));
   if (metadataBytes.length > READ_LIMITS.metadataBytes) throw new AppError('backup.metadataTooLarge', { code: 'backup/metadata-too-large' });
@@ -399,6 +406,7 @@ export async function writeBackupV2({ onProgress = () => {}, purpose = 'backup',
         fieldDefinitions: fieldDefinitions.length,
         folders: folders.length,
         locations: locations.length,
+        catalogEntities: catalogEntities.length,
         media: mediaCount,
         missingMedia: missingCount,
         mediaManifests: manifests.parts.length,

@@ -23,6 +23,7 @@ import {
 } from './sku.js';
 import { AppError, toMillis, uid } from './utils.js';
 import { inferFieldDefinition, normalizeFieldRecord } from './custom-fields.js';
+import { normalizeCatalogEntity } from './catalog/model.js';
 import { INDEX_FIELDS_VERSION, hasCurrentIndexFields, withIndexFields } from './item-index.js';
 import { decodeSpecCursor, encodeSpecCursor, project, specKey, validateQuerySpec } from './query-spec.js';
 import { aggregateItemsLocal, countItemsLocal, queryItemsLocal } from './query-local.js';
@@ -59,7 +60,7 @@ export class ConflictError extends AppError {
   }
 }
 
-const COLLECTIONS = ['items', 'folders', 'categories', 'locations', 'fieldDefinitions'];
+const COLLECTIONS = ['items', 'folders', 'categories', 'locations', 'fieldDefinitions', 'catalogEntities'];
 
 /** The index holding only the trashed records of each scope value. */
 const TRASH_INDEX_BY_FIELD = {
@@ -684,8 +685,9 @@ export class FirestoreBackend {
    */
   async countItemsByField(field, value) {
     if (value == null) return 0;
-    // `customFieldIds` is a list; its membership is asked with array-contains.
-    const q = this.fs.query(this.col('items'), this.fs.where(field, field === 'customFieldIds' ? 'array-contains' : '==', value));
+    // `customFieldIds` and `catalogRefs` are lists; membership is asked with array-contains.
+    const list = field === 'customFieldIds' || field === 'catalogRefs';
+    const q = this.fs.query(this.col('items'), this.fs.where(field, list ? 'array-contains' : '==', value));
     if (this.fs.getCountFromServer) {
       const snapshot = await this.fs.getCountFromServer(q);
       return snapshot.data().count;
@@ -1397,7 +1399,7 @@ export class LocalBackend {
 // ── Repository facade ──────────────────────────────────────────────────────
 class Repository {
   constructor() {
-    this.state = { items: [], folders: [], categories: [], locations: [], fieldDefinitions: [], activity: [] };
+    this.state = { items: [], folders: [], categories: [], locations: [], fieldDefinitions: [], catalogEntities: [], activity: [] };
     this.sync = { status: SyncState.LOADING, message: null, error: null };
     this.session = { userId: null, role: ROLES.OWNER, workspaceId: null, mode: 'local' };
     this.listeners = new Set();
@@ -1573,6 +1575,8 @@ class Repository {
       case 'categories': return rows.map((r) => normalizeCategory(r));
       case 'locations': return rows.map((r) => normalizeLocation(r));
       case 'fieldDefinitions': return rows.map((r) => normalizeFieldRecord(r)).filter(Boolean);
+      // Only the customer's own entries live here; anything else is ignored.
+      case 'catalogEntities': return rows.map((r) => normalizeCatalogEntity(r)).filter((e) => e && e.source === 'custom');
       default: return rows;
     }
   }
@@ -4028,6 +4032,33 @@ class Repository {
       console.error('[repo] backend query failed', error);
       throw new AppError('error.query/failed', { code: 'query/failed', cause: error });
     }
+  }
+
+  // ── the customer's catalog entries (catalog/service.js is the reader) ──
+
+  /** The customer's own catalog entries, as loaded (workspace data). */
+  catalogEntities() {
+    return this.state.catalogEntities;
+  }
+
+  /**
+   * Stores one of the customer's catalog entries — new, renamed or retired.
+   * The bundled catalog is never written: only `source: 'custom'` entries.
+   */
+  async saveCatalogEntity(input) {
+    this.assertCanWrite();
+    const entity = normalizeCatalogEntity({ ...input, source: 'custom', updatedAt: Date.now() });
+    if (!entity || !entity.id.startsWith('cust_')) throw new AppError('catalog.invalid', { code: 'catalog/invalid' });
+    await this.backend.runBatch([{ type: 'set', collection: 'catalogEntities', id: entity.id, merge: false, data: entity }]);
+    // Seen at once, before the watcher's refresh arrives.
+    this.state.catalogEntities = [...this.state.catalogEntities.filter((e) => e.id !== entity.id), entity];
+    this.emit();
+    return entity;
+  }
+
+  /** How many records — live or in the Trash — point at a catalog entity. */
+  async countCatalogReferences(id) {
+    return this.backend.countItemsByField('catalogRefs', id);
   }
 
   /**

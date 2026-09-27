@@ -33,6 +33,7 @@ import {
 } from './views/home.js';
 import { bindItemForm, openItemForm } from './views/item-form.js';
 import { bindTaxonomyPicker } from './views/taxonomy-picker.js';
+import { bindCatalogPicker } from './views/catalog-picker.js';
 import { refreshTaxonomyNotice } from './views/taxonomy-onboarding.js';
 import { refreshBackupReminder } from './views/backup-reminder.js';
 import { cleanupAbandonedRestoreState } from './full-backup.js';
@@ -44,7 +45,7 @@ import {
   activityRetentionDays, onSubscriptionChange, scheduleLocalUsageRefresh, startPlanWatch, subscriptionState,
 } from './subscription.js';
 
-const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account', 'tax', 'bk'];
+const SHEETS = ['add', 'det', 'qp', 'fld', 'mv', 'cat', 'filter', 'sort', 'as', 'trash', 'loc', 'import', 'simport', 'reassign', 'plans', 'labels', 'scan', 'bulk', 'team', 'ws', 'legal', 'account', 'tax', 'catpick', 'bk'];
 
 // Tells the boot guard (a classic script) that module code is running, so it
 // can distinguish "scripts never started" from "startup stalled".
@@ -388,6 +389,7 @@ function initializeUI() {
   bindContextActions();
   bindItemForm();
   bindTaxonomyPicker();
+  bindCatalogPicker();
   bindManageViews();
   bindAssistant();
   bindToolbar();

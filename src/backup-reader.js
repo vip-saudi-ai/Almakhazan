@@ -177,6 +177,10 @@ async function readV2Backup(archive) {
   for (const name of ['categories', 'fieldDefinitions', 'folders', 'locations']) {
     if (!Array.isArray(rawMetadata?.[name]) || rawMetadata[name].length !== counts[name]) throw integrity('backup/count');
   }
+  // Catalog entries arrived with format 2's catalog layer; an older backup has none.
+  if (counts.catalogEntities !== undefined && (!Array.isArray(rawMetadata?.catalogEntities) || rawMetadata.catalogEntities.length !== counts.catalogEntities)) {
+    throw integrity('backup/count');
+  }
 
   const fingerprint = `full2:${manifest.backupId}:${archive.manifestHash}`;
   return {
@@ -449,8 +453,8 @@ export async function verifyFullBackup(archive, { onProgress = () => {}, signal,
   try {
     // ── the small collections, with no repeated id ──
     report('metadata');
-    for (const name of ['categories', 'fieldDefinitions', 'folders', 'locations']) {
-      const ids = archive.metadata[name].map((record) => record.id);
+    for (const name of ['categories', 'fieldDefinitions', 'folders', 'locations', 'catalogEntities']) {
+      const ids = (archive.metadata[name] || []).map((record) => record.id);
       if ((await restoreIndex.markMany(key, name, ids)).length) throw corrupt('backup/duplicate-entry', { collection: name });
     }
 

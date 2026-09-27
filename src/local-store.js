@@ -18,7 +18,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 12;
+const DB_VERSION = 13;
 /** The database schema version — carried in a Full Backup manifest. */
 export const DATABASE_VERSION = DB_VERSION;
 
@@ -114,9 +114,17 @@ export const SCHEMA = {
       nameSortKey: 'nameSortKey',
       valueSort: ['valuation.currency', 'valuationMidpoint'],
       searchTokens: { keyPath: 'searchTokens', multiEntry: true },
+      // The catalog entities a record points at (version 13): brand, model,
+      // reference… one entry each. "Is this custom brand still used?" is a
+      // count, never a walk (catalog/service.js).
+      catalogRefs: { keyPath: 'catalogRefs', multiEntry: true },
     },
   },
   folders: { key: 'id', indexes: {} },
+  // The customer's own catalog entries (version 13): a brand, a model, an
+  // artist the bundled catalog does not have. Workspace data, backed up with
+  // it. The bundled catalog itself is never stored here.
+  catalogEntities: { key: 'id', indexes: { parentId: 'parentId', entityType: 'entityType' } },
   categories: { key: 'id', indexes: {} },
   // The customer's field definitions, for as long as any record may hold a
   // value under one (version 10). Retired, never silently deleted.

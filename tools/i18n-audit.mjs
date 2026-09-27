@@ -130,6 +130,11 @@ const ALLOWED = [
   { file: 'src/integrity.js', why: 'developer diagnostics from the dev integrity check (console / tests only)' },
   { file: 'src/boot-guard.js', why: 'classic-script boot failure text, bilingual table (runs before modules load)' },
   { file: 'src/brand.js', why: 'the Arabic brand name as a brand asset' },
+  { file: 'src/catalog/data/collectibles.js', why: 'bundled catalog data: official Arabic names and aliases beside the English (catalog entities, not UI text)' },
+  { file: 'src/catalog/data/devices.js', why: 'bundled catalog data: official Arabic names and aliases beside the English (catalog entities, not UI text)' },
+  { file: 'src/catalog/data/industrial.js', why: 'bundled catalog data: official Arabic names and aliases beside the English (catalog entities, not UI text)' },
+  { file: 'src/catalog/data/vehicles.js', why: 'bundled catalog data: official Arabic names and aliases beside the English (catalog entities, not UI text)' },
+  { file: 'src/catalog/data/watches.js', why: 'bundled catalog data: official Arabic names and aliases beside the English (catalog entities, not UI text)' },
   { file: 'src/views/item-form.js', why: 'the canonical stored unit and Arabic evidence recognisers' },
 ];
 

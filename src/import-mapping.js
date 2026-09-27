@@ -19,6 +19,7 @@ import { normalizeArabic } from './search.js';
 import { parseNumber } from './utils.js';
 import { t } from './i18n.js';
 import { LEVELS, OTHER_MAIN_ID, buildTaxonomy } from './taxonomy.js';
+import { resolveImportCatalog } from './catalog/import-resolve.js';
 
 /**
  * The id a given row of a given import becomes.
@@ -59,6 +60,7 @@ export const FIELDS = [
   { key: 'barcode', get label() { return t('importField.barcode'); }, aliases: ['الباركود', 'باركود', 'barcode', 'ean', 'upc', 'gtin'] },
   { key: 'serialNumber', get label() { return t('importField.serialNumber'); }, aliases: ['الرقم التسلسلي', 'رقم تسلسلي', 'التسلسلي', 'serial', 'serial no', 'serial number', 's/n', 'sn'] },
   { key: 'modelNumber', get label() { return t('importField.modelNumber'); }, aliases: ['رقم الموديل', 'الموديل', 'موديل', 'الطراز', 'model', 'model no', 'model number'] },
+  { key: 'year', get label() { return t('importField.year'); }, aliases: ['سنة الصنع', 'سنة التصنيع', 'سنة الإنتاج', 'السنة', 'year', 'model year', 'year of manufacture', 'manufacture year'] },
   { key: 'referenceNumber', get label() { return t('importField.referenceNumber'); }, aliases: ['الرقم المرجعي', 'رقم مرجعي', 'رقم البوليصة', 'reference number', 'ref no'] },
   { key: 'description', get label() { return t('importField.description'); }, aliases: ['الوصف', 'ملاحظات', 'ملاحظة', 'تفاصيل', 'description', 'notes', 'note', 'details'] },
   { key: 'valuationMin', get label() { return t('importField.valuationMin'); }, aliases: ['أدنى قيمة', 'أدنى تقييم', 'السعر', 'القيمة', 'التكلفة', 'price', 'value', 'cost', 'min', 'min value', 'minimum value', 'min valuation', 'valuation', 'estimated value'] },
@@ -252,6 +254,12 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR', r
     if (!record.categoryId && !record.categoryKey && !record.mainCategoryId && !record.mainCategoryKey) {
       record.categoryId = UNCATEGORIZED_ID;
     }
+
+    // Brand, model, reference and year against the catalog the row's
+    // classification uses. The cells themselves stay on the record as given.
+    const catalog = resolveImportCatalog(record, { taxonomy, year: cell(row, mapping.year) });
+    if (Object.keys(catalog.customFields).length) record.customFields = catalog.customFields;
+    for (const warning of catalog.warnings) problems.push({ line, ...warning });
 
     // The row this record came from. It is what makes a retry write the same
     // documents instead of a second copy of them — see `importItemId`.

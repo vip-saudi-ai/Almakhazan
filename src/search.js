@@ -45,6 +45,15 @@ const byNameKey = (item) => item.nameSortKey ?? nameSortKey(item.name);
  */
 const haystackCache = new WeakMap();
 
+function customFieldWords(item) {
+  const out = [];
+  for (const value of Object.values(item.customFields || {})) {
+    if (typeof value === 'string') out.push(value);
+    else if (value && typeof value === 'object' && typeof value.label === 'string') out.push(value.label);
+  }
+  return out;
+}
+
 export function buildHaystack(item, lookups) {
   const cached = haystackCache.get(item);
   if (cached && cached.updatedAt === item.updatedAt) return cached.text;
@@ -63,6 +72,9 @@ export function buildHaystack(item, lookups) {
     // «مولد» and "generator" both find a record filed under مولدات.
     lookups.classificationWords?.(item),
     item.condition, item.aiData?.description,
+    // Catalog selections and the codes typed into specialised fields: «Rolex»,
+    // «126500LN», a VIN, a part number.
+    ...customFieldWords(item),
   ].filter(Boolean).join(' '));
 
   haystackCache.set(item, { updatedAt: item.updatedAt, text });

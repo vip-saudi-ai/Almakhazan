@@ -146,10 +146,10 @@ test('search finds by Arabic, English and aliases, never duplicating a node', ()
 test('fields follow the Category, then its Main Category', () => {
   const tax = buildTaxonomy([{ id: 'equipment_generators', source: 'builtin', name: '', fields: [{ id: 'custom_f_x1', type: 'text', label: 'رقم الجرد الداخلي' }] }]);
   const gen = tax.fieldsFor({ categoryId: 'equipment_generators' }).map((f) => f.id);
-  assert.ok(gen.includes('manufacturer') && gen.includes('operating_hours'));
+  assert.ok(gen.includes('generator_manufacturer') && gen.includes('operating_hours'));
   assert.ok(gen.includes('custom_f_x1'), 'a field saved to the Category joins its template');
   assert.deepEqual(tax.fieldsFor({ categoryId: 'jewellery_diamonds' }).map((f) => f.id).slice(0, 3), ['carat_weight', 'measurements', 'shape']);
-  assert.ok(tax.fieldsFor({ categoryId: 'art_paintings' }).some((f) => f.id === 'artist'));
+  assert.ok(tax.fieldsFor({ categoryId: 'art_paintings' }).some((f) => f.id === 'art_artist'));
   assert.equal(tax.fieldsFor({ categoryId: 'vehicles_plates_keys' }).length, 0, 'a Category can opt out');
   const serial = tax.fieldsFor({ categoryId: 'electronics_computers' }).find((f) => f.id === 'serial_number');
   assert.equal(serial, undefined, 'core fields are never duplicated by a template');
@@ -215,7 +215,8 @@ test('a built-in node’s settings record needs no name; a custom node does', ()
 test('field values are checked against their definition', () => {
   const def = (id) => ({ ...FIELD_DEFINITIONS.find((f) => f.id === id), source: 'builtin', options: FIELD_DEFINITIONS.find((f) => f.id === id).options?.map((o) => ({ id: o.id })) });
   assert.deepEqual(normalizeFieldValue(def('manufacture_year'), '٢٠١٩'), { value: 2019 });
-  assert.equal(normalizeFieldValue(def('manufacture_year'), '19.5').error, 'field.error.integer');
+  assert.equal(normalizeFieldValue(def('manufacture_year'), '19.5').error, 'field.error.year');
+  assert.equal(normalizeFieldValue(def('manufacture_year'), '1650').value, 1650, 'historic years are years');
   assert.deepEqual(normalizeFieldValue(def('operating_hours'), '1,200'), { value: { value: 1200, unit: 'h' } });
   assert.equal(normalizeFieldValue(def('next_maintenance'), '2026-02-30').error, 'field.error.date');
   assert.deepEqual(normalizeFieldValue(def('fuel_type'), 'diesel'), { value: 'diesel' });

@@ -269,6 +269,8 @@ export async function exportJSON() {
     // Every field definition, retired ones included: a value in `items` is
     // only readable with its definition.
     fieldDefinitions: repo.state.fieldDefinitions,
+    // The customer's own catalog entries; items refer to them by id.
+    catalogEntities: repo.state.catalogEntities,
     locations: repo.state.locations,
   };
   let blob;
@@ -414,9 +416,9 @@ export async function applyMerge(data) {
   // inventories; merging a third into it would make that unrecoverable.
   await assertNoUnfinishedRestore();
   const operations = [];
-  const skipped = { items: 0, folders: 0, categories: 0, fieldDefinitions: 0, locations: 0 };
+  const skipped = { items: 0, folders: 0, categories: 0, fieldDefinitions: 0, catalogEntities: 0, locations: 0 };
 
-  for (const name of ['categories', 'fieldDefinitions', 'locations', 'folders', 'items']) {
+  for (const name of ['categories', 'fieldDefinitions', 'catalogEntities', 'locations', 'folders', 'items']) {
     const incoming = (data[name] || []).filter((record) => record?.id);
     const existing = await repo.backend.existingIds(name, incoming.map((record) => record.id));
     for (const record of incoming) {

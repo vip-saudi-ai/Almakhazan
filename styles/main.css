@@ -1589,3 +1589,20 @@ html:not(.lang-pending) .lang-gate { display: none; }
   background:var(--glass-primary);color:var(--tp);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer}
 .tx-chip[aria-pressed="true"]{background:var(--brand);color:var(--text-on-brand);border-color:transparent}
 .icpath{font-size:11px;color:var(--ts);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── catalog picker (src/views/catalog-picker.js) ── */
+.catpick-li{display:flex;align-items:center;gap:4px}
+.catpick-li>.catpick-opt{flex:1;min-width:0}
+.catpick-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1}
+.catpick-meta{font-size:13px;color:var(--ts);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.catpick-own{display:flex;gap:4px;padding-inline-end:8px;flex-shrink:0}
+.catpick-act{min-height:44px;padding:0 10px;border:none;background:none;color:var(--brand);font-family:var(--font);font-size:13px;cursor:pointer;touch-action:manipulation}
+.catpick-act:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.catpick-create{padding:4px 0 12px}
+.f-quick:empty{display:none}
+.f-quick .frow-pick-label{color:var(--ts)}
+.catalog-row{display:flex;align-items:stretch;gap:4px}
+.catalog-row>.frow-pick{flex:1;min-width:0}
+.catalog-clear{min-width:44px;min-height:44px;border:none;background:none;color:var(--ts);font-size:16px;cursor:pointer;touch-action:manipulation}
+.catalog-clear:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.catalog-last{margin:6px 0;align-self:flex-start}

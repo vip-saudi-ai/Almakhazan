@@ -111,7 +111,7 @@ check('B1 the archive is metadata, item chunks, media, media manifests and a man
   && made.names[made.names.length - 1] === 'manifest.json' && !made.names.includes('data.json'), made.names.join(', '));
 check('B2 the manifest describes the archive: versions, ids, counts, integrity, chunk and metadata hashes',
   m.backupFormatVersion === 2 && m.minReaderVersion === 2 && /^bkp/.test(m.backupId) && m.backupType === 'full'
-  && m.schemaVersion >= 1 && m.databaseVersion === 12 && m.taxonomySchemaVersion === 1 && m.appVersion === '1.0.0'
+  && m.schemaVersion >= 1 && m.databaseVersion === 13 && m.taxonomySchemaVersion === 1 && m.appVersion === '1.0.0'
   && m.counts.items === 4 && m.counts.itemChunks === 1 && m.counts.media === 2 && m.counts.missingMedia === 0
   && m.integrityStatus === 'complete' && made.chunkHashOk && made.metadataHashOk && m.itemChunks[0].path === 'items/00000001.ndjson',
   JSON.stringify({ counts: m.counts, integrity: m.integrityStatus, chunks: m.itemChunks }));

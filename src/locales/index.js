@@ -19,8 +19,9 @@ import { messages as app } from './app.js';
 import { messages as ui } from './ui.js';
 import { messages as release } from './release.js';
 import { messages as taxonomy } from './taxonomy.js';
+import { messages as catalog } from './catalog.js';
 
-const MODULES = { common, gateMessages, viewerMessages, teamMessages, overviewMessages, sheetimportMessages, formMessages, settingsMessages, detailMessages, homeMessages, importing, assistant, plans, errors, app, ui, release, taxonomy };
+const MODULES = { common, gateMessages, viewerMessages, teamMessages, overviewMessages, sheetimportMessages, formMessages, settingsMessages, detailMessages, homeMessages, importing, assistant, plans, errors, app, ui, release, taxonomy, catalog };
 
 export const MESSAGES = {};
 for (const [area, messages] of Object.entries(MODULES)) {

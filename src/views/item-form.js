@@ -25,7 +25,7 @@ import {
 import { discardUnreferenced, markPending, releasePending } from '../media.js';
 import {
   applySuggestedCategory, classificationLabelForAssistant, collectItemFields, currentClassification,
-  initItemFields, rememberChoice, renderClassification, renderFields,
+  initItemFields, mirroredBrand, rememberCatalogSelection, rememberChoice, renderClassification, renderFields,
 } from './item-fields.js';
 
 const form = {
@@ -686,7 +686,13 @@ export function __formPendingForTest() {
 // ── open / save ──
 let openGeneration = 0;
 
-export async function openItemForm({ itemId = null, folderId = null } = {}) {
+/**
+ * @param {{itemId?: string, folderId?: string, carry?: {folderId?: string|null, locationId?: string|null}}} options
+ *   `carry` is «حفظ وإضافة التالي»: the folder and location the last record
+ *   was saved to. Nothing that belongs to one object — a serial number, a VIN,
+ *   a barcode — is ever carried.
+ */
+export async function openItemForm({ itemId = null, folderId = null, carry = null } = {}) {
   if (!repository.canWrite()) { toast(t('error.repo/forbidden.viewer'), '🔒'); return; }
 
   // An edit starts from the record as it is stored now, not from the card it
@@ -734,6 +740,8 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
 
   setText('addtitle', item ? t('form.editTitle') : t('form.addTitle'));
   fillSelects(item);
+  // Before the fields: whether «البراند» steps aside depends on it.
+  $('f-brand').value = item?.brand || '';
   initItemFields(item);
 
   $('f-name').value = item?.name || '';
@@ -741,7 +749,6 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
   $('f-sku').value = item?.sku || form.provisionalSku;
   $('f-barcode').value = item?.barcode || '';
   $('f-qty').value = item ? String(item.quantity) : '';
-  $('f-brand').value = item?.brand || '';
   $('f-serial').value = item?.serialNumber || '';
   $('f-model').value = item?.modelNumber || '';
   $('f-ref').value = item?.referenceNumber || '';
@@ -750,6 +757,13 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
     ? (item.valuation.min === item.valuation.max ? String(item.valuation.min) : `${item.valuation.min}-${item.valuation.max}`)
     : '';
   if (folderId) $('f-folder').value = folderId;
+  if (!item && carry) {
+    if (carry.folderId !== undefined) $('f-folder').value = carry.folderId || '';
+    if (carry.locationId !== undefined) $('f-loc').value = carry.locationId || '';
+  }
+  const next = $('save-next-btn');
+  // Only while adding: an edit has no "next".
+  if (next) next.style.display = item ? 'none' : '';
 
   updateValuationPreview();
   renderImages();
@@ -761,7 +775,7 @@ export async function openItemForm({ itemId = null, folderId = null } = {}) {
   openSheet('add', { focus: '#f-name' });
 }
 
-async function saveItem() {
+async function saveItem({ next = false } = {}) {
   const name = $('f-name').value.trim();
   if (!name) { toast(t('form.nameRequired'), '⚠'); $('f-name').focus(); return; }
 
@@ -782,7 +796,7 @@ async function saveItem() {
     });
     if (!proceed) return;
     $('f-sku').value = await repository.reserveUniqueSku();
-    return saveItem();
+    return saveItem({ next });
   }
 
   const barcodeClash = barcode ? await repository.barcodeConflict(barcode, form.isNew ? null : form.itemId) : null;
@@ -822,7 +836,9 @@ async function saveItem() {
     quantity: quantity.value,
     unit,
     condition: $('f-cond').value,
-    brand: $('f-brand').value.trim(),
+    // A brand chosen from the catalog («البراند»، «الشركة المصنعة») fills the
+    // record's own brand when that was left empty — typed once, found by it.
+    brand: $('f-brand').value.trim() || mirroredBrand() || '',
     serialNumber: $('f-serial').value.trim(),
     modelNumber: $('f-model').value.trim(),
     referenceNumber: $('f-ref').value.trim(),
@@ -838,7 +854,8 @@ async function saveItem() {
       if (form.isNew) {
         await repository.createItem(payload);
         rememberChoice(classification);
-        toast(t('manage.added'), '✓');
+        rememberCatalogSelection();
+        toast(t(next ? 'form.savedNext' : 'manage.added'), '✓');
       } else {
         await repository.updateItem(form.itemId, payload, form.baseVersion);
         toast(t('manage.updated'), '✓');
@@ -848,6 +865,14 @@ async function saveItem() {
       // uploaded. Released before the sheet closes, so the close handler
       // finds nothing left to settle — and nothing is left marked pending.
       releaseFormPendingMarkers();
+      if (next && form.isNew) {
+        // The same sheet, fresh: classification and place kept for the next
+        // record (item-fields.js rememberChoice), everything else empty.
+        await openItemForm({ carry: { folderId: payload.folderId, locationId: payload.locationId } });
+        $('sh-add')?.querySelector('.shscroll')?.scrollTo({ top: 0 });
+        $('f-name')?.focus({ preventScroll: true });
+        return;
+      }
       closeSheet('add');
     } catch (error) {
       if (error instanceof ConflictError) {
@@ -913,7 +938,8 @@ export function bindItemForm() {
   $('dtbtn-manual')?.addEventListener('click', () => setDescriptionMode('manual'));
   $('dtbtn-ai')?.addEventListener('click', () => setDescriptionMode('ai'));
   $('aibtn')?.addEventListener('click', runAnalysis);
-  $('save-item-btn')?.addEventListener('click', saveItem);
+  $('save-item-btn')?.addEventListener('click', () => saveItem());
+  $('save-next-btn')?.addEventListener('click', () => saveItem({ next: true }));
 
   // However the form is dismissed — the close button, the overlay, Escape, the
   // back gesture — a photograph uploaded into it and never saved onto a record

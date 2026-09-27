@@ -494,6 +494,7 @@ export function validateImport(parsed) {
   const rawCategories = asArray(parsed.categories, 'categories');
   const rawLocations = asArray(parsed.locations, 'locations');
   const rawFieldDefinitions = asArray(parsed.fieldDefinitions, 'fieldDefinitions');
+  const rawCatalogEntities = asArray(parsed.catalogEntities, 'catalogEntities');
 
   if (errors.length) return { ok: false, errors, warnings, data: null };
   if (!rawItems.length && !rawFolders.length && !rawCategories.length && !rawLocations.length) {
@@ -502,6 +503,12 @@ export function validateImport(parsed) {
 
   const categories = rawCategories.map(normalizeCategory).filter(isKeptCategory);
   const fieldDefinitions = rawFieldDefinitions.map(normalizeFieldRecord).filter(Boolean);
+  // The customer's own catalog entries (a brand, a model…); the bundled
+  // catalog is never in a backup. Only the shape is checked here; the
+  // repository normalises every row as it loads it (catalog/model.js).
+  const catalogEntities = rawCatalogEntities.filter((e) => e && typeof e === 'object'
+    && e.source === 'custom' && /^cust_[a-z0-9]{1,60}$/.test(String(e.id || ''))
+    && (String(e.nameAr || '').trim() || String(e.nameEn || '').trim()));
   const locations = rawLocations.map(normalizeLocation).filter((l) => l.name);
   const folders = rawFolders.map((f) => normalizeFolder(f)).filter((f) => f.name);
 
@@ -526,13 +533,14 @@ export function validateImport(parsed) {
     ok: true,
     errors,
     warnings,
-    data: { items, folders, categories, fieldDefinitions, locations },
+    data: { items, folders, categories, fieldDefinitions, locations, catalogEntities },
     stats: {
       items: items.length,
       folders: folders.length,
       categories: categories.length,
       fieldDefinitions: fieldDefinitions.length,
       locations: locations.length,
+      catalogEntities: catalogEntities.length,
     },
   };
 }

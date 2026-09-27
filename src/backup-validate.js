@@ -19,6 +19,7 @@ import {
   importItemContext, isKeptCategory, normalizeCategory, normalizeFolder, normalizeItem, normalizeLocation, validateQuantity,
 } from './validation.js';
 import { normalizeFieldRecord } from './custom-fields.js';
+import { isCustomCatalogId, normalizeCatalogEntity } from './catalog/model.js';
 import { CONDITIONS, UNCATEGORIZED_ID } from './config.js';
 
 /** A backup that cannot be restored whole, and why — never shown raw. */
@@ -105,7 +106,7 @@ export function validateBackupItem(input, context) {
  * The small collections, validated whole: a record that would be dropped or
  * given a new id refuses the backup.
  *
- * @returns {{categories, fieldDefinitions, locations, folders}}
+ * @returns {{categories, fieldDefinitions, locations, folders, catalogEntities}}
  */
 export function validateBackupMetadata(raw) {
   const out = {};
@@ -114,6 +115,8 @@ export function validateBackupMetadata(raw) {
     fieldDefinitions: { normalize: normalizeFieldRecord, keep: Boolean },
     locations: { normalize: normalizeLocation, keep: (record) => Boolean(record?.name) },
     folders: { normalize: (record) => normalizeFolder(record), keep: (record) => Boolean(record?.name) },
+    // Only the customer's own entries, in their own id space.
+    catalogEntities: { normalize: normalizeCatalogEntity, keep: (record) => record?.source === 'custom' && isCustomCatalogId(record.id) },
   };
   for (const [name, rule] of Object.entries(rules)) {
     const list = raw?.[name] == null ? [] : raw[name];

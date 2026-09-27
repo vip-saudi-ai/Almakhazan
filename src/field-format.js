@@ -8,12 +8,30 @@ import { hasFieldValue } from './custom-fields.js';
 import { definitionFor, fieldLabel, measurementUnitLabel, optionLabel } from './taxonomy.js';
 
 /**
+ * How a catalog selection reads now. The catalog service registers itself
+ * here (catalog/service.js), so a label follows the language and a corrected
+ * catalog name; without it — or for an id this app does not know — the
+ * snapshot stored with the value is what is shown. Never the bare id.
+ */
+let catalogLabel = null;
+export function registerCatalogLabels(resolver) {
+  catalogLabel = typeof resolver === 'function' ? resolver : null;
+}
+
+export function catalogValueText(value, language) {
+  if (!value || typeof value !== 'object') return typeof value === 'string' ? value : '';
+  const live = value.ref && catalogLabel ? catalogLabel(value.ref, language) : '';
+  return live || value.label || '';
+}
+
+/**
  * Any stored value as plain text, for a field whose type does not describe it
  * (a recovered or damaged one). Never "[object Object]", never markup.
  */
 function plainValue(value) {
   if (Array.isArray(value)) return value.map((entry) => (typeof entry === 'object' ? '' : String(entry))).filter(Boolean).join(t('common.listSeparator'));
   if (value && typeof value === 'object') {
+    if ('label' in value) return String(value.label || '');
     if ('amount' in value) return `${formatNumber(Number(value.amount) || 0)} ${currencySymbol(value.currency)}`.trim();
     if ('value' in value) return `${formatNumber(Number(value.value) || 0)} ${value.unit ? measurementUnitLabel(value.unit) : ''}`.trim();
     return '';
@@ -37,6 +55,8 @@ export function formatFieldValue(def, value, language) {
     case 'number':
     case 'decimal':
       return typeof value === 'number' ? formatNumber(value) : plainValue(value);
+    case 'catalog': return catalogValueText(value, language);
+    case 'year': return typeof value === 'number' ? String(value) : plainValue(value);
     case 'date': {
       const date = new Date(`${value}T00:00:00`);
       return Number.isNaN(date.getTime()) ? String(value) : formatDate(date);
@@ -64,7 +84,17 @@ export function fieldRows(item, taxonomy) {
   for (const def of [...template, ...own]) {
     if (seen.has(def.id)) continue;
     seen.add(def.id);
-    const text = formatFieldValue(def, values[def.id]);
+    let text = formatFieldValue(def, values[def.id]);
+    // A value kept under the older field this one supersedes («الشركة
+    // المصنعة» typed as text before the catalog) reads under the new label
+    // until the record is next saved — never as a stray "previous" row.
+    if (!text) {
+      for (const old of def.supersedes || []) {
+        if (seen.has(old) || !(old in values)) continue;
+        text = plainValue(values[old]);
+        if (text) { seen.add(old); break; }
+      }
+    }
     if (text) current.push({ def, label: fieldLabel(def), text });
   }
   const previous = [];

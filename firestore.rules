@@ -246,6 +246,20 @@ service cloud.firestore {
         allow delete: if canWrite(workspaceId);
       }
 
+      // The workspace's own catalog entries (a brand, a model, an artist the
+      // NAZM catalog lacks). Only `source: 'custom'`, only in the customer id
+      // space, and never deleted — retired instead, because records point at
+      // them. The global NAZM catalog is not under any workspace and is not
+      // writable by customers at all.
+      match /catalogEntities/{entityId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId)
+          && entityId.matches('^cust_[a-z0-9]{1,60}$')
+          && request.resource.data.id == entityId
+          && request.resource.data.source == 'custom';
+        allow delete: if false;
+      }
+
       match /locations/{locationId} {
         allow read: if isMember(workspaceId);
         allow create, update: if canWrite(workspaceId) && validName(request.resource.data.name, 120);

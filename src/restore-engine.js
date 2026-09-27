@@ -54,7 +54,8 @@ export const RESTORE_WRITE_BATCH = 500;
 const REMOVAL_PAGE = 500;
 /** How often the media stage records its progress. */
 const MEDIA_SAVE_EVERY = { images: 25, bytes: 32 * 1024 * 1024 };
-const SMALL = ['categories', 'fieldDefinitions', 'locations', 'folders'];
+// The customer's catalog entries before the records that refer to them.
+const SMALL = ['categories', 'fieldDefinitions', 'catalogEntities', 'locations', 'folders'];
 const REMOVAL_ORDER = ['items', ...SMALL];
 
 // ── interruption, for the tests ───────────────────────────────────────────
@@ -162,7 +163,7 @@ async function save(job, patch = {}) {
 async function writeMetadata(repo, archive, job) {
   await save(job, { status: RestoreStatus.WRITING_METADATA });
   for (const name of SMALL) {
-    const records = archive.metadata[name];
+    const records = archive.metadata[name] || [];
     for (let i = 0; i < records.length; i += RESTORE_WRITE_BATCH) {
       await repo.restorePut(name, records.slice(i, i + RESTORE_WRITE_BATCH));
     }

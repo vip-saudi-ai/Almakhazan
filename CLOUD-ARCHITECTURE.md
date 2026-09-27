@@ -142,6 +142,50 @@ Not indexed server-side by default: custom field values, descriptions,
 AI text. Aggregating or indexing every customer-defined field would grow
 without bound.
 
+Catalog selections are the exception, because they are bounded: each record
+stores the ids it refers to in `catalogRefs` (at most 32, sorted), so "every
+Rolex" or "every record using this custom brand" is
+`catalogRefs ARRAY_CONTAINS <id>` plus `deletedAt`. On the device this is the
+`catalogRefs` multiEntry index (DB version 13); in Firestore it needs the
+composite index `catalogRefs ARRAY_CONTAINS, deletedAt ASC, updatedAt DESC`.
+
+### 6a. The catalog service (`src/catalog/service.js`)
+
+The pickers ask `catalogService`, never a dataset:
+
+| Call | Meaning |
+|---|---|
+| `search({domain, entityType, parentId, ancestorId, query, limit, cursor})` | ranked page (≤ 100, default 30); cursor is opaque |
+| `children({domain, entityType, parentId, limit, cursor})` | a level under a parent |
+| `getEntity(id)`, `path(id)`, `isWithin(id, ancestorId)` | lookups; unknown ids return null and the record's saved label is shown |
+| `resolveText({domain, entityType, ancestorId, text})` | `unique` / `ambiguous` / `none` — used by the spreadsheet import |
+| `findDuplicates`, `createCustom`, `renameCustom`, `retireCustom` | the customer's own entries |
+| `recent`, `recordUse` | recent and frequent selections, stored on the device only |
+
+Providers:
+
+- **BuiltinCatalogProvider** — the bundled data (`CATALOG-DATA.md`), loaded per
+  domain group on first use; a watch brand list does not load references
+  until a reference is searched.
+- **UserCatalogProvider** — the workspace's `catalogEntities` collection
+  (`source: 'custom'`, ids `cust_…`). It travels with the workspace, the Full
+  Backup and the JSON export; restore writes it before items.
+- **CloudCatalogProvider** — present and inactive. It is `active` only with
+  the cloud feature on *and* a configured endpoint (none is configured), so
+  no catalog request leaves the device in this release. When enabled it must
+  serve the same paginated contract; the bundled catalog stays the offline
+  fallback.
+
+Security rules for `workspaces/{id}/catalogEntities/{entityId}`: members read;
+writers create and update only ids matching `^cust_[a-z0-9]{1,60}$` with
+`source == 'custom'`; nobody deletes (entries are retired, because records
+hold their ids). The bundled catalog is never written to the workspace.
+
+Scaling notes: the bundled catalog is 1,711 entities and searches in well
+under a millisecond on the device. A catalog of hundreds of thousands of
+references (every watch reference, every vehicle trim) does not belong in the
+bundle; that is what the cloud provider and a search service are for.
+
 ---
 
 ## 7. Data model: field classification

@@ -14,12 +14,15 @@ import {
   CUSTOM_FIELD_TYPES, hasFieldValue, newCustomFieldId, normalizeCustomFieldDef, normalizeFieldValue,
 } from '../custom-fields.js';
 import { icon } from '../icons.js';
-import { t } from '../i18n.js';
+import { hasMessage, t } from '../i18n.js';
 import { currencySymbol } from '../money.js';
 import { repository } from '../repository.js';
 import {
-  LEVELS, definitionFor, fieldLabel, measurementUnitLabel, optionLabel,
+  LEVELS, definitionFor, fieldApplies, fieldLabel, measurementUnitLabel, optionLabel,
 } from '../taxonomy.js';
+import { catalogService } from '../catalog/service.js';
+import { catalogValueText } from '../field-format.js';
+import { openCatalogPicker } from './catalog-picker.js';
 import { $, el, render } from '../utils.js';
 import { openTaxonomyPicker } from './taxonomy-picker.js';
 import { toast, toastError } from '../ui.js';
@@ -36,7 +39,17 @@ const state = {
   notice: '',
   otherAcknowledged: false,
   builder: null,
+  /** What the last cascade change did to the levels below it, said aloud. */
+  catalogNotice: '',
 };
+
+/**
+ * The last catalog path saved under each field template in this session —
+ * offered as «استخدام آخر اختيار», never filled in by itself. Only catalog
+ * selections are kept: never a serial number, a VIN or anything else that
+ * belongs to one object.
+ */
+const lastPaths = new Map();
 
 /**
  * The choice to start the next new record from, within this session — a
@@ -73,6 +86,7 @@ export function initItemFields(item) {
   state.notice = '';
   state.otherAcknowledged = false;
   state.builder = null;
+  state.catalogNotice = '';
   // Each form starts closed; a record that already holds values opens it.
   const details = $('f-extra');
   if (details) details.open = false;
@@ -230,6 +244,8 @@ function toRaw(def, value) {
     case 'measurement': return typeof value === 'object' ? String(value.value ?? '') : String(value);
     case 'boolean': return value === true ? 'true' : value === false ? 'false' : '';
     case 'multiselect': return Array.isArray(value) ? value : [];
+    case 'catalog': return value && typeof value === 'object' ? { ref: value.ref ?? null, label: value.label || '' } : { ref: null, label: String(value) };
+    case 'year': return value === '' || value == null ? '' : String(typeof value === 'object' ? value.value ?? '' : value);
     default: return String(value);
   }
 }
@@ -242,7 +258,7 @@ function currentRaw(def) {
 function hasRawValue(raw) {
   if (raw == null) return false;
   if (Array.isArray(raw)) return raw.length > 0;
-  if (typeof raw === 'object') return Boolean(String(raw.amount || '').trim());
+  if (typeof raw === 'object') return Boolean(String(raw.label || raw.amount || '').trim());
   return String(raw).trim() !== '';
 }
 
@@ -314,7 +330,8 @@ function fieldControl(def, controlId) {
   }
 }
 
-function fieldRow(def, { removable = false } = {}) {
+function fieldRow(def, { removable = false, template = [] } = {}) {
+  if (def.type === 'catalog' || def.type === 'year') return pickerRow(def, template, { removable });
   const controlId = `cf-${def.id}`;
   const label = fieldLabel(def);
   const remove = removable ? el('button', {
@@ -345,11 +362,64 @@ function fieldRow(def, { removable = false } = {}) {
   ]);
 }
 
+/** The values the form holds now, as the stored shapes — for `showWhen`. */
+function currentValues(defs) {
+  const out = {};
+  for (const def of defs) {
+    const raw = currentRaw(def);
+    if (!hasRawValue(raw)) continue;
+    out[def.id] = raw;
+  }
+  return out;
+}
+
+/**
+ * A value kept under an older text field that a catalog field now covers
+ * («الشركة المصنعة» typed before there was a catalog) moves into the new
+ * field — matched to the catalog only when exactly one entry has that name —
+ * and the old key goes when the record is saved. Nothing is dropped: the text
+ * is what the new field shows.
+ */
+function applySupersedes(template) {
+  for (const def of template) {
+    if (!def.supersedes?.length || def.id in state.raw || hasFieldValue(state.stored[def.id])) continue;
+    for (const old of def.supersedes) {
+      const legacy = state.stored[old];
+      if (state.removed.has(old) || typeof legacy !== 'string' || !legacy.trim()) continue;
+      state.raw[def.id] = def.type === 'catalog' ? matchCatalog(def, legacy) : legacy;
+      state.removed.add(old);
+      break;
+    }
+  }
+}
+
+function matchCatalog(def, text) {
+  try {
+    const found = catalogService.resolveText({ domain: def.catalog.domain, entityType: def.catalog.entityType, text });
+    if (found.status === 'unique') return snapshot(found.entity);
+  } catch (error) {
+    console.error('[catalog] could not match an older value', error);
+  }
+  return { ref: null, label: text.trim() };
+}
+
+/** What a record stores for a catalog choice: the id, and its official name as a snapshot. */
+function snapshot(entity) {
+  return { ref: entity.id, label: entity.nameEn || entity.nameAr };
+}
+
 /** The definitions this form shows now, in three groups. */
 function groups() {
   const taxonomy = repository.taxonomy();
-  const template = taxonomy.fieldsFor(state.cls).filter((def) => !state.removed.has(def.id));
-  const templateIds = new Set(template.map((def) => def.id));
+  const all = taxonomy.fieldsFor(state.cls).filter((def) => !state.removed.has(def.id));
+  applySupersedes(all);
+  const allIds = new Set(all.map((def) => def.id));
+  const values = currentValues(all);
+  // A field that applies only to some machines or stones is left out until
+  // it does — unless it already holds something.
+  const template = all.filter((def) => values[def.id] !== undefined
+    || fieldApplies(def, { values, templateIds: allIds, categoryId: state.cls.categoryId }));
+  const templateIds = allIds;
   const own = state.ownDefs.filter((def) => !templateIds.has(def.id) && !state.removed.has(def.id));
   const ownIds = new Set(own.map((def) => def.id));
   const previous = [];
@@ -371,15 +441,30 @@ export function renderFields({ sync = true } = {}) {
   const host = $('f-extra-body');
   if (!host) return;
   const { template, own, previous } = groups();
+  renderQuick(template);
+  const title = $('f-extra-title');
+  if (title) {
+    const name = repository.taxonomy().templateFor(state.cls);
+    title.textContent = name && hasMessage(`fields.detailsFor.${name}`) ? t(`fields.detailsFor.${name}`) : t('fields.additional');
+  }
 
-  const visible = template.filter((def) => state.showAll || def.defaultVisible !== false || hasRawValue(currentRaw(def)));
-  const hiddenCount = template.length - visible.length;
+  // One brand field, not two: when the Category asks for its brand through
+  // the catalog, the record's own «البراند» row steps aside — unless it
+  // already holds something, which is never hidden.
+  const brandInput = $('f-brand');
+  const brandRow = brandInput?.closest('.frow');
+  if (brandRow) brandRow.hidden = template.some((def) => def.mirrors === 'brand') && !brandInput.value.trim();
+
+  const detail = template.filter((def) => !def.quick);
+  const visible = detail.filter((def) => state.showAll || def.defaultVisible !== false || hasRawValue(currentRaw(def)));
+  const hiddenCount = detail.length - visible.length;
   const children = [];
-  if (template.length) children.push(el('p', { class: 'sheet-note', text: t('fields.additionalHint') }));
-  if (visible.length) children.push(el('div', { class: 'fsec cf-sec' }, visible.map((def) => fieldRow(def))));
+  if (state.catalogNotice) children.push(el('p', { class: 'field-hint', role: 'status', text: state.catalogNotice }));
+  if (detail.length) children.push(el('p', { class: 'sheet-note', text: t('fields.additionalHint') }));
+  if (visible.length) children.push(el('div', { class: 'fsec cf-sec' }, visible.map((def) => fieldRow(def, { template }))));
   if (hiddenCount > 0) {
     children.push(el('button', {
-      type: 'button', class: 'tax-add', text: t('fields.showAll', { count: template.length }),
+      type: 'button', class: 'tax-add', text: t('fields.showAll', { count: detail.length }),
       onClick: () => { syncRaw(); state.showAll = true; renderFields({ sync: false }); },
     }));
   }
@@ -408,6 +493,234 @@ function removeField(id) {
   delete state.raw[id];
   state.ownDefs = state.ownDefs.filter((def) => def.id !== id);
   renderFields({ sync: false });
+}
+
+// ── catalog and year fields ────────────────────────────────────────────────
+
+/** A catalog or year field: a row that opens the searchable picker. */
+function pickerRow(def, template, { removable = false } = {}) {
+  const controlId = `cf-${def.id}`;
+  const label = fieldLabel(def);
+  const raw = currentRaw(def);
+  const has = hasRawValue(raw);
+  const text = def.type === 'catalog' ? catalogValueText(raw) : raw;
+  const button = el('button', {
+    type: 'button', id: controlId, class: `frow frow-pick${has ? '' : ' empty'}`, 'aria-haspopup': 'dialog',
+    onClick: () => (def.type === 'year' ? chooseYear(def) : chooseCatalog(def, template)),
+  }, [
+    el('span', { class: 'frow-pick-label', text: label }),
+    el('span', { class: 'frow-pick-value', dir: 'auto', text: has ? text : t('catalog.choose') }),
+    el('span', { class: 'lchev', 'aria-hidden': 'true' }, [icon('back', { size: 16 })]),
+  ]);
+  const clear = has ? el('button', {
+    type: 'button', class: 'catalog-clear', 'aria-label': t('catalog.clearValue', { name: label }),
+    onClick: () => { setCatalogValue(def, template, null); },
+  }, [el('span', { 'aria-hidden': 'true', text: '✕' })]) : null;
+  const remove = removable ? el('button', {
+    type: 'button', class: 'cf-remove', 'aria-label': t('fields.remove', { name: label }),
+    onClick: () => removeField(def.id),
+  }, [el('span', { 'aria-hidden': 'true', text: '✕' })]) : null;
+  return el('div', { class: 'cf-row', dataset: { field: def.id, type: def.type } }, [
+    el('div', { class: 'catalog-row' }, [button, clear, remove]),
+    el('div', { class: 'field-hint', id: `${controlId}-error`, role: 'alert' }),
+  ]);
+}
+
+/** The template's catalog fields above `def`, nearest first. */
+function ancestorFields(def, template) {
+  const byId = new Map(template.map((d) => [d.id, d]));
+  const out = [];
+  let parent = def.catalog?.parent ? byId.get(def.catalog.parent) : null;
+  while (parent && !out.includes(parent)) {
+    out.push(parent);
+    parent = parent.catalog?.parent ? byId.get(parent.catalog.parent) : null;
+  }
+  return out;
+}
+
+/** The template's catalog fields below `def`, in any depth. */
+function descendantFields(def, template) {
+  return template.filter((other) => other.type === 'catalog' && other !== def && ancestorFields(other, template).includes(def));
+}
+
+function valueOf(def) {
+  const raw = currentRaw(def);
+  return hasRawValue(raw) ? raw : null;
+}
+
+/**
+ * Where a catalog field looks: under the nearest level above it that holds a
+ * catalog choice (its children, or its descendants when a level between was
+ * left empty). A level above typed by hand says nothing about which entries
+ * apply, so the list waits for a search instead.
+ */
+function pickerContext(def, template) {
+  const chain = ancestorFields(def, template);
+  for (const [index, ancestor] of chain.entries()) {
+    const value = valueOf(ancestor);
+    if (!value) continue;
+    if (!value.ref) return { parentId: null, ancestorId: null, browse: false };
+    return index === 0 ? { parentId: value.ref, ancestorId: null, browse: true } : { parentId: null, ancestorId: value.ref, browse: true };
+  }
+  // The top of a cascade lists its entries; a lower level with nothing above
+  // it is searched directly — a reference typed in full finds its brand.
+  return { parentId: null, ancestorId: null, browse: chain.length === 0 };
+}
+
+function chooseCatalog(def, template) {
+  syncRaw();
+  const context = pickerContext(def, template);
+  const root = !def.catalog.parent;
+  const hasChildren = descendantFields(def, template).length > 0;
+  openCatalogPicker({
+    mode: 'catalog',
+    noun: def.noun,
+    domain: def.catalog.domain,
+    entityType: def.catalog.entityType,
+    ...context,
+    // From the top of a cascade, a search reaches every level: «126500»,
+    // «5711/1A», «Land Cruiser» or «320 GX» fill the whole path at once.
+    wholeDomain: root && hasChildren,
+    selected: valueOf(def),
+    onPick: (choice) => {
+      if (choice.clear) setCatalogValue(def, template, null);
+      else if (choice.manual) setCatalogValue(def, template, { ref: null, label: choice.manual });
+      else if (choice.entity) pickEntity(def, template, choice.entity);
+      document.getElementById(`cf-${def.id}`)?.focus();
+    },
+  });
+}
+
+function chooseYear(def) {
+  syncRaw();
+  const raw = currentRaw(def);
+  openCatalogPicker({
+    mode: 'year',
+    selected: raw ? Number(raw) : null,
+    yearMin: def.validation?.min ?? 1600,
+    yearMax: def.validation?.max ?? new Date().getFullYear() + 1,
+    onPick: (choice) => {
+      state.raw[def.id] = choice.clear ? '' : String(choice.year);
+      renderFields({ sync: false });
+      document.getElementById(`cf-${def.id}`)?.focus();
+    },
+  });
+}
+
+/**
+ * A catalog entry was chosen. The field that holds its level takes it —
+ * which, from a whole-domain search, may be a level below the one tapped —
+ * the levels above take its path, and the levels below are checked.
+ */
+function pickEntity(def, template, entity) {
+  const target = template.find((d) => d.type === 'catalog' && d.catalog.domain === def.catalog.domain && d.catalog.entityType === entity.entityType
+    && (d === def || ancestorFields(d, template).includes(def) || ancestorFields(def, template).includes(d))) || def;
+  const path = catalogService.path(entity.id);
+  const notes = [];
+  state.raw[target.id] = snapshot(entity);
+  for (const ancestor of ancestorFields(target, template)) {
+    const inPath = path.find((e) => e.entityType === ancestor.catalog.entityType);
+    const current = valueOf(ancestor);
+    if (inPath) state.raw[ancestor.id] = snapshot(inPath);
+    else if (current?.ref) {
+      // A level the chosen entry does not have (a reference filed directly
+      // under its collection): a different catalog choice there contradicts it.
+      notes.push(t('catalog.cleared', { value: catalogValueText(current) }));
+      state.raw[ancestor.id] = '';
+    }
+  }
+  invalidateBelow(target, template, notes);
+  state.catalogNotice = notes.join(' ');
+  renderFields({ sync: false });
+}
+
+/** A field set directly — to nothing, or to a value typed for this item. */
+function setCatalogValue(def, template, value) {
+  syncRaw();
+  state.raw[def.id] = value || '';
+  const notes = [];
+  if (value) invalidateBelow(def, template, notes);
+  state.catalogNotice = notes.join(' ');
+  renderFields({ sync: false });
+}
+
+/**
+ * The levels below a change: a catalog choice that no longer lies under the
+ * new selection is cleared, and said to be; a value the customer typed by
+ * hand is kept — the customer decides — and said to be kept.
+ */
+function invalidateBelow(def, template, notes) {
+  for (const child of descendantFields(def, template)) {
+    const value = valueOf(child);
+    if (!value) continue;
+    if (!value.ref) { notes.push(t('catalog.keptManual', { value: value.label })); continue; }
+    const anchor = ancestorFields(child, template).map(valueOf).find(Boolean);
+    const fits = anchor?.ref ? catalogService.isWithin(value.ref, anchor.ref) : false;
+    if (!fits) {
+      notes.push(t('catalog.cleared', { value: catalogValueText(value) }));
+      state.raw[child.id] = '';
+    }
+  }
+}
+
+/** The quick rows beside the classification, and «استخدام آخر اختيار». */
+function renderQuick(template) {
+  const host = $('f-quick');
+  if (!host) return;
+  const quick = template.filter((def) => def.quick);
+  const rows = quick.map((def) => pickerRow(def, template));
+  const name = repository.taxonomy().templateFor(state.cls);
+  const last = name ? lastPaths.get(name) : null;
+  const catalogDefs = template.filter((def) => def.type === 'catalog');
+  const empty = catalogDefs.every((def) => !valueOf(def));
+  if (last && empty) {
+    const labels = catalogDefs.map((def) => last[def.id]).filter(Boolean).map((v) => catalogValueText(v));
+    if (labels.length) {
+      rows.push(el('button', {
+        type: 'button', class: 'chipbtn catalog-last', id: 'f-use-last',
+        text: t('catalog.useLast', { path: labels.join(' › ') }),
+        onClick: () => {
+          syncRaw();
+          for (const def of catalogDefs) if (last[def.id]) state.raw[def.id] = { ...last[def.id] };
+          renderFields({ sync: false });
+          $('f-quick')?.querySelector('.frow-pick')?.focus();
+        },
+      }));
+    }
+  }
+  render(host, rows);
+}
+
+/** Remembers this form's catalog path for «استخدام آخر اختيار» — catalog choices only. */
+export function rememberCatalogSelection() {
+  const taxonomy = repository.taxonomy();
+  const name = taxonomy.templateFor(state.cls);
+  if (!name) return;
+  const path = {};
+  for (const def of taxonomy.fieldsFor(state.cls)) {
+    if (def.type !== 'catalog') continue;
+    const value = valueOf(def);
+    if (value) path[def.id] = { ...value };
+  }
+  if (Object.keys(path).length) lastPaths.set(name, path);
+}
+
+/**
+ * The label of the catalog field that stands for the record's brand or
+ * manufacturer, when it holds one — so «البراند» is filled and searchable
+ * without being typed twice.
+ */
+export function mirroredBrand() {
+  const def = repository.taxonomy().fieldsFor(state.cls).find((d) => d.mirrors === 'brand');
+  if (!def) return null;
+  const value = valueOf(def);
+  // The official name as recorded (the snapshot), not this screen's language.
+  return value ? value.label || catalogValueText(value) : null;
+}
+
+/** Whether the chosen Category asks for its brand through a catalog field. */
+export function templateMirrorsBrand() {
+  return repository.taxonomy().fieldsFor(state.cls).some((d) => d.mirrors === 'brand');
 }
 
 // ── «+ إضافة حقل مخصص» ─────────────────────────────────────────────────────

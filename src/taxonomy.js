@@ -28,6 +28,7 @@ import {
   DEFAULT_CATEGORIES, TAXONOMY_LIMITS, TAXONOMY_SCHEMA_VERSION as TAXONOMY_VERSION, UNCATEGORIZED_ID,
 } from './config.js';
 import { getLanguage, hasMessage, t, translateIn } from './i18n.js';
+import { DOMAINS as CATALOG_DOMAINS } from './catalog/model.js';
 import { normalizeArabic } from './search.js';
 import {
   FIELD_TYPES, inferFieldDefinition, normalizeCustomFieldDefs, normalizeFieldRecord,
@@ -96,8 +97,34 @@ function normalizeBuiltinField(field) {
       : null,
     unit: field.unit || null,
     validation: field.validation || null,
+    // Catalog fields (catalog/service.js): what they pick, the field above
+    // them in the cascade, and the domain's own noun for them.
+    catalog: field.catalog ? Object.freeze({ ...field.catalog }) : null,
+    noun: field.noun || null,
+    quick: Boolean(field.quick),
+    mirrors: field.mirrors || null,
+    supersedes: Object.freeze([...(field.supersedes || [])]),
+    showWhen: field.showWhen ? Object.freeze({ ...field.showWhen }) : null,
     source: 'builtin',
   });
+}
+
+/**
+ * Whether a template field applies given what the form holds: a `showWhen`
+ * field only for the listed values of its controlling field — and always
+ * when that controller is not in the template at all (a Forklift's own
+ * template has no «نوع الآلية» to ask), or the Category is named in
+ * `showWhen.always`. A field that already holds a value is always shown.
+ */
+export function fieldApplies(def, { values = {}, templateIds = new Set(), categoryId = null } = {}) {
+  const rule = def?.showWhen;
+  if (!rule) return true;
+  if (rule.always?.includes(categoryId)) return true;
+  if (!templateIds.has(rule.field)) return true;
+  const value = values[rule.field];
+  if (rule.in) return typeof value === 'string' && rule.in.includes(value);
+  if (rule.refIn) return Boolean(value && typeof value === 'object' && rule.refIn.includes(value.ref));
+  return true;
 }
 
 const FIELDS = new Map(FIELD_DEFINITIONS.map((field) => [field.id, normalizeBuiltinField(field)]));
@@ -578,11 +605,17 @@ class Taxonomy {
    * to the Main Category, then those saved to the Category, then to the
    * Subcategory. Each id once.
    */
+  /** The name of the field template a classification uses, or null. */
+  templateFor({ mainCategoryId = null, categoryId = null, subcategoryId = null } = {}) {
+    const { main, category } = this.path({ mainCategoryId, categoryId, subcategoryId });
+    if (category) return category.template !== undefined ? category.template : main?.template ?? null;
+    if (main) return main.template ?? null;
+    return null;
+  }
+
   fieldsFor({ mainCategoryId = null, categoryId = null, subcategoryId = null } = {}) {
     const { main, category, sub } = this.path({ mainCategoryId, categoryId, subcategoryId });
-    let template = null;
-    if (category) template = category.template !== undefined ? category.template : main?.template ?? null;
-    else if (main) template = main.template ?? null;
+    const template = this.templateFor({ mainCategoryId, categoryId, subcategoryId });
     const out = [];
     const seen = new Set();
     const push = (def) => {
@@ -711,6 +744,20 @@ export function validateCatalog() {
     if (!FIELD_TYPES.includes(field.type)) note(`field ${field.id}: unsupported type ${field.type}`);
     if (!field.ar || !field.en) note(`field ${field.id}: needs Arabic and English`);
     if (field.type === 'measurement' && !FIELD_UNITS[field.unit]) note(`field ${field.id}: unknown unit ${field.unit}`);
+    if (field.required) note(`field ${field.id}: built-in fields are never required`);
+    if (field.type === 'catalog') {
+      const spec = field.catalog || {};
+      if (!CATALOG_DOMAINS[spec.domain]?.types.includes(spec.entityType)) note(`field ${field.id}: ${spec.domain}/${spec.entityType} is not a catalog level`);
+      if (spec.parent) {
+        const parent = FIELD_DEFINITIONS.find((f) => f.id === spec.parent);
+        if (!parent || parent.type !== 'catalog') note(`field ${field.id}: parent ${spec.parent} is not a catalog field`);
+      }
+      if (!field.noun) note(`field ${field.id}: needs a noun`);
+    }
+    for (const old of field.supersedes || []) {
+      if (!FIELD_DEFINITIONS.some((f) => f.id === old)) note(`field ${field.id}: supersedes unknown ${old}`);
+    }
+    if (field.showWhen && !FIELD_DEFINITIONS.some((f) => f.id === field.showWhen.field)) note(`field ${field.id}: showWhen on unknown ${field.showWhen.field}`);
     if (field.type === 'select' || field.type === 'multiselect') {
       const optionIds = (field.options || []).map((o) => o.id);
       if (!optionIds.length) note(`field ${field.id}: no options`);

@@ -19,7 +19,33 @@ import { normalizeDigits, parseNumber, uid } from './utils.js';
 export const FIELD_TYPES = [
   'text', 'multiline', 'number', 'decimal', 'currency', 'date', 'boolean',
   'select', 'multiselect', 'url', 'identifier', 'measurement',
+  // A choice from a catalog (catalog/service.js), stored as
+  // `{ ref: catalog id | null, label: display snapshot }`: the id is
+  // authoritative; the label keeps the value readable offline, after a catalog
+  // update, or when the id is unknown to this app. `ref: null` is a value typed
+  // for this record alone.
+  'catalog',
+  // A year, chosen from a quick picker or typed: a whole number, historical
+  // years included. Empty means unknown — there is no "Unknown" year value.
+  'year',
 ];
+
+const CATALOG_REF = /^[a-z0-9][a-z0-9_.-]{0,127}$/;
+const CATALOG_LABEL_MAX = 160;
+
+/** A catalog value in its stored shape, or undefined. */
+export function catalogValue(input) {
+  if (input == null || input === '') return undefined;
+  if (typeof input === 'string') {
+    const label = cleanString(input, CATALOG_LABEL_MAX);
+    return label ? { ref: null, label } : undefined;
+  }
+  if (typeof input !== 'object' || Array.isArray(input)) return undefined;
+  const label = cleanString(input.label, CATALOG_LABEL_MAX);
+  const ref = typeof input.ref === 'string' && CATALOG_REF.test(input.ref) ? input.ref : null;
+  if (!label) return undefined;
+  return { ref, label };
+}
 
 /** The types a customer can pick for a field of their own. */
 export const CUSTOM_FIELD_TYPES = ['text', 'number', 'currency', 'date', 'boolean', 'select', 'multiselect', 'url'];
@@ -174,6 +200,7 @@ function sanitizeValue(value) {
     return list.length ? list : undefined;
   }
   if (value && typeof value === 'object') {
+    if ('label' in value && !('amount' in value) && !('value' in value)) return catalogValue(value);
     if ('amount' in value) {
       const amount = typeof value.amount === 'number' && Number.isFinite(value.amount) ? value.amount : null;
       if (amount == null || !isCurrencyCode(value.currency)) return undefined;
@@ -238,6 +265,8 @@ export function normalizeFieldValue(def, input, { currency = 'SAR' } = {}) {
     }
     case 'currency': {
       const object = typeof input === 'object' && input !== null;
+      // A currency picker with no amount is an empty field, not a bad number.
+      if (object && String(input.amount ?? '').trim() === '') return { value: undefined };
       const amount = parseNumber(object ? input.amount : input);
       if (amount == null) return { error: 'field.error.number' };
       if (amount < 0) return { error: 'field.error.min' };
@@ -267,6 +296,19 @@ export function normalizeFieldValue(def, input, { currency = 'SAR' } = {}) {
       if (list.some((entry) => !allowed.has(entry))) return { error: 'field.error.option' };
       const unique = [...new Set(list)];
       return { value: unique.length ? unique : undefined };
+    }
+    case 'catalog': {
+      const value = catalogValue(input);
+      return { value };
+    }
+    case 'year': {
+      const number = parseNumber(typeof input === 'object' && input !== null ? input.value : input);
+      if (number == null || !Number.isInteger(number)) return { error: 'field.error.year' };
+      const min = rules.min ?? 1000;
+      const max = rules.max ?? new Date().getFullYear() + 2;
+      if (number < min) return { error: 'field.error.min' };
+      if (number > max) return { error: 'field.error.max' };
+      return { value: number };
     }
     case 'url': {
       const text = cleanString(input, TAXONOMY_LIMITS.url);
