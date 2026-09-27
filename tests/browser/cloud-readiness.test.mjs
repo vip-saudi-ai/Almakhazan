@@ -262,6 +262,25 @@ await page.evaluate((value) => { window.__seed = value; }, seed);
   check('N2 and they have content', r.overview > 50 && r.ai > 50, JSON.stringify(r));
 }
 
+// ── the score is drawn first; a repaint never eats what is being typed ─────
+{
+  const r = await page.evaluate(async () => {
+    const { goTab } = await import('/src/navigation.js');
+    const { renderAssistant } = await import('/src/views/assistant.js');
+    goTab('ai');
+    for (let i = 0; i < 100 && !document.querySelector('.health-number'); i += 1) await new Promise((res) => setTimeout(res, 50));
+    const input = document.getElementById('ask-input');
+    input.focus();
+    input.value = 'قطع بدون';
+    renderAssistant();
+    await new Promise((res) => setTimeout(res, 1500));
+    const after = document.getElementById('ask-input');
+    return { value: after.value, focused: document.activeElement === after, score: document.querySelector('.health-number')?.textContent };
+  });
+  check('U1 a repaint keeps the half-typed question and the focus', r.value === 'قطع بدون' && r.focused && /\d/.test(r.score || ''), JSON.stringify(r));
+  await page.evaluate(async () => (await import('/src/navigation.js')).goTab('home'));
+}
+
 // ── a question handed to the inventory screen ─────────────────────────────
 {
   const r = await page.evaluate(async () => {

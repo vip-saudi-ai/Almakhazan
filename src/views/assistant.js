@@ -64,6 +64,10 @@ async function answer(question) {
 
 async function runQuestion(question) {
   state.question = question;
+  // The box shows the question being answered (a chip or a currency choice
+  // asks one the customer did not type), and a repaint keeps it.
+  const box = $('ask-input');
+  if (box) box.value = question;
   const result = await answer(question);
   if (!result) return;
   state.result = result;
@@ -423,22 +427,44 @@ export function renderAssistant() {
  */
 async function refreshHealth() {
   const ticket = ++healthGeneration;
-  let health;
   try {
-    health = await inventoryHealthSnapshot();
+    // The score first — it comes from counts — then the duplicate groups,
+    // which take a walk of the identifier indexes and do not change it.
+    const quick = await inventoryHealthSnapshot({ duplicates: false });
+    if (ticket !== healthGeneration || !quick) return;
+    // Until the walk answers, the last known groups stay on screen.
+    state.health = state.health?.duplicatesKnown
+      ? { ...quick, duplicates: state.health.duplicates, counts: { ...quick.counts, duplicates: state.health.counts.duplicates, duplicateGroups: state.health.counts.duplicateGroups } }
+      : quick;
+    paint();
+    const full = await inventoryHealthSnapshot();
+    if (ticket !== healthGeneration || !full) return;
+    state.health = full;
+    paint();
   } catch (error) {
     console.error('[assistant] health unavailable', error);
-    return;
   }
-  if (ticket !== healthGeneration || !health) return;
-  state.health = health;
-  paint();
 }
 
 function paint() {
   const root = $('ai-scroll');
   if (!root) return;
   const health = state.health;
+  // A repaint that arrives while the customer is typing a question (the
+  // health score is worked out asynchronously) keeps what they typed, the
+  // caret and the focus.
+  const typing = $('ask-input');
+  const kept = typing ? { value: typing.value, focused: document.activeElement === typing, start: typing.selectionStart, end: typing.selectionEnd } : null;
+  paintInto(root, health);
+  const input = $('ask-input');
+  if (kept && input && input.value !== kept.value) input.value = kept.value;
+  if (kept?.focused && input) {
+    input.focus({ preventScroll: true });
+    try { input.setSelectionRange(kept.start, kept.end); } catch { /* not a text input */ }
+  }
+}
+
+function paintInto(root, health) {
 
   if (state.screen === 'duplicates') {
     render(root, health ? duplicatesScreen(health) : []);

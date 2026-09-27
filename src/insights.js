@@ -55,12 +55,15 @@ export async function askRepository(question, { lookups, now = Date.now() }) {
  *
  * @returns {Promise<object|null>} null when the backend cannot say
  */
-export async function inventoryHealthSnapshot({ now = Date.now() } = {}) {
+export async function inventoryHealthSnapshot({ now = Date.now(), duplicates: withDuplicates = true } = {}) {
   const overview = await repository.getInventoryOverview();
   if (!overview) return null;
+  // Duplicates do not move the score (health.js WEIGHTS); finding them walks
+  // four identifier indexes, so a caller may draw the score first and ask
+  // for them after (`duplicates: false`).
   const [stale, candidates] = await Promise.all([
     overview.totalItems ? repository.countItemsMatching({ filters: { updatedAt: { lt: now - YEAR } } }).then((r) => r.count) : 0,
-    overview.totalItems ? repository.duplicateCandidates() : null,
+    overview.totalItems && withDuplicates ? repository.duplicateCandidates() : null,
   ]);
   const duplicates = candidates ? findDuplicateGroups(candidates.items) : [];
   const health = inventoryHealthFromOverview(overview, {
