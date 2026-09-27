@@ -1325,11 +1325,22 @@ export class LocalBackend {
 
   async inventoryAggregate() {
     const stored = await local.get('aggregates', AGGREGATE_KEY);
-    // One count guards the kept numbers against a write that bypassed the
-    // repository (an older build, a tool): if the aggregate does not account
-    // for every stored record, it is rebuilt rather than shown.
-    if (isCurrentAggregate(stored) && stored.live + stored.trashed === await local.countFresh('items')) return stored;
-    return this.rebuildAggregates();
+    if (isCurrentAggregate(stored)) {
+      // Once per session, one count guards the kept numbers against writes
+      // that bypassed the repository (an older build, a tool): if the
+      // aggregate does not account for every stored record, it is rebuilt
+      // rather than shown. Within the session every write passes through the
+      // repository and moves the aggregate itself, so the count — which costs
+      // time in proportion to the store — is not repeated.
+      if (this._aggregateChecked) return stored;
+      if (stored.live + stored.trashed === await local.countFresh('items')) {
+        this._aggregateChecked = true;
+        return stored;
+      }
+    }
+    const rebuilt = await this.rebuildAggregates();
+    if (rebuilt) this._aggregateChecked = true;
+    return rebuilt;
   }
 
   /**

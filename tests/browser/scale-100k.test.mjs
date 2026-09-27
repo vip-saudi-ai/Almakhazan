@@ -142,7 +142,8 @@ const EXPECTED_LIVE = COUNT - Math.ceil(COUNT / 97);
   check('Q4 value order comes from its index, within a currency', r.byValue.n === 50 && /valueSort/.test(r.byValue.strategy) && r.byValue.scanned < 400, JSON.stringify(r.byValue));
   check('Q5 a folder answers with an exact total from index sizes', r.folder.n === 50 && r.folder.total > 0, JSON.stringify(r.folder));
   check('Q6 an identifier is found at once', r.sku.ids.includes('sx0012345') || COUNT <= 12345, JSON.stringify(r.sku));
-  check('Q7 a word is found through the token index, reading only its matches', r.word.n > 0 && r.word.scanned <= r.word.n + 5, JSON.stringify(r.word));
+  // One record in 1,000 carries the word; the walk reads those and no others.
+  check('Q7 a word is found through the token index, reading only its matches', r.word.n > 0 && r.word.scanned <= Math.ceil(COUNT / 1000) + 5, JSON.stringify(r.word));
   check('Q8 a location count comes from index sizes', r.count.strategy === 'index-count' && r.count.ms < 500, JSON.stringify(r.count));
   check('Q9 whole-inventory totals come from the aggregate', r.sum.source === 'aggregate' && r.sum.n === EXPECTED_LIVE, JSON.stringify(r.sum));
 }

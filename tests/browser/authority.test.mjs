@@ -271,7 +271,11 @@ const acceptConfirm = (page) => page.evaluate(async () => {
     input.value = 'بعيدة';
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  await page.waitForTimeout(900);
+  // Until the search has painted its answer: a fixed wait was right only while
+  // nothing else used the database, and the records seeded here straight into
+  // the store are being given their ordering fields in the background.
+  await page.waitForFunction(() => document.querySelectorAll('[data-id^="r002"]').length >= 7, null, { timeout: 20000 }).catch(() => {});
+  await page.waitForTimeout(300);
   const picked = await page.evaluate(async () => {
     const home = await import('/src/views/home.js');
     home.startSelection();
