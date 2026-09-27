@@ -61,9 +61,10 @@ function transform(file) {
   const exported = new Set();
 
   source = source
-    .replace(/^export\s+(async\s+)?function\s+([A-Za-z_$][\w$]*)/gm, (_m, isAsync, name) => {
+    // Generators included: `export function*` and `export async function*`.
+    .replace(/^export\s+(async\s+)?function\s*(\*?)\s*([A-Za-z_$][\w$]*)/gm, (_m, isAsync, star, name) => {
       exported.add(name);
-      return `${isAsync || ''}function ${name}`;
+      return `${isAsync || ''}function${star ? '*' : ''} ${name}`;
     })
     .replace(/^export\s+class\s+([A-Za-z_$][\w$]*)/gm, (_m, name) => {
       exported.add(name);
@@ -88,6 +89,12 @@ function transform(file) {
   }
   if (/^export\s+default/m.test(source)) {
     throw new Error(`Default exports are not supported by this bundler (${file})`);
+  }
+  // Any other export form this bundler does not rewrite would reach the
+  // bundle as a syntax error in the customer's browser. Refused at build time.
+  const leftover = source.match(/^export\b.*$/m);
+  if (leftover) {
+    throw new Error(`Unsupported export form in ${file}: ${leftover[0].slice(0, 80)}`);
   }
 
   // Remaining dynamic imports are remote SDK loads; see __noImport above.

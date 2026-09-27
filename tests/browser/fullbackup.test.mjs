@@ -513,6 +513,18 @@ const v1 = await run(V.page, `
 check('1V a version 1 .nazmbackup still opens, verifies and restores, image included', v1.result.restored === 1 && JSON.stringify(v1.ids) === '["v1a"]'
   && v1.version === 3 && v1.bytes === 'version one image bytes' && v1.def === true, JSON.stringify(v1));
 
+// ── E. an empty inventory ──────────────────────────────────────────────────
+const E = await device();
+const empty = await run(E.page, `
+  const { file, summary } = await h.backupToFile();
+  const manifest = JSON.parse(new TextDecoder().decode((await h.entriesOf(file)).find(([n]) => n === 'manifest.json')[1]));
+  const result = await h.restoreFile(file);
+  return { summary, counts: manifest.counts, chunks: manifest.itemChunks.length, result, items: await local.countFresh('items'), job: (await local.getMeta('restoreJob')).status };
+`);
+check('E1 an empty inventory backs up to a valid archive with no chunks, and restores', empty.summary.items === 0 && empty.chunks === 0
+  && empty.counts.items === 0 && empty.result.restored === 0 && empty.items === 0 && empty.job === 'completed', JSON.stringify(empty));
+await E.context.close();
+
 check('Z1 no unexpected JS errors', allErrors.length === 0, allErrors.slice(0, 3).join(' | '));
 
 await browser.close();
