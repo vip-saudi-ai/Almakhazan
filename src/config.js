@@ -148,14 +148,18 @@ export const IMPORT_LIMITS = {
 };
 
 /**
- * How large a Full Backup (.nazmbackup) may be, by how it is written.
+ * How large a Full Backup (.nazmbackup) may be, by how it is written. These
+ * are limits of the destination, not of the format: the archive is ZIP64 and
+ * its records are chunked (backup-format.js), so neither the inventory's size
+ * nor its metadata has a ceiling of its own.
  *
- *   nativeStream  the native app writes the archive to disk a chunk at a time
- *                 (bridge.beginFile/appendFile/finishFile): memory stays at
- *                 one image. Bounded only by the ZIP format this writer uses
- *                 (no ZIP64): 4 GB less headroom.
- *   download      a browser assembles the archive as a Blob of per-image
- *                 Blobs and downloads it. Chromium keeps large Blobs on disk;
+ *   nativeStream  the native app writes the archive to a temporary file a
+ *                 slice at a time (bridge beginFile/appendFile/finishFile):
+ *                 memory stays at one chunk or one image. No container
+ *                 limit — only the free space on the disk, checked before
+ *                 starting when the app can report it (availableDiskSpace).
+ *   download      a browser assembles the archive as a Blob of bounded parts
+ *                 and downloads it. Chromium keeps large Blobs on disk;
  *                 Safari may hold them in memory, so this is capped.
  *   nativeSingle  a native build without the streaming bridge hands the file
  *                 over in one piece, encoded — the same ceiling as a JSON
@@ -163,16 +167,13 @@ export const IMPORT_LIMITS = {
  *
  * A backup over the limit of its path is refused before anything is read,
  * with the size and the limit stated — never started and killed half way.
+ * Reading a backup has no size limit: it is read in slices, and every piece
+ * of it is held to the limits in backup-format.js READ_LIMITS.
  */
 export const FULL_BACKUP_LIMITS = {
-  nativeStream: 4000 * 1024 * 1024,
-  download: 1024 * 1024 * 1024,
+  nativeStream: null,
+  download: 2 * 1024 * 1024 * 1024,
   nativeSingle: 64 * 1024 * 1024,
-  // A restore reads the archive in slices, so its limit is the format's.
-  restoreBytes: 4000 * 1024 * 1024,
-  // data.json is parsed whole; the same ceiling as a JSON backup on the device.
-  dataBytes: { web: 256 * 1024 * 1024, native: 64 * 1024 * 1024 },
-  entries: 65000,
 };
 
 const TEXT_LIMITS_CATEGORY_NAME = 120;

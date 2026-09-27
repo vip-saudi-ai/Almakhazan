@@ -78,7 +78,8 @@ billing is switched on.
 | `openUrl(url)` | Support website, public legal pages (https only) | `window.open` (web only) |
 | `composeEmail({ to, subject, body })` | Support, problem reports, privacy requests | `openUrl` with a validated, encoded `mailto:`, else a mailto link |
 | `shareFile({ filename, mimeType, base64 })` | Excel/JSON export, QR labels PDF, restore safety backup (small) | exports refuse with a message (a WKWebView cannot follow a blob download) |
-| `beginFile({ filename, mimeType })` → `{ id }`, `appendFile({ id, base64 })`, `finishFile({ id })`, `abortFile({ id })` | Full Backup (`.nazmbackup`) written in 512 KB pieces to a temporary file in Caches, then handed to the Share Sheet and deleted — the archive never sits whole in the WebView's memory | Full Backup falls back to `shareFile` and is refused above `FULL_BACKUP_LIMITS.nativeSingle` (64 MB) with a message |
+| `beginFile({ filename, mimeType })` → handle, `appendFile({ handle, base64 })`, `finishFile({ handle })`, `abortFile({ handle })` | Full Backup (`.nazmbackup`, ZIP64, any size) and the safety backup a Full Restore makes first. Written in slices of ≤ 512 KB of Base64 to a `<name>.partial` file in Caches, renamed to its real name only when complete, handed to the Share Sheet, and deleted. `finishFile` must **reject** when the customer cancels or the export fails — the app then records no backup and a restore does not start. Contract in `native/nazm-native-bridge.js`. | Full Backup falls back to `shareFile` and is refused above `FULL_BACKUP_LIMITS.nativeSingle` (64 MB) with a message; a Full Restore of a larger inventory cannot take its safety backup and is refused before any change |
+| `availableDiskSpace()` → bytes | Checked before a Full Backup and a Full Restore start, so a predictable lack of space fails before anything changes (iOS: `volumeAvailableCapacityForImportantUsage`) | The app proceeds; a write that fails for lack of space aborts cleanly (backup) or leaves a recoverable restore job (restore) |
 | `openSettings()` | "Open Settings" after the camera was refused | button hidden; the message says where |
 | `print()` | not used by the labels any more: in the app they are a PDF (vector QR, four-module quiet zone) handed to the Share Sheet, which offers Print, Save to Files and AirDrop | — |
 | `setStatusBarStyle(theme)` | status bar follows light/dark | — |
@@ -93,6 +94,52 @@ plugins; adapt it to the versions you install.
 document type) so that Files opens the backup with NAZM and the Share Sheet
 shows the right icon. Without it, restore still works through «استعادة نسخة
 احتياطية كاملة», which picks the file with the system file picker.
+
+### Full Backup and Restore on the device — what to build and test in Xcode
+
+The JavaScript side is complete and tested in a browser (see TESTING.md:
+`zip64`, `fullbackup`, `fullbackup-scale`). What only the native project can
+provide, and must be tested on real iPhones with large inventories:
+
+1. The four streaming methods above, exactly to their contract — in
+   particular: append without re-reading the file, the `.partial` name until
+   `finishFile`, and `finishFile` rejecting on cancel.
+2. `availableDiskSpace()`.
+3. Optionally, `UIApplication.beginBackgroundTask` around a backup so a brief
+   switch away does not kill it. iOS limits that time; the app never depends
+   on it — an interrupted backup is simply not recorded, an interrupted
+   restore resumes with the same file.
+4. The `.nazmbackup` document type (below).
+5. On-device measurements to take before release: a 100,000-record backup and
+   restore; a backup whose images exceed 4 GB (ZIP64 on disk); the WebView's
+   memory during both (Xcode Instruments); an interruption by locking the
+   phone and by force-quitting during each restore stage, then resuming.
+
+### Images at warehouse scale — the storage decision
+
+Originals and thumbnails are Blobs/ArrayBuffers in IndexedDB (`images`
+store), their metadata in `mediaAssets`. For 1.0.0 this is kept, deliberately:
+
+- WebKit stores large IndexedDB values as separate files on disk, not inside
+  the database file, so 10,000–100,000 images of a few MB each are bounded by
+  the device's disk, not by a database size limit. Every image is read and
+  written one at a time (display, backup, restore) — never all at once.
+- The native app's WebView storage is not subject to Safari's 7-day eviction
+  of website data, and the app requests persistent storage.
+- A migration of originals to the native file system would add a second
+  source of truth, a resumable copy-and-verify migration for every existing
+  user, and a bridge surface for reads on every image display — risk that is
+  not justified before the on-device measurements in step 5 show IndexedDB to
+  be the bottleneck.
+
+Where it could become one: multi-gigabyte image libraries make the WebView's
+storage the largest part of the app's footprint, and a quota prompt or eviction
+under extreme disk pressure affects IndexedDB and a native store alike. If the
+measurements show write failures or memory pressure at 50,000+ images, the
+smallest clean step is: new originals written to Application Support through a
+bridge `writeMedia/readMedia` pair keyed by the same media ids, with metadata
+staying in IndexedDB, and existing originals copied, verified by SHA-256, and
+only then removed from IndexedDB — resumable, one image at a time.
 
 ## 4. Service worker and updates
 

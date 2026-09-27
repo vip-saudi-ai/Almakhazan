@@ -11,6 +11,9 @@
 //     openUrl(url),                         // SFSafariViewController / system browser (https)
 //     composeEmail({ to, subject, body }),  // MFMailComposeViewController (optional)
 //     shareFile({ filename, mimeType, base64 }),   // UIActivityViewController
+//     beginFile/appendFile/finishFile/abortFile     // Full Backup, streamed to a
+//                                                   // temporary file (see nativeFileStream)
+//     availableDiskSpace(),                         // free bytes, before a backup/restore
 //     openSettings(),                       // UIApplication.openSettingsURLString
 //     print(),                              // UIPrintInteractionController of the WebView
 //     setStatusBarStyle('light' | 'dark'),
@@ -159,6 +162,23 @@ export function nativeFileStream() {
     finish: (handle) => Promise.resolve(native.finishFile({ handle })),
     abort: (handle) => Promise.resolve(native.abortFile?.({ handle })).catch(() => {}),
   };
+}
+
+/**
+ * Free space on the device's disk, in bytes, when the native app can say —
+ * `availableDiskSpace()` on the bridge (iOS: volumeAvailableCapacityForImportantUsage).
+ * Null when it cannot: a browser's storage estimate is a quota, not the disk,
+ * and is asked separately (local-store.js storageEstimate).
+ */
+export async function availableDiskSpace() {
+  const native = bridge();
+  if (typeof native?.availableDiskSpace !== 'function') return null;
+  try {
+    const bytes = Number(await native.availableDiskSpace());
+    return Number.isFinite(bytes) && bytes >= 0 ? bytes : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Printing works in browsers; in the native app only through the bridge. */

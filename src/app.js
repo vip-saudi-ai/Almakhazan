@@ -35,6 +35,7 @@ import { bindItemForm, openItemForm } from './views/item-form.js';
 import { bindTaxonomyPicker } from './views/taxonomy-picker.js';
 import { refreshTaxonomyNotice } from './views/taxonomy-onboarding.js';
 import { refreshBackupReminder } from './views/backup-reminder.js';
+import { cleanupAbandonedRestoreState } from './full-backup.js';
 import { renderOverview } from './views/overview.js';
 import { bindManageViews, openFolderSheet, renderCategories, renderSettings } from './views/manage.js';
 import { bindAssistant, renderAssistant } from './views/assistant.js';
@@ -248,14 +249,22 @@ async function loadApplicationData(firebase, session) {
     if (!recovery.ready) {
       console.error('[app] import recovery is needed; new imports are blocked until it succeeds');
     }
+    // A restore the last page died in the middle of is made visible now, and
+    // blocks the next restore or merge until the same backup finishes it.
+    const interrupted = await markInterruptedRestore().catch((error) => {
+      console.error('[app] restore check failed', error);
+      return null;
+    });
+    // What an abandoned backup check left in the restore index goes; an
+    // unfinished restore's own index stays for the restore that finishes it.
+    void cleanupAbandonedRestoreState();
     // Reference counts are kept incrementally, and a tab killed between a
     // record write and its count adjustment leaves them wrong. Once a day the
     // device's counts are re-derived from its records. Not awaited: it is
-    // maintenance, and the inventory does not wait for it.
-    void reconcileOccasionally(repository.session);
-    // A restore the last page died in the middle of is made visible now, and
-    // blocks the next restore or merge until the same backup finishes it.
-    await markInterruptedRestore().catch((error) => console.error('[app] restore check failed', error));
+    // maintenance, and the inventory does not wait for it. Not while a restore
+    // is unfinished: the images it has written are not referenced yet, and
+    // reclaiming them would take them from the restore that will need them.
+    if (!interrupted) void reconcileOccasionally(repository.session);
 
     // Without a cloud copy, what is on this device is the only copy — and a
     // browser evicts unpersisted storage when the device needs room. Asking is

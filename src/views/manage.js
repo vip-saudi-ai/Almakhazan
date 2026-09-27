@@ -5,7 +5,7 @@ import {
   CAT_ICONS, FOLDER_COLORS, FOLDER_ICONS,
 } from '../config.js';
 import { aiAvailability, aiStatusLabel } from '../ai.js';
-import { LANGUAGES, getLanguage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
+import { LANGUAGES, getLanguage, hasMessage, onLanguageChange, pick, setLanguage, t } from '../i18n.js';
 import { locationName, roleLabel } from '../labels.js';
 import { fieldLabel } from '../taxonomy.js';
 import {
@@ -21,7 +21,7 @@ import {
 } from '../restore.js';
 import { withFullInventory } from '../inventory-load.js';
 import {
-  createFullBackup, lastBackupInfo, looksLikeFullBackup, openFullBackup, restoreFullBackup, verifyFullBackupMedia,
+  createFullBackup, lastBackupInfo, looksLikeFullBackup, openFullBackup, restoreFullBackup, verifyFullBackup,
 } from '../full-backup.js';
 import { inventoryCounts, queryInventory } from '../query.js';
 import { storageEstimate } from '../local-store.js';
@@ -835,12 +835,20 @@ function showImportSummary(result, filename) {
     warnings.prepend(el('div', { class: 'imp-warn', text: t('backup.chooseSameFile') }));
     warnings.prepend(el('div', { class: 'imp-warn-title', role: 'alert', text: t(RESTORE_BLOCKED_MESSAGE) }));
   });
-  if (result.warnings.length) {
+  // A Full Backup reports how many warnings it found; only a sample is kept
+  // by text. A degraded backup says so before the customer confirms.
+  const warningCount = result.warningCount ?? result.warnings.length;
+  const notes = [
+    result.archive?.stats.missingMedia ? t('fullBackup.degradedNote', { count: result.archive.stats.missingMedia }) : null,
+    result.archive?.verification?.skipped ? t('fullBackup.skippedRecords', { count: result.archive.verification.skipped }) : null,
+  ].filter(Boolean);
+  if (warningCount || notes.length) {
     warnings.style.display = '';
     render(warnings, [
-      el('div', { class: 'imp-warn-title', text: t('count.warnings', { count: result.warnings.length }) }),
+      ...notes.map((note) => el('div', { class: 'imp-warn-title', role: 'alert', text: note })),
+      warningCount ? el('div', { class: 'imp-warn-title', text: t('count.warnings', { count: warningCount }) }) : null,
       ...result.warnings.slice(0, 8).map((warning) => el('div', { class: 'imp-warn', text: `• ${warning}` })),
-      result.warnings.length > 8 ? el('div', { class: 'imp-warn', text: t('backup.moreWarnings', { count: result.warnings.length - 8 }) }) : null,
+      warningCount > 8 ? el('div', { class: 'imp-warn', text: t('backup.moreWarnings', { count: warningCount - 8 }) }) : null,
     ]);
   } else {
     warnings.style.display = 'none';
@@ -851,7 +859,7 @@ function showImportSummary(result, filename) {
 }
 
 async function runImport(mode) {
-  if (!pendingImport?.data) return;
+  if (!pendingImport?.data && !pendingImport?.archive) return;
   const data = pendingImport.data;
 
   if (mode === 'restore') {
@@ -873,10 +881,6 @@ async function runImport(mode) {
         toast(t('backup.merged', { count: added }), '✓');
       } else {
         const onProgress = ({ stage, done, total }) => {
-          if (stage === 'media') {
-            setText('import-progress', t('fullBackup.writingImages', { done: formatNumber(done), total: formatNumber(total) }));
-            return;
-          }
           const label = stageLabel(stage);
           setText('import-progress', stage === RestoreStage.DONE || total <= 1
             ? label
@@ -884,7 +888,7 @@ async function runImport(mode) {
         };
         const saveBackup = (text) => saveBackupFile(text, 'nazm_safety');
         if (pendingImport.archive) {
-          const result = await restoreFullBackup(pendingImport.archive, { onProgress, saveBackup });
+          const result = await restoreFullBackup(pendingImport.archive, { onProgress: fullRestoreProgress });
           toast(t('fullBackup.restored', { items: formatNumber(result.restored), media: formatNumber(result.images) }), '✓');
           if (result.declaredMissing) toast(t('fullBackup.restoreMissing', { count: result.declaredMissing }), '⚠');
         } else {
@@ -1344,13 +1348,17 @@ async function restoreDefaultsFlow() {
   }
 }
 
-/** «آخر نسخة احتياطية: قبل ١٢ يوماً» under the Full Backup row. */
+/** «آخر نسخة احتياطية: قبل ١٢ يوماً» under the Full Backup row — and, for a
+ *  backup that was missing images, that it was incomplete. */
 async function paintLastBackup() {
   const last = await lastBackupInfo();
   // Looked up after the read: the panel may have been redrawn meanwhile.
   const node = $('full-backup-sub');
   if (!node) return;
-  node.textContent = `${t('fullBackup.sub')} · ${last ? t('fullBackup.last', { when: timeAgo(last.at) }) : t('fullBackup.never')}`;
+  const when = last ? timeAgo(last.at) : null;
+  const status = !last ? t('fullBackup.never')
+    : last.integrity === 'degraded' ? t('fullBackup.lastDegraded', { when }) : t('fullBackup.last', { when });
+  node.textContent = `${t('fullBackup.sub')} · ${status}`;
 }
 
 function showBackupProgress(text, ratio = null) {
@@ -1360,34 +1368,56 @@ function showBackupProgress(text, ratio = null) {
   if (bar) bar.style.width = ratio == null ? '0%' : `${Math.round(Math.min(1, ratio) * 100)}%`;
 }
 
+const counted = (key, { done = 0, total = 0 }) => t(key, { done: formatNumber(done), total: formatNumber(total) });
+
+/** A backup's phases, as the progress sheet says them. */
+function backupProgressText({ phase, done, total }) {
+  if (phase === 'items') return [counted('fullBackup.phase.items', { done, total }), total ? done / total : null];
+  if (phase === 'media') return [counted('fullBackup.phase.media', { done, total }), total ? done / total : null];
+  const key = `fullBackup.phase.${phase}`;
+  return [hasMessage(key) ? t(key) : t('fullBackup.working'), null];
+}
+
+/** A restore's phases — the safety backup's own phases included. */
+function fullRestoreProgress({ phase, done, total, step }) {
+  let text;
+  if (phase === 'safety') text = step ? `${t('fullBackup.restorePhase.safety')} ${backupProgressText(step)[0]}` : t('fullBackup.restorePhase.safety');
+  else if (phase === 'media' || phase === 'items') text = counted(`fullBackup.restorePhase.${phase}`, { done, total });
+  else if (phase === 'remove' || phase === 'verify') text = t(`fullBackup.restorePhase.${phase}`);
+  else if (phase === 'done') text = stageLabel(RestoreStage.DONE);
+  else text = t('common.working');
+  setText('import-progress', text);
+}
+
 /**
- * «نسخة احتياطية كاملة». Success is announced only once the system has taken
- * the file (the share sheet or the download), never when it is merely built.
+ * «نسخة احتياطية كاملة». Records are read from the database a page at a
+ * time — the inventory is not loaded first. Success is announced only once
+ * the system has taken the file (the share sheet or the download).
  */
 export async function runFullBackup() {
-  if (!(await withFullInventory(t('export.reading')))) return false;
   showBackupProgress(t('fullBackup.working'));
   try {
     const summary = await createFullBackup({
-      onProgress: ({ done, total }) => showBackupProgress(
-        total ? t('fullBackup.images', { done: formatNumber(done), total: formatNumber(total) }) : t('fullBackup.handoff'),
-        total ? done / total : null,
-      ),
+      onProgress: (progress) => showBackupProgress(...backupProgressText(progress)),
     });
     closeSheet('bk');
     toast(t('fullBackup.done', { items: formatNumber(summary.items), media: formatNumber(summary.media) }), '✓');
-    if (summary.missing.length) toast(t('fullBackup.missingImages', { count: summary.missing.length }), '⚠');
+    if (summary.missingCount) toast(t('fullBackup.degradedDone', { count: summary.missingCount }), '⚠', { assertive: true });
     void paintLastBackup();
     window.dispatchEvent(new CustomEvent('almakhzan:backup-made'));
     return true;
   } catch (error) {
     closeSheet('bk');
-    toastError(error, 'backup.corrupt');
+    toastError(error, 'backup.notSaved');
     return false;
   }
 }
 
-/** Picks a .nazmbackup, verifies all of it, then shows what it holds. */
+/**
+ * Picks a .nazmbackup and verifies all of it — every record, every image —
+ * before showing what it holds. The check can be stopped; nothing is changed
+ * by it either way.
+ */
 async function startFullRestore() {
   const input = document.createElement('input');
   input.type = 'file';
@@ -1397,19 +1427,33 @@ async function startFullRestore() {
   input.onchange = async () => {
     const file = input.files?.[0];
     if (!file) return;
+    const controller = new AbortController();
+    const stop = $('bk-cancel');
+    const onStop = () => controller.abort();
+    if (stop) { stop.hidden = false; stop.addEventListener('click', onStop); }
     showBackupProgress(t('fullBackup.checking'));
     try {
       if (!(await looksLikeFullBackup(file))) throw new AppError('backup.notFullBackup', { code: 'backup/not-full' });
       const archive = await openFullBackup(file);
-      await verifyFullBackupMedia(archive, {
-        onProgress: ({ done, total }) => showBackupProgress(t('fullBackup.checkingImages', { done: formatNumber(done), total: formatNumber(total) }), done / total),
+      await verifyFullBackup(archive, {
+        signal: controller.signal,
+        onProgress: ({ phase, done = 0, total = 0 }) => {
+          if (phase === 'metadata') showBackupProgress(t('fullBackup.check.metadata'));
+          else showBackupProgress(counted(`fullBackup.check.${phase}`, { done, total }), total ? done / total : null);
+        },
       });
       closeSheet('bk');
-      pendingImport = { ok: true, data: archive.data, stats: archive.stats, warnings: archive.warnings, sourceFingerprint: archive.fingerprint, archive };
+      pendingImport = {
+        ok: true, data: null, archive,
+        stats: archive.stats, warnings: archive.warnings, warningCount: archive.warningCount,
+        sourceFingerprint: archive.fingerprint,
+      };
       showImportSummary(pendingImport, file.name);
     } catch (error) {
       closeSheet('bk');
       toastError(error, 'backup.corrupt');
+    } finally {
+      if (stop) { stop.hidden = true; stop.removeEventListener('click', onStop); }
     }
   };
   input.click();

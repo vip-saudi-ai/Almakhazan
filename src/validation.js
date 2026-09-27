@@ -401,6 +401,63 @@ export function normalizeLocation(raw) {
  * Validates an import payload before any of it is applied.
  * Returns { ok, errors, warnings, data, stats }.
  */
+/**
+ * What a record may refer to in the backup it comes from: its classification
+ * (the backup's own nodes and this app's built-in library), folders, places.
+ * Small by nature, so held as sets.
+ */
+export function importItemContext({ categories = [], folders = [], locations = [] }) {
+  return {
+    categoryIds: new Set([...categories.map((c) => c.id), ...BUILTIN_TAXONOMY_IDS, UNCATEGORIZED_ID]),
+    folderIds: new Set(folders.map((f) => f.id)),
+    locationIds: new Set(locations.map((l) => l.id)),
+  };
+}
+
+/**
+ * One record from a backup, normalized, with its references to things the
+ * backup does not hold cleared — the same rule for a JSON backup read whole
+ * and for a Full Backup read a chunk at a time.
+ *
+ * @returns {{item: object|null, warnings: string[], droppedImage: boolean}}
+ *   `item` is null for a value that is not a record or has no name.
+ */
+export function normalizeImportedItem(raw, context) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { item: null, warnings: [t('backup.skippedInvalid')], droppedImage: false };
+  const item = normalizeItem(raw);
+  if (!item.name) return { item: null, warnings: [t('backup.skippedNameless')], droppedImage: false };
+  // Base64 payloads from old exports are not carried into the new model.
+  const droppedImage = typeof raw.img === 'string' && raw.img.startsWith('data:');
+  const warnings = [];
+  if (item.folderId && !context.folderIds.has(item.folderId)) {
+    warnings.push(t('backup.missingFolder', { name: item.name }));
+    item.folderId = null;
+  }
+  if (item.categoryId !== UNCATEGORIZED_ID && !context.categoryIds.has(item.categoryId)) {
+    warnings.push(t('backup.missingCategory', { name: item.name }));
+    item.categoryId = UNCATEGORIZED_ID;
+    item.subcategoryId = null;
+  }
+  // Whether the three levels agree is decided against the merged hierarchy
+  // by the restore (src/taxonomy.js reconcileClassification); here only a
+  // reference to nothing at all is cleared.
+  if (item.mainCategoryId && !context.categoryIds.has(item.mainCategoryId)) item.mainCategoryId = null;
+  if (item.subcategoryId && !context.categoryIds.has(item.subcategoryId)) item.subcategoryId = null;
+  if (item.locationId && !context.locationIds.has(item.locationId)) item.locationId = null;
+  return { item, warnings, droppedImage };
+}
+
+/** The small collections of a backup, normalized as a restore keeps them. */
+export function normalizeBackupMetadata(raw) {
+  const list = (value) => (Array.isArray(value) ? value : []);
+  return {
+    categories: list(raw?.categories).map(normalizeCategory).filter(isKeptCategory),
+    fieldDefinitions: list(raw?.fieldDefinitions).map(normalizeFieldRecord).filter(Boolean),
+    locations: list(raw?.locations).map(normalizeLocation).filter((l) => l.name),
+    folders: list(raw?.folders).map((f) => normalizeFolder(f)).filter((f) => f.name),
+  };
+}
+
 export function validateImport(parsed) {
   const errors = [];
   const warnings = [];
@@ -448,43 +505,14 @@ export function validateImport(parsed) {
   const locations = rawLocations.map(normalizeLocation).filter((l) => l.name);
   const folders = rawFolders.map((f) => normalizeFolder(f)).filter((f) => f.name);
 
-  const categoryIds = new Set([...categories.map((c) => c.id), ...BUILTIN_TAXONOMY_IDS, UNCATEGORIZED_ID]);
-  const folderIds = new Set(folders.map((f) => f.id));
-  const locationIds = new Set(locations.map((l) => l.id));
-
+  const context = importItemContext({ categories, folders, locations });
   let droppedImages = 0;
   const items = [];
   for (const raw of rawItems) {
-    if (!raw || typeof raw !== 'object') {
-      warnings.push(t('backup.skippedInvalid'));
-      continue;
-    }
-    const item = normalizeItem(raw);
-    if (!item.name) {
-      warnings.push(t('backup.skippedNameless'));
-      continue;
-    }
-    // Base64 payloads from old exports are not carried into the new model.
-    if (typeof raw.img === 'string' && raw.img.startsWith('data:')) droppedImages += 1;
-
-    if (item.folderId && !folderIds.has(item.folderId)) {
-      warnings.push(t('backup.missingFolder', { name: item.name }));
-      item.folderId = null;
-    }
-    if (item.categoryId !== UNCATEGORIZED_ID && !categoryIds.has(item.categoryId)) {
-      warnings.push(t('backup.missingCategory', { name: item.name }));
-      item.categoryId = UNCATEGORIZED_ID;
-      item.subcategoryId = null;
-    }
-    // Whether the three levels agree is decided against the merged hierarchy
-    // by the restore (src/taxonomy.js reconcileClassification); here only a
-    // reference to nothing at all is cleared.
-    if (item.mainCategoryId && !categoryIds.has(item.mainCategoryId)) item.mainCategoryId = null;
-    if (item.subcategoryId && !categoryIds.has(item.subcategoryId)) item.subcategoryId = null;
-    if (item.locationId && !locationIds.has(item.locationId)) {
-      item.locationId = null;
-    }
-    items.push(item);
+    const { item, warnings: found, droppedImage } = normalizeImportedItem(raw, context);
+    if (droppedImage) droppedImages += 1;
+    warnings.push(...found);
+    if (item) items.push(item);
   }
 
   if (droppedImages) {

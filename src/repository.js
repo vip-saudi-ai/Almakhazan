@@ -176,6 +176,26 @@ function skuConflictError({ sku, id, existingId, existingName = '' }) {
 }
 
 /**
+ * Whether two stored records are the same data: the same keys with the same
+ * values, in any key order (a record written by the app and the same record
+ * normalized from a backup list their fields in different orders). A key
+ * holding `undefined` counts as absent. Structured values are compared by
+ * their contents; an ArrayBuffer or other binary value is never "the same"
+ * here, so it is always rewritten.
+ */
+export function sameStoredRecord(a, b) {
+  if (a === b) return true;
+  if (a == null || b == null || typeof a !== 'object' || typeof b !== 'object') return Number.isNaN(a) && Number.isNaN(b);
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) return a.length === b.length && a.every((value, i) => sameStoredRecord(value, b[i]));
+  if (Object.getPrototypeOf(a) !== Object.prototype || Object.getPrototypeOf(b) !== Object.prototype) return false;
+  const keys = (o) => Object.keys(o).filter((k) => o[k] !== undefined);
+  const ka = keys(a);
+  const kb = keys(b);
+  return ka.length === kb.length && ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && sameStoredRecord(a[k], b[k]));
+}
+
+/**
  * Each item record's state before and after a batch, keyed by id — the last
  * operation on an id decides its final state, as it would in the store.
  */
@@ -3399,6 +3419,59 @@ class Repository {
     this._invalidateAggregates();
     this.invalidateSkuFloor();
     return result || { applied: operations.length, skippedExisting: [] };
+  }
+
+  /**
+   * Full Restore writes (restore-engine.js). A restore reconstructs a saved
+   * state, so each record is stored exactly as the backup holds it: its
+   * version, its `updatedAt`, its author — no bump, no new timestamp, no
+   * activity event per record. The SKU guard is not applied against the
+   * records already here: they are the inventory being replaced, removed
+   * once every incoming record has landed, and the incoming ones were unique
+   * on the device that made the backup. One transaction per call; the engine
+   * keeps each call to a bounded batch.
+   *
+   * Device-only: a Full Restore is refused on a cloud workspace before this.
+   */
+  async restorePut(collection, records) {
+    this.assertCanWrite();
+    if (this.session.mode === 'cloud') throw new AppError('backup.fullLocalOnly', { code: 'backup/local-only' });
+    if (!records.length) return { written: 0, unchanged: 0 };
+    // A record already stored exactly as the backup holds it is left alone.
+    // Rewriting it would change nothing but cost the most expensive write the
+    // database has — an overwrite re-indexes every index of the store — and
+    // a restore onto the same device, a resumed restore and a repair pass are
+    // mostly such records.
+    let written = 0;
+    await local.transaction(collection, 'readwrite', async (stores) => {
+      const store = stores[collection];
+      const existing = await Promise.all(records.map((record) => local.request(store.get(record.id))));
+      for (const [index, record] of records.entries()) {
+        if (existing[index] && sameStoredRecord(existing[index], record)) continue;
+        await local.request(store.put(record));
+        written += 1;
+      }
+    });
+    if (collection === 'items') for (const record of records) this.itemCache.delete(record.id);
+    return { written, unchanged: records.length - written };
+  }
+
+  /** Removes records a Full Restore replaced — see `restorePut`. */
+  async restoreRemove(collection, ids) {
+    this.assertCanWrite();
+    if (this.session.mode === 'cloud') throw new AppError('backup.fullLocalOnly', { code: 'backup/local-only' });
+    if (!ids.length) return 0;
+    await local.removeMany(collection, ids);
+    if (collection === 'items') for (const id of ids) this.itemCache.delete(id);
+    return ids.length;
+  }
+
+  /** After a Full Restore's writes: the page re-reads what changed. */
+  async afterRestoreWrites(collections) {
+    this._invalidateAggregates();
+    this.invalidateSkuFloor();
+    this.itemCache.clear();
+    for (const name of collections) await this.backend._notify?.(name);
   }
 
   /**

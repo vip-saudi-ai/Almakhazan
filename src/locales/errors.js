@@ -52,6 +52,7 @@ export const messages = {
   'error.import/sku-conflict': { ar: "يتضمن ملف البيانات رموز SKU مكررة أو مستخدمة مسبقاً. صحّح التعارضات ثم أعد المحاولة.", en: "The data file contains SKUs that are duplicated or already in use. Fix the conflicts and try again." },
   'error.restore/state-unsaved': { ar: "تعذّر حفظ حالة الاستعادة، ولم تُغيَّر أي بيانات بعدها. حاول مرة أخرى.", en: "Could not save the restore's progress, and nothing was changed after that. Please try again." },
   'error.restore/backup-unverified': { ar: "تعذّر التحقق من نسخة الأمان — أُلغيت الاستعادة", en: "Could not verify the safety backup — the restore was cancelled" },
+  'error.restore/final-verification': { ar: "لم تجتز الاستعادة التحقق النهائي، فلم تُعتبر مكتملة. أعد الاستعادة بالملف نفسه لإكمالها؛ نسخة الأمان محفوظة لديك.", en: "The restore did not pass its final check, so it was not marked complete. Run it again with the same file to finish it; your safety backup is saved." },
   'error.restore/aborted': { ar: "تعذّر حفظ نسخة الأمان، ولم تُغيَّر أي بيانات. تأكد من السماح بالتنزيل ثم حاول مرة أخرى.", en: "Could not save the safety backup, so nothing was changed. Make sure downloads are allowed, then try again." },
   'error.upload/missing-blob': { ar: "لم يُعثر على ملف الصورة على هذا الجهاز", en: "The image file was not found on this device" },
   'error.upload/empty-blob': { ar: "ملف الصورة تالف على هذا الجهاز", en: "The image file on this device is damaged" },

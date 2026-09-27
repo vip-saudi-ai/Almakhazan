@@ -40,7 +40,15 @@ src/
   ai.js                    callable wrapper + stale-analysis detection
   search.js                Arabic-aware query, filter, sort, pagination
   validation.js            normalization and validation of everything inbound
-  exporting.js             Excel / JSON export, import merge & restore
+  exporting.js             Excel / JSON export, import merge
+  restore.js               JSON restore, and the restore job every restore records
+  full-backup.js           Full Backup / Restore as the screens call them
+  backup-format.js         .nazmbackup layout, versions, chunk sizes, read limits
+  backup-writer.js         Full Backup format 2, written as a stream
+  backup-reader.js         opening formats 1 and 2; verifying all of a backup
+  restore-engine.js        the resumable, verified replacement restore
+  restore-index.js         what an incoming backup holds, kept on disk
+  zip64.js                 ZIP / ZIP64 writer and reader, in slices
   xlsx-writer.js           dependency-free XLSX writer
   ui.js, navigation.js     sheets, dialogs, focus, tabs
   views/                   home, detail, item-form, overview, manage
@@ -117,6 +125,31 @@ Duplicating an item raises that asset's reference count; removing an image or
 purging an item lowers it. Bytes are deleted only by the backend sweeper, only
 at zero, and only after re-verifying against the items collection.
 `tests/rules/media-refcount.test.mjs` walks the duplicate-then-delete case.
+
+## Full Backup and Full Restore
+
+A `.nazmbackup` (format 2) is a stored ZIP — ZIP64 once any offset, size or
+count needs it — holding `metadata.json` (classification, field definitions,
+places, folders), the records in NDJSON chunks of at most 2,000 records and
+4 MiB, each image's original and thumbnail named by position, media manifests
+(one line per image with its SHA-256s), and a small `manifest.json` written last
+with a SHA-256 for every piece and an `integrityStatus` (`degraded` when a
+record referenced an image the device no longer held).
+
+Nothing on either side holds the inventory or the file. The writer walks the
+database a page at a time and records image references in a scratch store
+(`workIndex`); the reader reads the archive through `File.slice`, streams its
+directory, and matches images to their descriptors in lockstep. A restore
+verifies everything first — every chunk, every image, no repeated record or
+path, nothing unaccounted for — building a `restoreIndex` of what the backup
+holds; takes a Full Backup of the device as it is (the same streaming writer);
+then writes metadata, images (an existing image is kept only if its bytes hash
+to the backup's), records chunk by chunk exactly as saved, removes what the
+index says the backup does not hold, reconciles image counts, and verifies the
+result before the job is `completed`. The job records its stage and position
+after every committed unit; any interruption is recovery-required and is
+finished by the same file. Format 1 backups are read through the same
+interface and restored by the same engine.
 
 ## Language
 

@@ -18,7 +18,7 @@ const DB_NAME = 'almakhzan';
 // whatever is missing — stores and indexes alike — so an existing database
 // upgrades in place without losing a single record. Never remove a store here
 // to "clean up": an older tab may still be writing to it.
-const DB_VERSION = 10;
+const DB_VERSION = 11;
 /** The database schema version — carried in a Full Backup manifest. */
 export const DATABASE_VERSION = DB_VERSION;
 
@@ -121,6 +121,17 @@ export const SCHEMA = {
     indexes: { startedAt: 'startedAt', fileFingerprint: 'fileFingerprint', status: 'status' },
   },
   meta: { key: 'key', indexes: {} },
+  // Temporary state of a Full Restore (version 11), never inventory: which
+  // records, definitions and images the incoming backup holds, one key each
+  // — [restore key, collection, id]. It is what decides which old records a
+  // replacement removes, without a set of every id in the page's memory, and
+  // it survives an interruption so the restore can finish. Cleared when the
+  // restore completes; an abandoned key is cleared the next time one starts.
+  restoreIndex: { key: ['job', 'collection', 'id'], indexes: {} },
+  // Scratch space for other whole-inventory passes (version 11): the image
+  // references a backup is writing, the reference counts a reconciliation is
+  // adding up — [run, kind, id] with a value. Each run removes its own keys.
+  workIndex: { key: ['run', 'kind', 'id'], indexes: {} },
 };
 
 export const STORES = Object.keys(SCHEMA);
@@ -549,6 +560,36 @@ function boundRange(range, key, direction) {
   return back
     ? IDBKeyRange.bound(range.lower ?? key, key, range.lowerOpen ?? false, true)
     : IDBKeyRange.bound(key, range.upper ?? key, true, range.upperOpen ?? false);
+}
+
+/**
+ * One page of primary keys, without reading the records: what a pass that only
+ * needs to know which records exist — a restore deciding what to remove —
+ * should cost. `after` is exclusive, like `page`.
+ */
+export function keysPage(storeName, { range = null, after, limit = 500 } = {}) {
+  return run(storeName, 'readonly', (store) => {
+    const effective = after === undefined ? range
+      : range ? IDBKeyRange.bound(after, range.upper, true, range.upperOpen) : IDBKeyRange.lowerBound(after, true);
+    return req(store.getAllKeys(effective, limit));
+  });
+}
+
+/** Every key in a range removed in one request — nothing is read first. */
+export function deleteKeyRange(storeName, range) {
+  return run(storeName, 'readwrite', (store) => req(store.delete(range)));
+}
+
+/** A count asked of the database itself, never the per-tab cache. */
+export function countFresh(storeName, range = null) {
+  return run(storeName, 'readonly', (store) => req(range ? store.count(range) : store.count()));
+}
+
+/** Every key of a compound-key store whose first part is `prefix`. */
+export function prefixRange(...prefix) {
+  // An array sorts after every string, number and date, so [..., []] is
+  // above every key that begins with `prefix`.
+  return IDBKeyRange.bound(prefix, [...prefix, []]);
 }
 
 /** How many records a range holds, without reading any of them. */

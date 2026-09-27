@@ -203,17 +203,6 @@ class LocalMediaStore {
     });
     return removed;
   }
-
-  /** Set the count to what the records actually hold, inside one transaction. */
-  async setCount(mediaId, refCount) {
-    await local.transaction('mediaAssets', 'readwrite', async (stores) => {
-      const asset = await local.request(stores.mediaAssets.get(mediaId));
-      if (!asset) return;
-      await local.request(stores.mediaAssets.put({
-        ...asset, refCount, orphanedAt: refCount === 0 ? (asset.orphanedAt || Date.now()) : null,
-      }));
-    });
-  }
 }
 
 export function mediaStore(session) {
@@ -299,13 +288,25 @@ export function releaseAll(session, item) {
  *  long enough for a form in another tab to finish saving it. */
 export const ORPHAN_GRACE_MS = 30 * 60 * 1000;
 
+/** How many ids of each kind a reconciliation hands back by name; the counts
+ *  are always exact, the lists are samples once they grow past this. */
+const REPORT_SAMPLE = 1000;
+
+function sampled() {
+  const list = [];
+  return {
+    list,
+    count: 0,
+    add(value) { this.count += 1; if (list.length < REPORT_SAMPLE) list.push(value); },
+  };
+}
+
 /**
  * Make the device's reference counts agree with its records.
  *
  * Counts are maintained incrementally, and an increment that is lost — a tab
  * killed between writing a record and adjusting its images' counts — is not
- * noticed by anything else. This walks the records once (a cursor, not a
- * copy), counts every image reference, and compares.
+ * noticed by anything else. This walks the records once and compares.
  *
  *   count wrong, asset referenced   the count is set to the real number. Safe:
  *                                   the records are the truth.
@@ -315,58 +316,131 @@ export const ORPHAN_GRACE_MS = 30 * 60 * 1000;
  *                                   form, and it has been orphaned for longer
  *                                   than the grace window. Otherwise reported.
  *
- * Maintenance, not a hot path: run at startup at most once a day, before a
- * device-to-cloud upload, and by the integrity tests.
+ * Bounded memory at any size. The real counts are added up on disk, in the
+ * `workIndex` store under this run's own key — one batch of records at a
+ * time — rather than in a map of every image id the inventory has ever
+ * referenced. The assets are then read a page at a time against those
+ * counts. What a record references but no asset row holds is whatever is
+ * left in the run's counts once every asset has claimed its own.
  *
- * @returns {Promise<{checked: number, corrected: Array, orphans: string[],
- *   reclaimed: string[], missing: Array}>}
+ * `dryRun` corrects nothing and reclaims nothing: it reports what a real run
+ * would change — the check a restore's final verification makes.
+ *
+ * Maintenance, not a hot path: at startup at most once a day, after a bulk
+ * write, before a device-to-cloud upload, and by the integrity tests.
+ *
+ * @returns {Promise<{checked: number, corrected: Array, correctedCount: number,
+ *   orphans: string[], orphanCount: number, reclaimed: string[],
+ *   reclaimedCount: number, missing: Array, missingCount: number,
+ *   referencedCount: number}>}
  */
-export async function reconcileLocalMediaReferences({ reclaim = false, now = Date.now(), graceMs = ORPHAN_GRACE_MS } = {}) {
-  const actual = new Map();
-  const missing = [];
-  await local.walk('items', {
-    batchSize: 500,
-    onBatch: (batch) => {
-      for (const item of batch) {
-        for (const mediaId of mediaIdsOf(item)) actual.set(mediaId, (actual.get(mediaId) || 0) + 1);
+export async function reconcileLocalMediaReferences({
+  reclaim = false, now = Date.now(), graceMs = ORPHAN_GRACE_MS, dryRun = false, pageSize = 500,
+} = {}) {
+  const run = uid('rec');
+  const refs = (id) => [run, 'ref', id];
+  const corrected = sampled();
+  const orphans = sampled();
+  const reclaimed = sampled();
+  const missing = sampled();
+  let checked = 0;
+  let referencedCount = 0;
+  try {
+    // ── 1. the real counts, added up on disk a batch at a time ──
+    await local.walk('items', {
+      batchSize: pageSize,
+      onBatch: async (batch) => {
+        const counts = new Map();
+        for (const item of batch) {
+          for (const mediaId of mediaIdsOf(item)) counts.set(mediaId, (counts.get(mediaId) || 0) + 1);
+        }
+        if (!counts.size) return true;
+        await local.transaction('workIndex', 'readwrite', async ({ workIndex }) => {
+          for (const [mediaId, n] of counts) {
+            const row = await local.request(workIndex.get(refs(mediaId)));
+            if (!row) referencedCount += 1;
+            await local.request(workIndex.put({ run, kind: 'ref', id: mediaId, value: (row?.value || 0) + n }));
+          }
+        });
+        return true;
+      },
+    });
+
+    // ── 2. every asset against its real count, a page at a time ──
+    const store = new LocalMediaStore();
+    const held = pendingMediaIds();
+    let after;
+    for (;;) {
+      const { rows: assets, done } = await local.page('mediaAssets', { limit: pageSize, after });
+      if (!assets.length) break;
+      after = assets[assets.length - 1].id;
+      checked += assets.length;
+      const discard = [];
+      await local.transaction(['workIndex', 'mediaAssets'], dryRun ? 'readonly' : 'readwrite', async ({ workIndex, mediaAssets }) => {
+        for (const asset of assets) {
+          const row = await local.request(workIndex.get(refs(asset.id)));
+          const real = row?.value || 0;
+          const stored = asset.refCount ?? 0;
+          // Claimed: whatever is left afterwards references no asset at all.
+          if (row && !dryRun) await local.request(workIndex.delete(refs(asset.id)));
+          if (real > 0) {
+            if (stored !== real) {
+              corrected.add({ mediaId: asset.id, from: stored, to: real });
+              if (!dryRun) await local.request(mediaAssets.put({ ...asset, refCount: real, orphanedAt: null }));
+            }
+            continue;
+          }
+          if (held.has(asset.id)) continue;
+          orphans.add(asset.id);
+          if (stored !== 0) {
+            corrected.add({ mediaId: asset.id, from: stored, to: 0 });
+            if (!dryRun) await local.request(mediaAssets.put({ ...asset, refCount: 0, orphanedAt: asset.orphanedAt || now }));
+          }
+          const orphanedFor = now - (asset.orphanedAt || asset.createdAt || now);
+          if (reclaim && !dryRun && orphanedFor >= graceMs) discard.push(asset.id);
+        }
+      });
+      // Each discard re-reads the count inside its own transaction, so a
+      // record that picked the file up a moment ago keeps it.
+      for (const mediaId of discard) if (await store.discard(mediaId)) reclaimed.add(mediaId);
+      if (done || assets.length < pageSize) break;
+    }
+
+    // ── 3. referenced, but no asset holds it ──
+    if (dryRun) {
+      // Nothing was claimed; ask the asset store about each id directly.
+      let afterKey;
+      for (;;) {
+        const keys = await local.keysPage('workIndex', { range: local.prefixRange(run, 'ref'), after: afterKey, limit: pageSize });
+        if (!keys.length) break;
+        afterKey = keys[keys.length - 1];
+        const present = await local.existingKeys('mediaAssets', keys.map((key) => key[2]));
+        for (const key of keys) if (!present.has(key[2])) missing.add({ mediaId: key[2] });
+        if (keys.length < pageSize) break;
       }
-      return true;
-    },
-  });
-
-  const store = new LocalMediaStore();
-  const assets = await local.getAll('mediaAssets');
-  const known = new Set(assets.map((asset) => asset.id));
-  for (const mediaId of actual.keys()) if (!known.has(mediaId)) missing.push({ mediaId, references: actual.get(mediaId) });
-
-  const held = pendingMediaIds();
-  const corrected = [];
-  const orphans = [];
-  const reclaimed = [];
-  for (const asset of assets) {
-    const real = actual.get(asset.id) || 0;
-    const stored = asset.refCount ?? 0;
-    if (real > 0 && stored !== real) {
-      await store.setCount(asset.id, real);
-      corrected.push({ mediaId: asset.id, from: stored, to: real });
-      continue;
+    } else {
+      await local.walk('workIndex', {
+        range: local.prefixRange(run, 'ref'),
+        batchSize: pageSize,
+        onBatch: (rows) => { for (const row of rows) missing.add({ mediaId: row.id, references: row.value }); return true; },
+      });
     }
-    if (real > 0) continue;
-    if (held.has(asset.id)) continue;
-    orphans.push(asset.id);
-    if (stored !== 0) {
-      await store.setCount(asset.id, 0);
-      corrected.push({ mediaId: asset.id, from: stored, to: 0 });
-    }
-    const orphanedFor = now - (asset.orphanedAt || asset.createdAt || now);
-    if (reclaim && orphanedFor >= graceMs && await store.discard(asset.id)) {
-      reclaimed.push(asset.id);
-    }
+  } finally {
+    await local.deleteKeyRange('workIndex', local.prefixRange(run)).catch((error) => {
+      console.error('[media] reconciliation scratch could not be cleared', error);
+    });
   }
-  if (corrected.length || reclaimed.length || missing.length) {
-    console.info('[media] reconciled', { corrected: corrected.length, reclaimed: reclaimed.length, missing: missing.length });
+  if (corrected.count || reclaimed.count || missing.count) {
+    console.info('[media] reconciled', { dryRun, corrected: corrected.count, reclaimed: reclaimed.count, missing: missing.count });
   }
-  return { checked: assets.length, corrected, orphans, reclaimed, missing };
+  return {
+    checked,
+    referencedCount,
+    corrected: corrected.list, correctedCount: corrected.count,
+    orphans: orphans.list, orphanCount: orphans.count,
+    reclaimed: reclaimed.list, reclaimedCount: reclaimed.count,
+    missing: missing.list, missingCount: missing.count,
+  };
 }
 
 const RECONCILE_KEY = 'media.lastReconciledAt';

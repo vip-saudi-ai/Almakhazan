@@ -38,17 +38,28 @@ import { reconcileAfterBulkWrite } from './media.js';
 
 const JOB_KEY = 'restoreJob';
 
+/**
+ * The states a restore job moves through. The JSON restore below uses
+ * prepared → writing → removing → completed; a Full Restore (restore-engine.js)
+ * uses prepared → writing-metadata → writing-media → writing-items →
+ * removing-old-records → reconciling → verifying → completed. Any job found
+ * in a state other than completed at startup becomes recovery-required.
+ */
 export const RestoreStatus = {
   PREPARED: 'prepared',
   WRITING: 'writing',
   REMOVING: 'removing',
+  WRITING_METADATA: 'writing-metadata',
+  WRITING_MEDIA: 'writing-media',
+  WRITING_ITEMS: 'writing-items',
+  REMOVING_OLD: 'removing-old-records',
+  RECONCILING: 'reconciling',
+  VERIFYING: 'verifying',
   COMPLETED: 'completed',
   RECOVERY_REQUIRED: 'recovery-required',
 };
 
-const UNFINISHED = new Set([
-  RestoreStatus.PREPARED, RestoreStatus.WRITING, RestoreStatus.REMOVING, RestoreStatus.RECOVERY_REQUIRED,
-]);
+const UNFINISHED = new Set(Object.values(RestoreStatus).filter((status) => status !== RestoreStatus.COMPLETED));
 
 /** A restore running in this page right now — not an interrupted one. */
 let activeRestoreId = null;
@@ -56,6 +67,16 @@ let activeRestoreId = null;
 /** Message keys (i18n.js): the screens say them in the current language. */
 export const RESTORE_BLOCKED_MESSAGE = 'restore.blocked';
 export const RESTORE_WRONG_FILE_MESSAGE = 'restore.wrongFile';
+
+/** Records a job's state; a job that cannot be recorded stops the restore. */
+export async function saveRestoreJob(job) {
+  return saveJob(job);
+}
+
+/** Marks which restore this page is running (null when it stops). */
+export function setActiveRestore(id) {
+  activeRestoreId = id;
+}
 
 async function saveJob(job) {
   try {
@@ -170,7 +191,7 @@ export function buildSafetyBackup() {
  *   finished only by the file with the same bytes, never by another backup
  *   of the same records.
  */
-export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup, sourceFingerprint, beforeWrite = null }) {
+export async function restoreFromBackup(data, { onProgress = () => {}, saveBackup, sourceFingerprint }) {
   const repo = repository;
   repo.assertCanWrite();
   if (!sourceFingerprint) {
@@ -200,13 +221,13 @@ export async function restoreFromBackup(data, { onProgress = () => {}, saveBacku
   };
   activeRestoreId = job.id;
   try {
-    return await runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite });
+    return await runRestore(repo, data, job, { onProgress, saveBackup });
   } finally {
     activeRestoreId = null;
   }
 }
 
-async function runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite }) {
+async function runRestore(repo, data, job, { onProgress, saveBackup }) {
 
   // ── 0. the whole inventory, before anything else ──
   // The app browses on a window of the newest records. A safety backup taken
@@ -236,11 +257,6 @@ async function runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite
   // before the first write — so a restore that stopped before changing
   // anything leaves nothing that looks like one that stopped half way.
   await saveJob(job);
-
-  // ── 1b. what the records will refer to ──
-  // A Full Backup writes its images here: after the safety backup, before any
-  // record that references them. Idempotent, so a resumed restore repeats it.
-  if (beforeWrite) await beforeWrite({ job });
 
   // ── 2. write the incoming records ──
   // Order: the classification (categories) first, then the records that
@@ -340,6 +356,6 @@ async function runRestore(repo, data, job, { onProgress, saveBackup, beforeWrite
     // Images the restored records name but this device does not hold — a
     // metadata-only backup restored onto another device. Reported, never
     // invented.
-    missingMedia: media?.missing?.length || 0,
+    missingMedia: media?.missingCount || 0,
   };
 }
