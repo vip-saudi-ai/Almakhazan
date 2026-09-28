@@ -34,6 +34,8 @@ const state = {
   screen: 'home',   // home | duplicates
   /** The last health computed; the screen draws it while a fresh one is worked out. */
   health: null,
+  /** True when the backend could not give the numbers the score needs. */
+  healthUnavailable: false,
 };
 
 /** Tickets, so an answer that arrives after a newer question paints nothing. */
@@ -431,7 +433,11 @@ async function refreshHealth() {
     // The score first — it comes from counts — then the duplicate groups,
     // which take a walk of the identifier indexes and do not change it.
     const quick = await inventoryHealthSnapshot({ duplicates: false });
-    if (ticket !== healthGeneration || !quick) return;
+    if (ticket !== healthGeneration) return;
+    // No aggregate to score from: "not known", not a score from part of the
+    // inventory and not a spinner that never ends.
+    state.healthUnavailable = !quick;
+    if (!quick) { state.health = null; paint(); return; }
     // Until the walk answers, the last known groups stay on screen.
     state.health = state.health?.duplicatesKnown
       ? { ...quick, duplicates: state.health.duplicates, counts: { ...quick.counts, duplicates: state.health.counts.duplicates, duplicateGroups: state.health.counts.duplicateGroups } }
@@ -474,9 +480,9 @@ function paintInto(root, health) {
   render(root, [
     askBlock(),
     quickActions(),
-    health ? healthBlock(health) : el('section', { class: 'asec gl', 'aria-busy': 'true' }, [
+    health ? healthBlock(health) : el('section', { class: 'asec gl', 'aria-busy': state.healthUnavailable ? 'false' : 'true' }, [
       el('div', { class: 'asec-head' }, [el('h2', { class: 'asec-title', text: t('assistant.healthTitle') })]),
-      el('p', { class: 'ask-text', text: t('sync.loading') }),
+      el('p', { class: 'ask-text', role: state.healthUnavailable ? 'status' : null, text: t(state.healthUnavailable ? 'assistant.healthUnavailable' : 'sync.loading') }),
     ]),
     health ? cleanupBlock(health) : null,
   ]);

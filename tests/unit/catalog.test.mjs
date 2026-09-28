@@ -151,3 +151,130 @@ test('an untouched currency field is empty, not an invalid number', () => {
   assert.equal(normalizeFieldValue(price, { amount: '', currency: 'SAR' }).error, undefined);
   assert.deepEqual(normalizeFieldValue(price, { amount: '1500', currency: 'USD' }).value, { amount: 1500, currency: 'USD' });
 });
+
+// ── import: a child is linked only where its parent agrees ────────────────
+
+import { repository } from '../../src/repository.js';
+
+function withCustom(entities, fn) {
+  const before = repository.state.catalogEntities;
+  repository.state.catalogEntities = entities.map(normalizeCatalogEntity);
+  try { return fn(); } finally { repository.state.catalogEntities = before; }
+}
+
+function importRows(rows) {
+  const taxonomy = buildTaxonomy([]);
+  const mapping = guessMapping(['Name', 'Category', 'Brand', 'Model', 'Reference number']);
+  return planImport({ rows, mapping, existing: { taxonomy, locations: [], folders: [] } });
+}
+
+test('import matrix: resolved, unresolved, omitted and conflicting parents', () => {
+  const { records, problems } = importRows([
+    ['a', 'Cars', 'Toyota', 'Land Cruiser', ''],
+    ['b', 'Cars', 'ABC', 'Land Cruiser', ''],
+    ['c', 'Cars', '', 'Land Cruiser', ''],
+    ['d', 'Cars', 'Mercedes-Benz', 'Land Cruiser', ''],
+    ['e', 'Watches', 'Rolex', '', '126500LN'],
+    ['f', 'Watches', 'Omega', '', '126500LN'],
+    ['g', 'Watches', 'ABC Watches', '', '126500LN'],
+    ['h', 'Watches', 'Patek Philippe', '', '5711/1A-010'],
+    ['i', 'Watches', 'ABC', '', '5711/1A-010'],
+  ]);
+  const by = Object.fromEntries(records.map((r) => [r.name, r]));
+  const warn = (line) => problems.filter((p) => p.line === line && !p.fatal).map((p) => p.reason).join(' | ');
+
+  assert.equal(by.a.customFields.vehicle_manufacturer.ref, 'vehicle_make_toyota');
+  assert.ok(by.a.customFields.vehicle_model.ref.startsWith('vehicle_model_toyota_land'));
+
+  assert.deepEqual(by.b.customFields.vehicle_manufacturer, { ref: null, label: 'ABC' });
+  assert.deepEqual(by.b.customFields.vehicle_model, { ref: null, label: 'Land Cruiser' }, 'no Toyota model under ABC');
+  assert.match(warn(3), /Land Cruiser/);
+
+  assert.equal(by.c.customFields.vehicle_manufacturer.ref, 'vehicle_make_toyota', 'an omitted parent comes from the path');
+  assert.ok(by.c.customFields.vehicle_model.ref.startsWith('vehicle_model_toyota_land'));
+  assert.equal(by.c.brand, 'Toyota');
+
+  assert.equal(by.d.customFields.vehicle_manufacturer.ref, 'vehicle_make_mercedes_benz');
+  assert.deepEqual(by.d.customFields.vehicle_model, { ref: null, label: 'Land Cruiser' }, 'not linked across makes');
+  assert.match(warn(5), /Land Cruiser/);
+
+  assert.equal(by.e.customFields.watch_brand.ref, 'watch_brand_rolex');
+  assert.ok(by.e.customFields.watch_reference.ref.startsWith('watch_ref_rolex_126500'));
+  assert.ok(by.e.customFields.watch_collection?.ref, 'the missing levels come from the path under a resolved brand');
+
+  assert.equal(by.f.customFields.watch_brand.ref, 'watch_brand_omega');
+  assert.deepEqual(by.f.customFields.watch_reference, { ref: null, label: '126500LN' });
+  assert.equal(by.f.customFields.watch_collection, undefined, 'no Rolex path under Omega');
+  assert.match(warn(7), /126500LN/);
+
+  assert.deepEqual(by.g.customFields.watch_brand, { ref: null, label: 'ABC Watches' });
+  assert.deepEqual(by.g.customFields.watch_reference, { ref: null, label: '126500LN' });
+
+  assert.equal(by.h.customFields.watch_brand.ref, 'watch_brand_patek_philippe');
+  assert.ok(by.h.customFields.watch_reference.ref.startsWith('watch_ref_patek'));
+
+  assert.deepEqual(by.i.customFields.watch_reference, { ref: null, label: '5711/1A-010' });
+  assert.equal(by.i.customFields.watch_collection, undefined);
+
+  for (const r of records) {
+    assert.equal(r.referenceNumber || '', { e: '126500LN', f: '126500LN', g: '126500LN', h: '5711/1A-010', i: '5711/1A-010' }[r.name] || '', 'the source cell is kept');
+  }
+  assert.ok(problems.every((p) => !p.fatal));
+});
+
+test('import: an ambiguous child is kept as written with a warning', () => {
+  withCustom([
+    { id: 'cust_amb1', domains: ['vehicle'], entityType: 'model', parentId: 'vehicle_make_toyota', nameEn: 'Zeta', source: 'custom' },
+    { id: 'cust_amb2', domains: ['vehicle'], entityType: 'model', parentId: 'vehicle_make_nissan', nameEn: 'Zeta', source: 'custom' },
+  ], () => {
+    const { records, problems } = importRows([['z', 'Cars', '', 'Zeta', '']]);
+    assert.deepEqual(records[0].customFields.vehicle_model, { ref: null, label: 'Zeta' });
+    assert.equal(records[0].customFields.vehicle_manufacturer, undefined, 'no parent guessed');
+    assert.ok(problems.some((p) => /Zeta/.test(p.reason) && !p.fatal));
+    const scoped = importRows([['z2', 'Cars', 'Toyota', 'Zeta', '']]);
+    assert.equal(scoped.records[0].customFields.vehicle_model.ref, 'cust_amb1', 'unique once the parent is known');
+  });
+});
+
+test('import: a model and a reference that disagree are never both linked', () => {
+  const taxonomy = buildTaxonomy([]);
+  const mapping = guessMapping(['Name', 'Category', 'Brand', 'Model', 'Reference number']);
+  const run = (model, ref) => planImport({ rows: [['x', 'Watches', 'Rolex', model, ref]], mapping, existing: { taxonomy, locations: [], folders: [] } }).records[0].customFields;
+  // A model name the catalog does not know beside a known reference: the
+  // reference is linked, the model kept as written, and nothing guessed between.
+  const unknown = run('Submariner', '126500LN');
+  assert.equal(unknown.watch_reference.ref, 'watch_ref_rolex_126500ln');
+  assert.deepEqual(unknown.watch_model, { ref: null, label: 'Submariner' });
+  assert.equal(unknown.watch_collection, undefined);
+  // The model on the reference's own path: both linked.
+  const agree = run('Cosmograph Daytona', '126500LN');
+  assert.equal(agree.watch_model.ref, 'watch_model_rolex_cosmograph_daytona');
+  assert.equal(agree.watch_reference.ref, 'watch_ref_rolex_126500ln');
+  // A known model from another line of the same brand: both kept as written.
+  const clashRows = planImport({ rows: [['y', 'Watches', 'Omega', 'Moonwatch', '2254.50.00']], mapping, existing: { taxonomy, locations: [], folders: [] } });
+  const clash = clashRows.records[0].customFields;
+  assert.deepEqual(clash.watch_model, { ref: null, label: 'Moonwatch' });
+  assert.deepEqual(clash.watch_reference, { ref: null, label: '2254.50.00' });
+  assert.equal(clash.watch_brand.ref, 'watch_brand_omega');
+  assert.ok(clashRows.problems.some((p) => /2254\.50\.00/.test(p.reason) && !p.fatal));
+  assert.deepEqual(run('Moonwatch', '').watch_model, { ref: null, label: 'Moonwatch' }, 'Rolex has no Moonwatch: kept as written');
+});
+
+// ── duplicates: the same rule for creating and renaming ───────────────────
+
+test('duplicate checks: built-in wins, self is excluded, parents scope names, retired entries block', () => withCustom([
+  { id: 'cust_abc', domains: ['watch'], entityType: 'brand', nameEn: 'ABC Watches', source: 'custom' },
+  { id: 'cust_xyz', domains: ['watch'], entityType: 'brand', nameEn: 'XYZ Watches', source: 'custom' },
+  { id: 'cust_old', domains: ['watch'], entityType: 'brand', nameEn: 'Old House', source: 'custom', status: 'retired' },
+  { id: 'cust_mx_a', domains: ['vehicle'], entityType: 'model', parentId: 'vehicle_make_toyota', nameEn: 'Model X9', source: 'custom' },
+], () => {
+  const spec = { domain: 'watch', entityType: 'brand' };
+  assert.equal(catalogService.findDuplicates({ ...spec, label: 'rolex', exceptId: 'cust_abc' }).exact?.id, 'watch_brand_rolex');
+  assert.equal(catalogService.findDuplicates({ ...spec, label: 'رولكس', exceptId: 'cust_abc' }).exact?.id, 'watch_brand_rolex', 'Arabic name');
+  assert.equal(catalogService.findDuplicates({ ...spec, label: '  abc   WATCHES ', exceptId: 'cust_xyz' }).exact?.id, 'cust_abc', 'case and spaces');
+  assert.equal(catalogService.findDuplicates({ ...spec, label: 'ABC Watches', exceptId: 'cust_abc' }).exact, null, 'itself excluded');
+  assert.equal(catalogService.findDuplicates({ ...spec, label: 'old house' }).retired?.id, 'cust_old');
+  const vehicle = { domain: 'vehicle', entityType: 'model' };
+  assert.equal(catalogService.findDuplicates({ ...vehicle, parentId: 'vehicle_make_nissan', label: 'Model X9' }).exact, null, 'another make may use the name');
+  assert.equal(catalogService.findDuplicates({ ...vehicle, parentId: 'vehicle_make_toyota', label: 'model x9' }).exact?.id, 'cust_mx_a');
+}));

@@ -351,7 +351,7 @@ export async function uploadDeviceData({ onProgress } = {}) {
 export async function findLocalReferences(workspaceId) {
   // "No image still points at the device" has to be true of every record, not
   // of the window the screen is showing.
-  await repository.completeItems();
+  await repository.completeItems({ purpose: 'migration' });
   repository.assertItemsComplete('partial.checkImages');
   const offenders = [];
   for (const item of repository.state.items) {

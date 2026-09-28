@@ -20,6 +20,7 @@ export const messages = {
   'importField.currency': { ar: "العملة", en: "Currency" },
   'importField.ignore': { ar: "تجاهل العمود", en: "Ignore column" },
   'importProblem.catalogAmbiguous': { ar: "«{value}» يطابق {count} عناصر في الكتالوج — حُفظ كما كُتب", en: "“{value}” matches {count} catalog entries — kept as written" },
+  'importProblem.catalogParentMismatch': { ar: "«{value}» موجود في كتالوج نَظْم لكنه لا يتبع «{parent}» كما ورد في الملف — حُفظ النص كما كُتب دون ربطه بالكتالوج", en: "“{value}” exists in the NAZM catalog, but not under “{parent}” as the file says — the text is kept as written, without a catalog link" },
   'importProblem.year': { ar: "سنة غير مفهومة: «{value}»", en: "Unreadable year: “{value}”" },
   'importProblem.yearUnused': { ar: "السنة «{value}» لا حقل لها في هذا الصنف", en: "Year “{value}” has no field in this category" },
   'importField.year': { ar: "سنة الصنع", en: "Year" },

@@ -152,6 +152,7 @@ const pick = (row) => Object.fromEntries(AUTHORITATIVE.map((k) => [k, row[k] ?? 
 }
 
 // ── missing media, exactly, past 1,000 ids ─────────────────────────────────
+let missingBackup = null;
 {
   const M = await device();
   const made = await run(M.page, `
@@ -198,7 +199,69 @@ const pick = (row) => Object.fromEntries(AUTHORITATIVE.map((k) => [k, row[k] ?? 
     }
   `, { ...made, jpeg: JPEG });
   check('M2 one undeclared missing image among 1,200 fails the final verification', exact.code === 'restore/final-verification' && /undeclared missing media 1 \(zz_undeclared\)/.test(exact.detail || ''), JSON.stringify(exact));
+  missingBackup = made;
   await M.context.close();
+}
+
+// ── missing media: A (actually missing) must equal D (declared), both ways ──
+//
+// Each case restores the same 1,200-missing backup on a clean device, and
+// changes the device at the reconcile checkpoint — after the records are
+// written, before the final check.
+{
+  const once = async (label, body) => {
+    const D = await device();
+    const r = await run(D.page, `
+      const engine = await import('/src/restore-engine.js');
+      engine.__setRestoreFaultForTest(async (name) => { if (name === 'reconcile') { ${body} } });
+      let result;
+      try {
+        const done = await h.restoreFile(h.base64ToFile(arg.base64));
+        result = { code: 'ok', missing: done.missingMedia, declared: done.declaredMissing };
+      } catch (e) {
+        result = { code: e.code, detail: e.detail || '', message: e.message };
+      } finally {
+        engine.__setRestoreFaultForTest(null);
+      }
+      result.job = (await local.getMeta('restoreJob'))?.status || null;
+      return result;
+    `, { ...missingBackup, jpeg: JPEG });
+    await D.context.close();
+    return r;
+  };
+
+  // An image put in place with its asset already counting the one record that
+  // references it: the reference counts agree, only the missing set differs.
+  const present = (id) => `await h.putImage('${id}', arg.jpeg); const a = await local.get('mediaAssets', '${id}'); await local.put('mediaAssets', { ...a, refCount: 1, orphanedAt: null });`;
+  const fewer = await once('fewer', present('miss01100'));
+  check('M3 declared [1,200] but only 1,199 actually missing (the extra one past the first 1,000) fails',
+    fewer.code === 'restore/final-verification' && /declared missing media present 1\/1200 \(miss01100\)/.test(fewer.detail), JSON.stringify(fewer));
+  check('M4 a failed verification leaves the job recoverable, not completed', fewer.job === 'recovery-required', String(fewer.job));
+
+  const extra = await once('extra', "const row = await local.get('items', 'mm01150'); await local.put('items', { ...row, images: [...row.images, h.imageRef('miss09999')] });");
+  check('M5 declared [1,200] but 1,201 actually missing (the extra one past the first 1,000) fails',
+    extra.code === 'restore/final-verification' && /undeclared missing media 1 \(miss09999\)/.test(extra.detail), JSON.stringify(extra));
+
+  const swapped = await once('swapped', present('miss01199') + " const row = await local.get('items', 'mm01100'); await local.put('items', { ...row, images: [...row.images, h.imageRef('miss01200x')] });");
+  check('M6 the same count with a different id past the first 1,000 fails',
+    swapped.code === 'restore/final-verification' && /undeclared missing media 1 \(miss01200x\)/.test(swapped.detail), JSON.stringify(swapped));
+
+  const exactMatch = await once('exact', '');
+  check('M7 exactly the declared set passes', exactMatch.code === 'ok' && exactMatch.missing === 1200 && exactMatch.declared === 1200 && exactMatch.job === 'completed', JSON.stringify(exactMatch));
+
+  const empty = await (async () => {
+    const E = await device();
+    const r = await run(E.page, `
+      await h.putImage('only', arg.jpeg);
+      await local.putMany('items', [{ id: 'e1', name: 'كاملة', quantity: 1, unit: 'قطعة', categoryId: 'uncategorized', images: [h.imageRef('only')], createdAt: Date.now(), updatedAt: Date.now(), version: 1, deletedAt: null }]);
+      const b = await h.backupToFile();
+      const done = await h.restoreFile(b.file);
+      return { declared: b.summary.missingCount, missing: done.missingMedia, job: (await local.getMeta('restoreJob'))?.status };
+    `, { jpeg: JPEG });
+    await E.context.close();
+    return r;
+  })();
+  check('M8 nothing declared and nothing missing passes', empty.declared === 0 && empty.missing === 0 && empty.job === 'completed', JSON.stringify(empty));
 }
 
 // ── the original safety backup survives a resume ──────────────────────────

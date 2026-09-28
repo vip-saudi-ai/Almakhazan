@@ -55,6 +55,7 @@ export const messages = {
   'assistant.noLocation': { ar: "بلا موقع", en: "No location" },
   'assistant.results': { ar: "نتائج المساعد", en: "Assistant results" },
   'assistant.gaugeLabel': { ar: "درجة صحة المخزون {score} من 100", en: "Inventory health score {score} out of 100" },
+  'assistant.healthUnavailable': { ar: "لا يمكن حساب صحة المخزون الآن: إجماليات هذه المساحة غير متاحة، ولا تُحسب من جزء من المخزون.", en: "Inventory health cannot be worked out right now: this workspace's totals are not available, and it is never scored from part of the inventory." },
   'assistant.healthTitle': { ar: "صحة مخزونك", en: "Your inventory health" },
   'assistant.healthEmptySub': { ar: "أضف أول قطعة وستظهر درجة التوثيق هنا.", en: "Add your first item and its documentation score will appear here." },
   'assistant.rowNoCategory': { ar: "بدون تصنيف", en: "Without a category" },

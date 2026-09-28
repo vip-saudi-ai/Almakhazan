@@ -971,7 +971,7 @@ export async function runCsvExport() {
 
 export async function runFullExcelExport() {
   if (!(await sizeAllows('xlsx'))) return false;
-  if (!(await withFullInventory(t('export.reading')))) return false;
+  if (!(await withFullInventory(t('export.reading'), { purpose: 'export' }))) return false;
   try {
     await exportExcel();
     toast(t('export.done'), '📊');
@@ -984,7 +984,7 @@ export async function runFullExcelExport() {
 
 export async function runFullJsonExport() {
   if (!(await sizeAllows('json'))) return false;
-  if (!(await withFullInventory(t('export.reading')))) return false;
+  if (!(await withFullInventory(t('export.reading'), { purpose: 'export' }))) return false;
   try {
     const { bytes, restorable } = await exportJSON();
     if (!restorable) {

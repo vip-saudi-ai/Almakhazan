@@ -133,11 +133,19 @@ export class CatalogService {
       || (spec.types || [spec.entityType]).some((type) => type !== 'brand' && type !== 'manufacturer');
     this.builtin.prepare(spec.domain, { deep });
     const out = [];
-    for (const provider of [this.builtin, this.user]) {
-      for (const entity of provider.index.pool(spec)) {
-        if (!includeInactive && entity.status !== 'active') continue;
-        out.push(entity);
+    const keep = (entity) => includeInactive || entity.status === 'active';
+    for (const entity of this.builtin.index.pool(spec)) if (keep(entity)) out.push(entity);
+    if (spec.ancestorId && !spec.parentId) {
+      // A customer's entry often sits under a built-in parent (a custom model
+      // under Toyota), which the customer's own index does not hold; its
+      // ancestry is walked across both catalogs instead. The customer's
+      // catalog is small, and this runs over one domain and type only.
+      const { ancestorId, ...level } = spec;
+      for (const entity of this.user.index.pool(level)) {
+        if (keep(entity) && this.isWithin(entity.id, ancestorId)) out.push(entity);
       }
+    } else {
+      for (const entity of this.user.index.pool(spec)) if (keep(entity)) out.push(entity);
     }
     return out;
   }
@@ -225,34 +233,59 @@ export class CatalogService {
 
   /**
    * What already exists under this parent with this name: an exact match by
-   * name or alias (never created twice), and similar names (suggested only —
-   * two different companies may share a prefix).
+   * name or alias (never created twice), a retired customer entry with that
+   * identity (never shadowed by a new one), and similar names (suggested only
+   * — two different companies may share a prefix). The same scoring decides
+   * for creating and for renaming; `exceptId` leaves out the entry being
+   * renamed, so a name never collides with itself.
    */
-  findDuplicates({ domain, entityType, parentId = null, label }) {
+  findDuplicates({ domain, entityType, parentId = null, label, exceptId = null }) {
     const key = searchKey(label);
-    if (!key) return { exact: null, similar: [] };
+    if (!key) return { exact: null, retired: null, similar: [] };
+    const compact = compactKey(label);
     const pool = this._pool({ domain, entityType, parentId: parentId || null }, { includeInactive: true })
-      .filter((e) => (e.parentId || null) === (parentId || null));
+      .filter((e) => (e.parentId || null) === (parentId || null) && e.id !== exceptId);
+    const score = this._scorer();
     let exact = null;
+    let retired = null;
     const similar = [];
     for (const entity of pool) {
-      const score = this._scorer()(entity, key, compactKey(label));
-      if (score >= MATCH.EXACT_CODE && entity.status !== 'retired') { exact ||= entity; continue; }
-      if (score >= MATCH.PREFIX || (key.length >= 4 && score >= MATCH.CONTAINS)) similar.push(entity);
+      const value = score(entity, key, compact);
+      if (value >= MATCH.EXACT_CODE) {
+        if (entity.status === 'retired') retired ||= entity;
+        // A built-in entry wins over a customer's one of the same name.
+        else if (!exact || (exact.source === 'custom' && entity.source !== 'custom')) exact = entity;
+        continue;
+      }
+      if (value >= MATCH.PREFIX || (key.length >= 4 && value >= MATCH.CONTAINS)) similar.push(entity);
     }
-    return { exact, similar: similar.slice(0, 5) };
+    return { exact, retired, similar: similar.slice(0, 5) };
+  }
+
+  /** Refuses a name that another entry already holds at this level. */
+  _refuseDuplicate({ exact, retired }) {
+    if (exact) {
+      const name = entityLabel(exact, getLanguage());
+      if (exact.source === 'custom') throw new AppError('catalog.existsCustom', { code: 'catalog/duplicate-custom', name, entityId: exact.id });
+      throw new AppError('catalog.existsBuiltin', { code: 'catalog/duplicate-builtin', name, entityId: exact.id });
+    }
+    if (retired) {
+      // Retired entries cannot be brought back from here yet; a second entry
+      // with the same identity would make every lookup ambiguous.
+      throw new AppError('catalog.existsRetired', { code: 'catalog/duplicate-retired', name: entityLabel(retired, getLanguage()), entityId: retired.id });
+    }
   }
 
   /**
    * Adds the customer's own entry. An exact existing match is returned instead
-   * (`duplicate`); `force` still refuses an exact duplicate but accepts a
-   * merely similar name.
+   * (`duplicate`); a retired entry of the same identity is refused.
    */
   async createCustom({ domain, entityType, parentId = null, label }) {
-    const text = String(label || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 160);
+    const text = cleanName(label);
     if (!text) throw new AppError('catalog.nameRequired', { code: 'catalog/name-required' });
-    const { exact } = this.findDuplicates({ domain, entityType, parentId, label: text });
-    if (exact) return { duplicate: exact };
+    const found = this.findDuplicates({ domain, entityType, parentId, label: text });
+    if (found.exact) return { duplicate: found.exact };
+    this._refuseDuplicate(found);
     const arabic = /[\u0600-\u06FF]/.test(text);
     // Kept exactly as typed, in the field matching its script; never translated.
     const entity = await repository.saveCatalogEntity({
@@ -262,14 +295,26 @@ export class CatalogService {
     return { entity };
   }
 
-  /** Renames one of the customer's entries; its id — what items store — never changes. */
+  /**
+   * Renames one of the customer's entries; its id — what items store — never
+   * changes. Held to the same duplicate rules as creating one, at the same
+   * level (domain, type and parent), leaving the entry itself out.
+   */
   async renameCustom(id, label) {
     const entity = this.user.get(id);
     if (!entity) throw new AppError('catalog.notCustom', { code: 'catalog/not-custom' });
-    const text = String(label || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 160);
+    const text = cleanName(label);
     if (!text) throw new AppError('catalog.nameRequired', { code: 'catalog/name-required' });
     const arabic = /[\u0600-\u06FF]/.test(text);
-    return repository.saveCatalogEntity({ ...entity, nameAr: arabic ? text : '', nameEn: arabic ? '' : text });
+    const nameAr = arabic ? text : '';
+    const nameEn = arabic ? '' : text;
+    if (nameAr === entity.nameAr && nameEn === entity.nameEn) return entity;
+    for (const domain of entity.domains) {
+      this._refuseDuplicate(this.findDuplicates({
+        domain, entityType: entity.entityType, parentId: entity.parentId, label: text, exceptId: entity.id,
+      }));
+    }
+    return repository.saveCatalogEntity({ ...entity, nameAr, nameEn });
   }
 
   /**
@@ -301,6 +346,10 @@ export class CatalogService {
     if (hits.length > 1) return { status: 'ambiguous', candidates: hits.slice(0, 5) };
     return { status: 'none', candidates: [] };
   }
+}
+
+function cleanName(label) {
+  return String(label || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 160);
 }
 
 export const catalogService = new CatalogService();

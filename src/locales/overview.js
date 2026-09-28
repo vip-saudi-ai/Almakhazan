@@ -1,6 +1,8 @@
 // Overview messages.
 
 export const messages = {
+  'overview.unavailableTitle': { ar: "الأرقام غير متاحة الآن", en: "Totals are not available right now" },
+  'overview.unavailableSub': { ar: "لم تُحسب إجماليات هذه المساحة بعد. لا تُحسب من القطع الظاهرة فقط لأنها ليست كل المخزون.", en: "This workspace's totals have not been computed yet. They are not counted from the items on screen, because those are not the whole inventory." },
   'overview.emptyTitle': { ar: "لا توجد بيانات بعد", en: "No data yet" },
   'overview.emptySub': { ar: "أضف قطعاً للجرد لرؤية الإحصائيات", en: "Add items to see statistics" },
   'overview.records': { ar: "عدد السجلات", en: "Records" },

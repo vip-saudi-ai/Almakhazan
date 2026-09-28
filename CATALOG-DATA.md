@@ -99,3 +99,28 @@ before items. It is never added to the bundled catalog.
 
 A value picked "for this item only" is stored on the record as
 `{ ref: null, label }` and creates nothing.
+
+Creating and renaming are held to one duplicate rule (`findDuplicates`):
+the same normalisation as search (Arabic letter forms, case, spaces,
+punctuation in codes, aliases), at the same level (domain, type and parent —
+one model name may exist under two makes, not twice under one). A name that
+is a built-in entry, another active custom entry, or a retired custom entry
+at that level is refused with a message naming it; the entry being renamed
+is left out of its own check, and a rename never changes the id.
+
+## Spreadsheet import
+
+Catalog values from a file are linked only where the row agrees with itself:
+
+- the parent (brand / manufacturer) named and found once → its children are
+  looked up under it only;
+- the parent named but not found (or ambiguous) → the children are kept as
+  written (`ref: null`), never linked to another parent's entry, with a
+  warning when the catalog knows them elsewhere;
+- no parent named → a child found once anywhere may bring its path (Land
+  Cruiser → Toyota);
+- a model and a reference from the same row that disagree are both kept as
+  written; an ambiguous child is kept as written with a warning.
+
+The source cells (`brand`, `modelNumber`, `referenceNumber`) always stay on
+the record exactly as the file had them.

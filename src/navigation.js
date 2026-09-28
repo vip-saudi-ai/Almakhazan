@@ -68,7 +68,11 @@ export function goTab(name) {
   const render = renderers.get(name);
   if (!render) return;
 
-  if (NEEDS_WHOLE_INVENTORY.has(name) && !repository.keepsAggregates && !repository.itemsComplete) {
+  // Only a backend that holds every record cheaply may be asked for them
+  // here; any other draws the screen from its aggregate, or says the numbers
+  // are not known — never a workspace downloaded to draw a tab.
+  if (NEEDS_WHOLE_INVENTORY.has(name) && !repository.keepsAggregates && !repository.itemsComplete
+    && repository.capabilities.wholeInventoryRead) {
     // Nothing is drawn from a fraction: the screen appears once the numbers on
     // it are the real ones. If the load fails, go back rather than show a
     // total that is wrong.

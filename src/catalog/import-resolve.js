@@ -31,7 +31,8 @@ function manual(text) {
 /**
  * @param {object} record the planned record (brand, modelNumber, referenceNumber)
  * @param {{taxonomy: object, year?: string}} context
- * @returns {{customFields: Record<string, any>, warnings: {field: string, reason: string, value: string}[]}}
+ * @returns {{customFields: Record<string, any>, warnings: {field: string, reason: string, value: string}[], brand: string}}
+ *   `brand` is the brand a child's path supplied when the file named none.
  */
 export function resolveImportCatalog(record, { taxonomy, year = '' }) {
   const customFields = {};
@@ -48,42 +49,86 @@ export function resolveImportCatalog(record, { taxonomy, year = '' }) {
   const byType = (type) => catalogFields.find((def) => def.catalog.entityType === type
     && def.catalog.domain === root?.catalog.domain);
 
-  let anchor = null;
-  const resolve = (def, text, ancestorId) => {
-    if (!def || !text) return null;
-    const result = catalogService.resolveText({
-      domain: def.catalog.domain, entityType: def.catalog.entityType, ancestorId, text,
-    });
-    if (result.status === 'unique') {
-      customFields[def.id] = snapshot(result.entity);
-      return result.entity;
-    }
-    if (result.status === 'ambiguous') {
-      warnings.push({
-        field: def.id, value: text,
-        reason: t('importProblem.catalogAmbiguous', { value: text, count: result.candidates.length }),
-      });
-    }
-    customFields[def.id] = manual(text);
-    return null;
-  };
+  const lookup = (def, text, ancestorId) => catalogService.resolveText({
+    domain: def.catalog.domain, entityType: def.catalog.entityType, ancestorId, text,
+  });
+  const ambiguous = (def, text, count) => warnings.push({
+    field: def.id, value: text, reason: t('importProblem.catalogAmbiguous', { value: text, count }),
+  });
+  const mismatch = (def, text, parent) => warnings.push({
+    field: def.id, value: text, reason: t('importProblem.catalogParentMismatch', { value: text, parent }),
+  });
 
+  let brandLabel = '';
   if (root) {
-    anchor = resolve(root, record.brand, null);
-    const model = byType('model');
+    const domain = root.catalog.domain;
+    const brandText = String(record.brand || '').trim();
+    // The parent the file names decides where its children may be found:
+    //   named and found once  → children are looked up under it only;
+    //   named and not found   → children are kept as written, never linked to
+    //                           some other parent's entry;
+    //   not named             → a child found once anywhere may bring its
+    //                           path (Land Cruiser → Toyota).
+    let anchor = null;
+    let trusted = true;
+    if (brandText) {
+      const result = lookup(root, brandText, null);
+      if (result.status === 'unique') {
+        anchor = result.entity;
+        customFields[root.id] = snapshot(anchor);
+      } else {
+        if (result.status === 'ambiguous') ambiguous(root, brandText, result.candidates.length);
+        customFields[root.id] = manual(brandText);
+        trusted = false;
+      }
+    }
+
+    const child = (def, text) => {
+      if (!def || !text) return null;
+      if (!trusted) {
+        customFields[def.id] = manual(text);
+        if (lookup(def, text, null).status !== 'none') mismatch(def, text, brandText);
+        return null;
+      }
+      const result = lookup(def, text, anchor?.id || null);
+      if (result.status === 'unique') {
+        customFields[def.id] = snapshot(result.entity);
+        return result.entity;
+      }
+      customFields[def.id] = manual(text);
+      if (result.status === 'ambiguous') ambiguous(def, text, result.candidates.length);
+      else if (anchor && lookup(def, text, null).status !== 'none') mismatch(def, text, brandText);
+      return null;
+    };
+
     const reference = byType('reference');
-    const within = anchor?.id || null;
-    // A reference is the more specific of the two, so it goes first: when it
-    // resolves, its path fills the collection and model the file left out.
-    const refEntity = reference ? resolve(reference, record.referenceNumber, within) : null;
-    const modelEntity = !refEntity && model ? resolve(model, record.modelNumber, within) : null;
-    const found = refEntity || modelEntity;
-    if (found) {
-      for (const entity of catalogService.path(found.id)) {
-        const def = catalogFields.find((d) => d.catalog.entityType === entity.entityType
-          && d.catalog.domain === root.catalog.domain);
-        // Only levels the file left empty: what it did say is kept as said.
-        if (def && !customFields[def.id]) customFields[def.id] = snapshot(entity);
+    const model = byType('model');
+    const refText = String(record.referenceNumber || '').trim();
+    const modelText = String(record.modelNumber || '').trim();
+    const refEntity = child(reference, refText);
+    const modelEntity = child(model, modelText);
+
+    // Two catalog answers from the same row must describe one object: a model
+    // that is not on the reference's path contradicts it, and neither is
+    // trusted over the other.
+    if (refEntity && modelEntity && !catalogService.isWithin(refEntity.id, modelEntity.id)) {
+      customFields[reference.id] = manual(refText);
+      customFields[model.id] = manual(modelText);
+      mismatch(reference, refText, modelText);
+    } else {
+      const found = customFields[reference?.id]?.ref ? refEntity : modelEntity;
+      // A model the file gave that is not in the catalog says nothing about
+      // which collection the reference is in: the levels between are left
+      // empty rather than filled with the catalog's guess beside it.
+      const modelUnlinked = found === refEntity && modelText && !modelEntity;
+      if (found && !modelUnlinked) {
+        // Only levels the file left empty are filled from the path: what it
+        // did say is kept as said.
+        for (const entity of catalogService.path(found.id)) {
+          const def = catalogFields.find((d) => d.catalog.entityType === entity.entityType && d.catalog.domain === domain);
+          if (def && !customFields[def.id]) customFields[def.id] = snapshot(entity);
+        }
+        if (!brandText && customFields[root.id]?.ref) brandLabel = customFields[root.id].label;
       }
     }
   }
@@ -103,5 +148,5 @@ export function resolveImportCatalog(record, { taxonomy, year = '' }) {
       warnings.push({ field: 'year', value: text, reason: t('importProblem.year', { value: text }) });
     }
   }
-  return { customFields, warnings };
+  return { customFields, warnings, brand: brandLabel };
 }

@@ -17,6 +17,7 @@
 
 import { PAGE_SIZE, UNCATEGORIZED_ID } from './config.js';
 import { repository } from './repository.js';
+import { NONE as NONE_KEY } from './aggregates.js';
 import * as idb from './query-idb.js';
 import {
   EMPTY_FILTERS, activeFilterCount, clampPage, parseQuery, queryItems,
@@ -232,7 +233,7 @@ const MemoryQueryAdapter = {
   needsEverything: (query) => isNarrowed(query),
   execute: async (query) => runInMemory(query),
   summarize: async (query) => summarizeInMemory(query),
-  counts: async () => countsInMemory(),
+  counts: () => countsForMemory(),
   // The records are in hand, so the scope is derived from them directly.
   scopeCategories: async () => null,
 };
@@ -449,6 +450,29 @@ function summarizeInMemory(query = emptyQuery()) {
     categories: complete ? categories : null,
     folders: repository.state.folders.length,
     liveTotal: complete ? live.length : total,
+  };
+}
+
+/**
+ * Counts for the memory adapter. Records held in full are counted directly;
+ * otherwise the backend's aggregate supplies them (the same numbers the
+ * Overview reads), and without one the counts are marked incomplete so no
+ * screen draws a number taken from a window of the newest records.
+ */
+async function countsForMemory() {
+  if (repository.itemsComplete) return countsInMemory();
+  const overview = await repository.getInventoryOverview().catch(() => null);
+  if (!overview) return countsInMemory();
+  const map = (object) => new Map(Object.entries(object || {}).filter(([key]) => key !== NONE_KEY));
+  return {
+    categories: map(overview.byCategory),
+    mains: map(overview.byMainCategory),
+    subs: map(overview.bySubcategory),
+    folders: map(overview.byFolder),
+    locations: map(overview.byLocation),
+    live: overview.totalItems,
+    trashed: overview.trashedItems,
+    complete: true,
   };
 }
 

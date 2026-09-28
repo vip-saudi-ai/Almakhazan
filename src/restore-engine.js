@@ -298,6 +298,23 @@ function verificationFailed(detail) {
   return new AppError('error.restore/final-verification', { code: 'restore/final-verification', detail });
 }
 
+/** Scratch under the restore key: the distinct ids the final check found missing. */
+const ACTUAL_MISSING = 'media-missing-actual';
+
+/** The first id the backup declared missing that the final check did not find missing. */
+async function firstDeclaredPresent(key) {
+  let after;
+  for (;;) {
+    const ids = await restoreIndex.idsPage(key, 'media-missing', { after, limit: 500 });
+    if (!ids.length) return null;
+    const found = await restoreIndex.presentIn(key, [ACTUAL_MISSING], ids);
+    const present = ids.find((id) => !found.has(id));
+    if (present) return present;
+    after = ids[ids.length - 1];
+    if (ids.length < 500) return null;
+  }
+}
+
 /**
  * The restored state, checked against the backup before the job may be
  * completed — with counts and key probes a page at a time, never by loading
@@ -336,13 +353,20 @@ async function verifyResult(archive, job) {
     if (ids.length < 500) break;
   }
 
-  // Reference counts agree with the records, and the only images records
-  // reference without holding are the ones the backup declared missing.
+  // Reference counts agree with the records, and the images records
+  // reference without holding are exactly the ones the backup declared
+  // missing: A (actually missing) = D (declared missing), checked in both
+  // directions over the whole set, never a sample and never a count alone.
   //
-  // The whole set, not a sample: every id the records reference and no image
-  // holds is looked up in the backup's own declared-missing list, a page at a
-  // time as the reconciliation finds them (its scratch is on disk, so the set
-  // can be any size). One undeclared id fails the restore.
+  //   A − D  every id the reconciliation finds missing is looked up in the
+  //          declared list, a page at a time as it finds them;
+  //   D − A  every distinct id it finds is recorded on disk (the restore
+  //          index), so once A ⊆ D holds, |A| = |D| means nothing declared
+  //          missing is actually here — and a difference is looked up id by
+  //          id to name one.
+  //
+  // Both sets stay in IndexedDB, so they can be any size.
+  await restoreIndex.clear(key, ACTUAL_MISSING);
   let undeclared = 0;
   let firstUndeclared = null;
   const check = await reconcileLocalMediaReferences({
@@ -354,14 +378,20 @@ async function verifyResult(archive, job) {
         undeclared += 1;
         firstUndeclared ??= id;
       }
+      await restoreIndex.markMany(key, ACTUAL_MISSING, [...new Set(ids)]);
     },
   });
   if (check.correctedCount) throw verificationFailed(`reference counts ${check.correctedCount}`);
   if (undeclared) throw verificationFailed(`undeclared missing media ${undeclared} (${firstUndeclared})`);
   const declared = await restoreIndex.countOf(key, 'media-missing');
-  if (check.missingCount > declared) throw verificationFailed('undeclared missing media');
+  const actual = await restoreIndex.countOf(key, ACTUAL_MISSING);
+  if (actual !== declared) {
+    const example = await firstDeclaredPresent(key);
+    throw verificationFailed(`declared missing media present ${declared - actual}/${declared}${example ? ` (${example})` : ''}`);
+  }
+  await restoreIndex.clear(key, ACTUAL_MISSING);
   await checkpoint('verify');
-  return { missingMedia: check.missingCount, missingChecked: check.missingCount };
+  return { missingMedia: actual, missingChecked: actual };
 }
 
 // ── the restore ────────────────────────────────────────────────────────────

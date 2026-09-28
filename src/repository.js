@@ -317,6 +317,16 @@ const SKU_QUERY_CONCURRENCY = 4;
 
 // ── Firestore backend ──────────────────────────────────────────────────────
 export class FirestoreBackend {
+  /**
+   * A remote workspace may hold hundreds of thousands of records. Queries,
+   * counts and aggregations are the server's; text search and duplicate
+   * detection wait for their server-side services; and nothing ordinary may
+   * read the whole workspace into the device.
+   */
+  capabilities = Object.freeze({
+    serverQueries: true, aggregates: true, search: false, duplicateCandidates: false, fullExport: true, wholeInventoryRead: false,
+  });
+
   constructor(workspaceId) {
     this.workspaceId = workspaceId;
     const { db, sdk } = firebaseContext();
@@ -827,6 +837,14 @@ export class FirestoreBackend {
 export class LocalBackend {
   /** The aggregate is kept in step with every write (aggregates.js). */
   keepsAggregates = true;
+
+  /**
+   * What this backend answers itself (see BACKEND_CAPABILITIES). The device
+   * holds every record already, so a whole-inventory read is a local one.
+   */
+  capabilities = Object.freeze({
+    serverQueries: true, aggregates: true, search: true, duplicateCandidates: true, fullExport: true, wholeInventoryRead: true,
+  });
 
   constructor() {
     this.watchers = new Map();
@@ -1397,6 +1415,26 @@ export class LocalBackend {
 }
 
 // ── Repository facade ──────────────────────────────────────────────────────
+/**
+ * The capability contract a backend declares (`backend.capabilities`):
+ *
+ *   serverQueries        queryItems / countItemsMatching answered by the backend
+ *   aggregates           inventoryAggregate / aggregateItems (may still be null)
+ *   search               text search in queryItems
+ *   duplicateCandidates  bounded duplicate candidates
+ *   fullExport           an explicit, user-requested export of everything
+ *   wholeInventoryRead   reading every record is cheap and local
+ */
+const NO_CAPABILITIES = Object.freeze({
+  serverQueries: false, aggregates: false, search: false, duplicateCandidates: false, fullExport: false, wholeInventoryRead: false,
+});
+
+/**
+ * The only reasons a backend without `wholeInventoryRead` may be asked for
+ * every record: each is a whole-dataset job the customer started on purpose.
+ */
+export const WHOLE_INVENTORY_PURPOSES = Object.freeze(new Set(['export', 'restore', 'migration', 'maintenance']));
+
 class Repository {
   constructor() {
     this.state = { items: [], folders: [], categories: [], locations: [], fieldDefinitions: [], catalogEntities: [], activity: [] };
@@ -1693,9 +1731,21 @@ class Repository {
    * Load the rest of the inventory. Idempotent, and concurrent callers share
    * one pass. On failure `itemsComplete` stays false: a partial set is never
    * presented as a whole one.
+   *
+   * THIS IS AN EXPLICIT WHOLE-DATASET OPERATION, never an ordinary screen's
+   * fallback. A screen that cannot be answered by a query, a count or an
+   * aggregate shows "not known" instead. On a backend that cannot read the
+   * whole inventory cheaply (`capabilities.wholeInventoryRead` false — the
+   * cloud), only the purposes in WHOLE_INVENTORY_PURPOSES may call it, and
+   * anything else is refused before a single read.
+   *
+   * @param {{onProgress?: Function, purpose?: string}} [options]
    */
-  async completeItems({ onProgress } = {}) {
+  async completeItems({ onProgress, purpose = null } = {}) {
     if (this.itemsComplete) return this.state.items;
+    if (!this.capabilities.wholeInventoryRead && !WHOLE_INVENTORY_PURPOSES.has(purpose)) {
+      throw new AppError('error.repo/unbounded-read', { code: 'repo/unbounded-read', purpose });
+    }
     if (this._completing) return this._completing;
     this._completing = (async () => {
       const rest = new Map();
@@ -3949,6 +3999,15 @@ class Repository {
    */
   get keepsAggregates() {
     return Boolean(this.backend?.keepsAggregates);
+  }
+
+  /**
+   * What the current backend can answer itself. A backend that does not say
+   * is assumed to be able to do nothing — in particular, not to read the
+   * whole inventory — so a new backend is safe until it declares otherwise.
+   */
+  get capabilities() {
+    return { ...NO_CAPABILITIES, ...(this.backend?.capabilities || {}) };
   }
 
   // ── the query contract ──

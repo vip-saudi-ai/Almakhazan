@@ -91,11 +91,17 @@ export function hideProgress() {
  * Ensures `repository.state.items` is the whole inventory.
  *
  * @param {string} [reason] what needs it, shown to the customer while waiting.
- * @returns {Promise<boolean>} false when the inventory could not be loaded —
- *   the caller must not present a partial answer as a complete one.
+ * @param {{purpose?: string}} [options] `purpose` names an explicit
+ *   whole-dataset job ('export', …, see WHOLE_INVENTORY_PURPOSES). Without one
+ *   this is a screen's fallback, and on a backend that cannot read the whole
+ *   inventory cheaply (the cloud) it loads nothing and answers false: the
+ *   screen shows "not known" rather than downloading the workspace.
+ * @returns {Promise<boolean>} false when the inventory is not in hand — the
+ *   caller must not present a partial answer as a complete one.
  */
-export async function withFullInventory(reason = '') {
+export async function withFullInventory(reason = '', { purpose = null } = {}) {
   if (repository.itemsComplete) return true;
+  if (!purpose && !repository.capabilities.wholeInventoryRead) return false;
 
   // A short load should not flash a box on the screen; a long one must not be
   // a frozen tap.
@@ -106,6 +112,7 @@ export async function withFullInventory(reason = '') {
 
   try {
     await repository.completeItems({
+      purpose,
       onProgress: (seen) => {
         const node = $('loadtext');
         if (node) node.textContent = t('load.readingCount', { count: seen });
@@ -137,9 +144,11 @@ export function partialNotice(onLoadAll) {
         ? t('load.partialOf', { loaded, total })
         : t('load.partial', { count: loaded }),
     }),
-    el('button', {
+    // "Show everything" only where everything is on this device: a cloud
+    // workspace is browsed a page at a time, never downloaded whole.
+    repository.capabilities.wholeInventoryRead ? el('button', {
       class: 'partial-btn', type: 'button', text: t('load.showAll'),
       onClick: async () => { if (await withFullInventory(t('load.readingAll'))) onLoadAll?.(); },
-    }),
+    }) : null,
   ]);
 }

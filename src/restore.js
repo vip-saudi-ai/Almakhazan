@@ -234,7 +234,7 @@ async function runRestore(repo, data, job, { onProgress, saveBackup }) {
   // The app browses on a window of the newest records. A safety backup taken
   // from a window backs up a fraction, and step 3 would then remove records
   // the backup never held. Load everything, and refuse if that fails.
-  await repo.completeItems();
+  await repo.completeItems({ purpose: 'restore' });
   repo.assertItemsComplete('partial.restore');
 
   // ── 1. safety backup ──

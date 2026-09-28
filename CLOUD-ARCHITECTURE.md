@@ -33,6 +33,43 @@ tests/browser/window.test.mjs): opening Overview, Assistant, Inventory,
 Categories and Settings calls `completeItems` zero times; clearing the
 inventory calls it zero times.
 
+### 1a. Backend capabilities and the whole-inventory rule
+
+Every backend declares what it answers itself (`backend.capabilities`,
+read through `repository.capabilities`; a backend that declares nothing is
+assumed to answer nothing):
+
+| Capability | Local (IndexedDB) | Firestore |
+|---|---|---|
+| `serverQueries` — queryItems / countItemsMatching | yes | yes |
+| `aggregates` — inventoryAggregate / aggregateItems (may still be null) | yes | yes (the server-kept document, null until deployed) |
+| `search` — text in queryItems | yes (token index) | no (`query/unsupported` until a search service) |
+| `duplicateCandidates` | yes (identifier indexes) | no (null = unknown) |
+| `fullExport` | yes | yes, explicitly requested only |
+| `wholeInventoryRead` | yes — the records are on the device | **no** |
+
+`completeItems()` is an explicit whole-dataset operation, never a screen's
+fallback. On a backend without `wholeInventoryRead` it is refused
+(`repo/unbounded-read`) before a single read unless called with one of the
+purposes in `WHOLE_INVENTORY_PURPOSES` (`export`, `restore`, `migration`,
+`maintenance`) — each a job the customer started on purpose. Remaining call
+sites:
+
+| Call site | Purpose | Cloud, ordinary use |
+|---|---|---|
+| `inventory-load.js` `withFullInventory(reason, { purpose })` → `completeItems` | the one gateway for screens | without a purpose it returns false on the cloud and loads nothing |
+| ↳ `views/manage.js` Excel / JSON export | `export` | user-requested only |
+| ↳ `views/home.js` inventory query `ensure`, identifier fallback; `views/manage.js` Trash `ensure`; `navigation.js` Overview / Assistant; the «show all» line | none (fallback) | never loads; the answer is marked incomplete / not known, «show all» is not offered |
+| `restore.js` legacy JSON restore safety backup | `restore` | user-requested only |
+| `device-upload.js` `findLocalReferences` (device → cloud migration check) | `migration` | user-requested only |
+
+What a cloud screen shows without a server answer: the Overview says the
+totals are not available (never a count of the window); health says it
+cannot be worked out; folder / category counts come from the aggregate or
+are not drawn; duplicate detection is "unknown"; a narrowed inventory query
+is marked unanswered. `tests/browser/cloud-guard.test.mjs` runs all of these
+against a mock cloud backend whose whole-collection read throws.
+
 ---
 
 ## 2. Paths, today and in the cloud
@@ -242,9 +279,13 @@ valuation per currency; analysis score sums. Structural fields only.
   from its schema and validates it; anything that would be dropped or changed
   (images, valuation, condition, field values, references, truncated text,
   invalid metadata) refuses the whole backup before a single write.
-* Missing images are verified as an exact set: every id the restored records
-  reference and no image holds is checked against the backup's declared list,
-  page by page on disk — at any size.
+* Missing images are verified as an exact set, A (actually missing) = D
+  (declared missing), in both directions: every id the restored records
+  reference and no image holds must be in the declared list (A − D empty),
+  and the distinct ids found are recorded in the restore index on disk so
+  that |A| = |D| proves nothing declared missing is actually present (D − A
+  empty). Page by page on disk — at any size, never a sample; a mismatch
+  names the first offending id and leaves the job recovery-required.
 * `originalSafetyBackup` is taken once, before the first write, and never
   replaced. A resumed restore does not require a new one; it may take an
   optional `recoveryCheckpointBackup`, recorded separately.

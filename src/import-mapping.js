@@ -259,6 +259,7 @@ export function planImport({ rows, lines, mapping, existing, currency = 'SAR', r
     // classification uses. The cells themselves stay on the record as given.
     const catalog = resolveImportCatalog(record, { taxonomy, year: cell(row, mapping.year) });
     if (Object.keys(catalog.customFields).length) record.customFields = catalog.customFields;
+    if (!record.brand && catalog.brand) record.brand = catalog.brand;
     for (const warning of catalog.warnings) problems.push({ line, ...warning });
 
     // The row this record came from. It is what makes a retry write the same

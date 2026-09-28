@@ -70,7 +70,14 @@ export async function renderOverview() {
     overview = null;
   }
   if (token !== renderToken) return;
-  if (!overview || !overview.totalItems) {
+  if (!overview) {
+    // No aggregate to read (a cloud workspace before its server-side totals
+    // exist, or a failed read): the numbers are not known, which is not the
+    // same as none — and they are never counted from the records on screen.
+    render(scroll, [emptyState('📊', t('overview.unavailableTitle'), t('overview.unavailableSub'))]);
+    return;
+  }
+  if (!overview.totalItems) {
     render(scroll, [emptyState('📊', t('overview.emptyTitle'), t('overview.emptySub'))]);
     return;
   }

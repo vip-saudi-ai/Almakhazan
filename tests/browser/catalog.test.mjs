@@ -265,6 +265,112 @@ const round = await run(`
 check('W25 a Full Backup carries custom catalog entries and a restore brings them back before items',
   round.back === 'Maison Qasr' && round.label?.includes('Maison Qasr'), JSON.stringify(round));
 
+// ── 10b. renaming a custom entry is held to the same duplicate rules ─────
+const ren = await run(`
+  const make = async (spec) => (await catalogService.createCustom(spec)).entity;
+  const abc = await make({ domain: 'watch', entityType: 'brand', label: 'ABC Watches' });
+  const xyz = await make({ domain: 'watch', entityType: 'brand', label: 'XYZ Watches' });
+  const code = async (p) => { try { await p; return 'ok'; } catch (e) { return e.code; } };
+  const toRolex = await code(catalogService.renameCustom(abc.id, 'Rolex'));
+  const toRolexAr = await code(catalogService.renameCustom(abc.id, 'رولكس'));
+  const xyzToAbc = await code(catalogService.renameCustom(xyz.id, '  abc   watches '));
+  const self = await catalogService.renameCustom(abc.id, 'ABC Watches');
+  // Same model name under two makes is fine; twice under one make is not.
+  const a = await make({ domain: 'vehicle', entityType: 'model', parentId: 'vehicle_make_toyota', label: 'Model X9' });
+  const b = await make({ domain: 'vehicle', entityType: 'model', parentId: 'vehicle_make_nissan', label: 'Model Y9' });
+  const bToX9 = await catalogService.renameCustom(b.id, 'Model X9').then((e) => e.nameEn).catch((e) => e.code);
+  const c2 = await make({ domain: 'vehicle', entityType: 'model', parentId: 'vehicle_make_toyota', label: 'Model Z9' });
+  const cToX9 = await code(catalogService.renameCustom(c2.id, 'Model X9'));
+  // A retired entry's identity is not taken over by a rename.
+  const old = await make({ domain: 'watch', entityType: 'brand', label: 'Old House' });
+  await catalogService.retireCustom(old.id);
+  const toRetired = await code(catalogService.renameCustom(xyz.id, 'Old House'));
+  const createRetired = await code(catalogService.createCustom({ domain: 'watch', entityType: 'brand', label: 'old house' }));
+  // A successful rename keeps the id every record stores.
+  const item = await repository.createItem({ name: 'ساعة XYZ', categoryId: 'jewellery_watches', customFields: { watch_brand: { ref: xyz.id, label: 'XYZ Watches' } } });
+  const renamed = await catalogService.renameCustom(xyz.id, 'XYZ Horology');
+  const fresh = await repository.getItem(item.id, { fresh: true });
+  const rows = fieldRows(fresh, repository.taxonomy()).current.map((r) => r.text);
+  const count = repository.catalogEntities().filter((e) => /^(abc watches|rolex)$/i.test(e.nameEn)).length;
+  return { toRolex, toRolexAr, xyzToAbc, selfId: self.id === abc.id, bToX9, cToX9, toRetired, createRetired,
+    sameId: renamed.id === xyz.id, ref: fresh.customFields.watch_brand.ref === xyz.id, shown: rows.join(','), count, abcId: abc.id };`);
+check('R1 renaming a custom brand to a built-in one (Rolex, رولكس) is refused', ren.toRolex === 'catalog/duplicate-builtin' && ren.toRolexAr === 'catalog/duplicate-builtin', JSON.stringify(ren));
+check('R2 renaming one custom brand onto another (case and spaces aside) is refused', ren.xyzToAbc === 'catalog/duplicate-custom', ren.xyzToAbc);
+check('R3 renaming to its own name is allowed and keeps the id', ren.selfId === true);
+check('R4 one model name under two makes is allowed; twice under one make is refused', ren.bToX9 === 'Model X9' && ren.cToX9 === 'catalog/duplicate-custom', JSON.stringify([ren.bToX9, ren.cToX9]));
+check('R5 a retired entry blocks both a rename and a create onto its identity', ren.toRetired === 'catalog/duplicate-retired' && ren.createRetired === 'catalog/duplicate-retired', JSON.stringify([ren.toRetired, ren.createRetired]));
+check('R6 a successful rename keeps the stable id; records still point at it and show the new name',
+  ren.sameId && ren.ref && ren.shown.includes('XYZ Horology') && ren.count === 1, JSON.stringify(ren));
+
+// The same refusal, through the picker, in words.
+await newForm('jewellery_watches');
+await page.click('#cf-watch_brand');
+await page.waitForSelector('#ov-catpick.open');
+await page.fill('#catpick-search', 'ABC Watches');
+await page.waitForTimeout(250);
+await page.evaluate(() => [...document.querySelectorAll('#catpick-body .catpick-act')].find((b) => /ABC Watches/.test(b.getAttribute('aria-label')) && b.textContent === b.getAttribute('aria-label').split(' — ')[0] && b === b.parentElement.firstElementChild)?.click());
+await page.waitForSelector('#catpick-rename');
+await page.fill('#catpick-rename', 'Rolex');
+await page.evaluate(() => [...document.querySelectorAll('#catpick-body .tax-create .btn-p')].pop().click());
+await page.waitForTimeout(300);
+const renameUi = await page.evaluate(() => ({ error: document.getElementById('catpick-error')?.textContent || '', role: document.getElementById('catpick-error')?.getAttribute('role') }));
+check('R7 the picker says why, in Arabic, in an alert', /كتالوج نَظْم/.test(renameUi.error) && /Rolex|رولكس/.test(renameUi.error) && renameUi.role === 'alert', JSON.stringify(renameUi));
+await page.keyboard.press('Escape');
+await page.waitForTimeout(150);
+await page.keyboard.press('Escape');
+await page.waitForTimeout(150);
+
+// ── 10c. regressions: paths, direct search, cascade ───────────────────────
+await newForm('vehicles_cars');
+await pick('vehicle_manufacturer', 'Toyota');
+await pick('vehicle_model', 'Land Cruiser');
+await pick('vehicle_manufacturer', 'Mercedes-Benz');
+const cascade = await page.evaluate(async () => {
+  const f = await import('/src/views/item-fields.js');
+  return f.collectItemFields().customFields;
+});
+check('C1 Toyota → Land Cruiser, then Mercedes-Benz: Land Cruiser is no longer linked',
+  cascade.vehicle_manufacturer?.ref === 'vehicle_make_mercedes_benz' && !cascade.vehicle_model?.ref, JSON.stringify(cascade));
+await page.keyboard.press('Escape');
+await page.waitForTimeout(150);
+
+const direct = await run(`
+  const pick = async (domain, entityType, query) => (await catalogService.search({ domain, entityType, query, limit: 3 })).items[0]?.entity;
+  const path = (e) => e ? catalogService.path(e.id).map((x) => x.id) : [];
+  const out = {};
+  for (const [k, d, t, q] of [['r126500', 'watch', 'reference', '126500'], ['r5711', 'watch', 'reference', '5711/1A'], ['lc', 'vehicle', 'model', 'Land Cruiser'], ['gx', 'machinery', 'model', '320 GX'], ['is50', 'lab', 'model', 'iS50']]) {
+    out[k] = path(await pick(d, t, q));
+  }
+  const col = await pick('watch', 'collection', 'Nautilus');
+  out.nautilus = path(col);
+  return out;`);
+check('C2 direct search finds each and its whole path: 126500, 5711/1A, Land Cruiser, 320 GX, iS50, Patek → Nautilus',
+  direct.r126500[0] === 'watch_brand_rolex' && direct.r126500.some((id) => id.includes('daytona'))
+  && direct.r5711[0] === 'watch_brand_patek_philippe' && direct.r5711.some((id) => id.includes('nautilus'))
+  && direct.lc[0] === 'vehicle_make_toyota' && direct.gx[0] === 'mfr_caterpillar'
+  && direct.is50[0]?.includes('thermo') && direct.is50.some((id) => id.includes('nicolet'))
+  && direct.nautilus[0] === 'watch_brand_patek_philippe', JSON.stringify(direct));
+
+// Name only for a car and a machine; a custom manufacturer reused.
+await newForm('vehicles_cars');
+const carOnly = await save('سيارة بالاسم فقط');
+await newForm('equipment_heavy');
+const machineOnly = await save('معدة بالاسم فقط');
+check('C3 a car and a machine save with the name (and category) only',
+  carOnly && machineOnly && Object.keys(carOnly.customFields || {}).length === 0 && machineOnly.categoryId === 'equipment_heavy', JSON.stringify([carOnly?.customFields, machineOnly?.categoryId]));
+const reuse = await run(`
+  const m = (await catalogService.createCustom({ domain: 'machinery', entityType: 'manufacturer', label: 'مصنع محلي' })).entity;
+  const again = await catalogService.createCustom({ domain: 'machinery', entityType: 'manufacturer', label: 'مصنع محلي' });
+  const found = (await catalogService.search({ domain: 'machinery', entityType: 'manufacturer', query: 'مصنع محلي' })).items[0]?.entity.id;
+  const model = (await catalogService.createCustom({ domain: 'machinery', entityType: 'model', parentId: m.id, label: 'M-1' })).entity;
+  const underIt = (await catalogService.search({ domain: 'machinery', entityType: 'model', ancestorId: m.id })).items.map((i) => i.entity.id);
+  const underCat = (await catalogService.search({ domain: 'machinery', entityType: 'model', ancestorId: 'mfr_caterpillar', query: 'M-1' })).items.map((i) => i.entity.id);
+  const customUnderBuiltin = (await catalogService.createCustom({ domain: 'vehicle', entityType: 'model', parentId: 'vehicle_make_toyota', label: 'Hilux Custom' })).entity;
+  const scoped = (await catalogService.search({ domain: 'vehicle', entityType: 'model', ancestorId: 'vehicle_make_toyota', query: 'Hilux Custom' })).items.map((i) => i.entity.id);
+  return { dup: again.duplicate?.id === m.id, found: found === m.id, underIt: underIt.includes(model.id), underCat: underCat.includes(model.id), scoped: scoped.includes(customUnderBuiltin.id) };`);
+check('C4 a custom manufacturer and model are reused, found, and scoped to their own parent (also under a built-in make)',
+  reuse.dup && reuse.found && reuse.underIt && !reuse.underCat && reuse.scoped, JSON.stringify(reuse));
+
 // ── 11. speed, network, errors ────────────────────────────────────────────
 const speed = await run(`
   const queries = ['ro', 'rolex', 'رولكس', '126500', 'omega speed', 'cat', '320', 'land', 'apple', 'thermo'];
