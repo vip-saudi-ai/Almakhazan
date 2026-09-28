@@ -156,4 +156,46 @@ out('contract.json', {
   }),
 });
 
+// ── the catalog service answered by the reference ─────────────────────────
+const { catalogService } = await import(join(reference, 'catalog/service.js'));
+const searches = [
+  ['watch', 'brand', 'رولكس'], ['watch', 'brand', 'Rolex'], ['watch', 'brand', 'AP'], ['watch', 'brand', 'pat'], ['watch', 'brand', ''],
+  ['watch', 'reference', '126500'], ['watch', 'reference', '5711/1A'], ['watch', 'collection', 'daytona'], ['watch', 'collection', 'marine'],
+  ['vehicle', 'manufacturer', 'تويوتا'], ['vehicle', 'model', 'Land Cruiser'], ['vehicle', 'model', 'land'],
+  ['machinery', 'manufacturer', 'كاتربيلر'], ['machinery', 'manufacturer', 'CAT'], ['machinery', 'model', '320 gx'],
+  ['lab', 'manufacturer', 'Thermo'], ['lab', 'model', 'i50'], ['lab', 'family', 'uv'], ['electronics', 'model', 'iphone 16'],
+  ['gem', 'type', 'ألماس'], ['art', 'artist', 'رضوي'], ['jewellery', 'brand', 'cartier'],
+];
+const searchResults = [];
+for (const [domain, entityType, query] of searches) {
+  const r = await catalogService.search({ domain, entityType, query, limit: 12 });
+  searchResults.push({ domain, entityType, query, total: r.total, ids: r.items.map((i) => i.entity.id), scores: r.items.map((i) => i.score) });
+}
+const scoped = [];
+for (const [domain, entityType, spec] of [
+  ['watch', 'collection', { parentId: 'watch_brand_patek_philippe' }],
+  ['watch', 'reference', { ancestorId: 'watch_brand_rolex' }],
+  ['vehicle', 'model', { parentId: 'vehicle_make_toyota', query: 'land' }],
+]) {
+  const r = await catalogService.search({ domain, entityType, limit: 100, ...spec });
+  scoped.push({ domain, entityType, spec, total: r.total, ids: r.items.map((i) => i.entity.id) });
+}
+const dupes = [
+  ['watch', 'brand', null, 'rolex'], ['watch', 'brand', null, 'رولكس'], ['watch', 'brand', null, 'Rolex Watch'], ['watch', 'brand', null, 'Omeg'],
+  ['vehicle', 'model', 'vehicle_make_toyota', 'land cruiser'], ['vehicle', 'model', 'vehicle_make_nissan', 'land cruiser'],
+].map(([domain, entityType, parentId, label]) => {
+  const d = catalogService.findDuplicates({ domain, entityType, parentId, label });
+  return { domain, entityType, parentId, label, exact: d.exact?.id || null, similar: d.similar.map((e) => e.id) };
+});
+const resolves = [
+  ['watch', 'brand', null, 'Rolex'], ['watch', 'reference', null, '126500LN'], ['watch', 'reference', 'watch_brand_omega', '126500LN'],
+  ['vehicle', 'model', null, 'Land Cruiser'], ['vehicle', 'model', 'vehicle_make_mercedes_benz', 'Land Cruiser'], ['watch', 'collection', null, 'Marine'],
+  ['machinery', 'manufacturer', null, 'CAT'], ['lab', 'model', null, 'iS50'],
+].map(([domain, entityType, ancestorId, text]) => {
+  const r = catalogService.resolveText({ domain, entityType, ancestorId, text });
+  return { domain, entityType, ancestorId, text, status: r.status, entity: r.entity?.id || null, candidates: r.candidates.map((e) => e.id) };
+});
+const paths = ['watch_ref_rolex_126500ln', 'lab_model_thermo_fisher_nicolet_is50', 'vehicle_model_toyota_land_cruiser'].map((id) => ({ id, path: catalogService.path(id).map((e) => e.id) }));
+out('catalog.json', { searches: searchResults, scoped, duplicates: dupes, resolves, paths });
+
 console.log(`fixtures: ${texts.length} texts, ${specs.length} query specs, ${items.length} items`);

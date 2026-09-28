@@ -245,6 +245,22 @@ compatibility with the reference.
 | Repository contracts + capabilities + explicit whole-dataset purposes | implemented | interfaces; Drift implementation is phase 2 |
 | Catalog (1,711 entities, 7 lazy groups) and taxonomy assets | implemented | generated and validated by the reference's validator |
 
+### Phase 2 — Domain/Data: in progress
+
+| Item | Status | Evidence |
+|---|---|---|
+| Drift item repository: create, batch create, update, trash, restore, purge — each one transaction with tokens, catalog refs, field ids and aggregate delta | verified | repository tests |
+| SKU uniqueness (create, batch, update, Trash restore; trashed SKU reusable) and version conflicts | verified | repository tests |
+| Purge releases media references | verified | repository test |
+| Keyset pagination over the query contract; SQL counts and per-currency sums | verified | 21 contract queries over 300 records return the reference's ids in its order, page by page |
+| Search tokens and catalog refs | verified | identical to the reference for all 300 records |
+| Kept aggregate equals a rebuild after every kind of write | verified | repository test (found and fixed a first-write double count) |
+| Identifier lookups use their own index | verified | EXPLAIN test; 100k SKU lookup 28.6 → 0.7 ms after the fix |
+| Duplicate candidates (non-empty shared identifiers, names; bounded) | verified | deliberately excludes the reference's empty-key quirk; groups are a superset |
+| 100,000-record run (file SQLite) | measured | seed 14.3 s; aggregate 1.1 ms; first page 14.6 ms; name pages 2.6–6.8 ms; folder/value/word/SKU/count ≤ 3.6 ms; SAR total 21 ms (Linux x64 test host, not a phone) |
+| Catalog: entity, index, ranking, service (lazy asset groups, scoped search, paging ≤ 100, path, isWithin, duplicates with `exceptId`, resolveText, custom entries under built-in parents) | verified | 22 searches (ids, order, scores, totals), 3 scoped levels, 6 duplicate checks, 8 resolutions, 3 paths identical to the reference; 1,711 entities / 197 watch brands load |
+| Taxonomy, field registry, item normaliser, locations/folders, media metadata repositories | pending | |
+
 ## 9. Environment limits (stated, not hidden)
 
 This work runs in a Linux container. `flutter analyze`, `flutter test`

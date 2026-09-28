@@ -1,0 +1,638 @@
+{
+ "searches": [
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "query": "رولكس",
+   "total": 1,
+   "ids": [
+    "watch_brand_rolex"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "query": "Rolex",
+   "total": 1,
+   "ids": [
+    "watch_brand_rolex"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "query": "AP",
+   "total": 1,
+   "ids": [
+    "watch_brand_audemars_piguet"
+   ],
+   "scores": [
+    95
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "query": "pat",
+   "total": 1,
+   "ids": [
+    "watch_brand_patek_philippe"
+   ],
+   "scores": [
+    80
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "query": "",
+   "total": 197,
+   "ids": [
+    "watch_brand_rolex",
+    "watch_brand_tudor",
+    "watch_brand_patek_philippe",
+    "watch_brand_audemars_piguet",
+    "watch_brand_vacheron_constantin",
+    "watch_brand_breguet",
+    "watch_brand_blancpain",
+    "watch_brand_jaeger_lecoultre",
+    "watch_brand_cartier",
+    "watch_brand_omega",
+    "watch_brand_iwc",
+    "watch_brand_panerai"
+   ],
+   "scores": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "reference",
+   "query": "126500",
+   "total": 1,
+   "ids": [
+    "watch_ref_rolex_126500ln"
+   ],
+   "scores": [
+    80
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "reference",
+   "query": "5711/1A",
+   "total": 3,
+   "ids": [
+    "watch_ref_patek_philippe_5711_1a_010",
+    "watch_ref_patek_philippe_5711_1a_011",
+    "watch_ref_patek_philippe_5711_1a_014"
+   ],
+   "scores": [
+    80,
+    80,
+    80
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "collection",
+   "query": "daytona",
+   "total": 1,
+   "ids": [
+    "watch_col_rolex_daytona"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "collection",
+   "query": "marine",
+   "total": 3,
+   "ids": [
+    "watch_col_breguet_marine",
+    "watch_col_ulysse_nardin_marine",
+    "watch_col_rolex_submariner"
+   ],
+   "scores": [
+    100,
+    100,
+    60
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "manufacturer",
+   "query": "تويوتا",
+   "total": 1,
+   "ids": [
+    "vehicle_make_toyota"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "query": "Land Cruiser",
+   "total": 3,
+   "ids": [
+    "vehicle_model_toyota_land_cruiser",
+    "vehicle_model_toyota_land_cruiser_prado",
+    "vehicle_model_toyota_land_cruiser_70"
+   ],
+   "scores": [
+    100,
+    80,
+    80
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "query": "land",
+   "total": 5,
+   "ids": [
+    "vehicle_model_toyota_land_cruiser",
+    "vehicle_model_toyota_land_cruiser_prado",
+    "vehicle_model_toyota_land_cruiser_70",
+    "vehicle_model_toyota_highlander",
+    "vehicle_model_mitsubishi_outlander"
+   ],
+   "scores": [
+    80,
+    80,
+    80,
+    60,
+    60
+   ]
+  },
+  {
+   "domain": "machinery",
+   "entityType": "manufacturer",
+   "query": "كاتربيلر",
+   "total": 1,
+   "ids": [
+    "mfr_caterpillar"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "machinery",
+   "entityType": "manufacturer",
+   "query": "CAT",
+   "total": 2,
+   "ids": [
+    "mfr_caterpillar",
+    "mfr_bobcat"
+   ],
+   "scores": [
+    95,
+    60
+   ]
+  },
+  {
+   "domain": "machinery",
+   "entityType": "model",
+   "query": "320 gx",
+   "total": 1,
+   "ids": [
+    "mfr_model_caterpillar_320_gx"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "lab",
+   "entityType": "manufacturer",
+   "query": "Thermo",
+   "total": 1,
+   "ids": [
+    "lab_manufacturer_thermo_fisher"
+   ],
+   "scores": [
+    95
+   ]
+  },
+  {
+   "domain": "lab",
+   "entityType": "model",
+   "query": "i50",
+   "total": 1,
+   "ids": [
+    "lab_model_thermo_fisher_nicolet_is50"
+   ],
+   "scores": [
+    95
+   ]
+  },
+  {
+   "domain": "lab",
+   "entityType": "family",
+   "query": "uv",
+   "total": 3,
+   "ids": [
+    "lab_family_shimadzu_uv_vis",
+    "lab_family_agilent_uv_vis",
+    "lab_family_perkinelmer_uv_vis"
+   ],
+   "scores": [
+    95,
+    80,
+    80
+   ]
+  },
+  {
+   "domain": "electronics",
+   "entityType": "model",
+   "query": "iphone 16",
+   "total": 5,
+   "ids": [
+    "electronics_model_apple_iphone_16",
+    "electronics_model_apple_iphone_16_plus",
+    "electronics_model_apple_iphone_16_pro",
+    "electronics_model_apple_iphone_16_pro_max",
+    "electronics_model_apple_iphone_16e"
+   ],
+   "scores": [
+    100,
+    80,
+    80,
+    80,
+    80
+   ]
+  },
+  {
+   "domain": "gem",
+   "entityType": "type",
+   "query": "ألماس",
+   "total": 1,
+   "ids": [
+    "gem_diamond"
+   ],
+   "scores": [
+    100
+   ]
+  },
+  {
+   "domain": "art",
+   "entityType": "artist",
+   "query": "رضوي",
+   "total": 1,
+   "ids": [
+    "artist_abdulhalim_radwi"
+   ],
+   "scores": [
+    60
+   ]
+  },
+  {
+   "domain": "jewellery",
+   "entityType": "brand",
+   "query": "cartier",
+   "total": 1,
+   "ids": [
+    "jewel_brand_cartier"
+   ],
+   "scores": [
+    100
+   ]
+  }
+ ],
+ "scoped": [
+  {
+   "domain": "watch",
+   "entityType": "collection",
+   "spec": {
+    "parentId": "watch_brand_patek_philippe"
+   },
+   "total": 9,
+   "ids": [
+    "watch_col_patek_philippe_nautilus",
+    "watch_col_patek_philippe_aquanaut",
+    "watch_col_patek_philippe_calatrava",
+    "watch_col_patek_philippe_grand_complications",
+    "watch_col_patek_philippe_complications",
+    "watch_col_patek_philippe_gondolo",
+    "watch_col_patek_philippe_golden_ellipse",
+    "watch_col_patek_philippe_twenty_4",
+    "watch_col_patek_philippe_cubitus"
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "reference",
+   "spec": {
+    "ancestorId": "watch_brand_rolex"
+   },
+   "total": 113,
+   "ids": [
+    "watch_ref_rolex_126500ln",
+    "watch_ref_rolex_116500ln",
+    "watch_ref_rolex_116520",
+    "watch_ref_rolex_16520",
+    "watch_ref_rolex_116506",
+    "watch_ref_rolex_126506",
+    "watch_ref_rolex_116508",
+    "watch_ref_rolex_126508",
+    "watch_ref_rolex_116518ln",
+    "watch_ref_rolex_126518ln",
+    "watch_ref_rolex_116515ln",
+    "watch_ref_rolex_126515ln",
+    "watch_ref_rolex_116519ln",
+    "watch_ref_rolex_126519ln",
+    "watch_ref_rolex_6263",
+    "watch_ref_rolex_6265",
+    "watch_ref_rolex_6239",
+    "watch_ref_rolex_124060",
+    "watch_ref_rolex_126610ln",
+    "watch_ref_rolex_126610lv",
+    "watch_ref_rolex_126613lb",
+    "watch_ref_rolex_126613ln",
+    "watch_ref_rolex_126618lb",
+    "watch_ref_rolex_126618ln",
+    "watch_ref_rolex_126619lb",
+    "watch_ref_rolex_114060",
+    "watch_ref_rolex_116610ln",
+    "watch_ref_rolex_116610lv",
+    "watch_ref_rolex_116613lb",
+    "watch_ref_rolex_116618lb",
+    "watch_ref_rolex_116619lb",
+    "watch_ref_rolex_16610",
+    "watch_ref_rolex_16610lv",
+    "watch_ref_rolex_14060m",
+    "watch_ref_rolex_5513",
+    "watch_ref_rolex_1680",
+    "watch_ref_rolex_1675",
+    "watch_ref_rolex_16700",
+    "watch_ref_rolex_16750",
+    "watch_ref_rolex_126710blro",
+    "watch_ref_rolex_126710blnr",
+    "watch_ref_rolex_126710grnr",
+    "watch_ref_rolex_126711chnr",
+    "watch_ref_rolex_126715chnr",
+    "watch_ref_rolex_126718grnr",
+    "watch_ref_rolex_126719blro",
+    "watch_ref_rolex_126720vtnr",
+    "watch_ref_rolex_116710ln",
+    "watch_ref_rolex_116710blnr",
+    "watch_ref_rolex_16710",
+    "watch_ref_rolex_126300",
+    "watch_ref_rolex_126334",
+    "watch_ref_rolex_126200",
+    "watch_ref_rolex_126234",
+    "watch_ref_rolex_126331",
+    "watch_ref_rolex_126333",
+    "watch_ref_rolex_126233",
+    "watch_ref_rolex_126231",
+    "watch_ref_rolex_116234",
+    "watch_ref_rolex_116200",
+    "watch_ref_rolex_16233",
+    "watch_ref_rolex_16234",
+    "watch_ref_rolex_1601",
+    "watch_ref_rolex_228238",
+    "watch_ref_rolex_228235",
+    "watch_ref_rolex_228239",
+    "watch_ref_rolex_228206",
+    "watch_ref_rolex_128238",
+    "watch_ref_rolex_128235",
+    "watch_ref_rolex_118238",
+    "watch_ref_rolex_118239",
+    "watch_ref_rolex_18038",
+    "watch_ref_rolex_124270",
+    "watch_ref_rolex_224270",
+    "watch_ref_rolex_214270",
+    "watch_ref_rolex_1016",
+    "watch_ref_rolex_226570",
+    "watch_ref_rolex_216570",
+    "watch_ref_rolex_16570",
+    "watch_ref_rolex_1655",
+    "watch_ref_rolex_126600",
+    "watch_ref_rolex_126603",
+    "watch_ref_rolex_116600",
+    "watch_ref_rolex_16600",
+    "watch_ref_rolex_136660",
+    "watch_ref_rolex_126660",
+    "watch_ref_rolex_116660",
+    "watch_ref_rolex_126622",
+    "watch_ref_rolex_226659",
+    "watch_ref_rolex_126655",
+    "watch_ref_rolex_116655",
+    "watch_ref_rolex_268622",
+    "watch_ref_rolex_226627",
+    "watch_ref_rolex_116680",
+    "watch_ref_rolex_116688",
+    "watch_ref_rolex_326934",
+    "watch_ref_rolex_326933",
+    "watch_ref_rolex_326238",
+    "watch_ref_rolex_336934",
+    "watch_ref_rolex_326135"
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "spec": {
+    "parentId": "vehicle_make_toyota",
+    "query": "land"
+   },
+   "total": 4,
+   "ids": [
+    "vehicle_model_toyota_land_cruiser",
+    "vehicle_model_toyota_land_cruiser_prado",
+    "vehicle_model_toyota_land_cruiser_70",
+    "vehicle_model_toyota_highlander"
+   ]
+  }
+ ],
+ "duplicates": [
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "parentId": null,
+   "label": "rolex",
+   "exact": "watch_brand_rolex",
+   "similar": []
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "parentId": null,
+   "label": "رولكس",
+   "exact": "watch_brand_rolex",
+   "similar": []
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "parentId": null,
+   "label": "Rolex Watch",
+   "exact": null,
+   "similar": []
+  },
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "parentId": null,
+   "label": "Omeg",
+   "exact": null,
+   "similar": [
+    "watch_brand_omega"
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "parentId": "vehicle_make_toyota",
+   "label": "land cruiser",
+   "exact": "vehicle_model_toyota_land_cruiser",
+   "similar": [
+    "vehicle_model_toyota_land_cruiser_prado",
+    "vehicle_model_toyota_land_cruiser_70"
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "parentId": "vehicle_make_nissan",
+   "label": "land cruiser",
+   "exact": null,
+   "similar": []
+  }
+ ],
+ "resolves": [
+  {
+   "domain": "watch",
+   "entityType": "brand",
+   "ancestorId": null,
+   "text": "Rolex",
+   "status": "unique",
+   "entity": "watch_brand_rolex",
+   "candidates": [
+    "watch_brand_rolex"
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "reference",
+   "ancestorId": null,
+   "text": "126500LN",
+   "status": "unique",
+   "entity": "watch_ref_rolex_126500ln",
+   "candidates": [
+    "watch_ref_rolex_126500ln"
+   ]
+  },
+  {
+   "domain": "watch",
+   "entityType": "reference",
+   "ancestorId": "watch_brand_omega",
+   "text": "126500LN",
+   "status": "none",
+   "entity": null,
+   "candidates": []
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "ancestorId": null,
+   "text": "Land Cruiser",
+   "status": "unique",
+   "entity": "vehicle_model_toyota_land_cruiser",
+   "candidates": [
+    "vehicle_model_toyota_land_cruiser"
+   ]
+  },
+  {
+   "domain": "vehicle",
+   "entityType": "model",
+   "ancestorId": "vehicle_make_mercedes_benz",
+   "text": "Land Cruiser",
+   "status": "none",
+   "entity": null,
+   "candidates": []
+  },
+  {
+   "domain": "watch",
+   "entityType": "collection",
+   "ancestorId": null,
+   "text": "Marine",
+   "status": "ambiguous",
+   "entity": null,
+   "candidates": [
+    "watch_col_breguet_marine",
+    "watch_col_ulysse_nardin_marine"
+   ]
+  },
+  {
+   "domain": "machinery",
+   "entityType": "manufacturer",
+   "ancestorId": null,
+   "text": "CAT",
+   "status": "unique",
+   "entity": "mfr_caterpillar",
+   "candidates": [
+    "mfr_caterpillar"
+   ]
+  },
+  {
+   "domain": "lab",
+   "entityType": "model",
+   "ancestorId": null,
+   "text": "iS50",
+   "status": "unique",
+   "entity": "lab_model_thermo_fisher_nicolet_is50",
+   "candidates": [
+    "lab_model_thermo_fisher_nicolet_is50"
+   ]
+  }
+ ],
+ "paths": [
+  {
+   "id": "watch_ref_rolex_126500ln",
+   "path": [
+    "watch_brand_rolex",
+    "watch_col_rolex_daytona",
+    "watch_model_rolex_cosmograph_daytona",
+    "watch_ref_rolex_126500ln"
+   ]
+  },
+  {
+   "id": "lab_model_thermo_fisher_nicolet_is50",
+   "path": [
+    "lab_manufacturer_thermo_fisher",
+    "lab_family_thermo_fisher_nicolet",
+    "lab_model_thermo_fisher_nicolet_is50"
+   ]
+  },
+  {
+   "id": "vehicle_model_toyota_land_cruiser",
+   "path": [
+    "vehicle_make_toyota",
+    "vehicle_model_toyota_land_cruiser"
+   ]
+  }
+ ]
+}
