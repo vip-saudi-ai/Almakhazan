@@ -1,0 +1,8562 @@
+[
+ {
+  "id": "watch_col_rolex_daytona",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "دايتونا",
+  "nameEn": "Daytona",
+  "aliasesAr": [
+   "ديتونا"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "daytona"
+ },
+ {
+  "id": "watch_model_rolex_cosmograph_daytona",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_rolex_daytona",
+  "nameAr": "",
+  "nameEn": "Cosmograph Daytona",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cosmograph daytona"
+ },
+ {
+  "id": "watch_ref_rolex_126500ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126500LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126500LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126500ln"
+ },
+ {
+  "id": "watch_ref_rolex_116500ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116500LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116500LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116500ln"
+ },
+ {
+  "id": "watch_ref_rolex_116520",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116520",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116520",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116520"
+ },
+ {
+  "id": "watch_ref_rolex_16520",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "16520",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16520",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016520"
+ },
+ {
+  "id": "watch_ref_rolex_116506",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116506",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116506",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116506"
+ },
+ {
+  "id": "watch_ref_rolex_126506",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126506",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126506",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126506"
+ },
+ {
+  "id": "watch_ref_rolex_116508",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116508",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116508",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116508"
+ },
+ {
+  "id": "watch_ref_rolex_126508",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126508",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126508",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126508"
+ },
+ {
+  "id": "watch_ref_rolex_116518ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116518LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116518LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116518ln"
+ },
+ {
+  "id": "watch_ref_rolex_126518ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126518LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126518LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126518ln"
+ },
+ {
+  "id": "watch_ref_rolex_116515ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116515LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116515LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116515ln"
+ },
+ {
+  "id": "watch_ref_rolex_126515ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126515LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126515LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126515ln"
+ },
+ {
+  "id": "watch_ref_rolex_116519ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "116519LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116519LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116519ln"
+ },
+ {
+  "id": "watch_ref_rolex_126519ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "126519LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126519LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126519ln"
+ },
+ {
+  "id": "watch_ref_rolex_6263",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "6263",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "6263",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000006263"
+ },
+ {
+  "id": "watch_ref_rolex_6265",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "6265",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "6265",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000006265"
+ },
+ {
+  "id": "watch_ref_rolex_6239",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_rolex_cosmograph_daytona",
+  "nameAr": "",
+  "nameEn": "6239",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "6239",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000006239"
+ },
+ {
+  "id": "watch_col_rolex_submariner",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "صبمارينر",
+  "nameEn": "Submariner",
+  "aliasesAr": [
+   "سبمارينر"
+  ],
+  "aliasesEn": [
+   "sub"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "submariner"
+ },
+ {
+  "id": "watch_ref_rolex_124060",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "124060",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "124060",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000124060"
+ },
+ {
+  "id": "watch_ref_rolex_126610ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126610LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126610LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126610ln"
+ },
+ {
+  "id": "watch_ref_rolex_126610lv",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126610LV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126610LV",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126610lv"
+ },
+ {
+  "id": "watch_ref_rolex_126613lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126613LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126613LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126613lb"
+ },
+ {
+  "id": "watch_ref_rolex_126613ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126613LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126613LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126613ln"
+ },
+ {
+  "id": "watch_ref_rolex_126618lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126618LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126618LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126618lb"
+ },
+ {
+  "id": "watch_ref_rolex_126618ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126618LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126618LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126618ln"
+ },
+ {
+  "id": "watch_ref_rolex_126619lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "126619LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126619LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126619lb"
+ },
+ {
+  "id": "watch_ref_rolex_114060",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "114060",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "114060",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000114060"
+ },
+ {
+  "id": "watch_ref_rolex_116610ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "116610LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116610LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116610ln"
+ },
+ {
+  "id": "watch_ref_rolex_116610lv",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "116610LV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116610LV",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116610lv"
+ },
+ {
+  "id": "watch_ref_rolex_116613lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "116613LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116613LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116613lb"
+ },
+ {
+  "id": "watch_ref_rolex_116618lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "116618LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116618LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116618lb"
+ },
+ {
+  "id": "watch_ref_rolex_116619lb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "116619LB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116619LB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116619lb"
+ },
+ {
+  "id": "watch_ref_rolex_16610",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "16610",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16610",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016610"
+ },
+ {
+  "id": "watch_ref_rolex_16610lv",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "16610LV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16610LV",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016610lv"
+ },
+ {
+  "id": "watch_ref_rolex_14060m",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "14060M",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "14060M",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000014060m"
+ },
+ {
+  "id": "watch_ref_rolex_5513",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "5513",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5513",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005513"
+ },
+ {
+  "id": "watch_ref_rolex_1680",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_submariner",
+  "nameAr": "",
+  "nameEn": "1680",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1680",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001680"
+ },
+ {
+  "id": "watch_col_rolex_gmt_master",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "GMT-Master",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "GMT Master"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gmt-master"
+ },
+ {
+  "id": "watch_ref_rolex_1675",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master",
+  "nameAr": "",
+  "nameEn": "1675",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1675",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001675"
+ },
+ {
+  "id": "watch_ref_rolex_16700",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master",
+  "nameAr": "",
+  "nameEn": "16700",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16700",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016700"
+ },
+ {
+  "id": "watch_ref_rolex_16750",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master",
+  "nameAr": "",
+  "nameEn": "16750",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16750",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016750"
+ },
+ {
+  "id": "watch_col_rolex_gmt_master_ii",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "GMT-Master II",
+  "aliasesAr": [
+   "بيبسي"
+  ],
+  "aliasesEn": [
+   "GMT Master II",
+   "GMT II",
+   "Pepsi",
+   "Batman"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gmt-master ii"
+ },
+ {
+  "id": "watch_ref_rolex_126710blro",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126710BLRO",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126710BLRO",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126710blro"
+ },
+ {
+  "id": "watch_ref_rolex_126710blnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126710BLNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126710BLNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126710blnr"
+ },
+ {
+  "id": "watch_ref_rolex_126710grnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126710GRNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126710GRNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126710grnr"
+ },
+ {
+  "id": "watch_ref_rolex_126711chnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126711CHNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126711CHNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126711chnr"
+ },
+ {
+  "id": "watch_ref_rolex_126715chnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126715CHNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126715CHNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126715chnr"
+ },
+ {
+  "id": "watch_ref_rolex_126718grnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126718GRNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126718GRNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126718grnr"
+ },
+ {
+  "id": "watch_ref_rolex_126719blro",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126719BLRO",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126719BLRO",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126719blro"
+ },
+ {
+  "id": "watch_ref_rolex_126720vtnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "126720VTNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126720VTNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126720vtnr"
+ },
+ {
+  "id": "watch_ref_rolex_116710ln",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "116710LN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116710LN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116710ln"
+ },
+ {
+  "id": "watch_ref_rolex_116710blnr",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "116710BLNR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116710BLNR",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116710blnr"
+ },
+ {
+  "id": "watch_ref_rolex_16710",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_gmt_master_ii",
+  "nameAr": "",
+  "nameEn": "16710",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16710",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016710"
+ },
+ {
+  "id": "watch_col_rolex_datejust",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "ديت جست",
+  "nameEn": "Datejust",
+  "aliasesAr": [
+   "دايت جست"
+  ],
+  "aliasesEn": [
+   "DJ"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "datejust"
+ },
+ {
+  "id": "watch_ref_rolex_126300",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126300",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126300",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126300"
+ },
+ {
+  "id": "watch_ref_rolex_126334",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126334",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126334",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126334"
+ },
+ {
+  "id": "watch_ref_rolex_126200",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126200",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126200"
+ },
+ {
+  "id": "watch_ref_rolex_126234",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126234",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126234",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126234"
+ },
+ {
+  "id": "watch_ref_rolex_126331",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126331",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126331",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126331"
+ },
+ {
+  "id": "watch_ref_rolex_126333",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126333",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126333",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126333"
+ },
+ {
+  "id": "watch_ref_rolex_126233",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126233",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126233",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126233"
+ },
+ {
+  "id": "watch_ref_rolex_126231",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "126231",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126231",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126231"
+ },
+ {
+  "id": "watch_ref_rolex_116234",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "116234",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116234",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116234"
+ },
+ {
+  "id": "watch_ref_rolex_116200",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "116200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116200",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116200"
+ },
+ {
+  "id": "watch_ref_rolex_16233",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "16233",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16233",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016233"
+ },
+ {
+  "id": "watch_ref_rolex_16234",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "16234",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16234",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016234"
+ },
+ {
+  "id": "watch_ref_rolex_1601",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_datejust",
+  "nameAr": "",
+  "nameEn": "1601",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1601",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001601"
+ },
+ {
+  "id": "watch_col_rolex_lady_datejust",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Lady-Datejust",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lady Datejust"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lady-datejust"
+ },
+ {
+  "id": "watch_col_rolex_day_date",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "داي ديت",
+  "nameEn": "Day-Date",
+  "aliasesAr": [
+   "بريزدنت"
+  ],
+  "aliasesEn": [
+   "Day Date",
+   "President"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "day-date"
+ },
+ {
+  "id": "watch_ref_rolex_228238",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "228238",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "228238",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000228238"
+ },
+ {
+  "id": "watch_ref_rolex_228235",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "228235",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "228235",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000228235"
+ },
+ {
+  "id": "watch_ref_rolex_228239",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "228239",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "228239",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000228239"
+ },
+ {
+  "id": "watch_ref_rolex_228206",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "228206",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "228206",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000228206"
+ },
+ {
+  "id": "watch_ref_rolex_128238",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "128238",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "128238",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000128238"
+ },
+ {
+  "id": "watch_ref_rolex_128235",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "128235",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "128235",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000128235"
+ },
+ {
+  "id": "watch_ref_rolex_118238",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "118238",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "118238",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000118238"
+ },
+ {
+  "id": "watch_ref_rolex_118239",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "118239",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "118239",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000118239"
+ },
+ {
+  "id": "watch_ref_rolex_18038",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_day_date",
+  "nameAr": "",
+  "nameEn": "18038",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "18038",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000018038"
+ },
+ {
+  "id": "watch_col_rolex_explorer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "إكسبلورر",
+  "nameEn": "Explorer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "explorer"
+ },
+ {
+  "id": "watch_ref_rolex_124270",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer",
+  "nameAr": "",
+  "nameEn": "124270",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "124270",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000124270"
+ },
+ {
+  "id": "watch_ref_rolex_224270",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer",
+  "nameAr": "",
+  "nameEn": "224270",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "224270",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000224270"
+ },
+ {
+  "id": "watch_ref_rolex_214270",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer",
+  "nameAr": "",
+  "nameEn": "214270",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "214270",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000214270"
+ },
+ {
+  "id": "watch_ref_rolex_1016",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer",
+  "nameAr": "",
+  "nameEn": "1016",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1016",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001016"
+ },
+ {
+  "id": "watch_col_rolex_explorer_ii",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "إكسبلورر 2",
+  "nameEn": "Explorer II",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "explorer ii"
+ },
+ {
+  "id": "watch_ref_rolex_226570",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer_ii",
+  "nameAr": "",
+  "nameEn": "226570",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "226570",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000226570"
+ },
+ {
+  "id": "watch_ref_rolex_216570",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer_ii",
+  "nameAr": "",
+  "nameEn": "216570",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "216570",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000216570"
+ },
+ {
+  "id": "watch_ref_rolex_16570",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer_ii",
+  "nameAr": "",
+  "nameEn": "16570",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16570",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016570"
+ },
+ {
+  "id": "watch_ref_rolex_1655",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_explorer_ii",
+  "nameAr": "",
+  "nameEn": "1655",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1655",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001655"
+ },
+ {
+  "id": "watch_col_rolex_sea_dweller",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Sea-Dweller",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Sea Dweller"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sea-dweller"
+ },
+ {
+  "id": "watch_ref_rolex_126600",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sea_dweller",
+  "nameAr": "",
+  "nameEn": "126600",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126600",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126600"
+ },
+ {
+  "id": "watch_ref_rolex_126603",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sea_dweller",
+  "nameAr": "",
+  "nameEn": "126603",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126603",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126603"
+ },
+ {
+  "id": "watch_ref_rolex_116600",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sea_dweller",
+  "nameAr": "",
+  "nameEn": "116600",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116600",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116600"
+ },
+ {
+  "id": "watch_ref_rolex_16600",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sea_dweller",
+  "nameAr": "",
+  "nameEn": "16600",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16600",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016600"
+ },
+ {
+  "id": "watch_col_rolex_deepsea",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Deepsea",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Sea-Dweller Deepsea"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "deepsea"
+ },
+ {
+  "id": "watch_ref_rolex_136660",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_deepsea",
+  "nameAr": "",
+  "nameEn": "136660",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "136660",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000136660"
+ },
+ {
+  "id": "watch_ref_rolex_126660",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_deepsea",
+  "nameAr": "",
+  "nameEn": "126660",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126660",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126660"
+ },
+ {
+  "id": "watch_ref_rolex_116660",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_deepsea",
+  "nameAr": "",
+  "nameEn": "116660",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116660",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116660"
+ },
+ {
+  "id": "watch_col_rolex_yacht_master",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Yacht-Master",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Yacht Master"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yacht-master"
+ },
+ {
+  "id": "watch_ref_rolex_126622",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "126622",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126622",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126622"
+ },
+ {
+  "id": "watch_ref_rolex_226659",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "226659",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "226659",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000226659"
+ },
+ {
+  "id": "watch_ref_rolex_126655",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "126655",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126655",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126655"
+ },
+ {
+  "id": "watch_ref_rolex_116655",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "116655",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116655",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116655"
+ },
+ {
+  "id": "watch_ref_rolex_268622",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "268622",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "268622",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000268622"
+ },
+ {
+  "id": "watch_ref_rolex_226627",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master",
+  "nameAr": "",
+  "nameEn": "226627",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "226627",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000226627"
+ },
+ {
+  "id": "watch_col_rolex_yacht_master_ii",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Yacht-Master II",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Yacht Master II"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yacht-master ii"
+ },
+ {
+  "id": "watch_ref_rolex_116680",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master_ii",
+  "nameAr": "",
+  "nameEn": "116680",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116680",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116680"
+ },
+ {
+  "id": "watch_ref_rolex_116688",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_yacht_master_ii",
+  "nameAr": "",
+  "nameEn": "116688",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116688",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116688"
+ },
+ {
+  "id": "watch_col_rolex_sky_dweller",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Sky-Dweller",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Sky Dweller"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sky-dweller"
+ },
+ {
+  "id": "watch_ref_rolex_326934",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sky_dweller",
+  "nameAr": "",
+  "nameEn": "326934",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "326934",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000326934"
+ },
+ {
+  "id": "watch_ref_rolex_326933",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sky_dweller",
+  "nameAr": "",
+  "nameEn": "326933",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "326933",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000326933"
+ },
+ {
+  "id": "watch_ref_rolex_326238",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sky_dweller",
+  "nameAr": "",
+  "nameEn": "326238",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "326238",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000326238"
+ },
+ {
+  "id": "watch_ref_rolex_336934",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sky_dweller",
+  "nameAr": "",
+  "nameEn": "336934",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "336934",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000336934"
+ },
+ {
+  "id": "watch_ref_rolex_326135",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_sky_dweller",
+  "nameAr": "",
+  "nameEn": "326135",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "326135",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000326135"
+ },
+ {
+  "id": "watch_col_rolex_oyster_perpetual",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Oyster Perpetual",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "OP"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oyster perpetual"
+ },
+ {
+  "id": "watch_ref_rolex_124300",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_oyster_perpetual",
+  "nameAr": "",
+  "nameEn": "124300",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "124300",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000124300"
+ },
+ {
+  "id": "watch_ref_rolex_126000",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_oyster_perpetual",
+  "nameAr": "",
+  "nameEn": "126000",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126000",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126000"
+ },
+ {
+  "id": "watch_ref_rolex_277200",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_oyster_perpetual",
+  "nameAr": "",
+  "nameEn": "277200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "277200",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000277200"
+ },
+ {
+  "id": "watch_ref_rolex_124200",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_oyster_perpetual",
+  "nameAr": "",
+  "nameEn": "124200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "124200",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000124200"
+ },
+ {
+  "id": "watch_ref_rolex_114300",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_oyster_perpetual",
+  "nameAr": "",
+  "nameEn": "114300",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "114300",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000114300"
+ },
+ {
+  "id": "watch_col_rolex_air_king",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Air-King",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Air King"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "air-king"
+ },
+ {
+  "id": "watch_ref_rolex_126900",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_air_king",
+  "nameAr": "",
+  "nameEn": "126900",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "126900",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000126900"
+ },
+ {
+  "id": "watch_ref_rolex_116900",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_air_king",
+  "nameAr": "",
+  "nameEn": "116900",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116900",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116900"
+ },
+ {
+  "id": "watch_col_rolex_milgauss",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Milgauss",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "milgauss"
+ },
+ {
+  "id": "watch_ref_rolex_116400gv",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_milgauss",
+  "nameAr": "",
+  "nameEn": "116400GV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116400GV",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116400gv"
+ },
+ {
+  "id": "watch_ref_rolex_116400",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_milgauss",
+  "nameAr": "",
+  "nameEn": "116400",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "116400",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000116400"
+ },
+ {
+  "id": "watch_col_rolex_cellini",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Cellini",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cellini"
+ },
+ {
+  "id": "watch_ref_rolex_50505",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_cellini",
+  "nameAr": "",
+  "nameEn": "50505",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "50505",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000050505"
+ },
+ {
+  "id": "watch_ref_rolex_50509",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_cellini",
+  "nameAr": "",
+  "nameEn": "50509",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "50509",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000050509"
+ },
+ {
+  "id": "watch_col_rolex_1908",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "1908",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Perpetual 1908"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001908"
+ },
+ {
+  "id": "watch_ref_rolex_52508",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_1908",
+  "nameAr": "",
+  "nameEn": "52508",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "52508",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000052508"
+ },
+ {
+  "id": "watch_ref_rolex_52509",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_rolex_1908",
+  "nameAr": "",
+  "nameEn": "52509",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "52509",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000052509"
+ },
+ {
+  "id": "watch_col_rolex_pearlmaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rolex",
+  "nameAr": "",
+  "nameEn": "Pearlmaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pearlmaster"
+ },
+ {
+  "id": "watch_col_patek_philippe_nautilus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "نوتيلوس",
+  "nameEn": "Nautilus",
+  "aliasesAr": [
+   "نوتلس"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nautilus"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5711_1a_010",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5711/1A-010",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5711/1A-010",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005711/000000000001a-000000000010"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5711_1a_011",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5711/1A-011",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5711/1A-011",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005711/000000000001a-000000000011"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5711_1a_014",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5711/1A-014",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5711/1A-014",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005711/000000000001a-000000000014"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5711_1r_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5711/1R-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5711/1R-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005711/000000000001r-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5712_1a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5712/1A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5712/1A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005712/000000000001a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5980_1a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5980/1A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5980/1A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005980/000000000001a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5726_1a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5726/1A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5726/1A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005726/000000000001a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5811_1g_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5811/1G-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5811/1G-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005811/000000000001g-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5990_1a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5990/1A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5990/1A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005990/000000000001a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_3700_1a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "3700/1A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "3700/1A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000003700/000000000001a"
+ },
+ {
+  "id": "watch_ref_patek_philippe_7118_1a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "7118/1A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "7118/1A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000007118/000000000001a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5740_1g_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_nautilus",
+  "nameAr": "",
+  "nameEn": "5740/1G-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5740/1G-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005740/000000000001g-000000000001"
+ },
+ {
+  "id": "watch_col_patek_philippe_aquanaut",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "أكوانوت",
+  "nameEn": "Aquanaut",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aquanaut"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5167a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5167A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5167A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005167a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5168g_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5168G-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5168G-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005168g-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5164a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5164A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5164A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005164a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5267_200a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5267/200A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5267/200A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005267/000000000200a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5968a_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5968A-001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5968A-001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005968a-000000000001"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5066a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_aquanaut",
+  "nameAr": "",
+  "nameEn": "5066A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5066A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005066a"
+ },
+ {
+  "id": "watch_col_patek_philippe_calatrava",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "كالاترافا",
+  "nameEn": "Calatrava",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "calatrava"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5196g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "5196G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5196G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005196g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5227g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "5227G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5227G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005227g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_6119g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "6119G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "6119G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000006119g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_6119r",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "6119R",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "6119R",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000006119r"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5226g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "5226G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5226G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005226g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5119g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "5119G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5119G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005119g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_3919",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "3919",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "3919",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000003919"
+ },
+ {
+  "id": "watch_ref_patek_philippe_96",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_calatrava",
+  "nameAr": "",
+  "nameEn": "96",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "96",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000096"
+ },
+ {
+  "id": "watch_col_patek_philippe_grand_complications",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Grand Complications",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grand complications"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5270p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_grand_complications",
+  "nameAr": "",
+  "nameEn": "5270P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5270P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005270p"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5204p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_grand_complications",
+  "nameAr": "",
+  "nameEn": "5204P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5204P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005204p"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5320g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_grand_complications",
+  "nameAr": "",
+  "nameEn": "5320G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5320G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005320g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5370p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_grand_complications",
+  "nameAr": "",
+  "nameEn": "5370P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5370P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005370p"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5327g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_grand_complications",
+  "nameAr": "",
+  "nameEn": "5327G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5327G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005327g"
+ },
+ {
+  "id": "watch_col_patek_philippe_complications",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Complications",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "complications"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5905p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5905P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5905P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005905p"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5930g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5930G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5930G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005930g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5396g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5396G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5396G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005396g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5205g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5205G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5205G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005205g"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5935a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5935A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5935A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005935a"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5524g",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_complications",
+  "nameAr": "",
+  "nameEn": "5524G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5524G",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005524g"
+ },
+ {
+  "id": "watch_col_patek_philippe_gondolo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Gondolo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gondolo"
+ },
+ {
+  "id": "watch_col_patek_philippe_golden_ellipse",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Golden Ellipse",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "golden ellipse"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5738r",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_golden_ellipse",
+  "nameAr": "",
+  "nameEn": "5738R",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5738R",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005738r"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5738p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_golden_ellipse",
+  "nameAr": "",
+  "nameEn": "5738P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5738P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005738p"
+ },
+ {
+  "id": "watch_col_patek_philippe_twenty_4",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Twenty~4",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Twenty 4",
+   "Twenty-4"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "twenty~000000000004"
+ },
+ {
+  "id": "watch_ref_patek_philippe_4910_1200a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_twenty_4",
+  "nameAr": "",
+  "nameEn": "4910/1200A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "4910/1200A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000004910/000000001200a"
+ },
+ {
+  "id": "watch_ref_patek_philippe_7300_1200a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_twenty_4",
+  "nameAr": "",
+  "nameEn": "7300/1200A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "7300/1200A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000007300/000000001200a"
+ },
+ {
+  "id": "watch_col_patek_philippe_cubitus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_patek_philippe",
+  "nameAr": "",
+  "nameEn": "Cubitus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cubitus"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5821_1a",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_cubitus",
+  "nameAr": "",
+  "nameEn": "5821/1A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5821/1A",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005821/000000000001a"
+ },
+ {
+  "id": "watch_ref_patek_philippe_5822p",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_patek_philippe_cubitus",
+  "nameAr": "",
+  "nameEn": "5822P",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5822P",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005822p"
+ },
+ {
+  "id": "watch_col_audemars_piguet_royal_oak",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "رويال أوك",
+  "nameEn": "Royal Oak",
+  "aliasesAr": [
+   "رويال اوك"
+  ],
+  "aliasesEn": [
+   "RO",
+   "Jumbo"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "royal oak"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15202st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15202ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15202ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015202st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_16202st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "16202ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16202ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000016202st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15500st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15500ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15500ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015500st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15510st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15510ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15510ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015510st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15400st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15400ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15400ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015400st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15450st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15450ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15450ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015450st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15300st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "15300ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15300ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015300st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_14790st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "14790ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "14790ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000014790st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_5402st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "5402ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "5402ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005402st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26240st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "26240ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26240ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026240st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26331st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "26331ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26331ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026331st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26320st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "26320ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26320ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026320st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26574st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "26574ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26574ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026574st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_77350st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak",
+  "nameAr": "",
+  "nameEn": "77350ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "77350ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000077350st"
+ },
+ {
+  "id": "watch_col_audemars_piguet_royal_oak_offshore",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "",
+  "nameEn": "Royal Oak Offshore",
+  "aliasesAr": [
+   "أوفشور"
+  ],
+  "aliasesEn": [
+   "ROO",
+   "Offshore"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "royal oak offshore"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26470st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak_offshore",
+  "nameAr": "",
+  "nameEn": "26470ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26470ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026470st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26420",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak_offshore",
+  "nameAr": "",
+  "nameEn": "26420",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26420",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026420"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15710st",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak_offshore",
+  "nameAr": "",
+  "nameEn": "15710ST",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15710ST",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015710st"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26405ce",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak_offshore",
+  "nameAr": "",
+  "nameEn": "26405CE",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26405CE",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026405ce"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_25940sk",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_royal_oak_offshore",
+  "nameAr": "",
+  "nameEn": "25940SK",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "25940SK",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000025940sk"
+ },
+ {
+  "id": "watch_col_audemars_piguet_royal_oak_concept",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "",
+  "nameEn": "Royal Oak Concept",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "royal oak concept"
+ },
+ {
+  "id": "watch_col_audemars_piguet_code_11_59",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "",
+  "nameEn": "Code 11.59",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Code 1159",
+   "CODE 11.59 by Audemars Piguet"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "code 000000000011.000000000059"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_15210",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_code_11_59",
+  "nameAr": "",
+  "nameEn": "15210",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "15210",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000015210"
+ },
+ {
+  "id": "watch_ref_audemars_piguet_26393",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_audemars_piguet_code_11_59",
+  "nameAr": "",
+  "nameEn": "26393",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "26393",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000026393"
+ },
+ {
+  "id": "watch_col_audemars_piguet_millenary",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "",
+  "nameEn": "Millenary",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "millenary"
+ },
+ {
+  "id": "watch_col_audemars_piguet_jules_audemars",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_audemars_piguet",
+  "nameAr": "",
+  "nameEn": "Jules Audemars",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jules audemars"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_overseas",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "أوفرسيز",
+  "nameEn": "Overseas",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "overseas"
+ },
+ {
+  "id": "watch_ref_vacheron_constantin_4500v_110a_b128",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_vacheron_constantin_overseas",
+  "nameAr": "",
+  "nameEn": "4500V/110A-B128",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "4500V/110A-B128",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000004500v/000000000110a-b000000000128"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_patrimony",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "",
+  "nameEn": "Patrimony",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "patrimony"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_traditionnelle",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "",
+  "nameEn": "Traditionnelle",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "traditionnelle"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_historiques",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "",
+  "nameEn": "Historiques",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "historiques"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_fiftysix",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "",
+  "nameEn": "Fiftysix",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Fifty Six"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fiftysix"
+ },
+ {
+  "id": "watch_col_vacheron_constantin_egerie",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_vacheron_constantin",
+  "nameAr": "",
+  "nameEn": "Égérie",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Egerie"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "égérie"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_lange_1",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "Lange 1",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lange 000000000001"
+ },
+ {
+  "id": "watch_ref_a_lange_sohne_191_032",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_a_lange_sohne_lange_1",
+  "nameAr": "",
+  "nameEn": "191.032",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "191.032",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000191.000000000032"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_saxonia",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "Saxonia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "saxonia"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_1815",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "1815",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001815"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_zeitwerk",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "Zeitwerk",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zeitwerk"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_datograph",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "Datograph",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "datograph"
+ },
+ {
+  "id": "watch_col_a_lange_sohne_odysseus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_a_lange_sohne",
+  "nameAr": "",
+  "nameEn": "Odysseus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "odysseus"
+ },
+ {
+  "id": "watch_col_breguet_classique",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Classique",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "classique"
+ },
+ {
+  "id": "watch_col_breguet_marine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Marine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "marine"
+ },
+ {
+  "id": "watch_col_breguet_type_xx",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Type XX",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Type 20",
+   "Type XXI",
+   "Type XXII"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "type xx"
+ },
+ {
+  "id": "watch_col_breguet_tradition",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Tradition",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tradition"
+ },
+ {
+  "id": "watch_col_breguet_reine_de_naples",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Reine de Naples",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "reine de naples"
+ },
+ {
+  "id": "watch_col_breguet_heritage",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breguet",
+  "nameAr": "",
+  "nameEn": "Héritage",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Heritage"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "héritage"
+ },
+ {
+  "id": "watch_col_blancpain_fifty_fathoms",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_blancpain",
+  "nameAr": "",
+  "nameEn": "Fifty Fathoms",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "50 Fathoms"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fifty fathoms"
+ },
+ {
+  "id": "watch_col_blancpain_villeret",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_blancpain",
+  "nameAr": "",
+  "nameEn": "Villeret",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "villeret"
+ },
+ {
+  "id": "watch_col_blancpain_air_command",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_blancpain",
+  "nameAr": "",
+  "nameEn": "Air Command",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "air command"
+ },
+ {
+  "id": "watch_col_blancpain_ladybird",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_blancpain",
+  "nameAr": "",
+  "nameEn": "Ladybird",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ladybird"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_reverso",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "ريفيرسو",
+  "nameEn": "Reverso",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "reverso"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_master_ultra_thin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "",
+  "nameEn": "Master Ultra Thin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "master ultra thin"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_master_control",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "",
+  "nameEn": "Master Control",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "master control"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_polaris",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "",
+  "nameEn": "Polaris",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "polaris"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_rendez_vous",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "",
+  "nameEn": "Rendez-Vous",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rendez-vous"
+ },
+ {
+  "id": "watch_col_jaeger_lecoultre_duometre",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jaeger_lecoultre",
+  "nameAr": "",
+  "nameEn": "Duomètre",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Duometre"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "duomètre"
+ },
+ {
+  "id": "watch_col_cartier_santos",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "سانتوس",
+  "nameEn": "Santos",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Santos de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "santos"
+ },
+ {
+  "id": "watch_col_cartier_santos_dumont",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Santos-Dumont",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "santos-dumont"
+ },
+ {
+  "id": "watch_col_cartier_tank",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "تانك",
+  "nameEn": "Tank",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Tank Must",
+   "Tank Française",
+   "Tank Louis Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tank"
+ },
+ {
+  "id": "watch_col_cartier_ballon_bleu",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "بالون بلو",
+  "nameEn": "Ballon Bleu",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ballon Bleu de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ballon bleu"
+ },
+ {
+  "id": "watch_col_cartier_pasha",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "باشا",
+  "nameEn": "Pasha",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Pasha de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pasha"
+ },
+ {
+  "id": "watch_col_cartier_panthere",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Panthère",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Panthere",
+   "Panthère de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "panthère"
+ },
+ {
+  "id": "watch_col_cartier_drive",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Drive",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Drive de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "drive"
+ },
+ {
+  "id": "watch_col_cartier_baignoire",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Baignoire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "baignoire"
+ },
+ {
+  "id": "watch_col_cartier_rotonde",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Rotonde",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Rotonde de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rotonde"
+ },
+ {
+  "id": "watch_col_cartier_calibre",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Calibre de Cartier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "calibre de cartier"
+ },
+ {
+  "id": "watch_col_cartier_ronde",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Ronde",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ronde Must",
+   "Ronde Solo"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ronde"
+ },
+ {
+  "id": "watch_col_cartier_crash",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Crash",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "crash"
+ },
+ {
+  "id": "watch_col_cartier_cle",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Clé",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Cle de Cartier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "clé"
+ },
+ {
+  "id": "watch_col_cartier_tortue",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Tortue",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tortue"
+ },
+ {
+  "id": "watch_col_omega_speedmaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_omega",
+  "nameAr": "سبيدماستر",
+  "nameEn": "Speedmaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "speedmaster"
+ },
+ {
+  "id": "watch_model_omega_moonwatch",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_omega_speedmaster",
+  "nameAr": "",
+  "nameEn": "Speedmaster Moonwatch",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Moonwatch",
+   "Speedmaster Professional"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "speedmaster moonwatch"
+ },
+ {
+  "id": "watch_ref_omega_310_30_42_50_01_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "310.30.42.50.01.001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "310.30.42.50.01.001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000310.000000000030.000000000042.000000000050.000000000001.000000000001"
+ },
+ {
+  "id": "watch_ref_omega_310_30_42_50_01_002",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "310.30.42.50.01.002",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "310.30.42.50.01.002",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000310.000000000030.000000000042.000000000050.000000000001.000000000002"
+ },
+ {
+  "id": "watch_ref_omega_311_30_42_30_01_005",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "311.30.42.30.01.005",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "311.30.42.30.01.005",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000311.000000000030.000000000042.000000000030.000000000001.000000000005"
+ },
+ {
+  "id": "watch_ref_omega_3570_50_00",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "3570.50.00",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "3570.50.00",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000003570.000000000050.000000000000"
+ },
+ {
+  "id": "watch_ref_omega_145_022",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "145.022",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "145.022",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000145.000000000022"
+ },
+ {
+  "id": "watch_ref_omega_105_012",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_moonwatch",
+  "nameAr": "",
+  "nameEn": "105.012",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "105.012",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000105.000000000012"
+ },
+ {
+  "id": "watch_col_omega_seamaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_omega",
+  "nameAr": "سيماستر",
+  "nameEn": "Seamaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seamaster"
+ },
+ {
+  "id": "watch_model_omega_diver_300m",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_omega_seamaster",
+  "nameAr": "",
+  "nameEn": "Seamaster Diver 300M",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Diver 300M",
+   "SMP"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seamaster diver 000000000300m"
+ },
+ {
+  "id": "watch_ref_omega_210_30_42_20_01_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_diver_300m",
+  "nameAr": "",
+  "nameEn": "210.30.42.20.01.001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "210.30.42.20.01.001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000210.000000000030.000000000042.000000000020.000000000001.000000000001"
+ },
+ {
+  "id": "watch_ref_omega_210_30_42_20_03_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_diver_300m",
+  "nameAr": "",
+  "nameEn": "210.30.42.20.03.001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "210.30.42.20.03.001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000210.000000000030.000000000042.000000000020.000000000003.000000000001"
+ },
+ {
+  "id": "watch_ref_omega_2254_50_00",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_diver_300m",
+  "nameAr": "",
+  "nameEn": "2254.50.00",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "2254.50.00",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000002254.000000000050.000000000000"
+ },
+ {
+  "id": "watch_ref_omega_2531_80_00",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_diver_300m",
+  "nameAr": "",
+  "nameEn": "2531.80.00",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "2531.80.00",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000002531.000000000080.000000000000"
+ },
+ {
+  "id": "watch_model_omega_planet_ocean",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_omega_seamaster",
+  "nameAr": "",
+  "nameEn": "Seamaster Planet Ocean",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Planet Ocean"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seamaster planet ocean"
+ },
+ {
+  "id": "watch_ref_omega_215_30_44_21_01_001",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_model_omega_planet_ocean",
+  "nameAr": "",
+  "nameEn": "215.30.44.21.01.001",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "215.30.44.21.01.001",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000215.000000000030.000000000044.000000000021.000000000001.000000000001"
+ },
+ {
+  "id": "watch_model_omega_aqua_terra",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_omega_seamaster",
+  "nameAr": "",
+  "nameEn": "Seamaster Aqua Terra",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Aqua Terra"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seamaster aqua terra"
+ },
+ {
+  "id": "watch_col_omega_constellation",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_omega",
+  "nameAr": "كونستليشن",
+  "nameEn": "Constellation",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "constellation"
+ },
+ {
+  "id": "watch_col_omega_de_ville",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_omega",
+  "nameAr": "دي فيل",
+  "nameEn": "De Ville",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "de ville"
+ },
+ {
+  "id": "watch_col_tudor_black_bay",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tudor",
+  "nameAr": "بلاك باي",
+  "nameEn": "Black Bay",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "black bay"
+ },
+ {
+  "id": "watch_ref_tudor_79230n",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay",
+  "nameAr": "",
+  "nameEn": "79230N",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79230N",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079230n"
+ },
+ {
+  "id": "watch_ref_tudor_79230b",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay",
+  "nameAr": "",
+  "nameEn": "79230B",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79230B",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079230b"
+ },
+ {
+  "id": "watch_ref_tudor_79230r",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay",
+  "nameAr": "",
+  "nameEn": "79230R",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79230R",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079230r"
+ },
+ {
+  "id": "watch_ref_tudor_79830rb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay",
+  "nameAr": "",
+  "nameEn": "79830RB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79830RB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079830rb"
+ },
+ {
+  "id": "watch_col_tudor_black_bay_58",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tudor",
+  "nameAr": "",
+  "nameEn": "Black Bay 58",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "BB58",
+   "Fifty-Eight"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "black bay 000000000058"
+ },
+ {
+  "id": "watch_ref_tudor_79030n",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay_58",
+  "nameAr": "",
+  "nameEn": "79030N",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79030N",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079030n"
+ },
+ {
+  "id": "watch_ref_tudor_79030b",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_black_bay_58",
+  "nameAr": "",
+  "nameEn": "79030B",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "79030B",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000079030b"
+ },
+ {
+  "id": "watch_col_tudor_pelagos",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tudor",
+  "nameAr": "",
+  "nameEn": "Pelagos",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pelagos"
+ },
+ {
+  "id": "watch_ref_tudor_25600tn",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_pelagos",
+  "nameAr": "",
+  "nameEn": "25600TN",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "25600TN",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000025600tn"
+ },
+ {
+  "id": "watch_ref_tudor_25600tb",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_pelagos",
+  "nameAr": "",
+  "nameEn": "25600TB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "25600TB",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000025600tb"
+ },
+ {
+  "id": "watch_ref_tudor_25407n",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_tudor_pelagos",
+  "nameAr": "",
+  "nameEn": "25407N",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "25407N",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000025407n"
+ },
+ {
+  "id": "watch_col_tudor_ranger",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tudor",
+  "nameAr": "",
+  "nameEn": "Ranger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ranger"
+ },
+ {
+  "id": "watch_col_tudor_royal",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tudor",
+  "nameAr": "",
+  "nameEn": "Royal",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "royal"
+ },
+ {
+  "id": "watch_col_iwc_portugieser",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Portugieser",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Portuguese"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "portugieser"
+ },
+ {
+  "id": "watch_ref_iwc_iw371446",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_iwc_portugieser",
+  "nameAr": "",
+  "nameEn": "IW371446",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "IW371446",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iw000000371446"
+ },
+ {
+  "id": "watch_ref_iwc_iw371617",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_iwc_portugieser",
+  "nameAr": "",
+  "nameEn": "IW371617",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "IW371617",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iw000000371617"
+ },
+ {
+  "id": "watch_col_iwc_pilots_watches",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Pilot's Watches",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Pilot",
+   "Big Pilot",
+   "Mark XX"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pilot's watches"
+ },
+ {
+  "id": "watch_col_iwc_portofino",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Portofino",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "portofino"
+ },
+ {
+  "id": "watch_col_iwc_ingenieur",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Ingenieur",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ingenieur"
+ },
+ {
+  "id": "watch_col_iwc_aquatimer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Aquatimer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aquatimer"
+ },
+ {
+  "id": "watch_col_iwc_da_vinci",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_iwc",
+  "nameAr": "",
+  "nameEn": "Da Vinci",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "da vinci"
+ },
+ {
+  "id": "watch_col_panerai_luminor",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_panerai",
+  "nameAr": "لومينور",
+  "nameEn": "Luminor",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "luminor"
+ },
+ {
+  "id": "watch_ref_panerai_pam00111",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_panerai_luminor",
+  "nameAr": "",
+  "nameEn": "PAM00111",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PAM00111",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pam000000000111"
+ },
+ {
+  "id": "watch_ref_panerai_pam01312",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_panerai_luminor",
+  "nameAr": "",
+  "nameEn": "PAM01312",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PAM01312",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pam000000001312"
+ },
+ {
+  "id": "watch_ref_panerai_pam00372",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_panerai_luminor",
+  "nameAr": "",
+  "nameEn": "PAM00372",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PAM00372",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pam000000000372"
+ },
+ {
+  "id": "watch_col_panerai_luminor_due",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_panerai",
+  "nameAr": "",
+  "nameEn": "Luminor Due",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "luminor due"
+ },
+ {
+  "id": "watch_col_panerai_radiomir",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_panerai",
+  "nameAr": "",
+  "nameEn": "Radiomir",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "radiomir"
+ },
+ {
+  "id": "watch_col_panerai_submersible",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_panerai",
+  "nameAr": "",
+  "nameEn": "Submersible",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "submersible"
+ },
+ {
+  "id": "watch_col_breitling_navitimer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "نافيتايمر",
+  "nameEn": "Navitimer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "navitimer"
+ },
+ {
+  "id": "watch_col_breitling_chronomat",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Chronomat",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chronomat"
+ },
+ {
+  "id": "watch_col_breitling_superocean",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Superocean",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "superocean"
+ },
+ {
+  "id": "watch_col_breitling_avenger",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Avenger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "avenger"
+ },
+ {
+  "id": "watch_col_breitling_premier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Premier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "premier"
+ },
+ {
+  "id": "watch_col_breitling_top_time",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Top Time",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "top time"
+ },
+ {
+  "id": "watch_col_breitling_endurance_pro",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_breitling",
+  "nameAr": "",
+  "nameEn": "Endurance Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "endurance pro"
+ },
+ {
+  "id": "watch_col_tag_heuer_carrera",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "كاريرا",
+  "nameEn": "Carrera",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "carrera"
+ },
+ {
+  "id": "watch_col_tag_heuer_monaco",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "موناكو",
+  "nameEn": "Monaco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "monaco"
+ },
+ {
+  "id": "watch_col_tag_heuer_aquaracer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "",
+  "nameEn": "Aquaracer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aquaracer"
+ },
+ {
+  "id": "watch_col_tag_heuer_formula_1",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "",
+  "nameEn": "Formula 1",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "formula 000000000001"
+ },
+ {
+  "id": "watch_col_tag_heuer_autavia",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "",
+  "nameEn": "Autavia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "autavia"
+ },
+ {
+  "id": "watch_col_tag_heuer_link",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tag_heuer",
+  "nameAr": "",
+  "nameEn": "Link",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "link"
+ },
+ {
+  "id": "watch_col_zenith_chronomaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_zenith",
+  "nameAr": "",
+  "nameEn": "Chronomaster",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "El Primero"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chronomaster"
+ },
+ {
+  "id": "watch_col_zenith_defy",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_zenith",
+  "nameAr": "",
+  "nameEn": "Defy",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "defy"
+ },
+ {
+  "id": "watch_col_zenith_pilot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_zenith",
+  "nameAr": "",
+  "nameEn": "Pilot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pilot"
+ },
+ {
+  "id": "watch_col_zenith_elite",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_zenith",
+  "nameAr": "",
+  "nameEn": "Elite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elite"
+ },
+ {
+  "id": "watch_col_hublot_big_bang",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hublot",
+  "nameAr": "بيغ بانغ",
+  "nameEn": "Big Bang",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "big bang"
+ },
+ {
+  "id": "watch_col_hublot_classic_fusion",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hublot",
+  "nameAr": "",
+  "nameEn": "Classic Fusion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "classic fusion"
+ },
+ {
+  "id": "watch_col_hublot_spirit_of_big_bang",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hublot",
+  "nameAr": "",
+  "nameEn": "Spirit of Big Bang",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spirit of big bang"
+ },
+ {
+  "id": "watch_col_hublot_square_bang",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hublot",
+  "nameAr": "",
+  "nameEn": "Square Bang",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "square bang"
+ },
+ {
+  "id": "watch_col_hublot_mp",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hublot",
+  "nameAr": "",
+  "nameEn": "MP Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mp collection"
+ },
+ {
+  "id": "watch_col_richard_mille_rm_models",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_richard_mille",
+  "nameAr": "",
+  "nameEn": "RM Models",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "RM"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm models"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_010",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 010",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 010",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000010"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_011",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 011",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 011",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000011"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_027",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 027",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 027",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000027"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_035",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 035",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 035",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000035"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_055",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 055",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 055",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000055"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_67_01",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 67-01",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 67-01",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000067-000000000001"
+ },
+ {
+  "id": "watch_ref_richard_mille_rm_72_01",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_richard_mille_rm_models",
+  "nameAr": "",
+  "nameEn": "RM 72-01",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "RM 72-01",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rm 000000000072-000000000001"
+ },
+ {
+  "id": "watch_col_chopard_alpine_eagle",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Alpine Eagle",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alpine eagle"
+ },
+ {
+  "id": "watch_col_chopard_happy_sport",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Happy Sport",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "happy sport"
+ },
+ {
+  "id": "watch_col_chopard_happy_diamonds",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Happy Diamonds",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "happy diamonds"
+ },
+ {
+  "id": "watch_col_chopard_luc",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_chopard",
+  "nameAr": "",
+  "nameEn": "L.U.C",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "LUC"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "l.u.c"
+ },
+ {
+  "id": "watch_col_chopard_mille_miglia",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Mille Miglia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mille miglia"
+ },
+ {
+  "id": "watch_col_bulgari_octo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Octo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "octo"
+ },
+ {
+  "id": "watch_model_bulgari_octo_finissimo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "model",
+  "parentId": "watch_col_bulgari_octo",
+  "nameAr": "",
+  "nameEn": "Octo Finissimo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "octo finissimo"
+ },
+ {
+  "id": "watch_col_bulgari_serpenti",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Serpenti",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "serpenti"
+ },
+ {
+  "id": "watch_col_bulgari_bulgari_bulgari",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Bvlgari Bvlgari",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bulgari Bulgari"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bvlgari bvlgari"
+ },
+ {
+  "id": "watch_col_bulgari_aluminium",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Aluminium",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aluminium"
+ },
+ {
+  "id": "watch_col_piaget_polo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_piaget",
+  "nameAr": "",
+  "nameEn": "Polo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "polo"
+ },
+ {
+  "id": "watch_col_piaget_altiplano",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_piaget",
+  "nameAr": "",
+  "nameEn": "Altiplano",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "altiplano"
+ },
+ {
+  "id": "watch_col_piaget_possession",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_piaget",
+  "nameAr": "",
+  "nameEn": "Possession",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "possession"
+ },
+ {
+  "id": "watch_col_piaget_limelight",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_piaget",
+  "nameAr": "",
+  "nameEn": "Limelight",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "limelight"
+ },
+ {
+  "id": "watch_col_hermes_arceau",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hermes",
+  "nameAr": "",
+  "nameEn": "Arceau",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "arceau"
+ },
+ {
+  "id": "watch_col_hermes_cape_cod",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hermes",
+  "nameAr": "",
+  "nameEn": "Cape Cod",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cape cod"
+ },
+ {
+  "id": "watch_col_hermes_h08",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hermes",
+  "nameAr": "",
+  "nameEn": "H08",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h000000000008"
+ },
+ {
+  "id": "watch_col_hermes_slim",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hermes",
+  "nameAr": "",
+  "nameEn": "Slim d'Hermès",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "slim d'hermès"
+ },
+ {
+  "id": "watch_col_longines_master_collection",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "Master Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "master collection"
+ },
+ {
+  "id": "watch_col_longines_conquest",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "Conquest",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "conquest"
+ },
+ {
+  "id": "watch_col_longines_hydroconquest",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "HydroConquest",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hydroconquest"
+ },
+ {
+  "id": "watch_col_longines_spirit",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "Spirit",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spirit"
+ },
+ {
+  "id": "watch_col_longines_legend_diver",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "Legend Diver",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "legend diver"
+ },
+ {
+  "id": "watch_col_longines_dolcevita",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "DolceVita",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dolcevita"
+ },
+ {
+  "id": "watch_col_longines_heritage",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_longines",
+  "nameAr": "",
+  "nameEn": "Heritage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "heritage"
+ },
+ {
+  "id": "watch_col_tissot_prx",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "PRX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "prx"
+ },
+ {
+  "id": "watch_col_tissot_seastar",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "Seastar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seastar"
+ },
+ {
+  "id": "watch_col_tissot_le_locle",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "Le Locle",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "le locle"
+ },
+ {
+  "id": "watch_col_tissot_gentleman",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "Gentleman",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gentleman"
+ },
+ {
+  "id": "watch_col_tissot_visodate",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "Visodate",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "visodate"
+ },
+ {
+  "id": "watch_col_tissot_t_touch",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_tissot",
+  "nameAr": "",
+  "nameEn": "T-Touch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "t-touch"
+ },
+ {
+  "id": "watch_col_hamilton_khaki_field",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hamilton",
+  "nameAr": "",
+  "nameEn": "Khaki Field",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "khaki field"
+ },
+ {
+  "id": "watch_col_hamilton_khaki_aviation",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hamilton",
+  "nameAr": "",
+  "nameEn": "Khaki Aviation",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "khaki aviation"
+ },
+ {
+  "id": "watch_col_hamilton_jazzmaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hamilton",
+  "nameAr": "",
+  "nameEn": "Jazzmaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jazzmaster"
+ },
+ {
+  "id": "watch_col_hamilton_ventura",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hamilton",
+  "nameAr": "",
+  "nameEn": "Ventura",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ventura"
+ },
+ {
+  "id": "watch_col_hamilton_american_classic",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_hamilton",
+  "nameAr": "",
+  "nameEn": "American Classic",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "american classic"
+ },
+ {
+  "id": "watch_col_oris_aquis",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_oris",
+  "nameAr": "",
+  "nameEn": "Aquis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aquis"
+ },
+ {
+  "id": "watch_col_oris_divers_sixty_five",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_oris",
+  "nameAr": "",
+  "nameEn": "Divers Sixty-Five",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "divers sixty-five"
+ },
+ {
+  "id": "watch_col_oris_big_crown",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_oris",
+  "nameAr": "",
+  "nameEn": "Big Crown",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "big crown"
+ },
+ {
+  "id": "watch_col_oris_propilot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_oris",
+  "nameAr": "",
+  "nameEn": "ProPilot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "propilot"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_tangente",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Tangente",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tangente"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_orion",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Orion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "orion"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_club",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Club",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "club"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_metro",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Metro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "metro"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_ahoi",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Ahoi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ahoi"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_tetra",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Tetra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tetra"
+ },
+ {
+  "id": "watch_col_nomos_glashutte_ludwig",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_nomos_glashutte",
+  "nameAr": "",
+  "nameEn": "Ludwig",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ludwig"
+ },
+ {
+  "id": "watch_col_glashutte_original_senator",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_glashutte_original",
+  "nameAr": "",
+  "nameEn": "Senator",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "senator"
+ },
+ {
+  "id": "watch_col_glashutte_original_panomatic",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_glashutte_original",
+  "nameAr": "",
+  "nameEn": "Pano",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "PanoMatic",
+   "PanoReserve"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pano"
+ },
+ {
+  "id": "watch_col_glashutte_original_seaq",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_glashutte_original",
+  "nameAr": "",
+  "nameEn": "SeaQ",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seaq"
+ },
+ {
+  "id": "watch_col_glashutte_original_sixties",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_glashutte_original",
+  "nameAr": "",
+  "nameEn": "Sixties",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sixties"
+ },
+ {
+  "id": "watch_col_grand_seiko_heritage",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_grand_seiko",
+  "nameAr": "",
+  "nameEn": "Heritage Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "heritage collection"
+ },
+ {
+  "id": "watch_ref_grand_seiko_sbga211",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_grand_seiko_heritage",
+  "nameAr": "",
+  "nameEn": "SBGA211",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SBGA211",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sbga000000000211"
+ },
+ {
+  "id": "watch_ref_grand_seiko_sbgw231",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_grand_seiko_heritage",
+  "nameAr": "",
+  "nameEn": "SBGW231",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SBGW231",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sbgw000000000231"
+ },
+ {
+  "id": "watch_col_grand_seiko_evolution_9",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_grand_seiko",
+  "nameAr": "",
+  "nameEn": "Evolution 9",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "evolution 000000000009"
+ },
+ {
+  "id": "watch_ref_grand_seiko_slgh005",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_grand_seiko_evolution_9",
+  "nameAr": "",
+  "nameEn": "SLGH005",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SLGH005",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "slgh000000000005"
+ },
+ {
+  "id": "watch_col_grand_seiko_sport",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_grand_seiko",
+  "nameAr": "",
+  "nameEn": "Sport Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sport collection"
+ },
+ {
+  "id": "watch_col_grand_seiko_elegance",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_grand_seiko",
+  "nameAr": "",
+  "nameEn": "Elegance Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elegance collection"
+ },
+ {
+  "id": "watch_col_grand_seiko_masterpiece",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_grand_seiko",
+  "nameAr": "",
+  "nameEn": "Masterpiece Collection",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "masterpiece collection"
+ },
+ {
+  "id": "watch_col_seiko_prospex",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_seiko",
+  "nameAr": "",
+  "nameEn": "Prospex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "prospex"
+ },
+ {
+  "id": "watch_ref_seiko_spb143",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_seiko_prospex",
+  "nameAr": "",
+  "nameEn": "SPB143",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SPB143",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spb000000000143"
+ },
+ {
+  "id": "watch_col_seiko_presage",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_seiko",
+  "nameAr": "",
+  "nameEn": "Presage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "presage"
+ },
+ {
+  "id": "watch_col_seiko_seiko_5_sports",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_seiko",
+  "nameAr": "",
+  "nameEn": "5 Sports",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Seiko 5"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000005 sports"
+ },
+ {
+  "id": "watch_col_seiko_astron",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_seiko",
+  "nameAr": "",
+  "nameEn": "Astron",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "astron"
+ },
+ {
+  "id": "watch_col_seiko_divers_classic",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_seiko",
+  "nameAr": "",
+  "nameEn": "Diver's (classic)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "diver's (classic)"
+ },
+ {
+  "id": "watch_ref_seiko_skx007",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_seiko_divers_classic",
+  "nameAr": "",
+  "nameEn": "SKX007",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SKX007",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "skx000000000007"
+ },
+ {
+  "id": "watch_ref_seiko_skx009",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_seiko_divers_classic",
+  "nameAr": "",
+  "nameEn": "SKX009",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SKX009",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "skx000000000009"
+ },
+ {
+  "id": "watch_col_casio_edifice",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_casio",
+  "nameAr": "",
+  "nameEn": "Edifice",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "edifice"
+ },
+ {
+  "id": "watch_col_casio_pro_trek",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_casio",
+  "nameAr": "",
+  "nameEn": "Pro Trek",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pro trek"
+ },
+ {
+  "id": "watch_col_casio_oceanus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_casio",
+  "nameAr": "",
+  "nameEn": "Oceanus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oceanus"
+ },
+ {
+  "id": "watch_col_g_shock_g_shock_models",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_g_shock",
+  "nameAr": "",
+  "nameEn": "G-Shock Models",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g-shock models"
+ },
+ {
+  "id": "watch_ref_g_shock_dw_5600",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_g_shock_g_shock_models",
+  "nameAr": "",
+  "nameEn": "DW-5600",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "DW-5600",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dw-000000005600"
+ },
+ {
+  "id": "watch_ref_g_shock_ga_2100",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_g_shock_g_shock_models",
+  "nameAr": "",
+  "nameEn": "GA-2100",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "GA-2100",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ga-000000002100"
+ },
+ {
+  "id": "watch_ref_g_shock_gmw_b5000",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_g_shock_g_shock_models",
+  "nameAr": "",
+  "nameEn": "GMW-B5000",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "GMW-B5000",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gmw-b000000005000"
+ },
+ {
+  "id": "watch_col_citizen_promaster",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_citizen",
+  "nameAr": "",
+  "nameEn": "Promaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "promaster"
+ },
+ {
+  "id": "watch_col_citizen_series_8",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_citizen",
+  "nameAr": "",
+  "nameEn": "Series 8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "series 000000000008"
+ },
+ {
+  "id": "watch_col_citizen_tsuyosa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_citizen",
+  "nameAr": "",
+  "nameEn": "Tsuyosa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tsuyosa"
+ },
+ {
+  "id": "watch_col_citizen_attesa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_citizen",
+  "nameAr": "",
+  "nameEn": "Attesa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "attesa"
+ },
+ {
+  "id": "watch_col_orient_bambino",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_orient",
+  "nameAr": "",
+  "nameEn": "Bambino",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bambino"
+ },
+ {
+  "id": "watch_col_orient_kamasu",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_orient",
+  "nameAr": "",
+  "nameEn": "Kamasu",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kamasu"
+ },
+ {
+  "id": "watch_col_orient_mako",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_orient",
+  "nameAr": "",
+  "nameEn": "Mako",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mako"
+ },
+ {
+  "id": "watch_col_rado_captain_cook",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rado",
+  "nameAr": "",
+  "nameEn": "Captain Cook",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "captain cook"
+ },
+ {
+  "id": "watch_col_rado_true",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rado",
+  "nameAr": "",
+  "nameEn": "True",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "true"
+ },
+ {
+  "id": "watch_col_rado_diastar",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rado",
+  "nameAr": "",
+  "nameEn": "DiaStar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "diastar"
+ },
+ {
+  "id": "watch_col_rado_centrix",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_rado",
+  "nameAr": "",
+  "nameEn": "Centrix",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "centrix"
+ },
+ {
+  "id": "watch_col_bell_ross_br_03",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bell_ross",
+  "nameAr": "",
+  "nameEn": "BR 03",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "br 000000000003"
+ },
+ {
+  "id": "watch_col_bell_ross_br_05",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bell_ross",
+  "nameAr": "",
+  "nameEn": "BR 05",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "br 000000000005"
+ },
+ {
+  "id": "watch_col_bell_ross_br_v2",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_bell_ross",
+  "nameAr": "",
+  "nameEn": "BR V2",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "br v000000000002"
+ },
+ {
+  "id": "watch_col_frederique_constant_classics",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_frederique_constant",
+  "nameAr": "",
+  "nameEn": "Classics",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "classics"
+ },
+ {
+  "id": "watch_col_frederique_constant_highlife",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_frederique_constant",
+  "nameAr": "",
+  "nameEn": "Highlife",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "highlife"
+ },
+ {
+  "id": "watch_col_frederique_constant_slimline",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_frederique_constant",
+  "nameAr": "",
+  "nameEn": "Slimline",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "slimline"
+ },
+ {
+  "id": "watch_col_montblanc_1858",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_montblanc",
+  "nameAr": "",
+  "nameEn": "1858",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001858"
+ },
+ {
+  "id": "watch_col_montblanc_star_legacy",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_montblanc",
+  "nameAr": "",
+  "nameEn": "Star Legacy",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "star legacy"
+ },
+ {
+  "id": "watch_col_montblanc_heritage",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_montblanc",
+  "nameAr": "",
+  "nameEn": "Heritage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "heritage"
+ },
+ {
+  "id": "watch_col_montblanc_timewalker",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_montblanc",
+  "nameAr": "",
+  "nameEn": "TimeWalker",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "timewalker"
+ },
+ {
+  "id": "watch_col_ulysse_nardin_marine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_ulysse_nardin",
+  "nameAr": "",
+  "nameEn": "Marine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "marine"
+ },
+ {
+  "id": "watch_col_ulysse_nardin_freak",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_ulysse_nardin",
+  "nameAr": "",
+  "nameEn": "Freak",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "freak"
+ },
+ {
+  "id": "watch_col_ulysse_nardin_diver",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_ulysse_nardin",
+  "nameAr": "",
+  "nameEn": "Diver",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "diver"
+ },
+ {
+  "id": "watch_col_ulysse_nardin_blast",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_ulysse_nardin",
+  "nameAr": "",
+  "nameEn": "Blast",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "blast"
+ },
+ {
+  "id": "watch_col_girard_perregaux_laureato",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_girard_perregaux",
+  "nameAr": "",
+  "nameEn": "Laureato",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "laureato"
+ },
+ {
+  "id": "watch_col_girard_perregaux_1966",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_girard_perregaux",
+  "nameAr": "",
+  "nameEn": "1966",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001966"
+ },
+ {
+  "id": "watch_col_girard_perregaux_vintage_1945",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_girard_perregaux",
+  "nameAr": "",
+  "nameEn": "Vintage 1945",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vintage 000000001945"
+ },
+ {
+  "id": "watch_col_franck_muller_vanguard",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_franck_muller",
+  "nameAr": "",
+  "nameEn": "Vanguard",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vanguard"
+ },
+ {
+  "id": "watch_col_franck_muller_cintree_curvex",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_franck_muller",
+  "nameAr": "",
+  "nameEn": "Cintrée Curvex",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Cintree Curvex"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cintrée curvex"
+ },
+ {
+  "id": "watch_col_franck_muller_long_island",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_franck_muller",
+  "nameAr": "",
+  "nameEn": "Long Island",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "long island"
+ },
+ {
+  "id": "watch_col_h_moser_cie_endeavour",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_h_moser_cie",
+  "nameAr": "",
+  "nameEn": "Endeavour",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "endeavour"
+ },
+ {
+  "id": "watch_col_h_moser_cie_streamliner",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_h_moser_cie",
+  "nameAr": "",
+  "nameEn": "Streamliner",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "streamliner"
+ },
+ {
+  "id": "watch_col_h_moser_cie_pioneer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_h_moser_cie",
+  "nameAr": "",
+  "nameEn": "Pioneer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pioneer"
+ },
+ {
+  "id": "watch_col_parmigiani_fleurier_tonda",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_parmigiani_fleurier",
+  "nameAr": "",
+  "nameEn": "Tonda",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tonda"
+ },
+ {
+  "id": "watch_col_parmigiani_fleurier_kalpa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_parmigiani_fleurier",
+  "nameAr": "",
+  "nameEn": "Kalpa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kalpa"
+ },
+ {
+  "id": "watch_col_parmigiani_fleurier_toric",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_parmigiani_fleurier",
+  "nameAr": "",
+  "nameEn": "Toric",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "toric"
+ },
+ {
+  "id": "watch_col_fp_journe_fp_journe_models",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_fp_journe",
+  "nameAr": "",
+  "nameEn": "Models",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "models"
+ },
+ {
+  "id": "watch_ref_fp_journe_chronometre_bleu",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_fp_journe_fp_journe_models",
+  "nameAr": "",
+  "nameEn": "Chronomètre Bleu",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Chronomètre Bleu",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chronomètre bleu"
+ },
+ {
+  "id": "watch_ref_fp_journe_chronometre_souverain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_fp_journe_fp_journe_models",
+  "nameAr": "",
+  "nameEn": "Chronomètre Souverain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Chronomètre Souverain",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chronomètre souverain"
+ },
+ {
+  "id": "watch_ref_fp_journe_tourbillon_souverain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_fp_journe_fp_journe_models",
+  "nameAr": "",
+  "nameEn": "Tourbillon Souverain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Tourbillon Souverain",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tourbillon souverain"
+ },
+ {
+  "id": "watch_ref_fp_journe_octa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_fp_journe_fp_journe_models",
+  "nameAr": "",
+  "nameEn": "Octa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Octa",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "octa"
+ },
+ {
+  "id": "watch_ref_fp_journe_elegante",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_fp_journe_fp_journe_models",
+  "nameAr": "",
+  "nameEn": "élégante",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "élégante",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "élégante"
+ },
+ {
+  "id": "watch_col_mb_f_horological_machine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_mb_f",
+  "nameAr": "",
+  "nameEn": "Horological Machine",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "HM"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "horological machine"
+ },
+ {
+  "id": "watch_col_mb_f_legacy_machine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_mb_f",
+  "nameAr": "",
+  "nameEn": "Legacy Machine",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "LM"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "legacy machine"
+ },
+ {
+  "id": "watch_col_roger_dubuis_excalibur",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_roger_dubuis",
+  "nameAr": "",
+  "nameEn": "Excalibur",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "excalibur"
+ },
+ {
+  "id": "watch_col_jacob_co_epic_x",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jacob_co",
+  "nameAr": "",
+  "nameEn": "Epic X",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "epic x"
+ },
+ {
+  "id": "watch_col_jacob_co_astronomia",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jacob_co",
+  "nameAr": "",
+  "nameEn": "Astronomia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "astronomia"
+ },
+ {
+  "id": "watch_col_jacob_co_twin_turbo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_jacob_co",
+  "nameAr": "",
+  "nameEn": "Twin Turbo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "twin turbo"
+ },
+ {
+  "id": "watch_col_christopher_ward_c60_trident",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_christopher_ward",
+  "nameAr": "",
+  "nameEn": "C60 Trident",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "c000000000060 trident"
+ },
+ {
+  "id": "watch_col_christopher_ward_c63_sealander",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_christopher_ward",
+  "nameAr": "",
+  "nameEn": "C63 Sealander",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "c000000000063 sealander"
+ },
+ {
+  "id": "watch_col_christopher_ward_bel_canto",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_christopher_ward",
+  "nameAr": "",
+  "nameEn": "Bel Canto",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bel canto"
+ },
+ {
+  "id": "watch_col_sinn_sinn_models",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_sinn",
+  "nameAr": "",
+  "nameEn": "Models",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "models"
+ },
+ {
+  "id": "watch_ref_sinn_556",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_sinn_sinn_models",
+  "nameAr": "",
+  "nameEn": "556",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "556",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000556"
+ },
+ {
+  "id": "watch_ref_sinn_104",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_sinn_sinn_models",
+  "nameAr": "",
+  "nameEn": "104",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "104",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000104"
+ },
+ {
+  "id": "watch_ref_sinn_356",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_sinn_sinn_models",
+  "nameAr": "",
+  "nameEn": "356",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "356",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000356"
+ },
+ {
+  "id": "watch_ref_sinn_857",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_sinn_sinn_models",
+  "nameAr": "",
+  "nameEn": "857",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "857",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000857"
+ },
+ {
+  "id": "watch_ref_sinn_u1",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "reference",
+  "parentId": "watch_col_sinn_sinn_models",
+  "nameAr": "",
+  "nameEn": "U1",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "U1",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "u000000000001"
+ },
+ {
+  "id": "watch_col_swatch_moonswatch",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "collection",
+  "parentId": "watch_brand_swatch",
+  "nameAr": "",
+  "nameEn": "MoonSwatch",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bioceramic MoonSwatch"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "moonswatch"
+ }
+]

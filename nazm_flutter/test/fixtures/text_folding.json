@@ -1,0 +1,182 @@
+[
+ {
+  "input": "",
+  "normalizeArabic": "",
+  "nameSortKey": "￿",
+  "normalizeDigits": ""
+ },
+ {
+  "input": "رولكس",
+  "normalizeArabic": "رولكس",
+  "nameSortKey": "رولكس",
+  "normalizeDigits": "رولكس"
+ },
+ {
+  "input": "أثر",
+  "normalizeArabic": "اثر",
+  "nameSortKey": "اثر",
+  "normalizeDigits": "أثر"
+ },
+ {
+  "input": "إبريق",
+  "normalizeArabic": "ابريق",
+  "nameSortKey": "ابريق",
+  "normalizeDigits": "إبريق"
+ },
+ {
+  "input": "آلة",
+  "normalizeArabic": "اله",
+  "nameSortKey": "اله",
+  "normalizeDigits": "آلة"
+ },
+ {
+  "input": "ٱسم",
+  "normalizeArabic": "اسم",
+  "nameSortKey": "اسم",
+  "normalizeDigits": "ٱسم"
+ },
+ {
+  "input": "مكتبة",
+  "normalizeArabic": "مكتبه",
+  "nameSortKey": "مكتبه",
+  "normalizeDigits": "مكتبة"
+ },
+ {
+  "input": "مستشفى",
+  "normalizeArabic": "مستشفي",
+  "nameSortKey": "مستشفي",
+  "normalizeDigits": "مستشفى"
+ },
+ {
+  "input": "مؤسسة",
+  "normalizeArabic": "موسسه",
+  "nameSortKey": "موسسه",
+  "normalizeDigits": "مؤسسة"
+ },
+ {
+  "input": "رئيس",
+  "normalizeArabic": "رييس",
+  "nameSortKey": "رييس",
+  "normalizeDigits": "رئيس"
+ },
+ {
+  "input": "قطعةٌ ثمينةٌ",
+  "normalizeArabic": "قطعه ثمينه",
+  "nameSortKey": "قطعه ثمينه",
+  "normalizeDigits": "قطعةٌ ثمينةٌ"
+ },
+ {
+  "input": "كتـــاب",
+  "normalizeArabic": "كتاب",
+  "nameSortKey": "كتاب",
+  "normalizeDigits": "كتـــاب"
+ },
+ {
+  "input": "Rolex  Daytona",
+  "normalizeArabic": "rolex daytona",
+  "nameSortKey": "rolex daytona",
+  "normalizeDigits": "Rolex  Daytona"
+ },
+ {
+  "input": "  مسافة   بين  ",
+  "normalizeArabic": "مسافه بين",
+  "nameSortKey": "مسافه بين",
+  "normalizeDigits": "  مسافة   بين  "
+ },
+ {
+  "input": "قطعة 2",
+  "normalizeArabic": "قطعه 2",
+  "nameSortKey": "قطعه 000000000002",
+  "normalizeDigits": "قطعة 2"
+ },
+ {
+  "input": "قطعة 10",
+  "normalizeArabic": "قطعه 10",
+  "nameSortKey": "قطعه 000000000010",
+  "normalizeDigits": "قطعة 10"
+ },
+ {
+  "input": "١٢٣٤٥٦٧٨٩٠",
+  "normalizeArabic": "1234567890",
+  "nameSortKey": "001234567890",
+  "normalizeDigits": "1234567890"
+ },
+ {
+  "input": "۱۲۳",
+  "normalizeArabic": "123",
+  "nameSortKey": "000000000123",
+  "normalizeDigits": "123"
+ },
+ {
+  "input": "٣٫٥",
+  "normalizeArabic": "3.5",
+  "nameSortKey": "000000000003.000000000005",
+  "normalizeDigits": "3.5"
+ },
+ {
+  "input": "١٬٠٠٠",
+  "normalizeArabic": "1,000",
+  "nameSortKey": "000000000001,000000000000",
+  "normalizeDigits": "1,000"
+ },
+ {
+  "input": "Land Cruiser 200",
+  "normalizeArabic": "land cruiser 200",
+  "nameSortKey": "land cruiser 000000000200",
+  "normalizeDigits": "Land Cruiser 200"
+ },
+ {
+  "input": "iS50",
+  "normalizeArabic": "is50",
+  "nameSortKey": "is000000000050",
+  "normalizeDigits": "iS50"
+ },
+ {
+  "input": "126500LN",
+  "normalizeArabic": "126500ln",
+  "nameSortKey": "000000126500ln",
+  "normalizeDigits": "126500LN"
+ },
+ {
+  "input": "Ω Omega",
+  "normalizeArabic": "ω omega",
+  "nameSortKey": "ω omega",
+  "normalizeDigits": "Ω Omega"
+ },
+ {
+  "input": "ÉCOLE",
+  "normalizeArabic": "école",
+  "nameSortKey": "école",
+  "normalizeDigits": "ÉCOLE"
+ },
+ {
+  "input": "ﷲ",
+  "normalizeArabic": "ﷲ",
+  "nameSortKey": "ﷲ",
+  "normalizeDigits": "ﷲ"
+ },
+ {
+  "input": "سُبْحَانَ",
+  "normalizeArabic": "سبحان",
+  "nameSortKey": "سبحان",
+  "normalizeDigits": "سُبْحَانَ"
+ },
+ {
+  "input": "ۖقرآن",
+  "normalizeArabic": "قران",
+  "nameSortKey": "قران",
+  "normalizeDigits": "ۖقرآن"
+ },
+ {
+  "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "normalizeArabic": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "nameSortKey": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "normalizeDigits": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "input": "0042",
+  "normalizeArabic": "0042",
+  "nameSortKey": "000000000042",
+  "normalizeDigits": "0042"
+ }
+]

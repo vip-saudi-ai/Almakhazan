@@ -1,0 +1,1723 @@
+[
+ {
+  "id": "lab_manufacturer_thermo_fisher",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ثيرمو فيشر",
+  "nameEn": "Thermo Fisher Scientific",
+  "aliasesAr": [
+   "ثيرمو"
+  ],
+  "aliasesEn": [
+   "Thermo",
+   "Thermo Fisher",
+   "Thermo Scientific"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thermo fisher scientific"
+ },
+ {
+  "id": "lab_family_thermo_fisher_nicolet",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_thermo_fisher",
+  "nameAr": "",
+  "nameEn": "Nicolet",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FTIR"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nicolet_is50",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nicolet",
+  "nameAr": "",
+  "nameEn": "Nicolet iS50",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "iS50",
+   "i50",
+   "iS 50"
+  ],
+  "code": "Nicolet iS50",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet is000000000050"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nicolet_is20",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nicolet",
+  "nameAr": "",
+  "nameEn": "Nicolet iS20",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "iS20"
+  ],
+  "code": "Nicolet iS20",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet is000000000020"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nicolet_is10",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nicolet",
+  "nameAr": "",
+  "nameEn": "Nicolet iS10",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "iS10"
+  ],
+  "code": "Nicolet iS10",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet is000000000010"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nicolet_is5",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nicolet",
+  "nameAr": "",
+  "nameEn": "Nicolet iS5",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "iS5"
+  ],
+  "code": "Nicolet iS5",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet is000000000005"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nicolet_summit",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nicolet",
+  "nameAr": "",
+  "nameEn": "Nicolet Summit",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Nicolet Summit",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nicolet summit"
+ },
+ {
+  "id": "lab_family_thermo_fisher_orbitrap",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_thermo_fisher",
+  "nameAr": "",
+  "nameEn": "Orbitrap",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "orbitrap"
+ },
+ {
+  "id": "lab_model_thermo_fisher_orbitrap_exploris_480",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_orbitrap",
+  "nameAr": "",
+  "nameEn": "Orbitrap Exploris 480",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Orbitrap Exploris 480",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "orbitrap exploris 000000000480"
+ },
+ {
+  "id": "lab_model_thermo_fisher_q_exactive",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_orbitrap",
+  "nameAr": "",
+  "nameEn": "Q Exactive",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Q Exactive",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q exactive"
+ },
+ {
+  "id": "lab_family_thermo_fisher_nanodrop",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_thermo_fisher",
+  "nameAr": "",
+  "nameEn": "NanoDrop",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nanodrop"
+ },
+ {
+  "id": "lab_model_thermo_fisher_nanodrop_one",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_thermo_fisher_nanodrop",
+  "nameAr": "",
+  "nameEn": "NanoDrop One",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "NanoDrop One",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nanodrop one"
+ },
+ {
+  "id": "lab_manufacturer_renishaw",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "رينيشو",
+  "nameEn": "Renishaw",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "renishaw"
+ },
+ {
+  "id": "lab_family_renishaw_invia",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_renishaw",
+  "nameAr": "",
+  "nameEn": "inVia",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Raman"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "invia"
+ },
+ {
+  "id": "lab_model_renishaw_invia_qontor",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_renishaw_invia",
+  "nameAr": "",
+  "nameEn": "inVia Qontor",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "inVia Qontor",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "invia qontor"
+ },
+ {
+  "id": "lab_model_renishaw_invia_reflex",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_renishaw_invia",
+  "nameAr": "",
+  "nameEn": "inVia Reflex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "inVia Reflex",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "invia reflex"
+ },
+ {
+  "id": "lab_manufacturer_shimadzu",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شيمادزو",
+  "nameEn": "Shimadzu",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "shimadzu"
+ },
+ {
+  "id": "lab_family_shimadzu_uv_vis",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_shimadzu",
+  "nameAr": "",
+  "nameEn": "UV-Vis",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "UV"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-vis"
+ },
+ {
+  "id": "lab_model_shimadzu_uv_1900i",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_uv_vis",
+  "nameAr": "",
+  "nameEn": "UV-1900i",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "UV-1900i",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-000000001900i"
+ },
+ {
+  "id": "lab_model_shimadzu_uv_2600i",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_uv_vis",
+  "nameAr": "",
+  "nameEn": "UV-2600i",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "UV-2600i",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-000000002600i"
+ },
+ {
+  "id": "lab_model_shimadzu_uv_3600i_plus",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_uv_vis",
+  "nameAr": "",
+  "nameEn": "UV-3600i Plus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "UV-3600i Plus",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-000000003600i plus"
+ },
+ {
+  "id": "lab_family_shimadzu_ftir",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_shimadzu",
+  "nameAr": "",
+  "nameEn": "FTIR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ftir"
+ },
+ {
+  "id": "lab_model_shimadzu_irtracer_100",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_ftir",
+  "nameAr": "",
+  "nameEn": "IRTracer-100",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "IRTracer-100",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "irtracer-000000000100"
+ },
+ {
+  "id": "lab_model_shimadzu_irspirit",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_ftir",
+  "nameAr": "",
+  "nameEn": "IRSpirit",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "IRSpirit",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "irspirit"
+ },
+ {
+  "id": "lab_family_shimadzu_hplc",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_shimadzu",
+  "nameAr": "",
+  "nameEn": "HPLC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hplc"
+ },
+ {
+  "id": "lab_model_shimadzu_nexera",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_hplc",
+  "nameAr": "",
+  "nameEn": "Nexera",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Nexera",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nexera"
+ },
+ {
+  "id": "lab_model_shimadzu_prominence",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_hplc",
+  "nameAr": "",
+  "nameEn": "Prominence",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Prominence",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "prominence"
+ },
+ {
+  "id": "lab_family_shimadzu_gc",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_shimadzu",
+  "nameAr": "",
+  "nameEn": "GC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gc"
+ },
+ {
+  "id": "lab_model_shimadzu_gc_2030",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_gc",
+  "nameAr": "",
+  "nameEn": "GC-2030",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "GC-2030",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gc-000000002030"
+ },
+ {
+  "id": "lab_family_shimadzu_edx",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_shimadzu",
+  "nameAr": "",
+  "nameEn": "EDX",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "XRF"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "edx"
+ },
+ {
+  "id": "lab_model_shimadzu_edx_7000",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_shimadzu_edx",
+  "nameAr": "",
+  "nameEn": "EDX-7000",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "EDX-7000",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "edx-000000007000"
+ },
+ {
+  "id": "lab_manufacturer_bruker",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بروكر",
+  "nameEn": "Bruker",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bruker"
+ },
+ {
+  "id": "lab_family_bruker_ft_ir",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_bruker",
+  "nameAr": "",
+  "nameEn": "FT-IR",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FTIR"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ft-ir"
+ },
+ {
+  "id": "lab_model_bruker_alpha_ii",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_bruker_ft_ir",
+  "nameAr": "",
+  "nameEn": "ALPHA II",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ALPHA II",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alpha ii"
+ },
+ {
+  "id": "lab_model_bruker_invenio",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_bruker_ft_ir",
+  "nameAr": "",
+  "nameEn": "INVENIO",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "INVENIO",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "invenio"
+ },
+ {
+  "id": "lab_model_bruker_vertex_70v",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_bruker_ft_ir",
+  "nameAr": "",
+  "nameEn": "VERTEX 70v",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "VERTEX 70v",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vertex 000000000070v"
+ },
+ {
+  "id": "lab_family_bruker_xrf",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_bruker",
+  "nameAr": "",
+  "nameEn": "XRF",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xrf"
+ },
+ {
+  "id": "lab_model_bruker_s2_puma",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_bruker_xrf",
+  "nameAr": "",
+  "nameEn": "S2 PUMA",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "S2 PUMA",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s000000000002 puma"
+ },
+ {
+  "id": "lab_family_bruker_xrd",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_bruker",
+  "nameAr": "",
+  "nameEn": "XRD",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xrd"
+ },
+ {
+  "id": "lab_model_bruker_d8_advance",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_bruker_xrd",
+  "nameAr": "",
+  "nameEn": "D8 ADVANCE",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D8 ADVANCE",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000008 advance"
+ },
+ {
+  "id": "lab_manufacturer_agilent",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أجيلنت",
+  "nameEn": "Agilent",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Agilent Technologies"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "agilent"
+ },
+ {
+  "id": "lab_family_agilent_uv_vis",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_agilent",
+  "nameAr": "",
+  "nameEn": "UV-Vis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-vis"
+ },
+ {
+  "id": "lab_model_agilent_cary_60",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_uv_vis",
+  "nameAr": "",
+  "nameEn": "Cary 60",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Cary 60",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cary 000000000060"
+ },
+ {
+  "id": "lab_model_agilent_cary_3500",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_uv_vis",
+  "nameAr": "",
+  "nameEn": "Cary 3500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Cary 3500",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cary 000000003500"
+ },
+ {
+  "id": "lab_family_agilent_ftir",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_agilent",
+  "nameAr": "",
+  "nameEn": "FTIR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ftir"
+ },
+ {
+  "id": "lab_model_agilent_cary_630",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_ftir",
+  "nameAr": "",
+  "nameEn": "Cary 630",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Cary 630",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cary 000000000630"
+ },
+ {
+  "id": "lab_family_agilent_gc",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_agilent",
+  "nameAr": "",
+  "nameEn": "GC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gc"
+ },
+ {
+  "id": "lab_model_agilent_8890",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_gc",
+  "nameAr": "",
+  "nameEn": "8890",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "8890",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000008890"
+ },
+ {
+  "id": "lab_model_agilent_7890b",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_gc",
+  "nameAr": "",
+  "nameEn": "7890B",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "7890B",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000007890b"
+ },
+ {
+  "id": "lab_family_agilent_icp_ms",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_agilent",
+  "nameAr": "",
+  "nameEn": "ICP-MS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "icp-ms"
+ },
+ {
+  "id": "lab_model_agilent_7900",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_icp_ms",
+  "nameAr": "",
+  "nameEn": "7900",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "7900",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000007900"
+ },
+ {
+  "id": "lab_family_agilent_hplc",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_agilent",
+  "nameAr": "",
+  "nameEn": "HPLC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hplc"
+ },
+ {
+  "id": "lab_model_agilent_1260_infinity_ii",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_agilent_hplc",
+  "nameAr": "",
+  "nameEn": "1260 Infinity II",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "1260 Infinity II",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001260 infinity ii"
+ },
+ {
+  "id": "lab_manufacturer_perkinelmer",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بيركن إلمر",
+  "nameEn": "PerkinElmer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "perkinelmer"
+ },
+ {
+  "id": "lab_family_perkinelmer_ft_ir",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_perkinelmer",
+  "nameAr": "",
+  "nameEn": "FT-IR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ft-ir"
+ },
+ {
+  "id": "lab_model_perkinelmer_spectrum_two",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_perkinelmer_ft_ir",
+  "nameAr": "",
+  "nameEn": "Spectrum Two",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Spectrum Two",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spectrum two"
+ },
+ {
+  "id": "lab_model_perkinelmer_spectrum_3",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_perkinelmer_ft_ir",
+  "nameAr": "",
+  "nameEn": "Spectrum 3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Spectrum 3",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spectrum 000000000003"
+ },
+ {
+  "id": "lab_family_perkinelmer_uv_vis",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_perkinelmer",
+  "nameAr": "",
+  "nameEn": "UV-Vis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uv-vis"
+ },
+ {
+  "id": "lab_model_perkinelmer_lambda_365",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_perkinelmer_uv_vis",
+  "nameAr": "",
+  "nameEn": "LAMBDA 365",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "LAMBDA 365",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lambda 000000000365"
+ },
+ {
+  "id": "lab_manufacturer_jeol",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيول",
+  "nameEn": "JEOL",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jeol"
+ },
+ {
+  "id": "lab_family_jeol_sem",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_jeol",
+  "nameAr": "",
+  "nameEn": "SEM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sem"
+ },
+ {
+  "id": "lab_model_jeol_jsm_it500",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_jeol_sem",
+  "nameAr": "",
+  "nameEn": "JSM-IT500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "JSM-IT500",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jsm-it000000000500"
+ },
+ {
+  "id": "lab_family_jeol_nmr",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_jeol",
+  "nameAr": "",
+  "nameEn": "NMR",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nmr"
+ },
+ {
+  "id": "lab_manufacturer_zeiss",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "زايس",
+  "nameEn": "Zeiss",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Carl Zeiss",
+   "ZEISS"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zeiss"
+ },
+ {
+  "id": "lab_family_zeiss_axio",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_zeiss",
+  "nameAr": "",
+  "nameEn": "Axio",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "axio"
+ },
+ {
+  "id": "lab_model_zeiss_axio_imager",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_zeiss_axio",
+  "nameAr": "",
+  "nameEn": "Axio Imager",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Axio Imager",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "axio imager"
+ },
+ {
+  "id": "lab_model_zeiss_axio_observer",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_zeiss_axio",
+  "nameAr": "",
+  "nameEn": "Axio Observer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Axio Observer",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "axio observer"
+ },
+ {
+  "id": "lab_family_zeiss_sem",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_zeiss",
+  "nameAr": "",
+  "nameEn": "SEM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sem"
+ },
+ {
+  "id": "lab_model_zeiss_sigma",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_zeiss_sem",
+  "nameAr": "",
+  "nameEn": "Sigma",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Sigma",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sigma"
+ },
+ {
+  "id": "lab_model_zeiss_geminisem",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_zeiss_sem",
+  "nameAr": "",
+  "nameEn": "GeminiSEM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "GeminiSEM",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "geminisem"
+ },
+ {
+  "id": "lab_manufacturer_leica_microsystems",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لايكا",
+  "nameEn": "Leica Microsystems",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Leica"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "leica microsystems"
+ },
+ {
+  "id": "lab_family_leica_microsystems_compound_microscopes",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_leica_microsystems",
+  "nameAr": "",
+  "nameEn": "Compound microscopes",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "compound microscopes"
+ },
+ {
+  "id": "lab_model_leica_microsystems_dm2500",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_leica_microsystems_compound_microscopes",
+  "nameAr": "",
+  "nameEn": "DM2500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "DM2500",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dm000000002500"
+ },
+ {
+  "id": "lab_manufacturer_evident",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إيفيدنت",
+  "nameEn": "Evident",
+  "aliasesAr": [
+   "أوليمبوس"
+  ],
+  "aliasesEn": [
+   "Olympus",
+   "Olympus / Evident"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "evident"
+ },
+ {
+  "id": "lab_family_evident_microscopes",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_evident",
+  "nameAr": "",
+  "nameEn": "Microscopes",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "microscopes"
+ },
+ {
+  "id": "lab_model_evident_bx53",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_evident_microscopes",
+  "nameAr": "",
+  "nameEn": "BX53",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "BX53",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bx000000000053"
+ },
+ {
+  "id": "lab_model_evident_cx23",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_evident_microscopes",
+  "nameAr": "",
+  "nameEn": "CX23",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "CX23",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx000000000023"
+ },
+ {
+  "id": "lab_manufacturer_malvern_panalytical",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مالفرن باناليتكال",
+  "nameEn": "Malvern Panalytical",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Malvern",
+   "PANalytical"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "malvern panalytical"
+ },
+ {
+  "id": "lab_family_malvern_panalytical_zetasizer",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_malvern_panalytical",
+  "nameAr": "",
+  "nameEn": "Zetasizer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zetasizer"
+ },
+ {
+  "id": "lab_family_malvern_panalytical_mastersizer",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_malvern_panalytical",
+  "nameAr": "",
+  "nameEn": "Mastersizer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mastersizer"
+ },
+ {
+  "id": "lab_model_malvern_panalytical_mastersizer_3000",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_malvern_panalytical_mastersizer",
+  "nameAr": "",
+  "nameEn": "Mastersizer 3000",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Mastersizer 3000",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mastersizer 000000003000"
+ },
+ {
+  "id": "lab_family_malvern_panalytical_empyrean",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_malvern_panalytical",
+  "nameAr": "",
+  "nameEn": "Empyrean",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "XRD"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "empyrean"
+ },
+ {
+  "id": "lab_manufacturer_horiba",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هوريبا",
+  "nameEn": "Horiba",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "horiba"
+ },
+ {
+  "id": "lab_family_horiba_raman",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_horiba",
+  "nameAr": "",
+  "nameEn": "Raman",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "raman"
+ },
+ {
+  "id": "lab_model_horiba_labram_hr_evolution",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_horiba_raman",
+  "nameAr": "",
+  "nameEn": "LabRAM HR Evolution",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "LabRAM HR Evolution",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "labram hr evolution"
+ },
+ {
+  "id": "lab_model_horiba_xplora",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_horiba_raman",
+  "nameAr": "",
+  "nameEn": "XploRA",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "XploRA",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xplora"
+ },
+ {
+  "id": "lab_manufacturer_hitachi_hightech",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيتاشي",
+  "nameEn": "Hitachi High-Tech",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hitachi"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hitachi high-tech"
+ },
+ {
+  "id": "lab_family_hitachi_hightech_sem",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_hitachi_hightech",
+  "nameAr": "",
+  "nameEn": "SEM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sem"
+ },
+ {
+  "id": "lab_model_hitachi_hightech_tm4000plus",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "model",
+  "parentId": "lab_family_hitachi_hightech_sem",
+  "nameAr": "",
+  "nameEn": "TM4000Plus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "TM4000Plus",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tm000000004000plus"
+ },
+ {
+  "id": "lab_manufacturer_mettler_toledo",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتلر توليدو",
+  "nameEn": "Mettler Toledo",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mettler"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mettler toledo"
+ },
+ {
+  "id": "lab_family_mettler_toledo_balances",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "family",
+  "parentId": "lab_manufacturer_mettler_toledo",
+  "nameAr": "",
+  "nameEn": "Balances",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "balances"
+ },
+ {
+  "id": "lab_manufacturer_sartorius",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سارتوريوس",
+  "nameEn": "Sartorius",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sartorius"
+ },
+ {
+  "id": "lab_manufacturer_eppendorf",
+  "domains": [
+   "lab"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إيبندورف",
+  "nameEn": "Eppendorf",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eppendorf"
+ }
+]

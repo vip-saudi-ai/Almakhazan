@@ -1,0 +1,3767 @@
+[
+ {
+  "id": "watch_brand_rolex",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "رولكس",
+  "nameEn": "Rolex",
+  "aliasesAr": [
+   "رولكس",
+   "رولیکس"
+  ],
+  "aliasesEn": [
+   "rlx"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rolex"
+ },
+ {
+  "id": "watch_brand_tudor",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تيودور",
+  "nameEn": "Tudor",
+  "aliasesAr": [
+   "تودور",
+   "تيودر"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tudor"
+ },
+ {
+  "id": "watch_brand_patek_philippe",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "باتيك فيليب",
+  "nameEn": "Patek Philippe",
+  "aliasesAr": [
+   "باتك فيليب",
+   "باتيك"
+  ],
+  "aliasesEn": [
+   "Patek",
+   "PP"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "patek philippe"
+ },
+ {
+  "id": "watch_brand_audemars_piguet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أوديمار بيغيه",
+  "nameEn": "Audemars Piguet",
+  "aliasesAr": [
+   "أوديمار بيغه",
+   "اوديمار بيجيه",
+   "اوديمار"
+  ],
+  "aliasesEn": [
+   "AP"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "audemars piguet"
+ },
+ {
+  "id": "watch_brand_vacheron_constantin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فاشرون كونستانتين",
+  "nameEn": "Vacheron Constantin",
+  "aliasesAr": [
+   "فاشرون"
+  ],
+  "aliasesEn": [
+   "VC",
+   "Vacheron"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vacheron constantin"
+ },
+ {
+  "id": "watch_brand_breguet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بريغيه",
+  "nameEn": "Breguet",
+  "aliasesAr": [
+   "بريجيه"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "breguet"
+ },
+ {
+  "id": "watch_brand_blancpain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بلانبان",
+  "nameEn": "Blancpain",
+  "aliasesAr": [
+   "بلانكبان"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "blancpain"
+ },
+ {
+  "id": "watch_brand_jaeger_lecoultre",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جيجر لوكولتر",
+  "nameEn": "Jaeger-LeCoultre",
+  "aliasesAr": [
+   "جاكر لوكولتر"
+  ],
+  "aliasesEn": [
+   "JLC",
+   "Jaeger LeCoultre"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jaeger-lecoultre"
+ },
+ {
+  "id": "watch_brand_cartier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كارتييه",
+  "nameEn": "Cartier",
+  "aliasesAr": [
+   "كارتير",
+   "كارتيه"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cartier"
+ },
+ {
+  "id": "watch_brand_omega",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أوميغا",
+  "nameEn": "Omega",
+  "aliasesAr": [
+   "اوميغا",
+   "اوميجا"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "omega"
+ },
+ {
+  "id": "watch_brand_iwc",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "آي دبليو سي",
+  "nameEn": "IWC Schaffhausen",
+  "aliasesAr": [
+   "اي دبليو سي"
+  ],
+  "aliasesEn": [
+   "IWC"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iwc schaffhausen"
+ },
+ {
+  "id": "watch_brand_panerai",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بانيراي",
+  "nameEn": "Panerai",
+  "aliasesAr": [
+   "باناري"
+  ],
+  "aliasesEn": [
+   "Officine Panerai"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "panerai"
+ },
+ {
+  "id": "watch_brand_breitling",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "برايتلينغ",
+  "nameEn": "Breitling",
+  "aliasesAr": [
+   "برايتلنج"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "breitling"
+ },
+ {
+  "id": "watch_brand_tag_heuer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تاغ هوير",
+  "nameEn": "TAG Heuer",
+  "aliasesAr": [
+   "تاج هوير"
+  ],
+  "aliasesEn": [
+   "TAG",
+   "Tag Heuer"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tag heuer"
+ },
+ {
+  "id": "watch_brand_heuer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هوير",
+  "nameEn": "Heuer",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "vintage Heuer"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "heuer"
+ },
+ {
+  "id": "watch_brand_zenith",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "زينيث",
+  "nameEn": "Zenith",
+  "aliasesAr": [
+   "زينث"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zenith"
+ },
+ {
+  "id": "watch_brand_hublot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هوبلو",
+  "nameEn": "Hublot",
+  "aliasesAr": [
+   "هوبلوت"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hublot"
+ },
+ {
+  "id": "watch_brand_richard_mille",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ريتشارد ميل",
+  "nameEn": "Richard Mille",
+  "aliasesAr": [
+   "ريشارد ميل"
+  ],
+  "aliasesEn": [
+   "RM"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "richard mille"
+ },
+ {
+  "id": "watch_brand_chopard",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شوبارد",
+  "nameEn": "Chopard",
+  "aliasesAr": [
+   "شوبار"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chopard"
+ },
+ {
+  "id": "watch_brand_bulgari",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بولغاري",
+  "nameEn": "Bulgari",
+  "aliasesAr": [
+   "بلغاري",
+   "بولجاري"
+  ],
+  "aliasesEn": [
+   "Bvlgari"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bulgari"
+ },
+ {
+  "id": "watch_brand_piaget",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بياجيه",
+  "nameEn": "Piaget",
+  "aliasesAr": [
+   "بياجي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "piaget"
+ },
+ {
+  "id": "watch_brand_harry_winston",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هاري ونستون",
+  "nameEn": "Harry Winston",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "harry winston"
+ },
+ {
+  "id": "watch_brand_van_cleef_arpels",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فان كليف آند آربلز",
+  "nameEn": "Van Cleef & Arpels",
+  "aliasesAr": [
+   "فان كليف"
+  ],
+  "aliasesEn": [
+   "VCA"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "van cleef & arpels"
+ },
+ {
+  "id": "watch_brand_girard_perregaux",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جيرارد بيرغو",
+  "nameEn": "Girard-Perregaux",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "GP",
+   "Girard Perregaux"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "girard-perregaux"
+ },
+ {
+  "id": "watch_brand_ulysse_nardin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يوليس ناردان",
+  "nameEn": "Ulysse Nardin",
+  "aliasesAr": [
+   "اوليس ناردين"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ulysse nardin"
+ },
+ {
+  "id": "watch_brand_parmigiani_fleurier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بارميجياني",
+  "nameEn": "Parmigiani Fleurier",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Parmigiani"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "parmigiani fleurier"
+ },
+ {
+  "id": "watch_brand_h_moser_cie",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موزر",
+  "nameEn": "H. Moser & Cie.",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Moser",
+   "H Moser"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h. moser & cie."
+ },
+ {
+  "id": "watch_brand_a_lange_sohne",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لانغه آند زونه",
+  "nameEn": "A. Lange & Söhne",
+  "aliasesAr": [
+   "لانج"
+  ],
+  "aliasesEn": [
+   "Lange",
+   "A Lange & Sohne",
+   "Lange & Sohne"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a. lange & söhne"
+ },
+ {
+  "id": "watch_brand_glashutte_original",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غلاشوته أوريجينال",
+  "nameEn": "Glashütte Original",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Glashutte Original",
+   "GO"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "glashütte original"
+ },
+ {
+  "id": "watch_brand_montblanc",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مونت بلانك",
+  "nameEn": "Montblanc",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mont Blanc"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "montblanc"
+ },
+ {
+  "id": "watch_brand_longines",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لونجين",
+  "nameEn": "Longines",
+  "aliasesAr": [
+   "لونجينز"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "longines"
+ },
+ {
+  "id": "watch_brand_tissot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تيسو",
+  "nameEn": "Tissot",
+  "aliasesAr": [
+   "تيسوت"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tissot"
+ },
+ {
+  "id": "watch_brand_hamilton",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هاملتون",
+  "nameEn": "Hamilton",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hamilton"
+ },
+ {
+  "id": "watch_brand_oris",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أوريس",
+  "nameEn": "Oris",
+  "aliasesAr": [
+   "اوريس"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oris"
+ },
+ {
+  "id": "watch_brand_rado",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "رادو",
+  "nameEn": "Rado",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rado"
+ },
+ {
+  "id": "watch_brand_bell_ross",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بيل آند روس",
+  "nameEn": "Bell & Ross",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bell and Ross",
+   "B&R"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bell & ross"
+ },
+ {
+  "id": "watch_brand_maurice_lacroix",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موريس لاكروا",
+  "nameEn": "Maurice Lacroix",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "maurice lacroix"
+ },
+ {
+  "id": "watch_brand_frederique_constant",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فريدريك كونستانت",
+  "nameEn": "Frederique Constant",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Frédérique Constant"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "frederique constant"
+ },
+ {
+  "id": "watch_brand_raymond_weil",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ريموند ويل",
+  "nameEn": "Raymond Weil",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "raymond weil"
+ },
+ {
+  "id": "watch_brand_baume_mercier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوم آند مرسييه",
+  "nameEn": "Baume & Mercier",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Baume et Mercier"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "baume & mercier"
+ },
+ {
+  "id": "watch_brand_alpina",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ألبينا",
+  "nameEn": "Alpina",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alpina"
+ },
+ {
+  "id": "watch_brand_certina",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيرتينا",
+  "nameEn": "Certina",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "certina"
+ },
+ {
+  "id": "watch_brand_mido",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ميدو",
+  "nameEn": "Mido",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mido"
+ },
+ {
+  "id": "watch_brand_eterna",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إيتيرنا",
+  "nameEn": "Eterna",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eterna"
+ },
+ {
+  "id": "watch_brand_fortis",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فورتيس",
+  "nameEn": "Fortis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fortis"
+ },
+ {
+  "id": "watch_brand_doxa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دوكسا",
+  "nameEn": "Doxa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "doxa"
+ },
+ {
+  "id": "watch_brand_squale",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سكوالي",
+  "nameEn": "Squale",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "squale"
+ },
+ {
+  "id": "watch_brand_edox",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إيدوكس",
+  "nameEn": "Edox",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "edox"
+ },
+ {
+  "id": "watch_brand_ebel",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إيبل",
+  "nameEn": "Ebel",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ebel"
+ },
+ {
+  "id": "watch_brand_glycine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غلايسين",
+  "nameEn": "Glycine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "glycine"
+ },
+ {
+  "id": "watch_brand_carl_f_bucherer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كارل إف بوخرر",
+  "nameEn": "Carl F. Bucherer",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bucherer"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "carl f. bucherer"
+ },
+ {
+  "id": "watch_brand_chronoswiss",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كرونوسويس",
+  "nameEn": "Chronoswiss",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chronoswiss"
+ },
+ {
+  "id": "watch_brand_graham",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غراهام",
+  "nameEn": "Graham",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "graham"
+ },
+ {
+  "id": "watch_brand_perrelet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بيريليه",
+  "nameEn": "Perrelet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "perrelet"
+ },
+ {
+  "id": "watch_brand_jaquet_droz",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جاكيه دروز",
+  "nameEn": "Jaquet Droz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jaquet droz"
+ },
+ {
+  "id": "watch_brand_corum",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كوروم",
+  "nameEn": "Corum",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "corum"
+ },
+ {
+  "id": "watch_brand_bovet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوفيه",
+  "nameEn": "Bovet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bovet"
+ },
+ {
+  "id": "watch_brand_franck_muller",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فرانك مولر",
+  "nameEn": "Franck Muller",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FM"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "franck muller"
+ },
+ {
+  "id": "watch_brand_roger_dubuis",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "روجيه دوبوي",
+  "nameEn": "Roger Dubuis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "roger dubuis"
+ },
+ {
+  "id": "watch_brand_jacob_co",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جاكوب آند كو",
+  "nameEn": "Jacob & Co.",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Jacob and Co",
+   "Jacob & Co"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jacob & co."
+ },
+ {
+  "id": "watch_brand_arnold_son",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "آرنولد آند سن",
+  "nameEn": "Arnold & Son",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "arnold & son"
+ },
+ {
+  "id": "watch_brand_angelus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أنجيلوس",
+  "nameEn": "Angelus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "angelus"
+ },
+ {
+  "id": "watch_brand_armin_strom",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أرمين ستروم",
+  "nameEn": "Armin Strom",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "armin strom"
+ },
+ {
+  "id": "watch_brand_louis_moinet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لويس موانيه",
+  "nameEn": "Louis Moinet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "louis moinet"
+ },
+ {
+  "id": "watch_brand_speake_marin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سبيك مارين",
+  "nameEn": "Speake-Marin",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Speake Marin"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "speake-marin"
+ },
+ {
+  "id": "watch_brand_czapek",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تشابيك",
+  "nameEn": "Czapek",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "czapek"
+ },
+ {
+  "id": "watch_brand_hautlence",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Hautlence",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hautlence"
+ },
+ {
+  "id": "watch_brand_ferdinand_berthoud",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فرديناند بيرتو",
+  "nameEn": "Ferdinand Berthoud",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ferdinand berthoud"
+ },
+ {
+  "id": "watch_brand_zodiac",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "زودياك",
+  "nameEn": "Zodiac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zodiac"
+ },
+ {
+  "id": "watch_brand_favre_leuba",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فافر لوبا",
+  "nameEn": "Favre-Leuba",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Favre Leuba"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "favre-leuba"
+ },
+ {
+  "id": "watch_brand_universal_geneve",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يونيفرسال جنيف",
+  "nameEn": "Universal Genève",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Universal Geneve"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "universal genève"
+ },
+ {
+  "id": "watch_brand_enicar",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إنيكار",
+  "nameEn": "Enicar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "enicar"
+ },
+ {
+  "id": "watch_brand_vulcain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فولكان",
+  "nameEn": "Vulcain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vulcain"
+ },
+ {
+  "id": "watch_brand_nivada_grenchen",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Nivada Grenchen",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Nivada"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nivada grenchen"
+ },
+ {
+  "id": "watch_brand_gallet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Gallet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gallet"
+ },
+ {
+  "id": "watch_brand_revue_thommen",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Revue Thommen",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "revue thommen"
+ },
+ {
+  "id": "watch_brand_mondaine",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موندين",
+  "nameEn": "Mondaine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mondaine"
+ },
+ {
+  "id": "watch_brand_swatch",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سواتش",
+  "nameEn": "Swatch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "swatch"
+ },
+ {
+  "id": "watch_brand_victorinox",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فكتورينوكس",
+  "nameEn": "Victorinox",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Victorinox Swiss Army"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "victorinox"
+ },
+ {
+  "id": "watch_brand_wenger",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ونجر",
+  "nameEn": "Wenger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wenger"
+ },
+ {
+  "id": "watch_brand_swiss_military_hanowa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سويس ميليتري",
+  "nameEn": "Swiss Military Hanowa",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Swiss Military"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "swiss military hanowa"
+ },
+ {
+  "id": "watch_brand_luminox",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لومينوكس",
+  "nameEn": "Luminox",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "luminox"
+ },
+ {
+  "id": "watch_brand_ball",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بول",
+  "nameEn": "Ball Watch",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ball"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ball watch"
+ },
+ {
+  "id": "watch_brand_formex",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Formex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "formex"
+ },
+ {
+  "id": "watch_brand_norqain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Norqain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "norqain"
+ },
+ {
+  "id": "watch_brand_porsche_design",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بورشه ديزاين",
+  "nameEn": "Porsche Design",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "porsche design"
+ },
+ {
+  "id": "watch_brand_movado",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موفادو",
+  "nameEn": "Movado",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "movado"
+ },
+ {
+  "id": "watch_brand_concord",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كونكورد",
+  "nameEn": "Concord",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "concord"
+ },
+ {
+  "id": "watch_brand_hermes",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هيرميس",
+  "nameEn": "Hermès",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hermes"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hermès"
+ },
+ {
+  "id": "watch_brand_chanel",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شانيل",
+  "nameEn": "Chanel",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chanel"
+ },
+ {
+  "id": "watch_brand_dior",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ديور",
+  "nameEn": "Dior",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Dior Horlogerie"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dior"
+ },
+ {
+  "id": "watch_brand_louis_vuitton",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لويس فيتون",
+  "nameEn": "Louis Vuitton",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "LV"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "louis vuitton"
+ },
+ {
+  "id": "watch_brand_tiffany_co",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تيفاني",
+  "nameEn": "Tiffany & Co.",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Tiffany"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiffany & co."
+ },
+ {
+  "id": "watch_brand_graff",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جراف",
+  "nameEn": "Graff",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "graff"
+ },
+ {
+  "id": "watch_brand_boucheron",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوشرون",
+  "nameEn": "Boucheron",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "boucheron"
+ },
+ {
+  "id": "watch_brand_chaumet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شوميه",
+  "nameEn": "Chaumet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chaumet"
+ },
+ {
+  "id": "watch_brand_de_grisogono",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دي غريسوغونو",
+  "nameEn": "de Grisogono",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "De Grisogono"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "de grisogono"
+ },
+ {
+  "id": "watch_brand_fp_journe",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إف بي جورن",
+  "nameEn": "F.P. Journe",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FP Journe",
+   "Journe"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "f.p. journe"
+ },
+ {
+  "id": "watch_brand_greubel_forsey",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غروبل فورسي",
+  "nameEn": "Greubel Forsey",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "greubel forsey"
+ },
+ {
+  "id": "watch_brand_mb_f",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إم بي آند إف",
+  "nameEn": "MB&F",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "MB and F",
+   "MBF"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mb&f"
+ },
+ {
+  "id": "watch_brand_de_bethune",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دي بيتون",
+  "nameEn": "De Bethune",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "de bethune"
+ },
+ {
+  "id": "watch_brand_laurent_ferrier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لوران فيرييه",
+  "nameEn": "Laurent Ferrier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "laurent ferrier"
+ },
+ {
+  "id": "watch_brand_kari_voutilainen",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كاري فوتيلاينن",
+  "nameEn": "Kari Voutilainen",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Voutilainen"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kari voutilainen"
+ },
+ {
+  "id": "watch_brand_roger_smith",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "روجر سميث",
+  "nameEn": "Roger W. Smith",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Roger Smith"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "roger w. smith"
+ },
+ {
+  "id": "watch_brand_ressence",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ريسينس",
+  "nameEn": "Ressence",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ressence"
+ },
+ {
+  "id": "watch_brand_urwerk",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أورفيرك",
+  "nameEn": "Urwerk",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "urwerk"
+ },
+ {
+  "id": "watch_brand_hyt",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "HYT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hyt"
+ },
+ {
+  "id": "watch_brand_moritz_grossmann",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موريتز غروسمان",
+  "nameEn": "Moritz Grossmann",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "moritz grossmann"
+ },
+ {
+  "id": "watch_brand_konstantin_chaykin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كونستانتين تشايكين",
+  "nameEn": "Konstantin Chaykin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "konstantin chaykin"
+ },
+ {
+  "id": "watch_brand_romain_gauthier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "رومان غوتييه",
+  "nameEn": "Romain Gauthier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "romain gauthier"
+ },
+ {
+  "id": "watch_brand_gronefeld",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غرونفيلد",
+  "nameEn": "Grönefeld",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Gronefeld"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grönefeld"
+ },
+ {
+  "id": "watch_brand_krayon",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Krayon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "krayon"
+ },
+ {
+  "id": "watch_brand_habring2",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Habring²",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Habring2",
+   "Habring"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "habring²"
+ },
+ {
+  "id": "watch_brand_philippe_dufour",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فيليب دوفور",
+  "nameEn": "Philippe Dufour",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Dufour"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "philippe dufour"
+ },
+ {
+  "id": "watch_brand_akrivia",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أكريفيا",
+  "nameEn": "Akrivia",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Rexhep Rexhepi"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "akrivia"
+ },
+ {
+  "id": "watch_brand_andersen_geneve",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Andersen Genève",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Andersen Geneve"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "andersen genève"
+ },
+ {
+  "id": "watch_brand_christophe_claret",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Christophe Claret",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "christophe claret"
+ },
+ {
+  "id": "watch_brand_cyrus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Cyrus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cyrus"
+ },
+ {
+  "id": "watch_brand_vianney_halter",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Vianney Halter",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vianney halter"
+ },
+ {
+  "id": "watch_brand_petermann_bedat",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Petermann Bédat",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Petermann Bedat"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "petermann bédat"
+ },
+ {
+  "id": "watch_brand_haldimann",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Haldimann",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "haldimann"
+ },
+ {
+  "id": "watch_brand_ludovic_ballouard",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Ludovic Ballouard",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ballouard"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ludovic ballouard"
+ },
+ {
+  "id": "watch_brand_ming",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مينغ",
+  "nameEn": "Ming",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ming"
+ },
+ {
+  "id": "watch_brand_kurono_tokyo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كورونو طوكيو",
+  "nameEn": "Kurono Tokyo",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Kurono"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kurono tokyo"
+ },
+ {
+  "id": "watch_brand_masahiro_kikuno",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Masahiro Kikuno",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Kikuno"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "masahiro kikuno"
+ },
+ {
+  "id": "watch_brand_nomos_glashutte",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "نوموس",
+  "nameEn": "Nomos Glashütte",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Nomos",
+   "Nomos Glashutte"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nomos glashütte"
+ },
+ {
+  "id": "watch_brand_sinn",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سين",
+  "nameEn": "Sinn",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sinn"
+ },
+ {
+  "id": "watch_brand_damasko",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "داماسكو",
+  "nameEn": "Damasko",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "damasko"
+ },
+ {
+  "id": "watch_brand_junghans",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يونغهانز",
+  "nameEn": "Junghans",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "junghans"
+ },
+ {
+  "id": "watch_brand_laco",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لاكو",
+  "nameEn": "Laco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "laco"
+ },
+ {
+  "id": "watch_brand_stowa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ستوفا",
+  "nameEn": "Stowa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "stowa"
+ },
+ {
+  "id": "watch_brand_meistersinger",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مايستر سينجر",
+  "nameEn": "MeisterSinger",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Meister Singer"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "meistersinger"
+ },
+ {
+  "id": "watch_brand_tutima",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "توتيما",
+  "nameEn": "Tutima",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tutima"
+ },
+ {
+  "id": "watch_brand_muhle_glashutte",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مول غلاشوته",
+  "nameEn": "Mühle-Glashütte",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Muhle Glashutte",
+   "Mühle"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mühle-glashütte"
+ },
+ {
+  "id": "watch_brand_union_glashutte",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يونيون غلاشوته",
+  "nameEn": "Union Glashütte",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Union Glashutte"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "union glashütte"
+ },
+ {
+  "id": "watch_brand_wempe",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ويمبي",
+  "nameEn": "Wempe",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Wempe Glashütte"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wempe"
+ },
+ {
+  "id": "watch_brand_hanhart",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هانهارت",
+  "nameEn": "Hanhart",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hanhart"
+ },
+ {
+  "id": "watch_brand_lang_heyne",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Lang & Heyne",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lang und Heyne"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lang & heyne"
+ },
+ {
+  "id": "watch_brand_archimede",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Archimede",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "archimede"
+ },
+ {
+  "id": "watch_brand_grand_seiko",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جراند سيكو",
+  "nameEn": "Grand Seiko",
+  "aliasesAr": [
+   "غراند سيكو"
+  ],
+  "aliasesEn": [
+   "GS"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grand seiko"
+ },
+ {
+  "id": "watch_brand_seiko",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيكو",
+  "nameEn": "Seiko",
+  "aliasesAr": [
+   "سايكو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seiko"
+ },
+ {
+  "id": "watch_brand_credor",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كريدور",
+  "nameEn": "Credor",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "credor"
+ },
+ {
+  "id": "watch_brand_king_seiko",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كينغ سيكو",
+  "nameEn": "King Seiko",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "king seiko"
+ },
+ {
+  "id": "watch_brand_citizen",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيتيزن",
+  "nameEn": "Citizen",
+  "aliasesAr": [
+   "ستيزن"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "citizen"
+ },
+ {
+  "id": "watch_brand_the_citizen",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ذا سيتيزن",
+  "nameEn": "The Citizen",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "the citizen"
+ },
+ {
+  "id": "watch_brand_casio",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كاسيو",
+  "nameEn": "Casio",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "casio"
+ },
+ {
+  "id": "watch_brand_g_shock",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جي شوك",
+  "nameEn": "G-Shock",
+  "aliasesAr": [
+   "جي شوك"
+  ],
+  "aliasesEn": [
+   "G Shock",
+   "Gshock"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g-shock"
+ },
+ {
+  "id": "watch_brand_orient",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أورينت",
+  "nameEn": "Orient",
+  "aliasesAr": [
+   "اورينت"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "orient"
+ },
+ {
+  "id": "watch_brand_orient_star",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أورينت ستار",
+  "nameEn": "Orient Star",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "orient star"
+ },
+ {
+  "id": "watch_brand_minase",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ميناسي",
+  "nameEn": "Minase",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "minase"
+ },
+ {
+  "id": "watch_brand_bulova",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بولوفا",
+  "nameEn": "Bulova",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bulova"
+ },
+ {
+  "id": "watch_brand_accutron",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أكيوترون",
+  "nameEn": "Accutron",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "accutron"
+ },
+ {
+  "id": "watch_brand_timex",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تايمكس",
+  "nameEn": "Timex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "timex"
+ },
+ {
+  "id": "watch_brand_shinola",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شينولا",
+  "nameEn": "Shinola",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "shinola"
+ },
+ {
+  "id": "watch_brand_weiss",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Weiss",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Weiss Watch Company"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "weiss"
+ },
+ {
+  "id": "watch_brand_rgm",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "RGM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rgm"
+ },
+ {
+  "id": "watch_brand_waltham",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "والثام",
+  "nameEn": "Waltham",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "waltham"
+ },
+ {
+  "id": "watch_brand_elgin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إلجين",
+  "nameEn": "Elgin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elgin"
+ },
+ {
+  "id": "watch_brand_fossil",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فوسيل",
+  "nameEn": "Fossil",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fossil"
+ },
+ {
+  "id": "watch_brand_invicta",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إنفيكتا",
+  "nameEn": "Invicta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "invicta"
+ },
+ {
+  "id": "watch_brand_lorier",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Lorier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lorier"
+ },
+ {
+  "id": "watch_brand_nodus",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Nodus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nodus"
+ },
+ {
+  "id": "watch_brand_vaer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Vaer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vaer"
+ },
+ {
+  "id": "watch_brand_bremont",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بريمونت",
+  "nameEn": "Bremont",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bremont"
+ },
+ {
+  "id": "watch_brand_christopher_ward",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كريستوفر وارد",
+  "nameEn": "Christopher Ward",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CW"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "christopher ward"
+ },
+ {
+  "id": "watch_brand_farer",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Farer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "farer"
+ },
+ {
+  "id": "watch_brand_garrick",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Garrick",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "garrick"
+ },
+ {
+  "id": "watch_brand_schofield",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Schofield",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "schofield"
+ },
+ {
+  "id": "watch_brand_smiths",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سميثز",
+  "nameEn": "Smiths",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "smiths"
+ },
+ {
+  "id": "watch_brand_yema",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ييما",
+  "nameEn": "Yema",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yema"
+ },
+ {
+  "id": "watch_brand_lip",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ليب",
+  "nameEn": "LIP",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lip"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lip"
+ },
+ {
+  "id": "watch_brand_baltic",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بالتيك",
+  "nameEn": "Baltic",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "baltic"
+ },
+ {
+  "id": "watch_brand_herbelin",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ميشيل هيربلين",
+  "nameEn": "Michel Herbelin",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Herbelin"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "michel herbelin"
+ },
+ {
+  "id": "watch_brand_pequignet",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Pequignet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pequignet"
+ },
+ {
+  "id": "watch_brand_serica",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Serica",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "serica"
+ },
+ {
+  "id": "watch_brand_u_boat",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يو بوت",
+  "nameEn": "U-Boat",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "U Boat"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "u-boat"
+ },
+ {
+  "id": "watch_brand_anonimo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أنونيمو",
+  "nameEn": "Anonimo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "anonimo"
+ },
+ {
+  "id": "watch_brand_unimatic",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Unimatic",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "unimatic"
+ },
+ {
+  "id": "watch_brand_venezianico",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Venezianico",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "venezianico"
+ },
+ {
+  "id": "watch_brand_autodromo",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Autodromo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "autodromo"
+ },
+ {
+  "id": "watch_brand_titan",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تايتن",
+  "nameEn": "Titan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "titan"
+ },
+ {
+  "id": "watch_brand_seagull",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سي غل",
+  "nameEn": "Sea-Gull",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Seagull"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sea-gull"
+ },
+ {
+  "id": "watch_brand_fiyta",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Fiyta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fiyta"
+ },
+ {
+  "id": "watch_brand_vostok",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فوستوك",
+  "nameEn": "Vostok",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vostok"
+ },
+ {
+  "id": "watch_brand_raketa",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "راكيتا",
+  "nameEn": "Raketa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "raketa"
+ },
+ {
+  "id": "watch_brand_poljot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوليوت",
+  "nameEn": "Poljot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "poljot"
+ },
+ {
+  "id": "watch_brand_sturmanskie",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Sturmanskie",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sturmanskie"
+ },
+ {
+  "id": "watch_brand_zelos",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Zelos",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zelos"
+ },
+ {
+  "id": "watch_brand_halios",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Halios",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "halios"
+ },
+ {
+  "id": "watch_brand_marathon",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ماراثون",
+  "nameEn": "Marathon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "marathon"
+ },
+ {
+  "id": "watch_brand_oak_oscar",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Oak & Oscar",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Oak and Oscar"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oak & oscar"
+ },
+ {
+  "id": "watch_brand_airain",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Airain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "airain"
+ },
+ {
+  "id": "watch_brand_bruno_sohnle",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Bruno Söhnle",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bruno Sohnle"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bruno söhnle"
+ },
+ {
+  "id": "watch_brand_ernst_benz",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Ernst Benz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ernst benz"
+ },
+ {
+  "id": "watch_brand_aerowatch",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Aerowatch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aerowatch"
+ },
+ {
+  "id": "watch_brand_candino",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Candino",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "candino"
+ },
+ {
+  "id": "watch_brand_mathey_tissot",
+  "domains": [
+   "watch"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Mathey-Tissot",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mathey Tissot"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mathey-tissot"
+ }
+]

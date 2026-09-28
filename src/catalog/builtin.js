@@ -114,8 +114,13 @@ export function builtinRows() {
   return Object.values(GROUPS).flatMap((group) => group());
 }
 
+/** The rows of one lazily loaded group (the Flutter asset generator reads these). */
+export function builtinGroupRows(name) {
+  return GROUPS[name] ? GROUPS[name]() : [];
+}
+
 /** Which groups a domain needs, and which of them wait for a deeper look. */
-const DOMAIN_GROUPS = {
+export const DOMAIN_GROUPS = {
   watch: { first: ['watchBrands'], deep: ['watchDetails'] },
   vehicle: { first: ['vehicles'] },
   machinery: { first: ['industrial'] },
