@@ -33,8 +33,9 @@ class Valuation {
   /// UTC milliseconds.
   final int? valuationDate;
 
-  /// The order/range key (the reference's `valuationMidpoint`).
-  double get midpoint => ((min + max) / Decimal.fromInt(2)).toDouble();
+  /// The order/range key (the reference's `valuationMidpoint`), computed in
+  /// double arithmetic exactly as the reference does, so kept totals agree.
+  double get midpoint => (min.toDouble() + max.toDouble()) / 2;
 
   static Valuation? fromJson(Object? raw) {
     if (raw is! Map) return null;

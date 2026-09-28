@@ -84,6 +84,23 @@ void main() {
     final bySku = await plan("SELECT id FROM items WHERE sku = 'X'");
     expect(bySku, contains('items_sku'));
 
+    // As the repository asks it: an identifier with the list order.
+    final skuInList = await plan(
+      "SELECT * FROM items WHERE deleted_at IS NULL AND sku = 'X' ORDER BY +created_at DESC, +id DESC LIMIT 51",
+    );
+    expect(skuInList, contains('items_sku'));
+    for (final (col, index) in [
+      ('serial_number', 'items_serial'),
+      ('model_number', 'items_model'),
+      ('reference_number', 'items_reference'),
+      ('barcode', 'items_barcode'),
+    ]) {
+      expect(
+        await plan("SELECT * FROM items WHERE deleted_at IS NULL AND $col = 'X' ORDER BY +created_at DESC LIMIT 51"),
+        contains(index),
+      );
+    }
+
     final token = await plan("SELECT item_id FROM item_tokens WHERE token >= 'rol' AND token < 'rom'");
     expect(token, contains('PRIMARY KEY'));
   });

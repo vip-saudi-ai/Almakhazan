@@ -32,6 +32,8 @@ import 'package:drift/drift.dart';
 @TableIndex(name: 'items_sku', columns: {#sku})
 @TableIndex(name: 'items_barcode', columns: {#barcode})
 @TableIndex(name: 'items_serial', columns: {#serialNumber})
+@TableIndex(name: 'items_model', columns: {#modelNumber})
+@TableIndex(name: 'items_reference', columns: {#referenceNumber})
 @TableIndex(name: 'items_import_job', columns: {#importJobId})
 class Items extends Table {
   TextColumn get id => text()();

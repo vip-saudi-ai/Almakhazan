@@ -17,6 +17,8 @@ const { normalizeDigits } = await import(join(reference, 'utils.js'));
 const { validateQuerySpec } = await import(join(reference, 'query-spec.js'));
 const { normalizeItem } = await import(join(reference, 'validation.js'));
 const { AggregateBuilder } = await import(join(reference, 'aggregates.js'));
+const { matchesSpec, compareForSort } = await import(join(reference, 'query-spec.js'));
+const { searchTokensOf, catalogRefsOf } = await import(join(reference, 'item-index.js'));
 
 const out = (name, data) => {
   const path = join(app, 'test', 'fixtures', name);
@@ -89,5 +91,69 @@ const builder = new AggregateBuilder();
 items.forEach((i) => builder.add(i));
 out('items.json', items);
 out('aggregate.json', builder.result());
+
+// ── the query contract answered by the reference over a fixed dataset ─────
+let seed = 20260928;
+const rand = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+const pick = (list) => list[Math.floor(rand() * list.length)];
+const words = ['مولد', 'كهربائي', 'ساعة', 'رولكس', 'لوحة', 'زيتية', 'سيارة', 'Land', 'Cruiser', 'Omega', 'المولد', 'جهاز', 'قطعة', 'iS50', 'Daytona'];
+const dataset = [];
+for (let i = 0; i < 300; i += 1) {
+  const currency = pick(['SAR', 'SAR', 'USD', null]);
+  const min = Math.round(rand() * 100000) / (rand() < 0.3 ? 4 : 1);
+  dataset.push(normalizeItem({
+    id: `ds_${String(i).padStart(4, '0')}_${Math.floor(rand() * 1000)}`,
+    name: `${pick(words)} ${pick(words)} ${Math.floor(rand() * 50)}`,
+    brand: rand() < 0.2 ? pick(['Rolex', 'Omega', 'Caterpillar']) : '',
+    quantity: rand() < 0.1 ? 2.5 : Math.floor(rand() * 5) + 1,
+    categoryId: pick(['uncategorized', 'art_paintings', 'equipment_generators', 'jewellery_watches']),
+    mainCategoryId: pick([null, 'equipment_tools', 'jewellery']),
+    locationId: pick([null, 'loc_a', 'loc_b']),
+    folderId: pick([null, 'fld_a']),
+    condition: pick(['', 'ممتازة', 'جيدة']),
+    sku: rand() < 0.5 ? `SKU-${i}` : '',
+    serialNumber: rand() < 0.2 ? `SN-${Math.floor(rand() * 40)}` : '',
+    valuation: currency ? { min, max: min + Math.round(rand() * 1000), currency, source: 'manual', valuationDate: 1700000000000 } : null,
+    images: rand() < 0.3 ? [{ id: `img_${i}`, mediaId: `img_${i}`, storagePath: `local:img_${i}` }] : [],
+    aiData: null,
+    customFields: rand() < 0.2 ? { watch_brand: { ref: 'watch_brand_rolex', label: 'Rolex' }, watch_reference: 'REF-126500' } : {},
+    createdAt: 1700000000000 + Math.floor(rand() * 1000) * 1000,
+    updatedAt: 1700000000000 + Math.floor(rand() * 5000) * 1000,
+    deletedAt: rand() < 0.1 ? 1760000000000 : null,
+  }));
+}
+const contractSpecs = [
+  {},
+  { sort: { field: 'name', direction: 'asc' } },
+  { sort: { field: 'name', direction: 'desc' } },
+  { sort: { field: 'updatedAt', direction: 'asc' } },
+  { filters: { folderId: 'fld_a' } },
+  { filters: { locationId: { exists: false } }, sort: { field: 'name', direction: 'asc' } },
+  { filters: { hasImages: false, categoryId: 'art_paintings' } },
+  { filters: { valuationCurrency: 'USD' }, sort: { field: 'valuation', direction: 'asc' } },
+  { filters: { valuationCurrency: 'SAR', valuationMidpoint: { gt: 50000 } }, sort: { field: 'valuation', direction: 'desc' } },
+  { filters: { deleted: true } },
+  { filters: { condition: 'ممتازة', quantity: { gte: 3 } } },
+  { filters: { condition: { exists: false } } },
+  { filters: { valued: false } },
+  { text: 'مولد' },
+  { text: 'SKU-1' },
+  { text: 'رولكس' },
+  { text: 'ref-126500' },
+  { text: 'land cru' },
+  { filters: { updatedAt: { lt: 1700002000000 } } },
+  { filters: { categoryId: { in: ['uncategorized', 'art_paintings'] } }, sort: { field: 'createdAt', direction: 'asc' } },
+  { filters: { mainCategoryId: { exists: true }, locationId: 'loc_b' }, sort: { field: 'name', direction: 'asc' } },
+];
+out('contract.json', {
+  items: dataset,
+  tokens: Object.fromEntries(dataset.map((i) => [i.id, searchTokensOf(i)])),
+  catalogRefs: Object.fromEntries(dataset.map((i) => [i.id, catalogRefsOf(i)])),
+  specs: contractSpecs.map((input) => {
+    const spec = validateQuerySpec(input);
+    const ids = dataset.filter((i) => matchesSpec(i, spec, searchTokensOf)).sort(compareForSort(spec.sort)).map((i) => i.id);
+    return { input, ids };
+  }),
+});
 
 console.log(`fixtures: ${texts.length} texts, ${specs.length} query specs, ${items.length} items`);

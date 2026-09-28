@@ -8794,6 +8794,11 @@ abstract class _$NazmDatabase extends GeneratedDatabase {
   late final Index itemsSku = Index('items_sku', 'CREATE INDEX items_sku ON items (sku)');
   late final Index itemsBarcode = Index('items_barcode', 'CREATE INDEX items_barcode ON items (barcode)');
   late final Index itemsSerial = Index('items_serial', 'CREATE INDEX items_serial ON items (serial_number)');
+  late final Index itemsModel = Index('items_model', 'CREATE INDEX items_model ON items (model_number)');
+  late final Index itemsReference = Index(
+    'items_reference',
+    'CREATE INDEX items_reference ON items (reference_number)',
+  );
   late final Index itemsImportJob = Index('items_import_job', 'CREATE INDEX items_import_job ON items (import_job_id)');
   late final Index itemTokensItem = Index('item_tokens_item', 'CREATE INDEX item_tokens_item ON item_tokens (item_id)');
   late final Index itemCatalogRefsItem = Index(
@@ -8875,6 +8880,8 @@ abstract class _$NazmDatabase extends GeneratedDatabase {
     itemsSku,
     itemsBarcode,
     itemsSerial,
+    itemsModel,
+    itemsReference,
     itemsImportJob,
     itemTokensItem,
     itemCatalogRefsItem,

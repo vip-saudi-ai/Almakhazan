@@ -17,6 +17,15 @@ class ItemAggregate {
   final Map<String, ({int count, double total})> byCurrency;
 }
 
+/// Live records sharing an identifier or a name with another live record.
+class DuplicateCandidates {
+  const DuplicateCandidates(this.items, {required this.truncated});
+  final List<Item> items;
+
+  /// More candidates exist than were returned.
+  final bool truncated;
+}
+
 abstract interface class ItemRepository {
   BackendCapabilities get capabilities;
 
@@ -37,6 +46,10 @@ abstract interface class ItemRepository {
 
   Future<Item> createItem(Item item);
 
+  /// Many records in one transaction (import, restore): all or nothing, with
+  /// the same id and SKU rules as [createItem].
+  Future<void> createItems(List<Item> items);
+
   /// Refused with `repo/conflict` when [expectedVersion] is stale.
   Future<Item> updateItem(Item item, {int? expectedVersion});
 
@@ -49,7 +62,7 @@ abstract interface class ItemRepository {
 
   /// Records that may be duplicates of one another (never the whole
   /// inventory); null when the backend cannot answer.
-  Future<List<Item>?> duplicateCandidates({int limit = 5000});
+  Future<DuplicateCandidates?> duplicateCandidates({int limit = 5000});
 
   /// EXPLICIT whole-dataset stream for export, restore safety backups,
   /// migration and maintenance only — a page at a time, never a list of
