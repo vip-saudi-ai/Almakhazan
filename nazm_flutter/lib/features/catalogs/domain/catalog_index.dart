@@ -27,7 +27,7 @@ class CatalogLevel {
   final String? parentId;
   final String? ancestorId;
 
-  List<String> get wantedTypes => types ?? [if (entityType != null) entityType!];
+  List<String> get wantedTypes => types ?? [?entityType];
 
   CatalogLevel withoutAncestor() =>
       CatalogLevel(domain: domain, entityType: entityType, types: types, parentId: parentId);
