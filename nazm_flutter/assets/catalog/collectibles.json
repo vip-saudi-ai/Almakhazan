@@ -1,0 +1,3242 @@
+[
+ {
+  "id": "jewel_brand_cartier",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كارتييه",
+  "nameEn": "Cartier",
+  "aliasesAr": [
+   "كارتير"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cartier"
+ },
+ {
+  "id": "jewel_col_cartier_love",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Love",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "love"
+ },
+ {
+  "id": "jewel_col_cartier_juste_un_clou",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Juste un Clou",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "juste un clou"
+ },
+ {
+  "id": "jewel_col_cartier_panthere_de_cartier",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Panthère de Cartier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "panthère de cartier"
+ },
+ {
+  "id": "jewel_col_cartier_trinity",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Trinity",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "trinity"
+ },
+ {
+  "id": "jewel_col_cartier_clash_de_cartier",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_cartier",
+  "nameAr": "",
+  "nameEn": "Clash de Cartier",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "clash de cartier"
+ },
+ {
+  "id": "jewel_brand_van_cleef_arpels",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فان كليف آند آربلز",
+  "nameEn": "Van Cleef & Arpels",
+  "aliasesAr": [
+   "فان كليف"
+  ],
+  "aliasesEn": [
+   "VCA"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "van cleef & arpels"
+ },
+ {
+  "id": "jewel_col_van_cleef_arpels_alhambra",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_van_cleef_arpels",
+  "nameAr": "",
+  "nameEn": "Alhambra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alhambra"
+ },
+ {
+  "id": "jewel_col_van_cleef_arpels_perlee",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_van_cleef_arpels",
+  "nameAr": "",
+  "nameEn": "Perlée",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "perlée"
+ },
+ {
+  "id": "jewel_col_van_cleef_arpels_frivole",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_van_cleef_arpels",
+  "nameAr": "",
+  "nameEn": "Frivole",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "frivole"
+ },
+ {
+  "id": "jewel_brand_bulgari",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بولغاري",
+  "nameEn": "Bulgari",
+  "aliasesAr": [
+   "بلغاري"
+  ],
+  "aliasesEn": [
+   "Bvlgari"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bulgari"
+ },
+ {
+  "id": "jewel_col_bulgari_serpenti",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Serpenti",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "serpenti"
+ },
+ {
+  "id": "jewel_col_bulgari_b_zero1",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "B.zero1",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "b.zero000000000001"
+ },
+ {
+  "id": "jewel_col_bulgari_divas_dream",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_bulgari",
+  "nameAr": "",
+  "nameEn": "Divas' Dream",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "divas' dream"
+ },
+ {
+  "id": "jewel_brand_tiffany_co",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "تيفاني",
+  "nameEn": "Tiffany & Co.",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Tiffany"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiffany & co."
+ },
+ {
+  "id": "jewel_col_tiffany_co_tiffany_t",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_tiffany_co",
+  "nameAr": "",
+  "nameEn": "Tiffany T",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiffany t"
+ },
+ {
+  "id": "jewel_col_tiffany_co_hardwear",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_tiffany_co",
+  "nameAr": "",
+  "nameEn": "HardWear",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hardwear"
+ },
+ {
+  "id": "jewel_col_tiffany_co_tiffany_setting",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_tiffany_co",
+  "nameAr": "",
+  "nameEn": "Tiffany Setting",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiffany setting"
+ },
+ {
+  "id": "jewel_col_tiffany_co_return_to_tiffany",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_tiffany_co",
+  "nameAr": "",
+  "nameEn": "Return to Tiffany",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "return to tiffany"
+ },
+ {
+  "id": "jewel_brand_harry_winston",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هاري ونستون",
+  "nameEn": "Harry Winston",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "harry winston"
+ },
+ {
+  "id": "jewel_brand_graff",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جراف",
+  "nameEn": "Graff",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "graff"
+ },
+ {
+  "id": "jewel_brand_boucheron",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوشرون",
+  "nameEn": "Boucheron",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "boucheron"
+ },
+ {
+  "id": "jewel_col_boucheron_quatre",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_boucheron",
+  "nameAr": "",
+  "nameEn": "Quatre",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "quatre"
+ },
+ {
+  "id": "jewel_col_boucheron_serpent_boheme",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_boucheron",
+  "nameAr": "",
+  "nameEn": "Serpent Bohème",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "serpent bohème"
+ },
+ {
+  "id": "jewel_brand_chaumet",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شوميه",
+  "nameEn": "Chaumet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chaumet"
+ },
+ {
+  "id": "jewel_col_chaumet_josephine",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_chaumet",
+  "nameAr": "",
+  "nameEn": "Joséphine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "joséphine"
+ },
+ {
+  "id": "jewel_col_chaumet_bee_my_love",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_chaumet",
+  "nameAr": "",
+  "nameEn": "Bee My Love",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bee my love"
+ },
+ {
+  "id": "jewel_col_chaumet_liens",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_chaumet",
+  "nameAr": "",
+  "nameEn": "Liens",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "liens"
+ },
+ {
+  "id": "jewel_brand_chopard",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شوبارد",
+  "nameEn": "Chopard",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chopard"
+ },
+ {
+  "id": "jewel_col_chopard_happy_diamonds",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Happy Diamonds",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "happy diamonds"
+ },
+ {
+  "id": "jewel_col_chopard_ice_cube",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_chopard",
+  "nameAr": "",
+  "nameEn": "Ice Cube",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ice cube"
+ },
+ {
+  "id": "jewel_brand_piaget",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بياجيه",
+  "nameEn": "Piaget",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "piaget"
+ },
+ {
+  "id": "jewel_col_piaget_possession",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_piaget",
+  "nameAr": "",
+  "nameEn": "Possession",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "possession"
+ },
+ {
+  "id": "jewel_brand_buccellati",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوتشيلاتي",
+  "nameEn": "Buccellati",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "buccellati"
+ },
+ {
+  "id": "jewel_brand_david_webb",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ديفيد ويب",
+  "nameEn": "David Webb",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "david webb"
+ },
+ {
+  "id": "jewel_brand_de_beers",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دي بيرز",
+  "nameEn": "De Beers",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "de beers"
+ },
+ {
+  "id": "jewel_brand_messika",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ميسيكا",
+  "nameEn": "Messika",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "messika"
+ },
+ {
+  "id": "jewel_col_messika_move",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_messika",
+  "nameAr": "",
+  "nameEn": "Move",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "move"
+ },
+ {
+  "id": "jewel_brand_pomellato",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوميلاتو",
+  "nameEn": "Pomellato",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pomellato"
+ },
+ {
+  "id": "jewel_col_pomellato_nudo",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "collection",
+  "parentId": "jewel_brand_pomellato",
+  "nameAr": "",
+  "nameEn": "Nudo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nudo"
+ },
+ {
+  "id": "jewel_brand_mikimoto",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ميكيموتو",
+  "nameEn": "Mikimoto",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mikimoto"
+ },
+ {
+  "id": "jewel_brand_damiani",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دامياني",
+  "nameEn": "Damiani",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "damiani"
+ },
+ {
+  "id": "jewel_brand_faberge",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فابرجيه",
+  "nameEn": "Fabergé",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Faberge"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fabergé"
+ },
+ {
+  "id": "jewel_brand_repossi",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ريبوسي",
+  "nameEn": "Repossi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "repossi"
+ },
+ {
+  "id": "jewel_brand_david_yurman",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ديفيد يورمان",
+  "nameEn": "David Yurman",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "david yurman"
+ },
+ {
+  "id": "jewel_brand_fred",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فريد",
+  "nameEn": "Fred",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fred"
+ },
+ {
+  "id": "jewel_brand_mouawad",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "معوض",
+  "nameEn": "Mouawad",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mouawad"
+ },
+ {
+  "id": "jewel_brand_damas",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "داماس",
+  "nameEn": "Damas",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "damas"
+ },
+ {
+  "id": "jewel_brand_lazurde",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لازوردي",
+  "nameEn": "L'azurde",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lazurde"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "l'azurde"
+ },
+ {
+  "id": "jewel_brand_tabbah",
+  "domains": [
+   "jewellery"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "طبّاع",
+  "nameEn": "Tabbah",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tabbah"
+ },
+ {
+  "id": "gem_diamond",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "ألماس",
+  "nameEn": "Diamond",
+  "aliasesAr": [
+   "الماس",
+   "الماسة"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "diamond"
+ },
+ {
+  "id": "gem_ruby",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "ياقوت أحمر",
+  "nameEn": "Ruby",
+  "aliasesAr": [
+   "ياقوت",
+   "روبي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ruby"
+ },
+ {
+  "id": "gem_sapphire",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "ياقوت أزرق",
+  "nameEn": "Sapphire",
+  "aliasesAr": [
+   "صفير",
+   "سفير"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sapphire"
+ },
+ {
+  "id": "gem_sapphire_blue_sapphire",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_sapphire",
+  "nameAr": "ياقوت أزرق",
+  "nameEn": "Blue Sapphire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "blue sapphire"
+ },
+ {
+  "id": "gem_sapphire_pink_sapphire",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_sapphire",
+  "nameAr": "ياقوت وردي",
+  "nameEn": "Pink Sapphire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pink sapphire"
+ },
+ {
+  "id": "gem_sapphire_yellow_sapphire",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_sapphire",
+  "nameAr": "ياقوت أصفر",
+  "nameEn": "Yellow Sapphire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yellow sapphire"
+ },
+ {
+  "id": "gem_sapphire_padparadscha",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_sapphire",
+  "nameAr": "بادبارادشا",
+  "nameEn": "Padparadscha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "padparadscha"
+ },
+ {
+  "id": "gem_sapphire_star_sapphire",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_sapphire",
+  "nameAr": "ياقوت نجمي",
+  "nameEn": "Star Sapphire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "star sapphire"
+ },
+ {
+  "id": "gem_emerald",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "زمرد",
+  "nameEn": "Emerald",
+  "aliasesAr": [
+   "زمرّد"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "emerald"
+ },
+ {
+  "id": "gem_spinel",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "إسبنيل",
+  "nameEn": "Spinel",
+  "aliasesAr": [
+   "سبينل"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spinel"
+ },
+ {
+  "id": "gem_alexandrite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "ألكسندريت",
+  "nameEn": "Alexandrite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alexandrite"
+ },
+ {
+  "id": "gem_chrysoberyl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "كريزوبريل",
+  "nameEn": "Chrysoberyl",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chrysoberyl"
+ },
+ {
+  "id": "gem_chrysoberyl_cat_s_eye_chrysoberyl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_chrysoberyl",
+  "nameAr": "عين القط",
+  "nameEn": "Cat's Eye Chrysoberyl",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Cats Eye"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cat's eye chrysoberyl"
+ },
+ {
+  "id": "gem_garnet",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "غارنيت",
+  "nameEn": "Garnet",
+  "aliasesAr": [
+   "عقيق احمر",
+   "جارنت"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "garnet"
+ },
+ {
+  "id": "gem_garnet_tsavorite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "تسافوريت",
+  "nameEn": "Tsavorite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tsavorite"
+ },
+ {
+  "id": "gem_garnet_demantoid",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "ديمانتويد",
+  "nameEn": "Demantoid",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "demantoid"
+ },
+ {
+  "id": "gem_garnet_rhodolite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "رودوليت",
+  "nameEn": "Rhodolite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rhodolite"
+ },
+ {
+  "id": "gem_garnet_spessartine",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "سبيسارتين",
+  "nameEn": "Spessartine",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Spessartite"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spessartine"
+ },
+ {
+  "id": "gem_garnet_almandine",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "ألماندين",
+  "nameEn": "Almandine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "almandine"
+ },
+ {
+  "id": "gem_garnet_pyrope",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_garnet",
+  "nameAr": "بايروب",
+  "nameEn": "Pyrope",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pyrope"
+ },
+ {
+  "id": "gem_tourmaline",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "تورمالين",
+  "nameEn": "Tourmaline",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tourmaline"
+ },
+ {
+  "id": "gem_tourmaline_paraiba_tourmaline",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_tourmaline",
+  "nameAr": "تورمالين بارايبا",
+  "nameEn": "Paraíba Tourmaline",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Paraiba"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "paraíba tourmaline"
+ },
+ {
+  "id": "gem_tourmaline_rubellite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_tourmaline",
+  "nameAr": "روبيليت",
+  "nameEn": "Rubellite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rubellite"
+ },
+ {
+  "id": "gem_tourmaline_indicolite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_tourmaline",
+  "nameAr": "إنديكوليت",
+  "nameEn": "Indicolite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "indicolite"
+ },
+ {
+  "id": "gem_aquamarine",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "أكوامارين",
+  "nameEn": "Aquamarine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aquamarine"
+ },
+ {
+  "id": "gem_morganite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "مورجانيت",
+  "nameEn": "Morganite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "morganite"
+ },
+ {
+  "id": "gem_topaz",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "توباز",
+  "nameEn": "Topaz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "topaz"
+ },
+ {
+  "id": "gem_zircon",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "زركون",
+  "nameEn": "Zircon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zircon"
+ },
+ {
+  "id": "gem_jadeite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "يشم جاديت",
+  "nameEn": "Jadeite",
+  "aliasesAr": [
+   "يشم"
+  ],
+  "aliasesEn": [
+   "Jade"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jadeite"
+ },
+ {
+  "id": "gem_nephrite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "يشم نفريت",
+  "nameEn": "Nephrite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nephrite"
+ },
+ {
+  "id": "gem_opal",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "أوبال",
+  "nameEn": "Opal",
+  "aliasesAr": [
+   "اوبال"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "opal"
+ },
+ {
+  "id": "gem_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "لؤلؤ",
+  "nameEn": "Pearl",
+  "aliasesAr": [
+   "لولو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pearl"
+ },
+ {
+  "id": "gem_pearl_natural_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_pearl",
+  "nameAr": "لؤلؤ طبيعي",
+  "nameEn": "Natural Pearl",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "natural pearl"
+ },
+ {
+  "id": "gem_pearl_cultured_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_pearl",
+  "nameAr": "لؤلؤ مستزرع",
+  "nameEn": "Cultured Pearl",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cultured pearl"
+ },
+ {
+  "id": "gem_pearl_akoya_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_pearl",
+  "nameAr": "لؤلؤ أكويا",
+  "nameEn": "Akoya Pearl",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Akoya"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "akoya pearl"
+ },
+ {
+  "id": "gem_pearl_south_sea_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_pearl",
+  "nameAr": "لؤلؤ البحار الجنوبية",
+  "nameEn": "South Sea Pearl",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "South Sea"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "south sea pearl"
+ },
+ {
+  "id": "gem_pearl_tahitian_pearl",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "variety",
+  "parentId": "gem_pearl",
+  "nameAr": "لؤلؤ تاهيتي",
+  "nameEn": "Tahitian Pearl",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Tahitian"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tahitian pearl"
+ },
+ {
+  "id": "gem_coral",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "مرجان",
+  "nameEn": "Coral",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "coral"
+ },
+ {
+  "id": "gem_amber",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "كهرمان",
+  "nameEn": "Amber",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "amber"
+ },
+ {
+  "id": "gem_turquoise",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "فيروز",
+  "nameEn": "Turquoise",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "turquoise"
+ },
+ {
+  "id": "gem_tanzanite",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "تنزانيت",
+  "nameEn": "Tanzanite",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tanzanite"
+ },
+ {
+  "id": "gem_peridot",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "زبرجد",
+  "nameEn": "Peridot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "peridot"
+ },
+ {
+  "id": "gem_amethyst",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "جمشت",
+  "nameEn": "Amethyst",
+  "aliasesAr": [
+   "أماتيست"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "amethyst"
+ },
+ {
+  "id": "gem_citrine",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "سترين",
+  "nameEn": "Citrine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "citrine"
+ },
+ {
+  "id": "gem_lapis_lazuli",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "لازورد",
+  "nameEn": "Lapis Lazuli",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lapis lazuli"
+ },
+ {
+  "id": "gem_moonstone",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "حجر القمر",
+  "nameEn": "Moonstone",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "moonstone"
+ },
+ {
+  "id": "gem_agate",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "عقيق",
+  "nameEn": "Agate",
+  "aliasesAr": [
+   "عقيق يماني"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "agate"
+ },
+ {
+  "id": "gem_onyx",
+  "domains": [
+   "gem"
+  ],
+  "entityType": "type",
+  "parentId": null,
+  "nameAr": "جزع",
+  "nameEn": "Onyx",
+  "aliasesAr": [
+   "أونيكس"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "onyx"
+ },
+ {
+  "id": "gemlab_gia",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "المعهد الأمريكي لعلوم الأحجار",
+  "nameEn": "GIA",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Gemological Institute of America"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gia"
+ },
+ {
+  "id": "gemlab_ssef",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "SSEF",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Swiss Gemmological Institute"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ssef"
+ },
+ {
+  "id": "gemlab_gubelin",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Gübelin Gem Lab",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Gubelin",
+   "Gübelin"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gübelin gem lab"
+ },
+ {
+  "id": "gemlab_grs",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "GRS",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "GemResearch Swisslab"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grs"
+ },
+ {
+  "id": "gemlab_agl",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "AGL",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "American Gemological Laboratories"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "agl"
+ },
+ {
+  "id": "gemlab_igi",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "IGI",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "International Gemological Institute"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "igi"
+ },
+ {
+  "id": "gemlab_hrd",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "HRD Antwerp",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "HRD"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hrd antwerp"
+ },
+ {
+  "id": "gemlab_lotus",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Lotus Gemology",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lotus"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lotus gemology"
+ },
+ {
+  "id": "gemlab_git",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "GIT",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Gem and Jewelry Institute of Thailand"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "git"
+ },
+ {
+  "id": "gemlab_egl",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "EGL",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "European Gemological Laboratory"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "egl"
+ },
+ {
+  "id": "gemlab_bellerophon",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Bellerophon Gemlab",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bellerophon"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bellerophon gemlab"
+ },
+ {
+  "id": "gemlab_cisgem",
+  "domains": [
+   "gem_lab"
+  ],
+  "entityType": "laboratory",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "CISGEM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cisgem"
+ },
+ {
+  "id": "artist_pablo_picasso",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "بابلو بيكاسو",
+  "nameEn": "Pablo Picasso",
+  "aliasesAr": [
+   "بيكاسو"
+  ],
+  "aliasesEn": [
+   "Picasso"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pablo picasso"
+ },
+ {
+  "id": "artist_vincent_van_gogh",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "فينسنت فان جوخ",
+  "nameEn": "Vincent van Gogh",
+  "aliasesAr": [
+   "فان غوخ"
+  ],
+  "aliasesEn": [
+   "Van Gogh"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vincent van gogh"
+ },
+ {
+  "id": "artist_claude_monet",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "كلود مونيه",
+  "nameEn": "Claude Monet",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Monet"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "claude monet"
+ },
+ {
+  "id": "artist_rembrandt",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "رامبرانت",
+  "nameEn": "Rembrandt van Rijn",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Rembrandt"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rembrandt van rijn"
+ },
+ {
+  "id": "artist_leonardo_da_vinci",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "ليوناردو دافنشي",
+  "nameEn": "Leonardo da Vinci",
+  "aliasesAr": [
+   "دافنشي"
+  ],
+  "aliasesEn": [
+   "Da Vinci"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "leonardo da vinci"
+ },
+ {
+  "id": "artist_salvador_dali",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "سلفادور دالي",
+  "nameEn": "Salvador Dalí",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Dali"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "salvador dalí"
+ },
+ {
+  "id": "artist_andy_warhol",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "آندي وارهول",
+  "nameEn": "Andy Warhol",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Warhol"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "andy warhol"
+ },
+ {
+  "id": "artist_henri_matisse",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "هنري ماتيس",
+  "nameEn": "Henri Matisse",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Matisse"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "henri matisse"
+ },
+ {
+  "id": "artist_mahmoud_said",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "محمود سعيد",
+  "nameEn": "Mahmoud Saïd",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mahmoud Said"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mahmoud saïd"
+ },
+ {
+  "id": "artist_abdulhalim_radwi",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "عبدالحليم رضوي",
+  "nameEn": "Abdulhalim Radwi",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Radwi"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "abdulhalim radwi"
+ },
+ {
+  "id": "artist_mohammed_alsaleem",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "محمد السليم",
+  "nameEn": "Mohammed Al Saleem",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mohammed al saleem"
+ },
+ {
+  "id": "artist_safeya_binzagr",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "صفية بن زقر",
+  "nameEn": "Safeya Binzagr",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "safeya binzagr"
+ },
+ {
+  "id": "artist_mahmoud_mokhtar",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "محمود مختار",
+  "nameEn": "Mahmoud Mokhtar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mahmoud mokhtar"
+ },
+ {
+  "id": "artist_jewad_selim",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "جواد سليم",
+  "nameEn": "Jewad Selim",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jewad selim"
+ },
+ {
+  "id": "artist_shakir_hassan_al_said",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "شاكر حسن آل سعيد",
+  "nameEn": "Shakir Hassan Al Said",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "shakir hassan al said"
+ },
+ {
+  "id": "artist_dia_azzawi",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "ضياء العزاوي",
+  "nameEn": "Dia Azzawi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dia azzawi"
+ },
+ {
+  "id": "artist_paul_guiragossian",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "بول غيراغوسيان",
+  "nameEn": "Paul Guiragossian",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "paul guiragossian"
+ },
+ {
+  "id": "artist_fateh_moudarres",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "فاتح المدرس",
+  "nameEn": "Fateh Moudarres",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fateh moudarres"
+ },
+ {
+  "id": "artist_louay_kayyali",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "لؤي كيالي",
+  "nameEn": "Louay Kayyali",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "louay kayyali"
+ },
+ {
+  "id": "artist_ahmed_mater",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "أحمد ماطر",
+  "nameEn": "Ahmed Mater",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ahmed mater"
+ },
+ {
+  "id": "artist_abdulnasser_gharem",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "عبدالناصر غارم",
+  "nameEn": "Abdulnasser Gharem",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "abdulnasser gharem"
+ },
+ {
+  "id": "artist_hussein_bicar",
+  "domains": [
+   "art"
+  ],
+  "entityType": "artist",
+  "parentId": null,
+  "nameAr": "حسين بيكار",
+  "nameEn": "Hussein Bicar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hussein bicar"
+ },
+ {
+  "id": "furniture_herman_miller",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "هيرمان ميلر",
+  "nameEn": "Herman Miller",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "herman miller"
+ },
+ {
+  "id": "furniture_steelcase",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "ستيل كيس",
+  "nameEn": "Steelcase",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "steelcase"
+ },
+ {
+  "id": "furniture_knoll",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "نول",
+  "nameEn": "Knoll",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "knoll"
+ },
+ {
+  "id": "furniture_vitra",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "فيترا",
+  "nameEn": "Vitra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vitra"
+ },
+ {
+  "id": "furniture_ikea",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "ايكيا",
+  "nameEn": "IKEA",
+  "aliasesAr": [
+   "إيكيا"
+  ],
+  "aliasesEn": [
+   "Ikea"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ikea"
+ },
+ {
+  "id": "furniture_haworth",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "هاوورث",
+  "nameEn": "Haworth",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "haworth"
+ },
+ {
+  "id": "furniture_humanscale",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Humanscale",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "humanscale"
+ },
+ {
+  "id": "furniture_poltrona_frau",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "بولترونا فراو",
+  "nameEn": "Poltrona Frau",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "poltrona frau"
+ },
+ {
+  "id": "furniture_cassina",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "كاسينا",
+  "nameEn": "Cassina",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cassina"
+ },
+ {
+  "id": "furniture_bb_italia",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "بي آند بي إيطاليا",
+  "nameEn": "B&B Italia",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "B and B Italia"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "b&b italia"
+ },
+ {
+  "id": "furniture_kartell",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "كارتيل",
+  "nameEn": "Kartell",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kartell"
+ },
+ {
+  "id": "furniture_fritz_hansen",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "فريتز هانسن",
+  "nameEn": "Fritz Hansen",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fritz hansen"
+ },
+ {
+  "id": "furniture_ligne_roset",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "لين روزيه",
+  "nameEn": "Ligne Roset",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ligne roset"
+ },
+ {
+  "id": "furniture_roche_bobois",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "روش بوبوا",
+  "nameEn": "Roche Bobois",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "roche bobois"
+ },
+ {
+  "id": "furniture_minotti",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "مينوتي",
+  "nameEn": "Minotti",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "minotti"
+ },
+ {
+  "id": "furniture_natuzzi",
+  "domains": [
+   "furniture"
+  ],
+  "entityType": "maker",
+  "parentId": null,
+  "nameAr": "ناتوزي",
+  "nameEn": "Natuzzi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "natuzzi"
+ },
+ {
+  "id": "fashion_louis_vuitton",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لويس فيتون",
+  "nameEn": "Louis Vuitton",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "LV"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "louis vuitton"
+ },
+ {
+  "id": "fashion_hermes",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هيرميس",
+  "nameEn": "Hermès",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hermes"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hermès"
+ },
+ {
+  "id": "fashion_chanel",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شانيل",
+  "nameEn": "Chanel",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chanel"
+ },
+ {
+  "id": "fashion_gucci",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "غوتشي",
+  "nameEn": "Gucci",
+  "aliasesAr": [
+   "قوتشي",
+   "جوتشي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gucci"
+ },
+ {
+  "id": "fashion_prada",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "برادا",
+  "nameEn": "Prada",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "prada"
+ },
+ {
+  "id": "fashion_dior",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ديور",
+  "nameEn": "Dior",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Christian Dior"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dior"
+ },
+ {
+  "id": "fashion_burberry",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بربري",
+  "nameEn": "Burberry",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "burberry"
+ },
+ {
+  "id": "fashion_balenciaga",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بالنسياغا",
+  "nameEn": "Balenciaga",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "balenciaga"
+ },
+ {
+  "id": "fashion_saint_laurent",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سان لوران",
+  "nameEn": "Saint Laurent",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "YSL"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "saint laurent"
+ },
+ {
+  "id": "fashion_fendi",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فندي",
+  "nameEn": "Fendi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fendi"
+ },
+ {
+  "id": "fashion_givenchy",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جيفنشي",
+  "nameEn": "Givenchy",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "givenchy"
+ },
+ {
+  "id": "fashion_valentino",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فالنتينو",
+  "nameEn": "Valentino",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "valentino"
+ },
+ {
+  "id": "fashion_versace",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فيرساتشي",
+  "nameEn": "Versace",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "versace"
+ },
+ {
+  "id": "fashion_bottega_veneta",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوتيغا فينيتا",
+  "nameEn": "Bottega Veneta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bottega veneta"
+ },
+ {
+  "id": "fashion_loewe",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لويفي",
+  "nameEn": "Loewe",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "loewe"
+ },
+ {
+  "id": "fashion_celine",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيلين",
+  "nameEn": "Celine",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "celine"
+ },
+ {
+  "id": "fashion_zara",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "زارا",
+  "nameEn": "Zara",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zara"
+ },
+ {
+  "id": "fashion_hm",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إتش آند إم",
+  "nameEn": "H&M",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h&m"
+ },
+ {
+  "id": "fashion_uniqlo",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يونيكلو",
+  "nameEn": "Uniqlo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uniqlo"
+ },
+ {
+  "id": "fashion_nike",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "نايكي",
+  "nameEn": "Nike",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nike"
+ },
+ {
+  "id": "fashion_adidas",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أديداس",
+  "nameEn": "Adidas",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "adidas"
+ },
+ {
+  "id": "fashion_puma",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوما",
+  "nameEn": "Puma",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "puma"
+ },
+ {
+  "id": "fashion_ray_ban",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "راي بان",
+  "nameEn": "Ray-Ban",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ray Ban"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ray-ban"
+ },
+ {
+  "id": "fashion_oakley",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أوكلي",
+  "nameEn": "Oakley",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oakley"
+ },
+ {
+  "id": "fashion_montblanc",
+  "domains": [
+   "fashion"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مونت بلانك",
+  "nameEn": "Montblanc",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "montblanc"
+ }
+]

@@ -1,0 +1,3973 @@
+[
+ {
+  "id": "mfr_caterpillar",
+  "domains": [
+   "machinery",
+   "generator",
+   "parts",
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كاتربيلر",
+  "nameEn": "Caterpillar",
+  "aliasesAr": [
+   "كاتربلر",
+   "كتربلر",
+   "كاتر"
+  ],
+  "aliasesEn": [
+   "CAT",
+   "Cat"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "caterpillar"
+ },
+ {
+  "id": "mfr_model_caterpillar_320",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "320",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "320",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000320"
+ },
+ {
+  "id": "mfr_model_caterpillar_320_gc",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "320 GC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "320 GC",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000320 gc"
+ },
+ {
+  "id": "mfr_model_caterpillar_320_gx",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "320 GX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "320 GX",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000320 gx"
+ },
+ {
+  "id": "mfr_model_caterpillar_323",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "323",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "323",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000323"
+ },
+ {
+  "id": "mfr_model_caterpillar_330",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "330",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "330",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000330"
+ },
+ {
+  "id": "mfr_model_caterpillar_336",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "336",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "336",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000336"
+ },
+ {
+  "id": "mfr_model_caterpillar_349",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "349",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "349",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000349"
+ },
+ {
+  "id": "mfr_model_caterpillar_352",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "352",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "352",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000352"
+ },
+ {
+  "id": "mfr_model_caterpillar_374",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "374",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "374",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000374"
+ },
+ {
+  "id": "mfr_model_caterpillar_395",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "395",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "395",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000395"
+ },
+ {
+  "id": "mfr_model_caterpillar_950",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "950",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "950",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000950"
+ },
+ {
+  "id": "mfr_model_caterpillar_962",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "962",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "962",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000962"
+ },
+ {
+  "id": "mfr_model_caterpillar_966",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "966",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "966",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000966"
+ },
+ {
+  "id": "mfr_model_caterpillar_972",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "972",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "972",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000972"
+ },
+ {
+  "id": "mfr_model_caterpillar_980",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "980",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "980",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000980"
+ },
+ {
+  "id": "mfr_model_caterpillar_982",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "982",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "982",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000982"
+ },
+ {
+  "id": "mfr_model_caterpillar_988",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "988",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "988",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000988"
+ },
+ {
+  "id": "mfr_model_caterpillar_d5",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D5",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000005"
+ },
+ {
+  "id": "mfr_model_caterpillar_d6",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D6",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000006"
+ },
+ {
+  "id": "mfr_model_caterpillar_d7",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D7",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000007"
+ },
+ {
+  "id": "mfr_model_caterpillar_d8",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D8",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000008"
+ },
+ {
+  "id": "mfr_model_caterpillar_d9",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D9",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D9",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000009"
+ },
+ {
+  "id": "mfr_model_caterpillar_d10",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D10",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D10",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000010"
+ },
+ {
+  "id": "mfr_model_caterpillar_d11",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "D11",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D11",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000011"
+ },
+ {
+  "id": "mfr_model_caterpillar_416",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "416",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "416",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000416"
+ },
+ {
+  "id": "mfr_model_caterpillar_420",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "420",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "420",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000420"
+ },
+ {
+  "id": "mfr_model_caterpillar_432",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "432",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "432",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000432"
+ },
+ {
+  "id": "mfr_model_caterpillar_444",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "444",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "444",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000444"
+ },
+ {
+  "id": "mfr_model_caterpillar_120",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "120",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "120",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000120"
+ },
+ {
+  "id": "mfr_model_caterpillar_140",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "140",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "140",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000140"
+ },
+ {
+  "id": "mfr_model_caterpillar_160",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "160",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "160",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000160"
+ },
+ {
+  "id": "mfr_model_caterpillar_12m",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "12M",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "12M",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000012m"
+ },
+ {
+  "id": "mfr_model_caterpillar_14m",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "14M",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "14M",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000014m"
+ },
+ {
+  "id": "mfr_model_caterpillar_16m",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "16M",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "16M",
+  "metadata": {
+   "machineType": "motor_grader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000016m"
+ },
+ {
+  "id": "mfr_model_caterpillar_226",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "226",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "226",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000226"
+ },
+ {
+  "id": "mfr_model_caterpillar_232",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "232",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "232",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000232"
+ },
+ {
+  "id": "mfr_model_caterpillar_236",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "236",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "236",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000236"
+ },
+ {
+  "id": "mfr_model_caterpillar_242",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "242",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "242",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000242"
+ },
+ {
+  "id": "mfr_model_caterpillar_262",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_caterpillar",
+  "nameAr": "",
+  "nameEn": "262",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "262",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000262"
+ },
+ {
+  "id": "mfr_komatsu",
+  "domains": [
+   "machinery",
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كوماتسو",
+  "nameEn": "Komatsu",
+  "aliasesAr": [
+   "كوماتسو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "komatsu"
+ },
+ {
+  "id": "mfr_model_komatsu_pc200",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "PC200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PC200",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pc000000000200"
+ },
+ {
+  "id": "mfr_model_komatsu_pc210",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "PC210",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PC210",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pc000000000210"
+ },
+ {
+  "id": "mfr_model_komatsu_pc300",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "PC300",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PC300",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pc000000000300"
+ },
+ {
+  "id": "mfr_model_komatsu_pc350",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "PC350",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PC350",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pc000000000350"
+ },
+ {
+  "id": "mfr_model_komatsu_wa320",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "WA320",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "WA320",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wa000000000320"
+ },
+ {
+  "id": "mfr_model_komatsu_wa380",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "WA380",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "WA380",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wa000000000380"
+ },
+ {
+  "id": "mfr_model_komatsu_wa470",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "WA470",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "WA470",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wa000000000470"
+ },
+ {
+  "id": "mfr_model_komatsu_wa500",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "WA500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "WA500",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wa000000000500"
+ },
+ {
+  "id": "mfr_model_komatsu_d65",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "D65",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D65",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000065"
+ },
+ {
+  "id": "mfr_model_komatsu_d85",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "D85",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D85",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000085"
+ },
+ {
+  "id": "mfr_model_komatsu_d155",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "D155",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D155",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000155"
+ },
+ {
+  "id": "mfr_model_komatsu_d375",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_komatsu",
+  "nameAr": "",
+  "nameEn": "D375",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D375",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000375"
+ },
+ {
+  "id": "mfr_volvo_ce",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فولفو للمعدات",
+  "nameEn": "Volvo Construction Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Volvo CE",
+   "Volvo"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "volvo construction equipment"
+ },
+ {
+  "id": "mfr_model_volvo_ce_ec220e",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_volvo_ce",
+  "nameAr": "",
+  "nameEn": "EC220E",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "EC220E",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ec000000000220e"
+ },
+ {
+  "id": "mfr_model_volvo_ce_l120h",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_volvo_ce",
+  "nameAr": "",
+  "nameEn": "L120H",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "L120H",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "l000000000120h"
+ },
+ {
+  "id": "mfr_model_volvo_ce_l150h",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_volvo_ce",
+  "nameAr": "",
+  "nameEn": "L150H",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "L150H",
+  "metadata": {
+   "machineType": "wheel_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "l000000000150h"
+ },
+ {
+  "id": "mfr_model_volvo_ce_a30g",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_volvo_ce",
+  "nameAr": "",
+  "nameEn": "A30G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "A30G",
+  "metadata": {
+   "machineType": "articulated_hauler"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000030g"
+ },
+ {
+  "id": "mfr_model_volvo_ce_a40g",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_volvo_ce",
+  "nameAr": "",
+  "nameEn": "A40G",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "A40G",
+  "metadata": {
+   "machineType": "articulated_hauler"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000040g"
+ },
+ {
+  "id": "mfr_hitachi_cm",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيتاشي",
+  "nameEn": "Hitachi Construction Machinery",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hitachi",
+   "ZAXIS"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hitachi construction machinery"
+ },
+ {
+  "id": "mfr_model_hitachi_cm_zx200",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_hitachi_cm",
+  "nameAr": "",
+  "nameEn": "ZX200",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ZX200",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zx000000000200"
+ },
+ {
+  "id": "mfr_model_hitachi_cm_zx350",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_hitachi_cm",
+  "nameAr": "",
+  "nameEn": "ZX350",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ZX350",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zx000000000350"
+ },
+ {
+  "id": "mfr_jcb",
+  "domains": [
+   "machinery",
+   "forklift",
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جي سي بي",
+  "nameEn": "JCB",
+  "aliasesAr": [
+   "جي سي بي",
+   "جيسيبي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jcb"
+ },
+ {
+  "id": "mfr_model_jcb_3cx",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_jcb",
+  "nameAr": "",
+  "nameEn": "3CX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "3CX",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000003cx"
+ },
+ {
+  "id": "mfr_model_jcb_4cx",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_jcb",
+  "nameAr": "",
+  "nameEn": "4CX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "4CX",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000004cx"
+ },
+ {
+  "id": "mfr_model_jcb_js220",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_jcb",
+  "nameAr": "",
+  "nameEn": "JS220",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "JS220",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "js000000000220"
+ },
+ {
+  "id": "mfr_model_jcb_531_70",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_jcb",
+  "nameAr": "",
+  "nameEn": "531-70",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "531-70",
+  "metadata": {
+   "machineType": "telehandler"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000531-000000000070"
+ },
+ {
+  "id": "mfr_model_jcb_540_140",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_jcb",
+  "nameAr": "",
+  "nameEn": "540-140",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "540-140",
+  "metadata": {
+   "machineType": "telehandler"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000540-000000000140"
+ },
+ {
+  "id": "mfr_liebherr",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ليبهير",
+  "nameEn": "Liebherr",
+  "aliasesAr": [
+   "ليبهر"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "liebherr"
+ },
+ {
+  "id": "mfr_model_liebherr_ltm_1090_4_2",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_liebherr",
+  "nameAr": "",
+  "nameEn": "LTM 1090-4.2",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "LTM 1090-4.2",
+  "metadata": {
+   "machineType": "crane"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ltm 000000001090-000000000004.000000000002"
+ },
+ {
+  "id": "mfr_model_liebherr_ltm_1100_5_2",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_liebherr",
+  "nameAr": "",
+  "nameEn": "LTM 1100-5.2",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "LTM 1100-5.2",
+  "metadata": {
+   "machineType": "crane"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ltm 000000001100-000000000005.000000000002"
+ },
+ {
+  "id": "mfr_john_deere",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جون دير",
+  "nameEn": "John Deere",
+  "aliasesAr": [
+   "جون ديري"
+  ],
+  "aliasesEn": [
+   "Deere"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "john deere"
+ },
+ {
+  "id": "mfr_model_john_deere_310l",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_john_deere",
+  "nameAr": "",
+  "nameEn": "310L",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "310L",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000310l"
+ },
+ {
+  "id": "mfr_model_john_deere_850k",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_john_deere",
+  "nameAr": "",
+  "nameEn": "850K",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "850K",
+  "metadata": {
+   "machineType": "bulldozer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000850k"
+ },
+ {
+  "id": "mfr_case",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كيس",
+  "nameEn": "CASE Construction Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CASE",
+   "Case"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "case construction equipment"
+ },
+ {
+  "id": "mfr_model_case_580",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_case",
+  "nameAr": "",
+  "nameEn": "580",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "580",
+  "metadata": {
+   "machineType": "backhoe_loader"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000580"
+ },
+ {
+  "id": "mfr_new_holland",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "نيو هولاند",
+  "nameEn": "New Holland",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "new holland"
+ },
+ {
+  "id": "mfr_bobcat",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بوبكات",
+  "nameEn": "Bobcat",
+  "aliasesAr": [
+   "بوب كات"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bobcat"
+ },
+ {
+  "id": "mfr_model_bobcat_s650",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_bobcat",
+  "nameAr": "",
+  "nameEn": "S650",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "S650",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s000000000650"
+ },
+ {
+  "id": "mfr_model_bobcat_s770",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_bobcat",
+  "nameAr": "",
+  "nameEn": "S770",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "S770",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s000000000770"
+ },
+ {
+  "id": "mfr_model_bobcat_t770",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_bobcat",
+  "nameAr": "",
+  "nameEn": "T770",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "T770",
+  "metadata": {
+   "machineType": "skid_steer"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "t000000000770"
+ },
+ {
+  "id": "mfr_develon",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ديفلون",
+  "nameEn": "Develon",
+  "aliasesAr": [
+   "دوسان"
+  ],
+  "aliasesEn": [
+   "Doosan",
+   "Doosan Infracore"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "develon"
+ },
+ {
+  "id": "mfr_hd_hyundai_ce",
+  "domains": [
+   "machinery",
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيونداي للمعدات",
+  "nameEn": "HD Hyundai Construction Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hyundai Construction Equipment",
+   "Hyundai CE",
+   "Hyundai"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hd hyundai construction equipment"
+ },
+ {
+  "id": "mfr_kubota",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كوبوتا",
+  "nameEn": "Kubota",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kubota"
+ },
+ {
+  "id": "mfr_sany",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ساني",
+  "nameEn": "SANY",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Sany"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sany"
+ },
+ {
+  "id": "mfr_model_sany_sy215c",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "model",
+  "parentId": "mfr_sany",
+  "nameAr": "",
+  "nameEn": "SY215C",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "SY215C",
+  "metadata": {
+   "machineType": "excavator"
+  },
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sy000000000215c"
+ },
+ {
+  "id": "mfr_xcmg",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إكس سي إم جي",
+  "nameEn": "XCMG",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xcmg"
+ },
+ {
+  "id": "mfr_liugong",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ليوقونغ",
+  "nameEn": "LiuGong",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Liu Gong"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "liugong"
+ },
+ {
+  "id": "mfr_zoomlion",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "زوم ليون",
+  "nameEn": "Zoomlion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zoomlion"
+ },
+ {
+  "id": "mfr_shantui",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شانتوي",
+  "nameEn": "Shantui",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "shantui"
+ },
+ {
+  "id": "mfr_sdlg",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "SDLG",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sdlg"
+ },
+ {
+  "id": "mfr_lonking",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Lonking",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lonking"
+ },
+ {
+  "id": "mfr_manitou",
+  "domains": [
+   "machinery",
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مانيتو",
+  "nameEn": "Manitou",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "manitou"
+ },
+ {
+  "id": "mfr_terex",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تيريكس",
+  "nameEn": "Terex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "terex"
+ },
+ {
+  "id": "mfr_genie",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيني",
+  "nameEn": "Genie",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "genie"
+ },
+ {
+  "id": "mfr_jlg",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جي إل جي",
+  "nameEn": "JLG",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jlg"
+ },
+ {
+  "id": "mfr_kobelco",
+  "domains": [
+   "machinery",
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كوبيلكو",
+  "nameEn": "Kobelco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kobelco"
+ },
+ {
+  "id": "mfr_takeuchi",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تاكيوتشي",
+  "nameEn": "Takeuchi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "takeuchi"
+ },
+ {
+  "id": "mfr_wacker_neuson",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "واكر نيوسون",
+  "nameEn": "Wacker Neuson",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wacker neuson"
+ },
+ {
+  "id": "mfr_yanmar",
+  "domains": [
+   "machinery",
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "يانمار",
+  "nameEn": "Yanmar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yanmar"
+ },
+ {
+  "id": "mfr_mecalac",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Mecalac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mecalac"
+ },
+ {
+  "id": "mfr_merlo",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميرلو",
+  "nameEn": "Merlo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "merlo"
+ },
+ {
+  "id": "mfr_dynapac",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ديناباك",
+  "nameEn": "Dynapac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dynapac"
+ },
+ {
+  "id": "mfr_bomag",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بوماج",
+  "nameEn": "BOMAG",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Bomag"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bomag"
+ },
+ {
+  "id": "mfr_hamm",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هام",
+  "nameEn": "Hamm",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hamm"
+ },
+ {
+  "id": "mfr_wirtgen",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ويرتجن",
+  "nameEn": "Wirtgen",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wirtgen"
+ },
+ {
+  "id": "mfr_vogele",
+  "domains": [
+   "machinery"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فوجيل",
+  "nameEn": "Vögele",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Vogele"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vögele"
+ },
+ {
+  "id": "mfr_tadano",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تادانو",
+  "nameEn": "Tadano",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tadano"
+ },
+ {
+  "id": "mfr_grove",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جروف",
+  "nameEn": "Grove",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Manitowoc Grove"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grove"
+ },
+ {
+  "id": "mfr_manitowoc",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مانيتوك",
+  "nameEn": "Manitowoc",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "manitowoc"
+ },
+ {
+  "id": "mfr_potain",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بوتين",
+  "nameEn": "Potain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "potain"
+ },
+ {
+  "id": "mfr_kato",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كاتو",
+  "nameEn": "Kato",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kato"
+ },
+ {
+  "id": "mfr_demag",
+  "domains": [
+   "crane"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ديماج",
+  "nameEn": "Demag",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "demag"
+ },
+ {
+  "id": "mfr_toyota_mh",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تويوتا للرافعات الشوكية",
+  "nameEn": "Toyota Material Handling",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Toyota Forklift",
+   "Toyota"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "toyota material handling"
+ },
+ {
+  "id": "mfr_linde_mh",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ليندي",
+  "nameEn": "Linde Material Handling",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Linde"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "linde material handling"
+ },
+ {
+  "id": "mfr_jungheinrich",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "يونغهاينريش",
+  "nameEn": "Jungheinrich",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jungheinrich"
+ },
+ {
+  "id": "mfr_hyster",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هايستر",
+  "nameEn": "Hyster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hyster"
+ },
+ {
+  "id": "mfr_yale",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ييل",
+  "nameEn": "Yale",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yale"
+ },
+ {
+  "id": "mfr_still",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ستيل",
+  "nameEn": "STILL",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Still"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "still"
+ },
+ {
+  "id": "mfr_crown_equipment",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كراون",
+  "nameEn": "Crown Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Crown"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "crown equipment"
+ },
+ {
+  "id": "mfr_mitsubishi_logisnext",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتسوبيشي للرافعات",
+  "nameEn": "Mitsubishi Logisnext",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mitsubishi Forklift"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mitsubishi logisnext"
+ },
+ {
+  "id": "mfr_clark",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كلارك",
+  "nameEn": "Clark",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "clark"
+ },
+ {
+  "id": "mfr_heli",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيلي",
+  "nameEn": "Heli",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "heli"
+ },
+ {
+  "id": "mfr_hangcha",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هانجتشا",
+  "nameEn": "Hangcha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hangcha"
+ },
+ {
+  "id": "mfr_doosan_forklift",
+  "domains": [
+   "forklift"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دوسان للرافعات",
+  "nameEn": "Doosan Forklift",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Doosan"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "doosan forklift"
+ },
+ {
+  "id": "mfr_cummins",
+  "domains": [
+   "generator",
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كمنز",
+  "nameEn": "Cummins",
+  "aliasesAr": [
+   "كومنز"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cummins"
+ },
+ {
+  "id": "mfr_perkins",
+  "domains": [
+   "generator",
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بيركنز",
+  "nameEn": "Perkins",
+  "aliasesAr": [
+   "بركنز"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "perkins"
+ },
+ {
+  "id": "mfr_fg_wilson",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إف جي ويلسون",
+  "nameEn": "FG Wilson",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FG Wilson"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fg wilson"
+ },
+ {
+  "id": "mfr_kohler",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كولر",
+  "nameEn": "Kohler",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Kohler-SDMO",
+   "SDMO"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kohler"
+ },
+ {
+  "id": "mfr_generac",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جنراك",
+  "nameEn": "Generac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "generac"
+ },
+ {
+  "id": "mfr_honda_power",
+  "domains": [
+   "generator",
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هوندا",
+  "nameEn": "Honda Power Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Honda"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "honda power equipment"
+ },
+ {
+  "id": "mfr_yamaha_power",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ياماها",
+  "nameEn": "Yamaha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yamaha"
+ },
+ {
+  "id": "mfr_atlas_copco",
+  "domains": [
+   "generator",
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أطلس كوبكو",
+  "nameEn": "Atlas Copco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "atlas copco"
+ },
+ {
+  "id": "mfr_doosan_portable_power",
+  "domains": [
+   "generator",
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دوسان",
+  "nameEn": "Doosan Portable Power",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Doosan"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "doosan portable power"
+ },
+ {
+  "id": "mfr_mitsubishi_heavy",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتسوبيشي",
+  "nameEn": "Mitsubishi Heavy Industries",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mitsubishi",
+   "MHI"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mitsubishi heavy industries"
+ },
+ {
+  "id": "mfr_aksa",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أكسا",
+  "nameEn": "Aksa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aksa"
+ },
+ {
+  "id": "mfr_himoinsa",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Himoinsa",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "himoinsa"
+ },
+ {
+  "id": "mfr_pramac",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "",
+  "nameEn": "Pramac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pramac"
+ },
+ {
+  "id": "mfr_volvo_penta",
+  "domains": [
+   "generator",
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فولفو بنتا",
+  "nameEn": "Volvo Penta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "volvo penta"
+ },
+ {
+  "id": "mfr_mtu",
+  "domains": [
+   "generator"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إم تي يو",
+  "nameEn": "MTU",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mtu"
+ },
+ {
+  "id": "mfr_deutz",
+  "domains": [
+   "generator",
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دويتز",
+  "nameEn": "Deutz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "deutz"
+ },
+ {
+  "id": "mfr_grundfos",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جروندفوس",
+  "nameEn": "Grundfos",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grundfos"
+ },
+ {
+  "id": "mfr_ksb",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كي إس بي",
+  "nameEn": "KSB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ksb"
+ },
+ {
+  "id": "mfr_wilo",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ويلو",
+  "nameEn": "Wilo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wilo"
+ },
+ {
+  "id": "mfr_pedrollo",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بيدرولو",
+  "nameEn": "Pedrollo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pedrollo"
+ },
+ {
+  "id": "mfr_ebara",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إبارا",
+  "nameEn": "Ebara",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ebara"
+ },
+ {
+  "id": "mfr_flygt",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فليجت",
+  "nameEn": "Flygt",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "flygt"
+ },
+ {
+  "id": "mfr_lowara",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لوارا",
+  "nameEn": "Lowara",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lowara"
+ },
+ {
+  "id": "mfr_sulzer",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سولزر",
+  "nameEn": "Sulzer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sulzer"
+ },
+ {
+  "id": "mfr_pentair",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بنتير",
+  "nameEn": "Pentair",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pentair"
+ },
+ {
+  "id": "mfr_dab",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "داب",
+  "nameEn": "DAB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dab"
+ },
+ {
+  "id": "mfr_calpeda",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كالبيدا",
+  "nameEn": "Calpeda",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "calpeda"
+ },
+ {
+  "id": "mfr_goulds",
+  "domains": [
+   "pump"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جولدز",
+  "nameEn": "Goulds Pumps",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Goulds"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "goulds pumps"
+ },
+ {
+  "id": "mfr_ingersoll_rand",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إنجرسول راند",
+  "nameEn": "Ingersoll Rand",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ingersoll rand"
+ },
+ {
+  "id": "mfr_kaeser",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كايزر",
+  "nameEn": "Kaeser",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kaeser"
+ },
+ {
+  "id": "mfr_sullair",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سولير",
+  "nameEn": "Sullair",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sullair"
+ },
+ {
+  "id": "mfr_gardner_denver",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "غاردنر دنفر",
+  "nameEn": "Gardner Denver",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gardner denver"
+ },
+ {
+  "id": "mfr_hitachi_ies",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيتاشي",
+  "nameEn": "Hitachi Industrial Equipment",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hitachi"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hitachi industrial equipment"
+ },
+ {
+  "id": "mfr_boge",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بوجي",
+  "nameEn": "BOGE",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "boge"
+ },
+ {
+  "id": "mfr_elgi",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إلجي",
+  "nameEn": "ELGi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elgi"
+ },
+ {
+  "id": "mfr_compair",
+  "domains": [
+   "compressor"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كومب إير",
+  "nameEn": "CompAir",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "compair"
+ },
+ {
+  "id": "mfr_bosch",
+  "domains": [
+   "tools",
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بوش",
+  "nameEn": "Bosch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bosch"
+ },
+ {
+  "id": "mfr_dewalt",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ديوالت",
+  "nameEn": "DeWalt",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "DEWALT"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dewalt"
+ },
+ {
+  "id": "mfr_makita",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ماكيتا",
+  "nameEn": "Makita",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "makita"
+ },
+ {
+  "id": "mfr_milwaukee",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميلووكي",
+  "nameEn": "Milwaukee",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "milwaukee"
+ },
+ {
+  "id": "mfr_hilti",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيلتي",
+  "nameEn": "Hilti",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hilti"
+ },
+ {
+  "id": "mfr_metabo",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتابو",
+  "nameEn": "Metabo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "metabo"
+ },
+ {
+  "id": "mfr_festool",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فستول",
+  "nameEn": "Festool",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "festool"
+ },
+ {
+  "id": "mfr_stanley",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ستانلي",
+  "nameEn": "Stanley",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "stanley"
+ },
+ {
+  "id": "mfr_black_decker",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بلاك آند ديكر",
+  "nameEn": "Black+Decker",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Black & Decker",
+   "Black and Decker"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "black+decker"
+ },
+ {
+  "id": "mfr_ridgid",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ريجيد",
+  "nameEn": "RIDGID",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Ridgid"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ridgid"
+ },
+ {
+  "id": "mfr_snap_on",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سناب أون",
+  "nameEn": "Snap-on",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Snap on"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "snap-on"
+ },
+ {
+  "id": "mfr_fluke",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فلوك",
+  "nameEn": "Fluke",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fluke"
+ },
+ {
+  "id": "mfr_knipex",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كنيبكس",
+  "nameEn": "Knipex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "knipex"
+ },
+ {
+  "id": "mfr_facom",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فاكوم",
+  "nameEn": "Facom",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "facom"
+ },
+ {
+  "id": "mfr_gedore",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيدور",
+  "nameEn": "Gedore",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gedore"
+ },
+ {
+  "id": "mfr_bahco",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "باكو",
+  "nameEn": "Bahco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bahco"
+ },
+ {
+  "id": "mfr_hikoki",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيكوكي",
+  "nameEn": "HiKOKI",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Hitachi Power Tools"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hikoki"
+ },
+ {
+  "id": "mfr_ryobi",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ريوبي",
+  "nameEn": "Ryobi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ryobi"
+ },
+ {
+  "id": "mfr_einhell",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "آينهيل",
+  "nameEn": "Einhell",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "einhell"
+ },
+ {
+  "id": "mfr_wera",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فيرا",
+  "nameEn": "Wera",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wera"
+ },
+ {
+  "id": "mfr_wiha",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ويها",
+  "nameEn": "Wiha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wiha"
+ },
+ {
+  "id": "mfr_stahlwille",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شتالفيله",
+  "nameEn": "Stahlwille",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "stahlwille"
+ },
+ {
+  "id": "mfr_klein_tools",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كلاين",
+  "nameEn": "Klein Tools",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "klein tools"
+ },
+ {
+  "id": "mfr_craftsman",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كرافتسمان",
+  "nameEn": "Craftsman",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "craftsman"
+ },
+ {
+  "id": "mfr_mitutoyo",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتوتويو",
+  "nameEn": "Mitutoyo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mitutoyo"
+ },
+ {
+  "id": "mfr_leica_geosystems",
+  "domains": [
+   "tools"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لايكا جيوسيستمز",
+  "nameEn": "Leica Geosystems",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "leica geosystems"
+ },
+ {
+  "id": "mfr_denso",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دينسو",
+  "nameEn": "Denso",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "denso"
+ },
+ {
+  "id": "mfr_continental",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كونتيننتال",
+  "nameEn": "Continental",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "continental"
+ },
+ {
+  "id": "mfr_zf",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "زد إف",
+  "nameEn": "ZF",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zf"
+ },
+ {
+  "id": "mfr_valeo",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فاليو",
+  "nameEn": "Valeo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "valeo"
+ },
+ {
+  "id": "mfr_mahle",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ماهلي",
+  "nameEn": "Mahle",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mahle"
+ },
+ {
+  "id": "mfr_mann_filter",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مان فلتر",
+  "nameEn": "MANN-FILTER",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mann Filter"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mann-filter"
+ },
+ {
+  "id": "mfr_ngk",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إن جي كي",
+  "nameEn": "NGK",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ngk"
+ },
+ {
+  "id": "mfr_brembo",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بريمبو",
+  "nameEn": "Brembo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "brembo"
+ },
+ {
+  "id": "mfr_skf",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إس كي إف",
+  "nameEn": "SKF",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "skf"
+ },
+ {
+  "id": "mfr_timken",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تيمكن",
+  "nameEn": "Timken",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "timken"
+ },
+ {
+  "id": "mfr_gates",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيتس",
+  "nameEn": "Gates",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gates"
+ },
+ {
+  "id": "mfr_aisin",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "آيسين",
+  "nameEn": "Aisin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aisin"
+ },
+ {
+  "id": "mfr_hella",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيلا",
+  "nameEn": "Hella",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hella"
+ },
+ {
+  "id": "mfr_mopar",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "موبار",
+  "nameEn": "Mopar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mopar"
+ },
+ {
+  "id": "mfr_motorcraft",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "موتوركرافت",
+  "nameEn": "Motorcraft",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "motorcraft"
+ },
+ {
+  "id": "mfr_acdelco",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إيه سي ديلكو",
+  "nameEn": "ACDelco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "acdelco"
+ },
+ {
+  "id": "mfr_donaldson",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دونالدسون",
+  "nameEn": "Donaldson",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "donaldson"
+ },
+ {
+  "id": "mfr_fleetguard",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فليتجارد",
+  "nameEn": "Fleetguard",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fleetguard"
+ },
+ {
+  "id": "mfr_baldwin",
+  "domains": [
+   "parts"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بالدوين",
+  "nameEn": "Baldwin Filters",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Baldwin"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "baldwin filters"
+ }
+]

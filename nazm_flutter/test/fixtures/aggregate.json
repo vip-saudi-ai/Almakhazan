@@ -1,0 +1,62 @@
+{
+ "key": "inventory",
+ "schema": 2,
+ "live": 4,
+ "trashed": 1,
+ "quantity": 5.5,
+ "withImages": 1,
+ "valued": 2,
+ "analyzed": 1,
+ "sound": 3,
+ "byMain": {
+  "jewellery": 1,
+  "equipment_tools": 1,
+  "__none__": 1,
+  "vehicles": 1
+ },
+ "byCategory": {
+  "jewellery_watches": 1,
+  "equipment_generators": 1,
+  "art_paintings": 1,
+  "vehicles_cars": 1
+ },
+ "bySub": {
+  "__none__": 4
+ },
+ "byLocation": {
+  "__none__": 3,
+  "loc_a": 1
+ },
+ "byFolder": {
+  "__none__": 3,
+  "fld_a": 1
+ },
+ "byCondition": {
+  "ممتازة": 1,
+  "__none__": 3
+ },
+ "byClass": {
+  "jewellery|jewellery_watches": 1,
+  "equipment_tools|equipment_generators": 1,
+  "|art_paintings": 1,
+  "vehicles|vehicles_cars": 1
+ },
+ "currency": {
+  "SAR": {
+   "count": 1,
+   "total": 165000
+  },
+  "USD": {
+   "count": 1,
+   "total": 1500.5
+  }
+ },
+ "aiLocal": {
+  "count": 1,
+  "sum": 0.8
+ },
+ "aiGlobal": {
+  "count": 0,
+  "sum": 0
+ }
+}

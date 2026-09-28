@@ -1,0 +1,564 @@
+/* NAZM layout system.
+ *
+ * One place for everything that answers "how big is the screen and what
+ * changes because of it". main.css styles components; this file decides where
+ * they sit, how wide they get, and what happens at each size.
+ *
+ * Ranges, and what each one is actually for:
+ *
+ *   ≤359px    a small phone held one-handed. Nothing may be three across.
+ *   360–479   the standard phone. Two columns, comfortable spacing.
+ *   480–767   a large phone or a small tablet in portrait. Width is spent on
+ *             breathing room and larger images, not on more of everything.
+ *   768–1023  a tablet. The app stops being a phone layout and becomes a
+ *             tablet layout: more columns, a constrained reading measure,
+ *             sheets that centre instead of sticking to the bottom edge.
+ *   1024–1439 a laptop. A navigation rail replaces the tab bar, panels
+ *             replace bottom sheets where a panel is the better shape.
+ *   ≥1440     a desktop monitor. The grid gains columns; cards do not grow.
+ *
+ * These are ranges, not a rule. Where a component needs its own threshold it
+ * declares one next to itself rather than being forced into a shared number.
+ */
+
+/* ── viewport height ───────────────────────────────────────────────────────
+ * `vh` on a phone is the height of the viewport *with browser chrome hidden*,
+ * which is not the height anything is actually visible in. `dvh` follows the
+ * chrome as it collapses and expands; `svh` is the small (chrome-shown) value
+ * and is the right one for a fixed shell that must never be cut off.
+ * The plain value stays first as the fallback for browsers with neither.
+ */
+:root {
+  --vh-full: 100vh;
+  --vh-small: 100vh;
+}
+@supports (height: 100dvh) {
+  :root { --vh-full: 100dvh; --vh-small: 100svh; }
+}
+
+/* ── safe area, once ───────────────────────────────────────────────────────
+ * One rule, and it is a rule: an inset is applied by exactly one element.
+ *   top    → .app, and nothing else
+ *   bottom → whichever surface is closest to the bottom edge at that moment:
+ *            the navigation bar, or an overlay covering it (sheet, selection
+ *            bar, viewer). Never both.
+ * `--sab` is the raw inset. A surface that consumes it uses `--sab` directly;
+ * a surface that sits *above* one that already consumed it uses `--nav-h`,
+ * which already includes it.
+ */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  /* The navigation bar's whole box: visual height plus the inset it absorbs. */
+  --nav-h: calc(var(--tab-h) + var(--sab));
+}
+
+/* ── the shell ─────────────────────────────────────────────────────────────
+ * Phone: a column with the navigation bar pinned to the bottom.
+ * Desktop: a row with a rail on the (RTL) right and content beside it.
+ *
+ * One element owns the screen. `.app` is the only viewport-fixed layer of the
+ * normal interface; the tab bar and the selection bar are anchored inside it
+ * (position: absolute), so Safari's toolbar expanding and collapsing — the
+ * moment iOS 26 is known to leave independent fixed-bottom layers floating or
+ * gapped — moves the whole interface as one surface instead of three layers
+ * each settling on its own. `inset: 0` with no explicit height makes the shell
+ * exactly the box a `position: fixed; bottom: 0` bar used to sit in, so the
+ * bar is where it always was. Full-screen overlays (sheets, scrims, dialogs,
+ * the viewer, the language gate) stay fixed: covering the viewport is their
+ * job.
+ */
+.app {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-content);
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--sat);
+  padding-bottom: var(--nav-h);
+  padding-inline: 0;
+}
+
+/* The scrolling region inside a view. The gutter grows with the screen; the
+   content stops growing well before the screen does. */
+.vscroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 var(--gutter) 24px;
+  scrollbar-width: none;
+  /* pan-y keeps a vertical list from being dragged sideways; pinch-zoom keeps
+     the page's own zoom, which pan-y alone would switch off here — that is,
+     almost everywhere, since almost everything scrolls inside this. */
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior: contain;
+}
+.vscroll::-webkit-scrollbar { display: none; }
+
+/* Everything inside a scroll region shares one measure, so the eye does not
+   have to travel further on a wide screen than it does on a narrow one. */
+.vscroll > * { max-width: var(--content-max-wide); margin-inline: auto; }
+
+/* ── responsive grids ──────────────────────────────────────────────────────
+ * Column counts are a consequence of card width, not of a breakpoint. A card
+ * has a minimum it may not go below; the grid fits as many as the width
+ * allows. That is what keeps a 2560px monitor from producing six cards the
+ * size of postcards, and a 320px phone from producing three unreadable ones.
+ */
+.igrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--card-min), 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.fld-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.catgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(104px, 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sgrid, .ov-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+/* Detail metrics — quantity, condition, valuation. Three cramped cells on a
+   320px screen is the failure this replaces: they drop to two, then to one. */
+.drow3, .ov-cond-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(112px, 100%), 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.airow, .imp-stats, .gate-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 8px;
+}
+
+/* ── ≤359px: the small phone ───────────────────────────────────────────────
+ * The one place a column count is forced. auto-fill would happily produce two
+ * 140px cards at 320px; at that width an item card stops showing an item.
+ */
+@media (max-width: 359px) {
+  :root { --gutter: 12px; --card-min: 132px; }
+  .catgrid { grid-template-columns: repeat(2, 1fr); }
+  .drow3, .ov-cond-grid { grid-template-columns: 1fr; }
+  /* A row of buttons stacks rather than each becoming too narrow to read. */
+  .shfoot { flex-wrap: wrap; }
+  .shfoot > .btn { flex: 1 1 100%; }
+}
+
+/* ── 480px+: a large phone ─────────────────────────────────────────────── */
+@media (min-width: 480px) {
+  :root { --gutter: 20px; --card-min: 158px; }
+}
+
+/* ── 768px+: the tablet ────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  :root {
+    --gutter: var(--gutter-md);
+    --card-min: 168px;
+    --tab-h: 74px;
+  }
+  /* Prose-shaped regions stop at the reading measure even though the grid
+     beside them may run wider. */
+  .ov-section, .fsec, .sheet-note { max-width: var(--content-max); margin-inline: auto; }
+  .nbar { padding-inline: var(--gutter); }
+  .sfrow { margin-inline: var(--gutter); }
+}
+
+/* ── 1024px+: the laptop ───────────────────────────────────────────────────
+ * The tab bar becomes a rail on the inline-start edge (the right, in RTL) and
+ * the shell becomes a row. A tab bar stretched across 1440px is the thing
+ * this exists to avoid.
+ */
+@media (min-width: 1024px) {
+  :root { --gutter: var(--gutter-lg); }
+
+  .app {
+    flex-direction: row-reverse;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-inline-start: var(--rail-w);
+  }
+  .view { min-width: 0; }
+
+  .tbar {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    width: var(--rail-w);
+    height: auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 0;
+    border-inline-end: 1px solid var(--border-quiet);
+  }
+  .ti { flex: 0 0 auto; width: 100%; padding: 10px 4px; gap: 6px; }
+  .tilbl { font-size: 11px; }
+
+  /* Overlays that were pinned above the tab bar now clear the rail instead. */
+  .select-bar {
+    inset-inline-start: var(--rail-w);
+    inset-inline-end: 0;
+    bottom: 0;
+    left: auto; right: auto;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* ── 1440px+: the monitor ──────────────────────────────────────────────────
+ * Width buys columns. It does not buy card size: past this point a card that
+ * kept growing would be a poster of one object.
+ */
+@media (min-width: 1440px) {
+  :root { --card-min: 200px; --rail-w: 96px; }
+}
+@media (min-width: 1800px) {
+  :root { --card-min: 220px; }
+}
+
+/* ── landscape phone ───────────────────────────────────────────────────────
+ * Short and wide. Vertical space is the scarce one, so the chrome gives some
+ * back rather than leaving a letterbox of content between two bars.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --tab-h: 58px; }
+  .tilbl { display: none; }
+  .ntitle { font-size: 22px; }
+  .nbar { padding-block: 6px 4px; }
+}
+
+.imp-stats { padding: 0 0 14px; }
+
+/* ── sheets, modals and panels ─────────────────────────────────────────────
+ * One element, three shapes. A bottom sheet is right on a phone, where the
+ * thumb is at the bottom of the screen and the sheet rises to meet it. On a
+ * tablet or a laptop the same content pinned to the bottom edge of a 1400px
+ * window is a phone pattern wearing a desktop's clothes, so it becomes a
+ * centred dialog — or, where the interaction is "narrow the thing beside it"
+ * rather than "answer a question", a side panel.
+ *
+ * Markup does not change between the three. `.sh-panel` opts a sheet into the
+ * panel shape on desktop; everything else centres.
+ */
+.sh {
+  /* The shell is `max-height` plus content, so a short sheet stays short and
+     a long one scrolls — instead of 17 hand-picked vh values. */
+  max-height: calc(var(--vh-small) - var(--sat) - 12px);
+  padding-bottom: var(--sab);
+}
+
+/* The keyboard. `--kb` is set from visualViewport (see src/viewport.js); it is
+   0 whenever no keyboard is up, so this rule costs nothing the rest of the
+   time. The sheet lifts by exactly the occluded height, which keeps both the
+   focused field and the footer buttons above the keyboard. */
+.sh { bottom: var(--kb, 0px); }
+body.kb-open .sh { max-height: calc(var(--vh-small) - var(--kb, 0px) - 12px); }
+body.kb-open .tbar { transform: translateY(100%); }
+body.kb-open .select-bar { bottom: var(--kb, 0px); }
+
+@media (min-width: 768px) {
+  .sh {
+    inset-block-end: auto;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(var(--modal-w), calc(100vw - 2 * var(--gutter)));
+    max-height: min(84svh, calc(var(--vh-small) - 96px));
+    border-radius: var(--r-xl);
+    border: 1px solid var(--border-quiet);
+    box-shadow: var(--glass-shadow-high);
+    padding-bottom: 0;
+    transform: translate(-50%, calc(-50% + 16px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform var(--motion) var(--ease), opacity var(--motion) var(--ease), visibility 0s var(--motion);
+  }
+  .sh.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto;
+    transition: transform var(--motion) var(--ease), opacity var(--motion) var(--ease), visibility 0s; }
+  /* The drag handle means "pull me down". A centred dialog cannot be pulled. */
+  .sh .shhnd { display: none; }
+  .sh .shhdr { padding-top: 18px; }
+  /* Sheets that are really browsers of a long list may run taller and wider. */
+  #sh-trash, #sh-simport, #sh-labels, #sh-plans, #sh-team {
+    width: min(720px, calc(100vw - 2 * var(--gutter)));
+  }
+  #sh-plans { width: min(920px, calc(100vw - 2 * var(--gutter))); }
+}
+
+@media (min-width: 1024px) {
+  /* Filtering narrows the grid behind it, so on a laptop it belongs beside
+     the grid rather than on top of it. */
+  #sh-filter, #sh-sort {
+    top: 0;
+    left: auto;
+    inset-inline-end: 0;
+    inset-inline-start: auto;
+    transform: translateX(0) translateY(0);
+    width: var(--panel-w);
+    height: var(--vh-small);
+    max-height: none;
+    border-radius: 0;
+    border-inline-start: 1px solid var(--border-quiet);
+    opacity: 1;
+    transition: transform var(--motion) var(--ease);
+  }
+  html[dir="rtl"] #sh-filter, html[dir="rtl"] #sh-sort { transform: translateX(-100%); }
+  html:not([dir="rtl"]) #sh-filter, html:not([dir="rtl"]) #sh-sort { transform: translateX(100%); }
+  #sh-filter.open, #sh-sort.open { transform: translateX(0); }
+}
+
+/* The action sheet (export / import) follows the same progression. Both the
+   open and closed transforms have to be restated: a centred dialog's resting
+   position is not "off the bottom edge", so inheriting the phone's closed
+   state would leave it parked in the middle of the screen. */
+@media (min-width: 768px) {
+  .asht {
+    inset-block-end: auto;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    width: min(420px, calc(100vw - 2 * var(--gutter)));
+    padding: 0;
+    transform: translate(-50%, calc(-50% + 16px));
+    opacity: 0;
+    pointer-events: none;
+  }
+  .asht.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+}
+
+/* ── forms ─────────────────────────────────────────────────────────────────
+ * A label with a fixed minimum width is fine until the label is long, the
+ * text is scaled to 200%, or the screen is 320px — at which point the input
+ * it sits beside collapses to nothing. Below 480px, and whenever the label
+ * would leave the input less than usable, the label moves above it.
+ */
+.frow label { min-width: 88px; }
+@media (max-width: 479px) {
+  .frow { flex-direction: column; align-items: stretch; gap: 4px; padding-block: 10px; }
+  .frow label { min-width: 0; font-size: 13px; color: var(--ts); }
+  .frow input, .frow select, .frow textarea { width: 100%; }
+  /* A row whose control is a switch or a chevron stays horizontal: there is
+     no input to protect. */
+  .frow.frow-inline { flex-direction: row; align-items: center; gap: 10px; }
+  .frow.frow-inline label { min-width: 88px; font-size: 15px; color: var(--tp); }
+}
+/* Long text scaling hits the same failure at any width. */
+@media (min-width: 480px) {
+  .frow label { max-width: 45%; }
+  .frow input, .frow select, .frow textarea { min-width: 0; }
+}
+
+/* ── density on a wide screen ──────────────────────────────────────────────
+ * The grid is allowed to use the whole width. The chrome around it is not:
+ * a search field 1300px wide, two filter buttons the size of banners and a
+ * pair of KPI tiles stretched across a monitor are what "a phone layout
+ * scaled up" looks like. Each of these keeps a shape of its own instead.
+ */
+@media (min-width: 768px) {
+  /* Tiles stop growing and start leaving space, rather than the reverse. */
+  .sgrid, .ov-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 300px)); }
+  .drow3, .ov-cond-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 260px)); }
+  .imp-stats { grid-template-columns: repeat(auto-fit, minmax(160px, 280px)); }
+
+  /* The search field is a control, not a banner. `width` again, for the same
+     reason: an auto margin on a flex item beats `stretch`. */
+  .sfrow { width: 100%; max-width: 640px; margin-inline: var(--gutter) auto; }
+  .fsact-row { width: 100%; max-width: 420px; }
+  .fsact-btn { flex: 0 1 200px; }
+}
+
+/* ── text zoom ─────────────────────────────────────────────────────────────
+ * At 200% the tab labels are the first thing to break: four of them across a
+ * phone, each wanting twice the width. A label ellipsises rather than pushing
+ * the icon out of the bar — the icon plus its accessible name still says
+ * which tab it is.
+ *
+ * (Touch targets are handled in main.css, next to the controls themselves:
+ * one transparent extension that guarantees --touch-target on every small
+ * control, on every device. A mouse benefits from it too.)
+ */
+.tilbl { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── below 320px ───────────────────────────────────────────────────────────
+ * Not a device — a person. Browser zoom at 200% on a 390px phone leaves a
+ * 195px CSS viewport, and text-only zoom does the same to anything sized in
+ * rem. The layout has to survive it, because the alternative is that the
+ * people who most need larger text are the ones who cannot use the app.
+ *
+ * Everything becomes one column, the tab bar keeps its icons and drops its
+ * labels, and rows that were side by side wrap instead of overflowing.
+ */
+@media (max-width: 359px) {
+  .nbar { flex-wrap: wrap; row-gap: 6px; }
+  .nacts { flex-shrink: 0; }
+}
+/* The search field is `flex:1` and the scanner button beside it is not, but a
+   flex item's default minimum size is its content — so at very narrow widths
+   the field refused to shrink and pushed the button off the edge instead.
+   `min-width:0` lets the field give way, which is what it should do: a search
+   box can be narrow, a button that has left the screen cannot be pressed. */
+.sbar { min-width: 0; }
+.sfrow > .ibtn { flex-shrink: 0; }
+
+@media (max-width: 319px) {
+  :root { --gutter: 10px; --tab-h: 62px; }
+  .igrid, .fld-row, .sgrid, .ov-kpi-grid, .imp-stats, .gate-choices, .airow {
+    grid-template-columns: 1fr;
+  }
+  .catgrid { grid-template-columns: repeat(2, 1fr); }
+  /* The icon plus its accessible name still says which tab it is; the visible
+     label is what does not fit. */
+  .tilbl { display: none; }
+  .ntitle { font-size: 22px; }
+  .fsact-row { flex-direction: column; }
+  .fsact-btn { width: 100%; }
+  .shfoot { flex-wrap: wrap; }
+  .shfoot > .btn { flex: 1 1 100%; }
+}
+
+/* The same reasoning at a bigger scale: a tab bar whose labels no longer fit
+   across the width it has. Four labels need roughly 60px each before they
+   start truncating into each other. */
+@media (max-width: 300px), (orientation: landscape) and (max-height: 430px) {
+  .tilbl { display: none; }
+}
+
+/* ── tablet: a composition, not a wide phone ───────────────────────────────
+ * Technically responsive is not the same as designed. Below are the four
+ * things that made 768–1023px read as an enlarged phone: navigation stretched
+ * edge to edge, a section heading pinned to one margin with its action at the
+ * other, an empty-state button as wide as the screen, and controls that grew
+ * simply because there was room.
+ */
+@media (min-width: 768px) {
+  /* A heading and its action belong to each other. `.shdr` is
+     `justify-content: space-between`, which on a phone puts them at either
+     end of 358px — a pair — and on a 1280px screen puts them 1200px apart
+     with nothing in between, which is not a pair. The row now stops at the
+     grid's own measure so the action stays beside what it acts on. */
+  .shdr { max-width: var(--content-max-wide); margin-inline: auto; }
+  /* And past the phone, the action moves next to the title rather than to the
+     far edge: "المجلدات  + جديد" reads as one thing, which is what it is.
+     Anything genuinely secondary (the count, the grid/list toggles) still
+     goes to the end. */
+  .shdr { justify-content: flex-start; gap: 14px; }
+  .shdr .shdr-acts { margin-inline-start: auto; }
+
+  /* Nothing is full width merely because width exists. */
+  .empty { max-width: 420px; margin-inline: auto; }
+  .empty-cta { width: auto; min-width: 220px; max-width: 340px; margin-inline: auto; }
+  .shfoot .btn { flex: 0 1 auto; min-width: 140px; }
+  .shfoot { justify-content: flex-end; }
+
+  /* Folders and categories are navigation, not the subject. They keep a
+     sensible height and let the inventory below them be the main event. */
+  .fld-row { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
+  .catgrid { grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr)); }
+}
+
+
+/* Navigation floats at a deliberate width instead of spanning the iPad. Four
+   items across 1024px is four items with 200px of nothing between them.
+   Bounded to the tablet range on purpose: from 1024px up this element is a
+   vertical rail, and a 600px-wide rail is not a rail. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tbar {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(600px, calc(100% - 2 * var(--gutter)));
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+  body.kb-open .tbar { transform: translateX(-50%) translateY(100%); }
+}
+
+/* ── desktop: one column, two measures ─────────────────────────────────────
+ * The first attempt gave every region its own maximum, and the result was a
+ * ragged edge: a heading stopping at 1180px above a grid running to 1560,
+ * with its own action button 1200px away from it across empty space.
+ *
+ * So: one container width for everything in the scroll region, which is what
+ * makes a column read as a column. Inside it, text-shaped regions take a
+ * reading measure, because a form field 1180px wide is not a form field and a
+ * line of 200 characters is not a line.
+ */
+@media (min-width: 1024px) {
+  :root {
+    --shell-max: 1200px;   /* the column everything aligns to */
+    --prose-max: 740px;    /* forms, settings, onboarding, prose answers */
+  }
+
+  /* Every direct child of the scroll region shares one edge. */
+  .vscroll > * { max-width: var(--shell-max); margin-inline: auto; }
+
+  /* Text- and control-shaped regions take the narrower measure, aligned to
+     the start of the column rather than centred inside it, so the left edge
+     of a form lines up with the left edge of the grid above it. */
+  .fsec, .sgroup, .apibox, .ov-section, .sheet-note, .ask-answer, .imp-table-wrap {
+    max-width: var(--prose-max);
+    margin-inline: 0;
+  }
+
+  /* The toolbar: search, then filter and sort beside it, as one row of
+     controls rather than three stacked banners.
+
+     `width: 100%` is load-bearing. These rows are flex items of `.view`, and
+     an auto inline margin on a flex item overrides `stretch` — the row
+     collapses to the width of its contents and then centres that. Without it
+     the search row measured 274px adrift in the middle of a 1440px screen. */
+  .sfrow, .fsact-row { width: 100%; max-width: var(--shell-max); margin-inline: auto; }
+  .sbar { max-width: 460px; }
+  .fsact-row { justify-content: flex-start; }
+  .fsact-btn { flex: 0 0 auto; min-width: 150px; }
+
+  /* The empty state is a composed block in the column, not a shape floating
+     in a canvas. */
+  .empty {
+    max-width: 440px;
+    margin: clamp(24px, 7vh, 88px) auto;
+    padding: 40px 32px;
+    border-radius: var(--r-lg);
+    background: var(--surface-card);
+    border: 1px solid var(--border-quiet);
+  }
+}
+
+/* Past this width the column may grow; the reading measure never does. */
+@media (min-width: 1700px) {
+  :root { --shell-max: 1500px; }
+}
+
+/* ── horizontal safe area (landscape iPhone) ────────────────────────────────
+ * Portrait hides it; landscape exposes it: the camera housing and the rounded
+ * corners sit on the left or right edge, and content laid out to the plain
+ * gutter runs underneath them. Each region takes the larger of its own gutter
+ * and the inset on that side — not the sum, so portrait (inset 0) is exactly
+ * as before. Physical left/right on purpose: the notch is on a physical edge,
+ * whichever language is reading. Desktop has no cutout and keeps its own
+ * margins (some of them `auto`), so this stops below the rail breakpoint.
+ * The tab bar and the selection bar carry their own (main.css).
+ */
+@media (max-width: 1023px) {
+  .vscroll { padding-left: max(var(--gutter), var(--sal)); padding-right: max(var(--gutter), var(--sar)); }
+  .nbar { padding-left: max(20px, var(--sal)); padding-right: max(20px, var(--sar)); }
+  .sfrow, .fsact-row { margin-left: max(16px, var(--sal)); margin-right: max(16px, var(--sar)); }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nbar { padding-left: max(var(--gutter), var(--sal)); padding-right: max(var(--gutter), var(--sar)); }
+  .sfrow { margin-left: max(var(--gutter), var(--sal)); margin-right: max(var(--gutter), var(--sar)); }
+}

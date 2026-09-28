@@ -1,0 +1,3145 @@
+[
+ {
+  "id": "electronics_brand_apple",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أبل",
+  "nameEn": "Apple",
+  "aliasesAr": [
+   "ابل",
+   "آبل"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple"
+ },
+ {
+  "id": "electronics_family_apple_iphone",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "iPhone",
+  "aliasesAr": [
+   "آيفون",
+   "ايفون"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone"
+ },
+ {
+  "id": "electronics_model_apple_iphone_11",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 11",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 11",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000011"
+ },
+ {
+  "id": "electronics_model_apple_iphone_11_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 11 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 11 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000011 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_11_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 11 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 11 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000011 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_12",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 12",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 12",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000012"
+ },
+ {
+  "id": "electronics_model_apple_iphone_12_mini",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 12 mini",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 12 mini",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000012 mini"
+ },
+ {
+  "id": "electronics_model_apple_iphone_12_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 12 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 12 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000012 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_12_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 12 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 12 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000012 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_13",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 13",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 13",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000013"
+ },
+ {
+  "id": "electronics_model_apple_iphone_13_mini",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 13 mini",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 13 mini",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000013 mini"
+ },
+ {
+  "id": "electronics_model_apple_iphone_13_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 13 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 13 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000013 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_13_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 13 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 13 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000013 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_14",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 14",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 14",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000014"
+ },
+ {
+  "id": "electronics_model_apple_iphone_14_plus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 14 Plus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 14 Plus",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000014 plus"
+ },
+ {
+  "id": "electronics_model_apple_iphone_14_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 14 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 14 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000014 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_14_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 14 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 14 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000014 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_15",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 15",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 15",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000015"
+ },
+ {
+  "id": "electronics_model_apple_iphone_15_plus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 15 Plus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 15 Plus",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000015 plus"
+ },
+ {
+  "id": "electronics_model_apple_iphone_15_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 15 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 15 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000015 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_15_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 15 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 15 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000015 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_16",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 16",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 16",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000016"
+ },
+ {
+  "id": "electronics_model_apple_iphone_16_plus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 16 Plus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 16 Plus",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000016 plus"
+ },
+ {
+  "id": "electronics_model_apple_iphone_16_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 16 Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 16 Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000016 pro"
+ },
+ {
+  "id": "electronics_model_apple_iphone_16_pro_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 16 Pro Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 16 Pro Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000016 pro max"
+ },
+ {
+  "id": "electronics_model_apple_iphone_16e",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone 16e",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone 16e",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone 000000000016e"
+ },
+ {
+  "id": "electronics_model_apple_iphone_se_2nd_generation",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone SE (2nd generation)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone SE (2nd generation)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone se (000000000002nd generation)"
+ },
+ {
+  "id": "electronics_model_apple_iphone_se_3rd_generation",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_iphone",
+  "nameAr": "",
+  "nameEn": "iPhone SE (3rd generation)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPhone SE (3rd generation)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iphone se (000000000003rd generation)"
+ },
+ {
+  "id": "electronics_family_apple_ipad",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "iPad",
+  "aliasesAr": [
+   "آيباد",
+   "ايباد"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ipad"
+ },
+ {
+  "id": "electronics_model_apple_ipad_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_ipad",
+  "nameAr": "",
+  "nameEn": "iPad Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPad Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ipad pro"
+ },
+ {
+  "id": "electronics_model_apple_ipad_air",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_ipad",
+  "nameAr": "",
+  "nameEn": "iPad Air",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPad Air",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ipad air"
+ },
+ {
+  "id": "electronics_model_apple_ipad_mini",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_ipad",
+  "nameAr": "",
+  "nameEn": "iPad mini",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPad mini",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ipad mini"
+ },
+ {
+  "id": "electronics_model_apple_ipad",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_ipad",
+  "nameAr": "",
+  "nameEn": "iPad",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "iPad",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ipad"
+ },
+ {
+  "id": "electronics_family_apple_macbook_air",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "MacBook Air",
+  "aliasesAr": [
+   "ماك بوك اير"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air"
+ },
+ {
+  "id": "electronics_model_apple_macbook_air_13_inch_m1",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_air",
+  "nameAr": "",
+  "nameEn": "MacBook Air 13-inch (M1)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Air 13-inch (M1)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air 000000000013-inch (m000000000001)"
+ },
+ {
+  "id": "electronics_model_apple_macbook_air_13_inch_m2",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_air",
+  "nameAr": "",
+  "nameEn": "MacBook Air 13-inch (M2)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Air 13-inch (M2)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air 000000000013-inch (m000000000002)"
+ },
+ {
+  "id": "electronics_model_apple_macbook_air_15_inch_m2",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_air",
+  "nameAr": "",
+  "nameEn": "MacBook Air 15-inch (M2)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Air 15-inch (M2)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air 000000000015-inch (m000000000002)"
+ },
+ {
+  "id": "electronics_model_apple_macbook_air_13_inch_m3",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_air",
+  "nameAr": "",
+  "nameEn": "MacBook Air 13-inch (M3)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Air 13-inch (M3)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air 000000000013-inch (m000000000003)"
+ },
+ {
+  "id": "electronics_model_apple_macbook_air_15_inch_m3",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_air",
+  "nameAr": "",
+  "nameEn": "MacBook Air 15-inch (M3)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Air 15-inch (M3)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook air 000000000015-inch (m000000000003)"
+ },
+ {
+  "id": "electronics_family_apple_macbook_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "MacBook Pro",
+  "aliasesAr": [
+   "ماك بوك برو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook pro"
+ },
+ {
+  "id": "electronics_model_apple_macbook_pro_13_inch",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_pro",
+  "nameAr": "",
+  "nameEn": "MacBook Pro 13-inch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Pro 13-inch",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook pro 000000000013-inch"
+ },
+ {
+  "id": "electronics_model_apple_macbook_pro_14_inch",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_pro",
+  "nameAr": "",
+  "nameEn": "MacBook Pro 14-inch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Pro 14-inch",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook pro 000000000014-inch"
+ },
+ {
+  "id": "electronics_model_apple_macbook_pro_16_inch",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_macbook_pro",
+  "nameAr": "",
+  "nameEn": "MacBook Pro 16-inch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "MacBook Pro 16-inch",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macbook pro 000000000016-inch"
+ },
+ {
+  "id": "electronics_family_apple_imac",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "iMac",
+  "aliasesAr": [
+   "آي ماك"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "imac"
+ },
+ {
+  "id": "electronics_family_apple_mac_mini",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Mac mini",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mac mini"
+ },
+ {
+  "id": "electronics_family_apple_mac_studio",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Mac Studio",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mac studio"
+ },
+ {
+  "id": "electronics_family_apple_mac_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Mac Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mac pro"
+ },
+ {
+  "id": "electronics_family_apple_apple_watch",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Apple Watch",
+  "aliasesAr": [
+   "ساعة ابل"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch"
+ },
+ {
+  "id": "electronics_model_apple_apple_watch_series_9",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_watch",
+  "nameAr": "",
+  "nameEn": "Apple Watch Series 9",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Watch Series 9",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch series 000000000009"
+ },
+ {
+  "id": "electronics_model_apple_apple_watch_series_10",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_watch",
+  "nameAr": "",
+  "nameEn": "Apple Watch Series 10",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Watch Series 10",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch series 000000000010"
+ },
+ {
+  "id": "electronics_model_apple_apple_watch_ultra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_watch",
+  "nameAr": "",
+  "nameEn": "Apple Watch Ultra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Watch Ultra",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch ultra"
+ },
+ {
+  "id": "electronics_model_apple_apple_watch_ultra_2",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_watch",
+  "nameAr": "",
+  "nameEn": "Apple Watch Ultra 2",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Watch Ultra 2",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch ultra 000000000002"
+ },
+ {
+  "id": "electronics_model_apple_apple_watch_se",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_watch",
+  "nameAr": "",
+  "nameEn": "Apple Watch SE",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Watch SE",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple watch se"
+ },
+ {
+  "id": "electronics_family_apple_airpods",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "AirPods",
+  "aliasesAr": [
+   "ايربودز"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "airpods"
+ },
+ {
+  "id": "electronics_model_apple_airpods_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_airpods",
+  "nameAr": "",
+  "nameEn": "AirPods Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "AirPods Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "airpods pro"
+ },
+ {
+  "id": "electronics_model_apple_airpods_pro_2nd_generation",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_airpods",
+  "nameAr": "",
+  "nameEn": "AirPods Pro (2nd generation)",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "AirPods Pro (2nd generation)",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "airpods pro (000000000002nd generation)"
+ },
+ {
+  "id": "electronics_model_apple_airpods_max",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_airpods",
+  "nameAr": "",
+  "nameEn": "AirPods Max",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "AirPods Max",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "airpods max"
+ },
+ {
+  "id": "electronics_family_apple_vision_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Vision Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vision pro"
+ },
+ {
+  "id": "electronics_model_apple_apple_vision_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_vision_pro",
+  "nameAr": "",
+  "nameEn": "Apple Vision Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple Vision Pro",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple vision pro"
+ },
+ {
+  "id": "electronics_family_apple_apple_tv",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_apple",
+  "nameAr": "",
+  "nameEn": "Apple TV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple tv"
+ },
+ {
+  "id": "electronics_model_apple_apple_tv_4k",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_apple_apple_tv",
+  "nameAr": "",
+  "nameEn": "Apple TV 4K",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Apple TV 4K",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "apple tv 000000000004k"
+ },
+ {
+  "id": "electronics_brand_samsung",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سامسونج",
+  "nameEn": "Samsung",
+  "aliasesAr": [
+   "سامسونغ"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "samsung"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_s",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy S",
+  "aliasesAr": [
+   "جالكسي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s22",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S22",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S22",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000022"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s22_ultra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S22 Ultra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S22 Ultra",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000022 ultra"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s23",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S23",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S23",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000023"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s23_ultra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S23 Ultra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S23 Ultra",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000023 ultra"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s24",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S24",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S24",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000024"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s24_plus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S24+",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S24+",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000024+"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s24_ultra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S24 Ultra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S24 Ultra",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000024 ultra"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s25",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S25",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S25",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000025"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_s25_ultra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_s",
+  "nameAr": "",
+  "nameEn": "Galaxy S25 Ultra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy S25 Ultra",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy s000000000025 ultra"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_z",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy Z",
+  "aliasesAr": [
+   "فولد",
+   "فليب"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy z"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_z_fold5",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_z",
+  "nameAr": "",
+  "nameEn": "Galaxy Z Fold5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy Z Fold5",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy z fold000000000005"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_z_flip5",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_z",
+  "nameAr": "",
+  "nameEn": "Galaxy Z Flip5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy Z Flip5",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy z flip000000000005"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_z_fold6",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_z",
+  "nameAr": "",
+  "nameEn": "Galaxy Z Fold6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy Z Fold6",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy z fold000000000006"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_z_flip6",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_z",
+  "nameAr": "",
+  "nameEn": "Galaxy Z Flip6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy Z Flip6",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy z flip000000000006"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_a",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy A",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy a"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_a54",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_a",
+  "nameAr": "",
+  "nameEn": "Galaxy A54",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy A54",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy a000000000054"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_a55",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_a",
+  "nameAr": "",
+  "nameEn": "Galaxy A55",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy A55",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy a000000000055"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_tab",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy Tab",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy tab"
+ },
+ {
+  "id": "electronics_model_samsung_galaxy_tab_s9",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_samsung_galaxy_tab",
+  "nameAr": "",
+  "nameEn": "Galaxy Tab S9",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Galaxy Tab S9",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy tab s000000000009"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_watch",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy Watch",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy watch"
+ },
+ {
+  "id": "electronics_family_samsung_galaxy_book",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_samsung",
+  "nameAr": "",
+  "nameEn": "Galaxy Book",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "galaxy book"
+ },
+ {
+  "id": "electronics_brand_dell",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ديل",
+  "nameEn": "Dell",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dell"
+ },
+ {
+  "id": "electronics_family_dell_latitude",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "Latitude",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "latitude"
+ },
+ {
+  "id": "electronics_family_dell_precision",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "Precision",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "precision"
+ },
+ {
+  "id": "electronics_family_dell_xps",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "XPS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xps"
+ },
+ {
+  "id": "electronics_family_dell_optiplex",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "OptiPlex",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "optiplex"
+ },
+ {
+  "id": "electronics_family_dell_poweredge",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "PowerEdge",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "poweredge"
+ },
+ {
+  "id": "electronics_family_dell_inspiron",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "Inspiron",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "inspiron"
+ },
+ {
+  "id": "electronics_family_dell_vostro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "Vostro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vostro"
+ },
+ {
+  "id": "electronics_family_dell_alienware",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_dell",
+  "nameAr": "",
+  "nameEn": "Alienware",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alienware"
+ },
+ {
+  "id": "electronics_brand_hp",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إتش بي",
+  "nameEn": "HP",
+  "aliasesAr": [
+   "اتش بي"
+  ],
+  "aliasesEn": [
+   "Hewlett-Packard"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hp"
+ },
+ {
+  "id": "electronics_family_hp_elitebook",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "EliteBook",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elitebook"
+ },
+ {
+  "id": "electronics_family_hp_probook",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "ProBook",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "probook"
+ },
+ {
+  "id": "electronics_family_hp_zbook",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "ZBook",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zbook"
+ },
+ {
+  "id": "electronics_family_hp_pavilion",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "Pavilion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pavilion"
+ },
+ {
+  "id": "electronics_family_hp_spectre",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "Spectre",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spectre"
+ },
+ {
+  "id": "electronics_family_hp_envy",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "ENVY",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "envy"
+ },
+ {
+  "id": "electronics_family_hp_elitedesk",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "EliteDesk",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elitedesk"
+ },
+ {
+  "id": "electronics_family_hp_laserjet",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "LaserJet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "laserjet"
+ },
+ {
+  "id": "electronics_family_hp_officejet",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "OfficeJet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "officejet"
+ },
+ {
+  "id": "electronics_family_hp_designjet",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hp",
+  "nameAr": "",
+  "nameEn": "DesignJet",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "designjet"
+ },
+ {
+  "id": "electronics_brand_hpe",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إتش بي إي",
+  "nameEn": "Hewlett Packard Enterprise",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "HPE"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hewlett packard enterprise"
+ },
+ {
+  "id": "electronics_family_hpe_proliant",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hpe",
+  "nameAr": "",
+  "nameEn": "ProLiant",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "proliant"
+ },
+ {
+  "id": "electronics_family_hpe_aruba",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_hpe",
+  "nameAr": "",
+  "nameEn": "Aruba",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aruba"
+ },
+ {
+  "id": "electronics_brand_lenovo",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "لينوفو",
+  "nameEn": "Lenovo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lenovo"
+ },
+ {
+  "id": "electronics_family_lenovo_thinkpad",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "ThinkPad",
+  "aliasesAr": [
+   "ثينك باد"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkpad"
+ },
+ {
+  "id": "electronics_model_lenovo_thinkpad_x1_carbon",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_lenovo_thinkpad",
+  "nameAr": "",
+  "nameEn": "ThinkPad X1 Carbon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ThinkPad X1 Carbon",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkpad x000000000001 carbon"
+ },
+ {
+  "id": "electronics_model_lenovo_thinkpad_t14",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_lenovo_thinkpad",
+  "nameAr": "",
+  "nameEn": "ThinkPad T14",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ThinkPad T14",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkpad t000000000014"
+ },
+ {
+  "id": "electronics_model_lenovo_thinkpad_t14s",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_lenovo_thinkpad",
+  "nameAr": "",
+  "nameEn": "ThinkPad T14s",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "ThinkPad T14s",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkpad t000000000014s"
+ },
+ {
+  "id": "electronics_family_lenovo_thinkcentre",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "ThinkCentre",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkcentre"
+ },
+ {
+  "id": "electronics_family_lenovo_thinkstation",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "ThinkStation",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinkstation"
+ },
+ {
+  "id": "electronics_family_lenovo_ideapad",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "IdeaPad",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ideapad"
+ },
+ {
+  "id": "electronics_family_lenovo_legion",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "Legion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "legion"
+ },
+ {
+  "id": "electronics_family_lenovo_yoga",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "Yoga",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yoga"
+ },
+ {
+  "id": "electronics_family_lenovo_thinksystem",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_lenovo",
+  "nameAr": "",
+  "nameEn": "ThinkSystem",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "thinksystem"
+ },
+ {
+  "id": "electronics_brand_microsoft",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "مايكروسوفت",
+  "nameEn": "Microsoft",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "microsoft"
+ },
+ {
+  "id": "electronics_family_microsoft_surface_pro",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_microsoft",
+  "nameAr": "",
+  "nameEn": "Surface Pro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "surface pro"
+ },
+ {
+  "id": "electronics_family_microsoft_surface_laptop",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_microsoft",
+  "nameAr": "",
+  "nameEn": "Surface Laptop",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "surface laptop"
+ },
+ {
+  "id": "electronics_family_microsoft_surface_book",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_microsoft",
+  "nameAr": "",
+  "nameEn": "Surface Book",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "surface book"
+ },
+ {
+  "id": "electronics_family_microsoft_xbox",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_microsoft",
+  "nameAr": "",
+  "nameEn": "Xbox",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xbox"
+ },
+ {
+  "id": "electronics_model_microsoft_xbox_series_x",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_microsoft_xbox",
+  "nameAr": "",
+  "nameEn": "Xbox Series X",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Xbox Series X",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xbox series x"
+ },
+ {
+  "id": "electronics_model_microsoft_xbox_series_s",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_microsoft_xbox",
+  "nameAr": "",
+  "nameEn": "Xbox Series S",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "Xbox Series S",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xbox series s"
+ },
+ {
+  "id": "electronics_brand_sony",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سوني",
+  "nameEn": "Sony",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sony"
+ },
+ {
+  "id": "electronics_family_sony_playstation",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_sony",
+  "nameAr": "",
+  "nameEn": "PlayStation",
+  "aliasesAr": [
+   "بلايستيشن",
+   "بلاي ستيشن"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "playstation"
+ },
+ {
+  "id": "electronics_model_sony_playstation_5",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_sony_playstation",
+  "nameAr": "",
+  "nameEn": "PlayStation 5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PlayStation 5",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "playstation 000000000005"
+ },
+ {
+  "id": "electronics_model_sony_playstation_4",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_sony_playstation",
+  "nameAr": "",
+  "nameEn": "PlayStation 4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "PlayStation 4",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "playstation 000000000004"
+ },
+ {
+  "id": "electronics_family_sony_alpha",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_sony",
+  "nameAr": "",
+  "nameEn": "Alpha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alpha"
+ },
+ {
+  "id": "electronics_family_sony_bravia",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_sony",
+  "nameAr": "",
+  "nameEn": "BRAVIA",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bravia"
+ },
+ {
+  "id": "electronics_brand_canon",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "كانون",
+  "nameEn": "Canon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "canon"
+ },
+ {
+  "id": "electronics_family_canon_eos",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_canon",
+  "nameAr": "",
+  "nameEn": "EOS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eos"
+ },
+ {
+  "id": "electronics_model_canon_eos_r5",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_canon_eos",
+  "nameAr": "",
+  "nameEn": "EOS R5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "EOS R5",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eos r000000000005"
+ },
+ {
+  "id": "electronics_model_canon_eos_r6",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_canon_eos",
+  "nameAr": "",
+  "nameEn": "EOS R6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "EOS R6",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eos r000000000006"
+ },
+ {
+  "id": "electronics_model_canon_eos_5d_mark_iv",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_canon_eos",
+  "nameAr": "",
+  "nameEn": "EOS 5D Mark IV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "EOS 5D Mark IV",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eos 000000000005d mark iv"
+ },
+ {
+  "id": "electronics_family_canon_powershot",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_canon",
+  "nameAr": "",
+  "nameEn": "PowerShot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "powershot"
+ },
+ {
+  "id": "electronics_family_canon_imagerunner",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_canon",
+  "nameAr": "",
+  "nameEn": "imageRUNNER",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "imagerunner"
+ },
+ {
+  "id": "electronics_brand_nikon",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "نيكون",
+  "nameEn": "Nikon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nikon"
+ },
+ {
+  "id": "electronics_family_nikon_z_series",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_nikon",
+  "nameAr": "",
+  "nameEn": "Z series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "z series"
+ },
+ {
+  "id": "electronics_family_nikon_d_series",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_nikon",
+  "nameAr": "",
+  "nameEn": "D series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d series"
+ },
+ {
+  "id": "electronics_model_nikon_d850",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "model",
+  "parentId": "electronics_family_nikon_d_series",
+  "nameAr": "",
+  "nameEn": "D850",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": "D850",
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d000000000850"
+ },
+ {
+  "id": "electronics_brand_google",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جوجل",
+  "nameEn": "Google",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "google"
+ },
+ {
+  "id": "electronics_family_google_pixel",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "family",
+  "parentId": "electronics_brand_google",
+  "nameAr": "",
+  "nameEn": "Pixel",
+  "aliasesAr": [
+   "بكسل"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pixel"
+ },
+ {
+  "id": "electronics_brand_lg",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إل جي",
+  "nameEn": "LG",
+  "aliasesAr": [
+   "ال جي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lg"
+ },
+ {
+  "id": "electronics_brand_huawei",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هواوي",
+  "nameEn": "Huawei",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "huawei"
+ },
+ {
+  "id": "electronics_brand_xiaomi",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "شاومي",
+  "nameEn": "Xiaomi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xiaomi"
+ },
+ {
+  "id": "electronics_brand_asus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أسوس",
+  "nameEn": "ASUS",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Asus"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "asus"
+ },
+ {
+  "id": "electronics_brand_acer",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أيسر",
+  "nameEn": "Acer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "acer"
+ },
+ {
+  "id": "electronics_brand_fujifilm",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فوجي فيلم",
+  "nameEn": "Fujifilm",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fujifilm"
+ },
+ {
+  "id": "electronics_brand_cisco",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيسكو",
+  "nameEn": "Cisco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cisco"
+ },
+ {
+  "id": "electronics_brand_epson",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "إبسون",
+  "nameEn": "Epson",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "epson"
+ },
+ {
+  "id": "electronics_brand_brother",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "براذر",
+  "nameEn": "Brother",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "brother"
+ },
+ {
+  "id": "electronics_brand_garmin",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "جارمن",
+  "nameEn": "Garmin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "garmin"
+ },
+ {
+  "id": "electronics_brand_dji",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دي جي آي",
+  "nameEn": "DJI",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dji"
+ },
+ {
+  "id": "electronics_brand_bose",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "بوز",
+  "nameEn": "Bose",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bose"
+ },
+ {
+  "id": "electronics_brand_dyson",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "دايسون",
+  "nameEn": "Dyson",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dyson"
+ },
+ {
+  "id": "electronics_brand_philips",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فيليبس",
+  "nameEn": "Philips",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "philips"
+ },
+ {
+  "id": "electronics_brand_panasonic",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "باناسونيك",
+  "nameEn": "Panasonic",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "panasonic"
+ },
+ {
+  "id": "electronics_brand_toshiba",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "توشيبا",
+  "nameEn": "Toshiba",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "toshiba"
+ },
+ {
+  "id": "electronics_brand_seagate",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سيجيت",
+  "nameEn": "Seagate",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seagate"
+ },
+ {
+  "id": "electronics_brand_western_digital",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ويسترن ديجيتال",
+  "nameEn": "Western Digital",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "WD"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "western digital"
+ },
+ {
+  "id": "electronics_brand_synology",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "سينولوجي",
+  "nameEn": "Synology",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "synology"
+ },
+ {
+  "id": "electronics_brand_ubiquiti",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "يوبيكويتي",
+  "nameEn": "Ubiquiti",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ubiquiti"
+ },
+ {
+  "id": "electronics_brand_zebra",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "زيبرا",
+  "nameEn": "Zebra Technologies",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Zebra"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zebra technologies"
+ },
+ {
+  "id": "electronics_brand_hikvision",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "هيك فيجن",
+  "nameEn": "Hikvision",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hikvision"
+ },
+ {
+  "id": "electronics_brand_dahua",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "داهوا",
+  "nameEn": "Dahua",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dahua"
+ },
+ {
+  "id": "electronics_brand_motorola",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "موتورولا",
+  "nameEn": "Motorola",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "motorola"
+ },
+ {
+  "id": "electronics_brand_nokia",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "نوكيا",
+  "nameEn": "Nokia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nokia"
+ },
+ {
+  "id": "electronics_brand_oppo",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "أوبو",
+  "nameEn": "OPPO",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oppo"
+ },
+ {
+  "id": "electronics_brand_vivo",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "فيفو",
+  "nameEn": "vivo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vivo"
+ },
+ {
+  "id": "electronics_brand_oneplus",
+  "domains": [
+   "electronics"
+  ],
+  "entityType": "brand",
+  "parentId": null,
+  "nameAr": "ون بلس",
+  "nameEn": "OnePlus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "oneplus"
+ }
+]

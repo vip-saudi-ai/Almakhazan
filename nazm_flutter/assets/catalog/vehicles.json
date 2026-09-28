@@ -1,0 +1,7403 @@
+[
+ {
+  "id": "vehicle_make_toyota",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تويوتا",
+  "nameEn": "Toyota",
+  "aliasesAr": [
+   "تيوتا"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "toyota"
+ },
+ {
+  "id": "vehicle_model_toyota_land_cruiser",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "لاندكروزر",
+  "nameEn": "Land Cruiser",
+  "aliasesAr": [
+   "لاند كروزر",
+   "شاص"
+  ],
+  "aliasesEn": [
+   "LC"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "land cruiser"
+ },
+ {
+  "id": "vehicle_model_toyota_land_cruiser_prado",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "برادو",
+  "nameEn": "Land Cruiser Prado",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Prado"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "land cruiser prado"
+ },
+ {
+  "id": "vehicle_model_toyota_land_cruiser_70",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "لاندكروزر 70",
+  "nameEn": "Land Cruiser 70",
+  "aliasesAr": [
+   "ربع"
+  ],
+  "aliasesEn": [
+   "LC70"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "land cruiser 000000000070"
+ },
+ {
+  "id": "vehicle_model_toyota_camry",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "كامري",
+  "nameEn": "Camry",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "camry"
+ },
+ {
+  "id": "vehicle_model_toyota_corolla",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "كورولا",
+  "nameEn": "Corolla",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "corolla"
+ },
+ {
+  "id": "vehicle_model_toyota_corolla_cross",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "كورولا كروس",
+  "nameEn": "Corolla Cross",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "corolla cross"
+ },
+ {
+  "id": "vehicle_model_toyota_hilux",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "هايلكس",
+  "nameEn": "Hilux",
+  "aliasesAr": [
+   "هايلوكس"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hilux"
+ },
+ {
+  "id": "vehicle_model_toyota_fortuner",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "فورتشنر",
+  "nameEn": "Fortuner",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fortuner"
+ },
+ {
+  "id": "vehicle_model_toyota_rav4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "راف فور",
+  "nameEn": "RAV4",
+  "aliasesAr": [
+   "راف 4"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rav000000000004"
+ },
+ {
+  "id": "vehicle_model_toyota_highlander",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "هايلاندر",
+  "nameEn": "Highlander",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "highlander"
+ },
+ {
+  "id": "vehicle_model_toyota_yaris",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "يارس",
+  "nameEn": "Yaris",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yaris"
+ },
+ {
+  "id": "vehicle_model_toyota_crown",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "كراون",
+  "nameEn": "Crown",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "crown"
+ },
+ {
+  "id": "vehicle_model_toyota_supra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "سوبرا",
+  "nameEn": "Supra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "supra"
+ },
+ {
+  "id": "vehicle_model_toyota_avalon",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "أفالون",
+  "nameEn": "Avalon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "avalon"
+ },
+ {
+  "id": "vehicle_model_toyota_sequoia",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "سيكويا",
+  "nameEn": "Sequoia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sequoia"
+ },
+ {
+  "id": "vehicle_model_toyota_tundra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "تندرا",
+  "nameEn": "Tundra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tundra"
+ },
+ {
+  "id": "vehicle_model_toyota_tacoma",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "تاكوما",
+  "nameEn": "Tacoma",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tacoma"
+ },
+ {
+  "id": "vehicle_model_toyota_4runner",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "فور رنر",
+  "nameEn": "4Runner",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000004runner"
+ },
+ {
+  "id": "vehicle_model_toyota_fj_cruiser",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "إف جي كروزر",
+  "nameEn": "FJ Cruiser",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "FJ"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fj cruiser"
+ },
+ {
+  "id": "vehicle_model_toyota_innova",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "إينوفا",
+  "nameEn": "Innova",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "innova"
+ },
+ {
+  "id": "vehicle_model_toyota_hiace",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "هايس",
+  "nameEn": "Hiace",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hiace"
+ },
+ {
+  "id": "vehicle_model_toyota_coaster",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "كوستر",
+  "nameEn": "Coaster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "coaster"
+ },
+ {
+  "id": "vehicle_model_toyota_rush",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "راش",
+  "nameEn": "Rush",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rush"
+ },
+ {
+  "id": "vehicle_model_toyota_raize",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "رايز",
+  "nameEn": "Raize",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "raize"
+ },
+ {
+  "id": "vehicle_model_toyota_veloz",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "فيلوز",
+  "nameEn": "Veloz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "veloz"
+ },
+ {
+  "id": "vehicle_model_toyota_c_hr",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "سي إتش آر",
+  "nameEn": "C-HR",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CHR"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "c-hr"
+ },
+ {
+  "id": "vehicle_model_toyota_prius",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "بريوس",
+  "nameEn": "Prius",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "prius"
+ },
+ {
+  "id": "vehicle_model_toyota_gr86",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "جي آر 86",
+  "nameEn": "GR86",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "GR 86"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gr000000000086"
+ },
+ {
+  "id": "vehicle_model_toyota_bz4x",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_toyota",
+  "nameAr": "",
+  "nameEn": "bZ4X",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bz000000000004x"
+ },
+ {
+  "id": "vehicle_make_lexus",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لكزس",
+  "nameEn": "Lexus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lexus"
+ },
+ {
+  "id": "vehicle_model_lexus_lx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "LX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lx"
+ },
+ {
+  "id": "vehicle_model_lexus_gx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "GX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gx"
+ },
+ {
+  "id": "vehicle_model_lexus_rx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "RX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rx"
+ },
+ {
+  "id": "vehicle_model_lexus_nx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "NX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nx"
+ },
+ {
+  "id": "vehicle_model_lexus_ux",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "UX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ux"
+ },
+ {
+  "id": "vehicle_model_lexus_es",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "ES",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "es"
+ },
+ {
+  "id": "vehicle_model_lexus_ls",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "LS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ls"
+ },
+ {
+  "id": "vehicle_model_lexus_is",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "IS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "is"
+ },
+ {
+  "id": "vehicle_model_lexus_rc",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "RC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rc"
+ },
+ {
+  "id": "vehicle_model_lexus_lc",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "LC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lc"
+ },
+ {
+  "id": "vehicle_model_lexus_lm",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "LM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lm"
+ },
+ {
+  "id": "vehicle_model_lexus_tx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lexus",
+  "nameAr": "",
+  "nameEn": "TX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tx"
+ },
+ {
+  "id": "vehicle_make_nissan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "نيسان",
+  "nameEn": "Nissan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "nissan"
+ },
+ {
+  "id": "vehicle_model_nissan_patrol",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "باترول",
+  "nameEn": "Patrol",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "patrol"
+ },
+ {
+  "id": "vehicle_model_nissan_sunny",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "صني",
+  "nameEn": "Sunny",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sunny"
+ },
+ {
+  "id": "vehicle_model_nissan_altima",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "ألتيما",
+  "nameEn": "Altima",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "altima"
+ },
+ {
+  "id": "vehicle_model_nissan_maxima",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "ماكسيما",
+  "nameEn": "Maxima",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "maxima"
+ },
+ {
+  "id": "vehicle_model_nissan_x_trail",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "إكس تريل",
+  "nameEn": "X-Trail",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "XTrail"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x-trail"
+ },
+ {
+  "id": "vehicle_model_nissan_pathfinder",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "باثفايندر",
+  "nameEn": "Pathfinder",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pathfinder"
+ },
+ {
+  "id": "vehicle_model_nissan_navara",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "نافارا",
+  "nameEn": "Navara",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "navara"
+ },
+ {
+  "id": "vehicle_model_nissan_kicks",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "كيكس",
+  "nameEn": "Kicks",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kicks"
+ },
+ {
+  "id": "vehicle_model_nissan_sentra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "سنترا",
+  "nameEn": "Sentra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sentra"
+ },
+ {
+  "id": "vehicle_model_nissan_gt_r",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "جي تي آر",
+  "nameEn": "GT-R",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "GTR"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gt-r"
+ },
+ {
+  "id": "vehicle_model_nissan_z",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "",
+  "nameEn": "Z",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "370Z",
+   "400Z"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "z"
+ },
+ {
+  "id": "vehicle_model_nissan_armada",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "أرمادا",
+  "nameEn": "Armada",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "armada"
+ },
+ {
+  "id": "vehicle_model_nissan_urvan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_nissan",
+  "nameAr": "أورفان",
+  "nameEn": "Urvan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "urvan"
+ },
+ {
+  "id": "vehicle_make_infiniti",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إنفينيتي",
+  "nameEn": "Infiniti",
+  "aliasesAr": [
+   "انفنتي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "infiniti"
+ },
+ {
+  "id": "vehicle_model_infiniti_qx80",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_infiniti",
+  "nameAr": "",
+  "nameEn": "QX80",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "qx000000000080"
+ },
+ {
+  "id": "vehicle_model_infiniti_qx60",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_infiniti",
+  "nameAr": "",
+  "nameEn": "QX60",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "qx000000000060"
+ },
+ {
+  "id": "vehicle_model_infiniti_qx50",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_infiniti",
+  "nameAr": "",
+  "nameEn": "QX50",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "qx000000000050"
+ },
+ {
+  "id": "vehicle_model_infiniti_q50",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_infiniti",
+  "nameAr": "",
+  "nameEn": "Q50",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q000000000050"
+ },
+ {
+  "id": "vehicle_make_honda",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هوندا",
+  "nameEn": "Honda",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "honda"
+ },
+ {
+  "id": "vehicle_model_honda_civic",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "سيفيك",
+  "nameEn": "Civic",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "civic"
+ },
+ {
+  "id": "vehicle_model_honda_accord",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "أكورد",
+  "nameEn": "Accord",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "accord"
+ },
+ {
+  "id": "vehicle_model_honda_cr_v",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "سي آر في",
+  "nameEn": "CR-V",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CRV"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cr-v"
+ },
+ {
+  "id": "vehicle_model_honda_hr_v",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "إتش آر في",
+  "nameEn": "HR-V",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "HRV"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hr-v"
+ },
+ {
+  "id": "vehicle_model_honda_pilot",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "بايلوت",
+  "nameEn": "Pilot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pilot"
+ },
+ {
+  "id": "vehicle_model_honda_city",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "سيتي",
+  "nameEn": "City",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "city"
+ },
+ {
+  "id": "vehicle_model_honda_odyssey",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_honda",
+  "nameAr": "أوديسي",
+  "nameEn": "Odyssey",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "odyssey"
+ },
+ {
+  "id": "vehicle_make_acura",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أكورا",
+  "nameEn": "Acura",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "acura"
+ },
+ {
+  "id": "vehicle_make_mazda",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مازدا",
+  "nameEn": "Mazda",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mazda"
+ },
+ {
+  "id": "vehicle_model_mazda_mazda3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "مازدا 3",
+  "nameEn": "Mazda3",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mazda 3"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mazda000000000003"
+ },
+ {
+  "id": "vehicle_model_mazda_mazda6",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "مازدا 6",
+  "nameEn": "Mazda6",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mazda 6"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mazda000000000006"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-3",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX3"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000003"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-5",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX5"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000005"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_9",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-9",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX9"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000009"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_30",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-30",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX30"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000030"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_60",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-60",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX60"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000060"
+ },
+ {
+  "id": "vehicle_model_mazda_cx_90",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "CX-90",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "CX90"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cx-000000000090"
+ },
+ {
+  "id": "vehicle_model_mazda_mx_5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mazda",
+  "nameAr": "",
+  "nameEn": "MX-5",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "MX5",
+   "Miata"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mx-000000000005"
+ },
+ {
+  "id": "vehicle_make_subaru",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سوبارو",
+  "nameEn": "Subaru",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "subaru"
+ },
+ {
+  "id": "vehicle_make_mitsubishi",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميتسوبيشي",
+  "nameEn": "Mitsubishi",
+  "aliasesAr": [
+   "متسوبيشي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mitsubishi"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_pajero",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "باجيرو",
+  "nameEn": "Pajero",
+  "aliasesAr": [
+   "باجيرو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pajero"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_l200",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "",
+  "nameEn": "L200",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Triton"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "l000000000200"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_outlander",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "أوتلاندر",
+  "nameEn": "Outlander",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "outlander"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_asx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "",
+  "nameEn": "ASX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "asx"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_attrage",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "أتراج",
+  "nameEn": "Attrage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "attrage"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_xpander",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "إكسباندر",
+  "nameEn": "Xpander",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xpander"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_eclipse_cross",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "إكليبس كروس",
+  "nameEn": "Eclipse Cross",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eclipse cross"
+ },
+ {
+  "id": "vehicle_model_mitsubishi_lancer",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mitsubishi",
+  "nameAr": "لانسر",
+  "nameEn": "Lancer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lancer"
+ },
+ {
+  "id": "vehicle_make_suzuki",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سوزوكي",
+  "nameEn": "Suzuki",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "suzuki"
+ },
+ {
+  "id": "vehicle_model_suzuki_swift",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "سويفت",
+  "nameEn": "Swift",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "swift"
+ },
+ {
+  "id": "vehicle_model_suzuki_jimny",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "جيمني",
+  "nameEn": "Jimny",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jimny"
+ },
+ {
+  "id": "vehicle_model_suzuki_vitara",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "فيتارا",
+  "nameEn": "Vitara",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vitara"
+ },
+ {
+  "id": "vehicle_model_suzuki_dzire",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "ديزاير",
+  "nameEn": "Dzire",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dzire"
+ },
+ {
+  "id": "vehicle_model_suzuki_ertiga",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "إرتيجا",
+  "nameEn": "Ertiga",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ertiga"
+ },
+ {
+  "id": "vehicle_model_suzuki_ciaz",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "سياز",
+  "nameEn": "Ciaz",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ciaz"
+ },
+ {
+  "id": "vehicle_model_suzuki_baleno",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_suzuki",
+  "nameAr": "بالينو",
+  "nameEn": "Baleno",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "baleno"
+ },
+ {
+  "id": "vehicle_make_isuzu",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إيسوزو",
+  "nameEn": "Isuzu",
+  "aliasesAr": [
+   "ايسوزو"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "isuzu"
+ },
+ {
+  "id": "vehicle_model_isuzu_d_max",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_isuzu",
+  "nameAr": "دي ماكس",
+  "nameEn": "D-Max",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "DMax"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "d-max"
+ },
+ {
+  "id": "vehicle_model_isuzu_mu_x",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_isuzu",
+  "nameAr": "",
+  "nameEn": "MU-X",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "MUX"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mu-x"
+ },
+ {
+  "id": "vehicle_model_isuzu_n_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_isuzu",
+  "nameAr": "",
+  "nameEn": "N-Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "n-series"
+ },
+ {
+  "id": "vehicle_make_hyundai",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هيونداي",
+  "nameEn": "Hyundai",
+  "aliasesAr": [
+   "هونداي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hyundai"
+ },
+ {
+  "id": "vehicle_model_hyundai_accent",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "أكسنت",
+  "nameEn": "Accent",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "accent"
+ },
+ {
+  "id": "vehicle_model_hyundai_elantra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "إلنترا",
+  "nameEn": "Elantra",
+  "aliasesAr": [
+   "النترا"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "elantra"
+ },
+ {
+  "id": "vehicle_model_hyundai_sonata",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "سوناتا",
+  "nameEn": "Sonata",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sonata"
+ },
+ {
+  "id": "vehicle_model_hyundai_tucson",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "توسان",
+  "nameEn": "Tucson",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tucson"
+ },
+ {
+  "id": "vehicle_model_hyundai_santa_fe",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "سنتافي",
+  "nameEn": "Santa Fe",
+  "aliasesAr": [
+   "سانتافي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "santa fe"
+ },
+ {
+  "id": "vehicle_model_hyundai_palisade",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "باليسيد",
+  "nameEn": "Palisade",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "palisade"
+ },
+ {
+  "id": "vehicle_model_hyundai_creta",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "كريتا",
+  "nameEn": "Creta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "creta"
+ },
+ {
+  "id": "vehicle_model_hyundai_azera",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "أزيرا",
+  "nameEn": "Azera",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "azera"
+ },
+ {
+  "id": "vehicle_model_hyundai_kona",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "كونا",
+  "nameEn": "Kona",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kona"
+ },
+ {
+  "id": "vehicle_model_hyundai_staria",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "ستاريا",
+  "nameEn": "Staria",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "staria"
+ },
+ {
+  "id": "vehicle_model_hyundai_h_1",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_hyundai",
+  "nameAr": "إتش 1",
+  "nameEn": "H-1",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "H1"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h-000000000001"
+ },
+ {
+  "id": "vehicle_make_kia",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كيا",
+  "nameEn": "Kia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kia"
+ },
+ {
+  "id": "vehicle_model_kia_pegas",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "بيجاس",
+  "nameEn": "Pegas",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pegas"
+ },
+ {
+  "id": "vehicle_model_kia_rio",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "ريو",
+  "nameEn": "Rio",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rio"
+ },
+ {
+  "id": "vehicle_model_kia_cerato",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "سيراتو",
+  "nameEn": "Cerato",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cerato"
+ },
+ {
+  "id": "vehicle_model_kia_k5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "",
+  "nameEn": "K5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "k000000000005"
+ },
+ {
+  "id": "vehicle_model_kia_k8",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "",
+  "nameEn": "K8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "k000000000008"
+ },
+ {
+  "id": "vehicle_model_kia_sportage",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "سبورتاج",
+  "nameEn": "Sportage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sportage"
+ },
+ {
+  "id": "vehicle_model_kia_sorento",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "سورينتو",
+  "nameEn": "Sorento",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sorento"
+ },
+ {
+  "id": "vehicle_model_kia_telluride",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "تيلورايد",
+  "nameEn": "Telluride",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "telluride"
+ },
+ {
+  "id": "vehicle_model_kia_carnival",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "كرنفال",
+  "nameEn": "Carnival",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "carnival"
+ },
+ {
+  "id": "vehicle_model_kia_seltos",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "سيلتوس",
+  "nameEn": "Seltos",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seltos"
+ },
+ {
+  "id": "vehicle_model_kia_picanto",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_kia",
+  "nameAr": "بيكانتو",
+  "nameEn": "Picanto",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "picanto"
+ },
+ {
+  "id": "vehicle_make_genesis",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جينيسيس",
+  "nameEn": "Genesis",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "genesis"
+ },
+ {
+  "id": "vehicle_model_genesis_g70",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_genesis",
+  "nameAr": "",
+  "nameEn": "G70",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g000000000070"
+ },
+ {
+  "id": "vehicle_model_genesis_g80",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_genesis",
+  "nameAr": "",
+  "nameEn": "G80",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g000000000080"
+ },
+ {
+  "id": "vehicle_model_genesis_g90",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_genesis",
+  "nameAr": "",
+  "nameEn": "G90",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g000000000090"
+ },
+ {
+  "id": "vehicle_model_genesis_gv70",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_genesis",
+  "nameAr": "",
+  "nameEn": "GV70",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gv000000000070"
+ },
+ {
+  "id": "vehicle_model_genesis_gv80",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_genesis",
+  "nameAr": "",
+  "nameEn": "GV80",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gv000000000080"
+ },
+ {
+  "id": "vehicle_make_mercedes_benz",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مرسيدس بنز",
+  "nameEn": "Mercedes-Benz",
+  "aliasesAr": [
+   "مرسيدس",
+   "مارسيدس"
+  ],
+  "aliasesEn": [
+   "Mercedes",
+   "Benz"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mercedes-benz"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_a_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "A-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "A Class"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_c_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "C-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "C Class"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "c-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_e_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "E-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "E Class"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "e-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_s_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "S-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "S Class"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_g_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "G-Class",
+  "aliasesAr": [
+   "جي كلاس"
+  ],
+  "aliasesEn": [
+   "G Class",
+   "G-Wagon"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "g-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_gla",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "GLA",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gla"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_glb",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "GLB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "glb"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_glc",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "GLC",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "glc"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_gle",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "GLE",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gle"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_gls",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "GLS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gls"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_cla",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "CLA",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cla"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_cls",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "CLS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cls"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_sl",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "SL",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sl"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_amg_gt",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "AMG GT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "amg gt"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_v_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "V-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "V Class"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "v-class"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_sprinter",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "سبرينتر",
+  "nameEn": "Sprinter",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sprinter"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_eqs",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "EQS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eqs"
+ },
+ {
+  "id": "vehicle_model_mercedes_benz_mercedes_maybach_s_class",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mercedes_benz",
+  "nameAr": "",
+  "nameEn": "Mercedes-Maybach S-Class",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Maybach"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mercedes-maybach s-class"
+ },
+ {
+  "id": "vehicle_make_bmw",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بي إم دبليو",
+  "nameEn": "BMW",
+  "aliasesAr": [
+   "بي ام دبليو",
+   "بمو",
+   "بي ام"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bmw"
+ },
+ {
+  "id": "vehicle_model_bmw_1_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "1 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000001 series"
+ },
+ {
+  "id": "vehicle_model_bmw_2_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "2 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000002 series"
+ },
+ {
+  "id": "vehicle_model_bmw_3_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "3 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000003 series"
+ },
+ {
+  "id": "vehicle_model_bmw_4_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "4 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000004 series"
+ },
+ {
+  "id": "vehicle_model_bmw_5_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "5 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000005 series"
+ },
+ {
+  "id": "vehicle_model_bmw_7_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "7 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000007 series"
+ },
+ {
+  "id": "vehicle_model_bmw_8_series",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "8 Series",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000008 series"
+ },
+ {
+  "id": "vehicle_model_bmw_x1",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X1",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000001"
+ },
+ {
+  "id": "vehicle_model_bmw_x2",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X2",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000002"
+ },
+ {
+  "id": "vehicle_model_bmw_x3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000003"
+ },
+ {
+  "id": "vehicle_model_bmw_x4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000004"
+ },
+ {
+  "id": "vehicle_model_bmw_x5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000005"
+ },
+ {
+  "id": "vehicle_model_bmw_x6",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000006"
+ },
+ {
+  "id": "vehicle_model_bmw_x7",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "X7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "x000000000007"
+ },
+ {
+  "id": "vehicle_model_bmw_z4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "Z4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "z000000000004"
+ },
+ {
+  "id": "vehicle_model_bmw_m3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "M3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "m000000000003"
+ },
+ {
+  "id": "vehicle_model_bmw_m5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "M5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "m000000000005"
+ },
+ {
+  "id": "vehicle_model_bmw_i4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "i4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "i000000000004"
+ },
+ {
+  "id": "vehicle_model_bmw_i7",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "i7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "i000000000007"
+ },
+ {
+  "id": "vehicle_model_bmw_ix",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bmw",
+  "nameAr": "",
+  "nameEn": "iX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ix"
+ },
+ {
+  "id": "vehicle_make_mini",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ميني",
+  "nameEn": "MINI",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Mini"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mini"
+ },
+ {
+  "id": "vehicle_model_mini_cooper",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mini",
+  "nameAr": "كوبر",
+  "nameEn": "Cooper",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cooper"
+ },
+ {
+  "id": "vehicle_model_mini_countryman",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mini",
+  "nameAr": "كنتريمان",
+  "nameEn": "Countryman",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "countryman"
+ },
+ {
+  "id": "vehicle_make_audi",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أودي",
+  "nameEn": "Audi",
+  "aliasesAr": [
+   "اودي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "audi"
+ },
+ {
+  "id": "vehicle_model_audi_a3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000003"
+ },
+ {
+  "id": "vehicle_model_audi_a4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000004"
+ },
+ {
+  "id": "vehicle_model_audi_a5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000005"
+ },
+ {
+  "id": "vehicle_model_audi_a6",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000006"
+ },
+ {
+  "id": "vehicle_model_audi_a7",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000007"
+ },
+ {
+  "id": "vehicle_model_audi_a8",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "A8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "a000000000008"
+ },
+ {
+  "id": "vehicle_model_audi_q3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "Q3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q000000000003"
+ },
+ {
+  "id": "vehicle_model_audi_q5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "Q5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q000000000005"
+ },
+ {
+  "id": "vehicle_model_audi_q7",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "Q7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q000000000007"
+ },
+ {
+  "id": "vehicle_model_audi_q8",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "Q8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "q000000000008"
+ },
+ {
+  "id": "vehicle_model_audi_e_tron_gt",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "e-tron GT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "e-tron gt"
+ },
+ {
+  "id": "vehicle_model_audi_r8",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_audi",
+  "nameAr": "",
+  "nameEn": "R8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "r000000000008"
+ },
+ {
+  "id": "vehicle_make_volkswagen",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فولكس فاجن",
+  "nameEn": "Volkswagen",
+  "aliasesAr": [
+   "فولكس واجن"
+  ],
+  "aliasesEn": [
+   "VW"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "volkswagen"
+ },
+ {
+  "id": "vehicle_model_volkswagen_golf",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "جولف",
+  "nameEn": "Golf",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "golf"
+ },
+ {
+  "id": "vehicle_model_volkswagen_passat",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "باسات",
+  "nameEn": "Passat",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "passat"
+ },
+ {
+  "id": "vehicle_model_volkswagen_jetta",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "جيتا",
+  "nameEn": "Jetta",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jetta"
+ },
+ {
+  "id": "vehicle_model_volkswagen_tiguan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "تيغوان",
+  "nameEn": "Tiguan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiguan"
+ },
+ {
+  "id": "vehicle_model_volkswagen_touareg",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "طوارق",
+  "nameEn": "Touareg",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "touareg"
+ },
+ {
+  "id": "vehicle_model_volkswagen_teramont",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "تيرامونت",
+  "nameEn": "Teramont",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "teramont"
+ },
+ {
+  "id": "vehicle_model_volkswagen_t_roc",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volkswagen",
+  "nameAr": "",
+  "nameEn": "T-Roc",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "t-roc"
+ },
+ {
+  "id": "vehicle_make_porsche",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بورشه",
+  "nameEn": "Porsche",
+  "aliasesAr": [
+   "بورش"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "porsche"
+ },
+ {
+  "id": "vehicle_model_porsche_911",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "",
+  "nameEn": "911",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000911"
+ },
+ {
+  "id": "vehicle_model_porsche_cayenne",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "كايين",
+  "nameEn": "Cayenne",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cayenne"
+ },
+ {
+  "id": "vehicle_model_porsche_macan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "ماكان",
+  "nameEn": "Macan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "macan"
+ },
+ {
+  "id": "vehicle_model_porsche_panamera",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "باناميرا",
+  "nameEn": "Panamera",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "panamera"
+ },
+ {
+  "id": "vehicle_model_porsche_taycan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "تايكان",
+  "nameEn": "Taycan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "taycan"
+ },
+ {
+  "id": "vehicle_model_porsche_718_cayman",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "",
+  "nameEn": "718 Cayman",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Cayman"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000718 cayman"
+ },
+ {
+  "id": "vehicle_model_porsche_718_boxster",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_porsche",
+  "nameAr": "",
+  "nameEn": "718 Boxster",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Boxster"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000718 boxster"
+ },
+ {
+  "id": "vehicle_make_bentley",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بنتلي",
+  "nameEn": "Bentley",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bentley"
+ },
+ {
+  "id": "vehicle_model_bentley_bentayga",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bentley",
+  "nameAr": "بنتايجا",
+  "nameEn": "Bentayga",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bentayga"
+ },
+ {
+  "id": "vehicle_model_bentley_continental_gt",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bentley",
+  "nameAr": "كونتيننتال",
+  "nameEn": "Continental GT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "continental gt"
+ },
+ {
+  "id": "vehicle_model_bentley_flying_spur",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_bentley",
+  "nameAr": "فلاينج سبير",
+  "nameEn": "Flying Spur",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "flying spur"
+ },
+ {
+  "id": "vehicle_make_rolls_royce",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "رولز رويس",
+  "nameEn": "Rolls-Royce",
+  "aliasesAr": [
+   "رولزرويس"
+  ],
+  "aliasesEn": [
+   "Rolls Royce"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rolls-royce"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_phantom",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "فانتوم",
+  "nameEn": "Phantom",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "phantom"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_ghost",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "جوست",
+  "nameEn": "Ghost",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ghost"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_cullinan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "كولينان",
+  "nameEn": "Cullinan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cullinan"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_wraith",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "رايث",
+  "nameEn": "Wraith",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wraith"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_dawn",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "داون",
+  "nameEn": "Dawn",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dawn"
+ },
+ {
+  "id": "vehicle_model_rolls_royce_spectre",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rolls_royce",
+  "nameAr": "سبكتر",
+  "nameEn": "Spectre",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spectre"
+ },
+ {
+  "id": "vehicle_make_ferrari",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فيراري",
+  "nameEn": "Ferrari",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ferrari"
+ },
+ {
+  "id": "vehicle_model_ferrari_296_gtb",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "296 GTB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000296 gtb"
+ },
+ {
+  "id": "vehicle_model_ferrari_roma",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "Roma",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "roma"
+ },
+ {
+  "id": "vehicle_model_ferrari_sf90_stradale",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "SF90 Stradale",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "SF90"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sf000000000090 stradale"
+ },
+ {
+  "id": "vehicle_model_ferrari_812_superfast",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "812 Superfast",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000812 superfast"
+ },
+ {
+  "id": "vehicle_model_ferrari_purosangue",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "Purosangue",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "purosangue"
+ },
+ {
+  "id": "vehicle_model_ferrari_f8_tributo",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "F8 Tributo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "f000000000008 tributo"
+ },
+ {
+  "id": "vehicle_model_ferrari_488_gtb",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "488 GTB",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000488 gtb"
+ },
+ {
+  "id": "vehicle_model_ferrari_laferrari",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ferrari",
+  "nameAr": "",
+  "nameEn": "LaFerrari",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "laferrari"
+ },
+ {
+  "id": "vehicle_make_lamborghini",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لامبورغيني",
+  "nameEn": "Lamborghini",
+  "aliasesAr": [
+   "لمبرجيني"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lamborghini"
+ },
+ {
+  "id": "vehicle_model_lamborghini_urus",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lamborghini",
+  "nameAr": "أوروس",
+  "nameEn": "Urus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "urus"
+ },
+ {
+  "id": "vehicle_model_lamborghini_huracan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lamborghini",
+  "nameAr": "هوراكان",
+  "nameEn": "Huracán",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Huracan"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "huracán"
+ },
+ {
+  "id": "vehicle_model_lamborghini_aventador",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lamborghini",
+  "nameAr": "أفينتادور",
+  "nameEn": "Aventador",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aventador"
+ },
+ {
+  "id": "vehicle_model_lamborghini_revuelto",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lamborghini",
+  "nameAr": "",
+  "nameEn": "Revuelto",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "revuelto"
+ },
+ {
+  "id": "vehicle_make_maserati",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مازيراتي",
+  "nameEn": "Maserati",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "maserati"
+ },
+ {
+  "id": "vehicle_model_maserati_ghibli",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_maserati",
+  "nameAr": "",
+  "nameEn": "Ghibli",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ghibli"
+ },
+ {
+  "id": "vehicle_model_maserati_levante",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_maserati",
+  "nameAr": "",
+  "nameEn": "Levante",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "levante"
+ },
+ {
+  "id": "vehicle_model_maserati_quattroporte",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_maserati",
+  "nameAr": "",
+  "nameEn": "Quattroporte",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "quattroporte"
+ },
+ {
+  "id": "vehicle_model_maserati_mc20",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_maserati",
+  "nameAr": "",
+  "nameEn": "MC20",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mc000000000020"
+ },
+ {
+  "id": "vehicle_model_maserati_grecale",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_maserati",
+  "nameAr": "",
+  "nameEn": "Grecale",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grecale"
+ },
+ {
+  "id": "vehicle_make_mclaren",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ماكلارين",
+  "nameEn": "McLaren",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mclaren"
+ },
+ {
+  "id": "vehicle_model_mclaren_720s",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mclaren",
+  "nameAr": "",
+  "nameEn": "720S",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000720s"
+ },
+ {
+  "id": "vehicle_model_mclaren_750s",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mclaren",
+  "nameAr": "",
+  "nameEn": "750S",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000750s"
+ },
+ {
+  "id": "vehicle_model_mclaren_artura",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mclaren",
+  "nameAr": "",
+  "nameEn": "Artura",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "artura"
+ },
+ {
+  "id": "vehicle_model_mclaren_gt",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mclaren",
+  "nameAr": "",
+  "nameEn": "GT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gt"
+ },
+ {
+  "id": "vehicle_make_aston_martin",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أستون مارتن",
+  "nameEn": "Aston Martin",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "aston martin"
+ },
+ {
+  "id": "vehicle_model_aston_martin_db11",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_aston_martin",
+  "nameAr": "",
+  "nameEn": "DB11",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "db000000000011"
+ },
+ {
+  "id": "vehicle_model_aston_martin_db12",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_aston_martin",
+  "nameAr": "",
+  "nameEn": "DB12",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "db000000000012"
+ },
+ {
+  "id": "vehicle_model_aston_martin_vantage",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_aston_martin",
+  "nameAr": "",
+  "nameEn": "Vantage",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "vantage"
+ },
+ {
+  "id": "vehicle_model_aston_martin_dbx",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_aston_martin",
+  "nameAr": "",
+  "nameEn": "DBX",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dbx"
+ },
+ {
+  "id": "vehicle_make_alfa_romeo",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ألفا روميو",
+  "nameEn": "Alfa Romeo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "alfa romeo"
+ },
+ {
+  "id": "vehicle_make_fiat",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فيات",
+  "nameEn": "Fiat",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "fiat"
+ },
+ {
+  "id": "vehicle_make_peugeot",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بيجو",
+  "nameEn": "Peugeot",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "peugeot"
+ },
+ {
+  "id": "vehicle_model_peugeot_208",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_peugeot",
+  "nameAr": "",
+  "nameEn": "208",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000208"
+ },
+ {
+  "id": "vehicle_model_peugeot_2008",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_peugeot",
+  "nameAr": "",
+  "nameEn": "2008",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000002008"
+ },
+ {
+  "id": "vehicle_model_peugeot_3008",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_peugeot",
+  "nameAr": "",
+  "nameEn": "3008",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000003008"
+ },
+ {
+  "id": "vehicle_model_peugeot_5008",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_peugeot",
+  "nameAr": "",
+  "nameEn": "5008",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000005008"
+ },
+ {
+  "id": "vehicle_model_peugeot_508",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_peugeot",
+  "nameAr": "",
+  "nameEn": "508",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000508"
+ },
+ {
+  "id": "vehicle_make_citroen",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سيتروين",
+  "nameEn": "Citroën",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Citroen"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "citroën"
+ },
+ {
+  "id": "vehicle_make_renault",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "رينو",
+  "nameEn": "Renault",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "renault"
+ },
+ {
+  "id": "vehicle_model_renault_duster",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_renault",
+  "nameAr": "داستر",
+  "nameEn": "Duster",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "duster"
+ },
+ {
+  "id": "vehicle_model_renault_koleos",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_renault",
+  "nameAr": "كوليوس",
+  "nameEn": "Koleos",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "koleos"
+ },
+ {
+  "id": "vehicle_model_renault_megane",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_renault",
+  "nameAr": "ميجان",
+  "nameEn": "Megane",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "megane"
+ },
+ {
+  "id": "vehicle_make_volvo",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فولفو",
+  "nameEn": "Volvo",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "volvo"
+ },
+ {
+  "id": "vehicle_model_volvo_xc40",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "XC40",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xc000000000040"
+ },
+ {
+  "id": "vehicle_model_volvo_xc60",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "XC60",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xc000000000060"
+ },
+ {
+  "id": "vehicle_model_volvo_xc90",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "XC90",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xc000000000090"
+ },
+ {
+  "id": "vehicle_model_volvo_s60",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "S60",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s000000000060"
+ },
+ {
+  "id": "vehicle_model_volvo_s90",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "S90",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "s000000000090"
+ },
+ {
+  "id": "vehicle_model_volvo_ex30",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_volvo",
+  "nameAr": "",
+  "nameEn": "EX30",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ex000000000030"
+ },
+ {
+  "id": "vehicle_make_polestar",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بولستار",
+  "nameEn": "Polestar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "polestar"
+ },
+ {
+  "id": "vehicle_make_land_rover",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لاند روفر",
+  "nameEn": "Land Rover",
+  "aliasesAr": [
+   "لاندروفر",
+   "رنج روفر"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "land rover"
+ },
+ {
+  "id": "vehicle_model_land_rover_range_rover",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "رنج روفر",
+  "nameEn": "Range Rover",
+  "aliasesAr": [
+   "رينج روفر"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "range rover"
+ },
+ {
+  "id": "vehicle_model_land_rover_range_rover_sport",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "رنج روفر سبورت",
+  "nameEn": "Range Rover Sport",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "range rover sport"
+ },
+ {
+  "id": "vehicle_model_land_rover_range_rover_velar",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "فيلار",
+  "nameEn": "Range Rover Velar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "range rover velar"
+ },
+ {
+  "id": "vehicle_model_land_rover_range_rover_evoque",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "إيفوك",
+  "nameEn": "Range Rover Evoque",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "range rover evoque"
+ },
+ {
+  "id": "vehicle_model_land_rover_defender",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "ديفندر",
+  "nameEn": "Defender",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "defender"
+ },
+ {
+  "id": "vehicle_model_land_rover_discovery",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "ديسكفري",
+  "nameEn": "Discovery",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "discovery"
+ },
+ {
+  "id": "vehicle_model_land_rover_discovery_sport",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_land_rover",
+  "nameAr": "ديسكفري سبورت",
+  "nameEn": "Discovery Sport",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "discovery sport"
+ },
+ {
+  "id": "vehicle_make_jaguar",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جاكوار",
+  "nameEn": "Jaguar",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jaguar"
+ },
+ {
+  "id": "vehicle_make_ford",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فورد",
+  "nameEn": "Ford",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ford"
+ },
+ {
+  "id": "vehicle_model_ford_f_150",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "",
+  "nameEn": "F-150",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "F150"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "f-000000000150"
+ },
+ {
+  "id": "vehicle_model_ford_explorer",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "إكسبلورر",
+  "nameEn": "Explorer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "explorer"
+ },
+ {
+  "id": "vehicle_model_ford_expedition",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "إكسبديشن",
+  "nameEn": "Expedition",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "expedition"
+ },
+ {
+  "id": "vehicle_model_ford_mustang",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "موستنج",
+  "nameEn": "Mustang",
+  "aliasesAr": [
+   "موستانج"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mustang"
+ },
+ {
+  "id": "vehicle_model_ford_ranger",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "رينجر",
+  "nameEn": "Ranger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ranger"
+ },
+ {
+  "id": "vehicle_model_ford_taurus",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "توروس",
+  "nameEn": "Taurus",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "taurus"
+ },
+ {
+  "id": "vehicle_model_ford_edge",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "إيدج",
+  "nameEn": "Edge",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "edge"
+ },
+ {
+  "id": "vehicle_model_ford_bronco",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "برونكو",
+  "nameEn": "Bronco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bronco"
+ },
+ {
+  "id": "vehicle_model_ford_escape",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "إسكيب",
+  "nameEn": "Escape",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "escape"
+ },
+ {
+  "id": "vehicle_model_ford_territory",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ford",
+  "nameAr": "تيريتوري",
+  "nameEn": "Territory",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "territory"
+ },
+ {
+  "id": "vehicle_make_lincoln",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لينكولن",
+  "nameEn": "Lincoln",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lincoln"
+ },
+ {
+  "id": "vehicle_make_chevrolet",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شيفروليه",
+  "nameEn": "Chevrolet",
+  "aliasesAr": [
+   "شفروليه",
+   "شفر"
+  ],
+  "aliasesEn": [
+   "Chevy"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chevrolet"
+ },
+ {
+  "id": "vehicle_model_chevrolet_tahoe",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "تاهو",
+  "nameEn": "Tahoe",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tahoe"
+ },
+ {
+  "id": "vehicle_model_chevrolet_suburban",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "سوبربان",
+  "nameEn": "Suburban",
+  "aliasesAr": [
+   "سبربن"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "suburban"
+ },
+ {
+  "id": "vehicle_model_chevrolet_silverado",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "سلفرادو",
+  "nameEn": "Silverado",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "silverado"
+ },
+ {
+  "id": "vehicle_model_chevrolet_camaro",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "كامارو",
+  "nameEn": "Camaro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "camaro"
+ },
+ {
+  "id": "vehicle_model_chevrolet_corvette",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "كورفيت",
+  "nameEn": "Corvette",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "corvette"
+ },
+ {
+  "id": "vehicle_model_chevrolet_malibu",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "ماليبو",
+  "nameEn": "Malibu",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "malibu"
+ },
+ {
+  "id": "vehicle_model_chevrolet_captiva",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "كابتيفا",
+  "nameEn": "Captiva",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "captiva"
+ },
+ {
+  "id": "vehicle_model_chevrolet_traverse",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "ترافيرس",
+  "nameEn": "Traverse",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "traverse"
+ },
+ {
+  "id": "vehicle_model_chevrolet_groove",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "جروف",
+  "nameEn": "Groove",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "groove"
+ },
+ {
+  "id": "vehicle_model_chevrolet_spark",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "سبارك",
+  "nameEn": "Spark",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "spark"
+ },
+ {
+  "id": "vehicle_model_chevrolet_blazer",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chevrolet",
+  "nameAr": "بليزر",
+  "nameEn": "Blazer",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "blazer"
+ },
+ {
+  "id": "vehicle_make_gmc",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جي إم سي",
+  "nameEn": "GMC",
+  "aliasesAr": [
+   "جمس",
+   "جي ام سي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gmc"
+ },
+ {
+  "id": "vehicle_model_gmc_yukon",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_gmc",
+  "nameAr": "يوكن",
+  "nameEn": "Yukon",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yukon"
+ },
+ {
+  "id": "vehicle_model_gmc_sierra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_gmc",
+  "nameAr": "سييرا",
+  "nameEn": "Sierra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "sierra"
+ },
+ {
+  "id": "vehicle_model_gmc_acadia",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_gmc",
+  "nameAr": "أكاديا",
+  "nameEn": "Acadia",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "acadia"
+ },
+ {
+  "id": "vehicle_model_gmc_terrain",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_gmc",
+  "nameAr": "تيرين",
+  "nameEn": "Terrain",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "terrain"
+ },
+ {
+  "id": "vehicle_model_gmc_hummer_ev",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_gmc",
+  "nameAr": "همر",
+  "nameEn": "Hummer EV",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hummer ev"
+ },
+ {
+  "id": "vehicle_make_cadillac",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كاديلاك",
+  "nameEn": "Cadillac",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cadillac"
+ },
+ {
+  "id": "vehicle_model_cadillac_escalade",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "إسكاليد",
+  "nameEn": "Escalade",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "escalade"
+ },
+ {
+  "id": "vehicle_model_cadillac_ct4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "CT4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ct000000000004"
+ },
+ {
+  "id": "vehicle_model_cadillac_ct5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "CT5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ct000000000005"
+ },
+ {
+  "id": "vehicle_model_cadillac_xt4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "XT4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xt000000000004"
+ },
+ {
+  "id": "vehicle_model_cadillac_xt5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "XT5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xt000000000005"
+ },
+ {
+  "id": "vehicle_model_cadillac_xt6",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "XT6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "xt000000000006"
+ },
+ {
+  "id": "vehicle_model_cadillac_lyriq",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_cadillac",
+  "nameAr": "",
+  "nameEn": "Lyriq",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lyriq"
+ },
+ {
+  "id": "vehicle_make_jeep",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيب",
+  "nameEn": "Jeep",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jeep"
+ },
+ {
+  "id": "vehicle_model_jeep_wrangler",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "رانجلر",
+  "nameEn": "Wrangler",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "wrangler"
+ },
+ {
+  "id": "vehicle_model_jeep_grand_cherokee",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "جراند شيروكي",
+  "nameEn": "Grand Cherokee",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "grand cherokee"
+ },
+ {
+  "id": "vehicle_model_jeep_cherokee",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "شيروكي",
+  "nameEn": "Cherokee",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cherokee"
+ },
+ {
+  "id": "vehicle_model_jeep_compass",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "كومباس",
+  "nameEn": "Compass",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "compass"
+ },
+ {
+  "id": "vehicle_model_jeep_gladiator",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "جلادياتور",
+  "nameEn": "Gladiator",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gladiator"
+ },
+ {
+  "id": "vehicle_model_jeep_renegade",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_jeep",
+  "nameAr": "رينيجيد",
+  "nameEn": "Renegade",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "renegade"
+ },
+ {
+  "id": "vehicle_make_dodge",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دودج",
+  "nameEn": "Dodge",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "dodge"
+ },
+ {
+  "id": "vehicle_model_dodge_charger",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_dodge",
+  "nameAr": "تشارجر",
+  "nameEn": "Charger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "charger"
+ },
+ {
+  "id": "vehicle_model_dodge_challenger",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_dodge",
+  "nameAr": "تشالنجر",
+  "nameEn": "Challenger",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "challenger"
+ },
+ {
+  "id": "vehicle_model_dodge_durango",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_dodge",
+  "nameAr": "دورانجو",
+  "nameEn": "Durango",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "durango"
+ },
+ {
+  "id": "vehicle_make_ram",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "رام",
+  "nameEn": "Ram",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ram"
+ },
+ {
+  "id": "vehicle_model_ram_1500",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ram",
+  "nameAr": "",
+  "nameEn": "1500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000001500"
+ },
+ {
+  "id": "vehicle_model_ram_2500",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ram",
+  "nameAr": "",
+  "nameEn": "2500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000002500"
+ },
+ {
+  "id": "vehicle_model_ram_3500",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_ram",
+  "nameAr": "",
+  "nameEn": "3500",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000003500"
+ },
+ {
+  "id": "vehicle_make_chrysler",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كرايسلر",
+  "nameEn": "Chrysler",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chrysler"
+ },
+ {
+  "id": "vehicle_model_chrysler_300",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chrysler",
+  "nameAr": "",
+  "nameEn": "300",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "300C"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "000000000300"
+ },
+ {
+  "id": "vehicle_model_chrysler_pacifica",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chrysler",
+  "nameAr": "",
+  "nameEn": "Pacifica",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "pacifica"
+ },
+ {
+  "id": "vehicle_make_buick",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بيوك",
+  "nameEn": "Buick",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "buick"
+ },
+ {
+  "id": "vehicle_make_tesla",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تسلا",
+  "nameEn": "Tesla",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tesla"
+ },
+ {
+  "id": "vehicle_model_tesla_model_s",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_tesla",
+  "nameAr": "",
+  "nameEn": "Model S",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "model s"
+ },
+ {
+  "id": "vehicle_model_tesla_model_3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_tesla",
+  "nameAr": "",
+  "nameEn": "Model 3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "model 000000000003"
+ },
+ {
+  "id": "vehicle_model_tesla_model_x",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_tesla",
+  "nameAr": "",
+  "nameEn": "Model X",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "model x"
+ },
+ {
+  "id": "vehicle_model_tesla_model_y",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_tesla",
+  "nameAr": "",
+  "nameEn": "Model Y",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "model y"
+ },
+ {
+  "id": "vehicle_model_tesla_cybertruck",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_tesla",
+  "nameAr": "",
+  "nameEn": "Cybertruck",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cybertruck"
+ },
+ {
+  "id": "vehicle_make_lucid",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "لوسيد",
+  "nameEn": "Lucid",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "lucid"
+ },
+ {
+  "id": "vehicle_model_lucid_air",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lucid",
+  "nameAr": "",
+  "nameEn": "Air",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Lucid Air"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "air"
+ },
+ {
+  "id": "vehicle_model_lucid_gravity",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_lucid",
+  "nameAr": "",
+  "nameEn": "Gravity",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gravity"
+ },
+ {
+  "id": "vehicle_make_rivian",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ريفيان",
+  "nameEn": "Rivian",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rivian"
+ },
+ {
+  "id": "vehicle_model_rivian_r1t",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rivian",
+  "nameAr": "",
+  "nameEn": "R1T",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "r000000000001t"
+ },
+ {
+  "id": "vehicle_model_rivian_r1s",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_rivian",
+  "nameAr": "",
+  "nameEn": "R1S",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "r000000000001s"
+ },
+ {
+  "id": "vehicle_make_byd",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بي واي دي",
+  "nameEn": "BYD",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "byd"
+ },
+ {
+  "id": "vehicle_model_byd_atto_3",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_byd",
+  "nameAr": "",
+  "nameEn": "Atto 3",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "atto 000000000003"
+ },
+ {
+  "id": "vehicle_model_byd_seal",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_byd",
+  "nameAr": "",
+  "nameEn": "Seal",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seal"
+ },
+ {
+  "id": "vehicle_model_byd_han",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_byd",
+  "nameAr": "",
+  "nameEn": "Han",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "han"
+ },
+ {
+  "id": "vehicle_model_byd_tang",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_byd",
+  "nameAr": "",
+  "nameEn": "Tang",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tang"
+ },
+ {
+  "id": "vehicle_model_byd_song",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_byd",
+  "nameAr": "",
+  "nameEn": "Song",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "song"
+ },
+ {
+  "id": "vehicle_make_geely",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيلي",
+  "nameEn": "Geely",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "geely"
+ },
+ {
+  "id": "vehicle_model_geely_coolray",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_geely",
+  "nameAr": "كولراي",
+  "nameEn": "Coolray",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "coolray"
+ },
+ {
+  "id": "vehicle_model_geely_monjaro",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_geely",
+  "nameAr": "مونجارو",
+  "nameEn": "Monjaro",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "monjaro"
+ },
+ {
+  "id": "vehicle_model_geely_emgrand",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_geely",
+  "nameAr": "امجراند",
+  "nameEn": "Emgrand",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "emgrand"
+ },
+ {
+  "id": "vehicle_model_geely_tugella",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_geely",
+  "nameAr": "توجيلا",
+  "nameEn": "Tugella",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tugella"
+ },
+ {
+  "id": "vehicle_model_geely_okavango",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_geely",
+  "nameAr": "أوكافانجو",
+  "nameEn": "Okavango",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "okavango"
+ },
+ {
+  "id": "vehicle_make_zeekr",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "زيكر",
+  "nameEn": "Zeekr",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zeekr"
+ },
+ {
+  "id": "vehicle_make_chery",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شيري",
+  "nameEn": "Chery",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "chery"
+ },
+ {
+  "id": "vehicle_model_chery_tiggo_4",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chery",
+  "nameAr": "",
+  "nameEn": "Tiggo 4",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiggo 000000000004"
+ },
+ {
+  "id": "vehicle_model_chery_tiggo_7",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chery",
+  "nameAr": "",
+  "nameEn": "Tiggo 7",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiggo 000000000007"
+ },
+ {
+  "id": "vehicle_model_chery_tiggo_8",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_chery",
+  "nameAr": "",
+  "nameEn": "Tiggo 8",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tiggo 000000000008"
+ },
+ {
+  "id": "vehicle_make_exeed",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إكسيد",
+  "nameEn": "Exeed",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "exeed"
+ },
+ {
+  "id": "vehicle_make_jetour",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جيتور",
+  "nameEn": "Jetour",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jetour"
+ },
+ {
+  "id": "vehicle_make_gwm",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "جريت وول",
+  "nameEn": "GWM",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Great Wall"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "gwm"
+ },
+ {
+  "id": "vehicle_make_haval",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هافال",
+  "nameEn": "Haval",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "haval"
+ },
+ {
+  "id": "vehicle_model_haval_h6",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_haval",
+  "nameAr": "",
+  "nameEn": "H6",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h000000000006"
+ },
+ {
+  "id": "vehicle_model_haval_jolion",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_haval",
+  "nameAr": "",
+  "nameEn": "Jolion",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "jolion"
+ },
+ {
+  "id": "vehicle_model_haval_h9",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_haval",
+  "nameAr": "",
+  "nameEn": "H9",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "h000000000009"
+ },
+ {
+  "id": "vehicle_make_tank",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تانك",
+  "nameEn": "Tank",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tank"
+ },
+ {
+  "id": "vehicle_make_changan",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "شانجان",
+  "nameEn": "Changan",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "changan"
+ },
+ {
+  "id": "vehicle_model_changan_cs35",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_changan",
+  "nameAr": "",
+  "nameEn": "CS35",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cs000000000035"
+ },
+ {
+  "id": "vehicle_model_changan_cs75",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_changan",
+  "nameAr": "",
+  "nameEn": "CS75",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "cs000000000075"
+ },
+ {
+  "id": "vehicle_model_changan_uni_k",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_changan",
+  "nameAr": "",
+  "nameEn": "UNI-K",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "uni-k"
+ },
+ {
+  "id": "vehicle_model_changan_eado",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_changan",
+  "nameAr": "",
+  "nameEn": "Eado",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "eado"
+ },
+ {
+  "id": "vehicle_make_hongqi",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هونشي",
+  "nameEn": "Hongqi",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hongqi"
+ },
+ {
+  "id": "vehicle_make_mg",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إم جي",
+  "nameEn": "MG",
+  "aliasesAr": [
+   "ام جي"
+  ],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mg"
+ },
+ {
+  "id": "vehicle_model_mg_zs",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mg",
+  "nameAr": "",
+  "nameEn": "ZS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "zs"
+ },
+ {
+  "id": "vehicle_model_mg_hs",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mg",
+  "nameAr": "",
+  "nameEn": "HS",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hs"
+ },
+ {
+  "id": "vehicle_model_mg_rx5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mg",
+  "nameAr": "",
+  "nameEn": "RX5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "rx000000000005"
+ },
+ {
+  "id": "vehicle_model_mg_mg5",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "model",
+  "parentId": "vehicle_make_mg",
+  "nameAr": "",
+  "nameEn": "MG5",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mg000000000005"
+ },
+ {
+  "id": "vehicle_make_skoda",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سكودا",
+  "nameEn": "Škoda",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Skoda"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "škoda"
+ },
+ {
+  "id": "vehicle_make_seat",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سيات",
+  "nameEn": "SEAT",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "seat"
+ },
+ {
+  "id": "vehicle_make_opel",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "أوبل",
+  "nameEn": "Opel",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "opel"
+ },
+ {
+  "id": "vehicle_make_proton",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بروتون",
+  "nameEn": "Proton",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "proton"
+ },
+ {
+  "id": "vehicle_make_tata",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تاتا",
+  "nameEn": "Tata Motors",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Tata"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "tata motors"
+ },
+ {
+  "id": "vehicle_make_mahindra",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ماهيندرا",
+  "nameEn": "Mahindra",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mahindra"
+ },
+ {
+  "id": "vehicle_make_daihatsu",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دايهاتسو",
+  "nameEn": "Daihatsu",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "daihatsu"
+ },
+ {
+  "id": "vehicle_make_hino",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هينو",
+  "nameEn": "Hino",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "hino"
+ },
+ {
+  "id": "vehicle_make_scania",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "سكانيا",
+  "nameEn": "Scania",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "scania"
+ },
+ {
+  "id": "vehicle_make_man",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مان",
+  "nameEn": "MAN",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "MAN Truck & Bus"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "man"
+ },
+ {
+  "id": "vehicle_make_daf",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "داف",
+  "nameEn": "DAF",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "daf"
+ },
+ {
+  "id": "vehicle_make_iveco",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "إيفيكو",
+  "nameEn": "Iveco",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "iveco"
+ },
+ {
+  "id": "vehicle_make_volvo_trucks",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "فولفو للشاحنات",
+  "nameEn": "Volvo Trucks",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "volvo trucks"
+ },
+ {
+  "id": "vehicle_make_mercedes_benz_trucks",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "مرسيدس للشاحنات",
+  "nameEn": "Mercedes-Benz Trucks",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Actros"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "mercedes-benz trucks"
+ },
+ {
+  "id": "vehicle_make_harley_davidson",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "هارلي ديفيدسون",
+  "nameEn": "Harley-Davidson",
+  "aliasesAr": [],
+  "aliasesEn": [
+   "Harley"
+  ],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "harley-davidson"
+ },
+ {
+  "id": "vehicle_make_ducati",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "دوكاتي",
+  "nameEn": "Ducati",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ducati"
+ },
+ {
+  "id": "vehicle_make_yamaha_motor",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "ياماها",
+  "nameEn": "Yamaha",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "yamaha"
+ },
+ {
+  "id": "vehicle_make_kawasaki",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كاواساكي",
+  "nameEn": "Kawasaki",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "kawasaki"
+ },
+ {
+  "id": "vehicle_make_triumph",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "تريومف",
+  "nameEn": "Triumph",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "triumph"
+ },
+ {
+  "id": "vehicle_make_ktm",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "كي تي إم",
+  "nameEn": "KTM",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "ktm"
+ },
+ {
+  "id": "vehicle_make_bmw_motorrad",
+  "domains": [
+   "vehicle"
+  ],
+  "entityType": "manufacturer",
+  "parentId": null,
+  "nameAr": "بي إم دبليو موتوراد",
+  "nameEn": "BMW Motorrad",
+  "aliasesAr": [],
+  "aliasesEn": [],
+  "code": null,
+  "metadata": {},
+  "source": "catalog",
+  "status": "active",
+  "redirectTo": null,
+  "sortKey": "bmw motorrad"
+ }
+]

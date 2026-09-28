@@ -1,0 +1,7 @@
+/* NAZM — Arabic permission purpose strings. Copy into the Xcode project's
+   ar.lproj/InfoPlist.strings. Only the permissions NAZM actually uses. */
+"CFBundleDisplayName" = "نَظْم";
+"NSCameraUsageDescription" = "يستخدم نَظْم الكاميرا لتصوير مقتنياتك ومسح الباركود ورموز QR عند طلبك.";
+/* Only if a plugin that reads the photo library directly is added. The system
+   photo picker (PHPicker, used by <input type="file">) needs no permission. */
+"NSPhotoLibraryUsageDescription" = "يستخدم نَظْم الصور التي تختارها لإضافتها إلى سجلات مقتنياتك.";

@@ -1,0 +1,262 @@
+{
+ "catalogSchemaVersion": 1,
+ "catalogDataVersion": "2026.09.1",
+ "domains": {
+  "watch": {
+   "types": [
+    "brand",
+    "collection",
+    "model",
+    "reference"
+   ]
+  },
+  "vehicle": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "machinery": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "forklift": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "crane": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "generator": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "pump": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "compressor": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "tools": {
+   "types": [
+    "manufacturer",
+    "model"
+   ]
+  },
+  "electronics": {
+   "types": [
+    "brand",
+    "family",
+    "model"
+   ]
+  },
+  "lab": {
+   "types": [
+    "manufacturer",
+    "family",
+    "model"
+   ]
+  },
+  "jewellery": {
+   "types": [
+    "brand",
+    "collection"
+   ]
+  },
+  "gem": {
+   "types": [
+    "type",
+    "variety"
+   ]
+  },
+  "gem_lab": {
+   "types": [
+    "laboratory"
+   ]
+  },
+  "art": {
+   "types": [
+    "artist"
+   ]
+  },
+  "parts": {
+   "types": [
+    "manufacturer"
+   ]
+  },
+  "furniture": {
+   "types": [
+    "maker"
+   ]
+  },
+  "fashion": {
+   "types": [
+    "brand"
+   ]
+  },
+  "author": {
+   "types": [
+    "author"
+   ]
+  },
+  "product": {
+   "types": [
+    "brand"
+   ]
+  }
+ },
+ "domainGroups": {
+  "watch": {
+   "first": [
+    "watchBrands"
+   ],
+   "deep": [
+    "watchDetails"
+   ]
+  },
+  "vehicle": {
+   "first": [
+    "vehicles"
+   ]
+  },
+  "machinery": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "forklift": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "crane": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "generator": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "pump": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "compressor": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "tools": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "parts": {
+   "first": [
+    "industrial"
+   ]
+  },
+  "electronics": {
+   "first": [
+    "electronics"
+   ]
+  },
+  "lab": {
+   "first": [
+    "lab"
+   ]
+  },
+  "jewellery": {
+   "first": [
+    "collectibles"
+   ]
+  },
+  "gem": {
+   "first": [
+    "collectibles"
+   ]
+  },
+  "gem_lab": {
+   "first": [
+    "collectibles"
+   ]
+  },
+  "art": {
+   "first": [
+    "collectibles"
+   ]
+  },
+  "furniture": {
+   "first": [
+    "collectibles"
+   ]
+  },
+  "fashion": {
+   "first": [
+    "collectibles"
+   ]
+  }
+ },
+ "groups": {
+  "watchBrands": {
+   "file": "assets/catalog/watchBrands.json",
+   "count": 197
+  },
+  "watchDetails": {
+   "file": "assets/catalog/watchDetails.json",
+   "count": 468
+  },
+  "vehicles": {
+   "file": "assets/catalog/vehicles.json",
+   "count": 402
+  },
+  "industrial": {
+   "file": "assets/catalog/industrial.json",
+   "count": 206
+  },
+  "electronics": {
+   "file": "assets/catalog/electronics.json",
+   "count": 172
+  },
+  "lab": {
+   "file": "assets/catalog/lab.json",
+   "count": 93
+  },
+  "collectibles": {
+   "file": "assets/catalog/collectibles.json",
+   "count": 173
+  }
+ },
+ "builtinIdPrefixes": [
+  "watch_",
+  "vehicle_",
+  "mfr_",
+  "electronics_",
+  "lab_",
+  "jewel_",
+  "gem_",
+  "gemlab_",
+  "artist_",
+  "furniture_",
+  "fashion_"
+ ],
+ "total": 1711
+}

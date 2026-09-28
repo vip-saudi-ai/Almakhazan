@@ -1,0 +1,5198 @@
+{
+ "taxonomySchemaVersion": 1,
+ "uncategorizedId": "uncategorized",
+ "conditions": [
+  "ممتازة",
+  "جيدة جداً",
+  "جيدة",
+  "مقبولة",
+  "ضعيفة",
+  "للإتلاف"
+ ],
+ "mainCategories": [
+  {
+   "id": "equipment_tools",
+   "icon": "🛠️",
+   "ar": "معدات وأدوات",
+   "en": "Equipment & Tools",
+   "template": "equipment",
+   "aliases": {
+    "ar": [
+     "معدات",
+     "ادوات",
+     "معده"
+    ],
+    "en": [
+     "equipment",
+     "tools",
+     "tool"
+    ]
+   },
+   "categories": [
+    {
+     "id": "equipment_heavy",
+     "ar": "معدات ثقيلة",
+     "en": "Heavy Equipment",
+     "aliases": {
+      "ar": [
+       "شيول",
+       "حفار",
+       "بلدوزر"
+      ],
+      "en": [
+       "excavator",
+       "loader",
+       "bulldozer"
+      ]
+     },
+     "template": "machinery"
+    },
+    {
+     "id": "equipment_electrical",
+     "ar": "معدات كهربائية",
+     "en": "Electrical Equipment"
+    },
+    {
+     "id": "equipment_hand_tools",
+     "ar": "أدوات يدوية",
+     "en": "Hand Tools",
+     "aliases": {
+      "ar": [
+       "مفك",
+       "مفتاح",
+       "شاكوش",
+       "مطرقة"
+      ],
+      "en": [
+       "screwdriver",
+       "wrench",
+       "hammer",
+       "spanner"
+      ]
+     },
+     "template": "tools"
+    },
+    {
+     "id": "equipment_power_tools",
+     "ar": "أدوات كهربائية",
+     "en": "Power Tools",
+     "aliases": {
+      "ar": [
+       "دريل",
+       "مثقاب",
+       "صاروخ",
+       "منشار"
+      ],
+      "en": [
+       "drill",
+       "grinder",
+       "saw"
+      ]
+     },
+     "template": "tools"
+    },
+    {
+     "id": "equipment_workshop",
+     "ar": "معدات ورش",
+     "en": "Workshop Equipment",
+     "aliases": {
+      "ar": [
+       "ورشة"
+      ],
+      "en": [
+       "workshop",
+       "bench"
+      ]
+     }
+    },
+    {
+     "id": "equipment_safety",
+     "ar": "معدات سلامة",
+     "en": "Safety Equipment",
+     "aliases": {
+      "ar": [
+       "طفاية",
+       "خوذة",
+       "سلامه"
+      ],
+      "en": [
+       "extinguisher",
+       "helmet",
+       "ppe"
+      ]
+     }
+    },
+    {
+     "id": "equipment_measuring",
+     "ar": "معدات قياس",
+     "en": "Measuring Equipment",
+     "aliases": {
+      "ar": [
+       "قياس",
+       "ميزان",
+       "متر"
+      ],
+      "en": [
+       "gauge",
+       "meter",
+       "scale"
+      ]
+     },
+     "template": "tools"
+    },
+    {
+     "id": "equipment_generators",
+     "ar": "مولدات",
+     "en": "Generators",
+     "template": "generator",
+     "aliases": {
+      "ar": [
+       "مولد",
+       "مولد كهرباء",
+       "جينيريتر",
+       "جنريتر"
+      ],
+      "en": [
+       "generator",
+       "genset"
+      ]
+     },
+     "subcategories": [
+      {
+       "id": "equipment_generators_diesel",
+       "ar": "مولدات ديزل",
+       "en": "Diesel Generators",
+       "aliases": {
+        "ar": [
+         "ديزل"
+        ],
+        "en": [
+         "diesel"
+        ]
+       }
+      },
+      {
+       "id": "equipment_generators_petrol",
+       "ar": "مولدات بنزين",
+       "en": "Petrol Generators",
+       "aliases": {
+        "ar": [
+         "بنزين"
+        ],
+        "en": [
+         "gasoline",
+         "petrol"
+        ]
+       }
+      },
+      {
+       "id": "equipment_generators_gas",
+       "ar": "مولدات غاز",
+       "en": "Gas Generators",
+       "aliases": {
+        "ar": [
+         "غاز"
+        ],
+        "en": [
+         "gas",
+         "lpg"
+        ]
+       }
+      },
+      {
+       "id": "equipment_generators_portable",
+       "ar": "مولدات متنقلة",
+       "en": "Portable Generators",
+       "aliases": {
+        "ar": [
+         "متنقل"
+        ],
+        "en": [
+         "portable"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "equipment_pumps",
+     "ar": "مضخات",
+     "en": "Pumps",
+     "aliases": {
+      "ar": [
+       "مضخة",
+       "ماطور",
+       "غطاس"
+      ],
+      "en": [
+       "pump"
+      ]
+     },
+     "template": "pump"
+    },
+    {
+     "id": "equipment_compressors",
+     "ar": "ضواغط",
+     "en": "Compressors",
+     "aliases": {
+      "ar": [
+       "ضاغط",
+       "كمبروسر"
+      ],
+      "en": [
+       "compressor"
+      ]
+     },
+     "template": "compressor"
+    },
+    {
+     "id": "equipment_lifting",
+     "ar": "معدات رفع",
+     "en": "Lifting Equipment",
+     "aliases": {
+      "ar": [
+       "ونش",
+       "رافعة",
+       "جك"
+      ],
+      "en": [
+       "hoist",
+       "jack",
+       "winch"
+      ]
+     }
+    },
+    {
+     "id": "equipment_cleaning",
+     "ar": "معدات تنظيف",
+     "en": "Cleaning Equipment",
+     "aliases": {
+      "ar": [
+       "مكنسة",
+       "غسالة ضغط"
+      ],
+      "en": [
+       "vacuum",
+       "pressure washer"
+      ]
+     }
+    },
+    {
+     "id": "equipment_agricultural",
+     "ar": "معدات زراعية",
+     "en": "Agricultural Equipment",
+     "aliases": {
+      "ar": [
+       "زراعة",
+       "حراثة"
+      ],
+      "en": [
+       "farm",
+       "tractor"
+      ]
+     },
+     "template": "machinery"
+    },
+    {
+     "id": "equipment_construction",
+     "ar": "معدات بناء",
+     "en": "Construction Equipment",
+     "aliases": {
+      "ar": [
+       "خلاطة",
+       "سقالة"
+      ],
+      "en": [
+       "mixer",
+       "scaffolding"
+      ]
+     },
+     "template": "machinery"
+    },
+    {
+     "id": "equipment_industrial",
+     "ar": "معدات صناعية",
+     "en": "Industrial Equipment",
+     "aliases": {
+      "ar": [
+       "مصنع",
+       "مكينة"
+      ],
+      "en": [
+       "machine",
+       "factory"
+      ]
+     }
+    },
+    {
+     "id": "equipment_accessories",
+     "ar": "ملحقات",
+     "en": "Accessories"
+    },
+    {
+     "id": "equipment_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "electronics_devices",
+   "icon": "💻",
+   "ar": "إلكترونيات وأجهزة",
+   "en": "Electronics & Devices",
+   "template": "electronics",
+   "aliases": {
+    "ar": [
+     "الكترونيات",
+     "اجهزه الكترونيه",
+     "الاجهزة الالكترونية"
+    ],
+    "en": [
+     "electronics"
+    ]
+   },
+   "categories": [
+    {
+     "id": "electronics_computers",
+     "ar": "حاسب آلي",
+     "en": "Computers",
+     "aliases": {
+      "ar": [
+       "كمبيوتر",
+       "حاسوب",
+       "لابتوب"
+      ],
+      "en": [
+       "computer",
+       "pc",
+       "laptop"
+      ]
+     },
+     "subcategories": [
+      {
+       "id": "electronics_computers_laptops",
+       "ar": "أجهزة محمولة (لابتوب)",
+       "en": "Laptops",
+       "aliases": {
+        "ar": [
+         "لابتوب",
+         "محمول"
+        ],
+        "en": [
+         "laptop",
+         "notebook"
+        ]
+       }
+      },
+      {
+       "id": "electronics_computers_desktops",
+       "ar": "أجهزة مكتبية",
+       "en": "Desktops",
+       "aliases": {
+        "ar": [
+         "مكتبي"
+        ],
+        "en": [
+         "desktop"
+        ]
+       }
+      },
+      {
+       "id": "electronics_computers_tablets",
+       "ar": "أجهزة لوحية",
+       "en": "Tablets",
+       "aliases": {
+        "ar": [
+         "ايباد",
+         "تابلت"
+        ],
+        "en": [
+         "ipad",
+         "tablet"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "electronics_mobile",
+     "ar": "أجهزة محمولة",
+     "en": "Mobile Devices",
+     "aliases": {
+      "ar": [
+       "جوال",
+       "هاتف",
+       "موبايل"
+      ],
+      "en": [
+       "phone",
+       "mobile",
+       "smartphone",
+       "iphone"
+      ]
+     }
+    },
+    {
+     "id": "electronics_displays",
+     "ar": "شاشات",
+     "en": "Displays",
+     "aliases": {
+      "ar": [
+       "شاشة",
+       "تلفزيون",
+       "مونيتر"
+      ],
+      "en": [
+       "monitor",
+       "screen",
+       "tv"
+      ]
+     }
+    },
+    {
+     "id": "electronics_printers",
+     "ar": "طابعات",
+     "en": "Printers",
+     "aliases": {
+      "ar": [
+       "طابعة"
+      ],
+      "en": [
+       "printer",
+       "scanner"
+      ]
+     }
+    },
+    {
+     "id": "electronics_networking",
+     "ar": "أجهزة شبكات",
+     "en": "Networking Equipment",
+     "aliases": {
+      "ar": [
+       "راوتر",
+       "سويتش",
+       "شبكة"
+      ],
+      "en": [
+       "router",
+       "switch",
+       "network"
+      ]
+     }
+    },
+    {
+     "id": "electronics_communication",
+     "ar": "أجهزة اتصالات",
+     "en": "Communication Devices",
+     "aliases": {
+      "ar": [
+       "لاسلكي",
+       "اتصالات"
+      ],
+      "en": [
+       "radio",
+       "walkie-talkie"
+      ]
+     }
+    },
+    {
+     "id": "electronics_cameras",
+     "ar": "كاميرات",
+     "en": "Cameras",
+     "aliases": {
+      "ar": [
+       "كاميرا"
+      ],
+      "en": [
+       "camera"
+      ]
+     }
+    },
+    {
+     "id": "electronics_projectors",
+     "ar": "أجهزة عرض",
+     "en": "Projectors",
+     "aliases": {
+      "ar": [
+       "بروجكتر",
+       "جهاز عرض"
+      ],
+      "en": [
+       "projector"
+      ]
+     }
+    },
+    {
+     "id": "electronics_audio",
+     "ar": "أنظمة صوت",
+     "en": "Audio Equipment",
+     "aliases": {
+      "ar": [
+       "سماعات",
+       "مكبر صوت"
+      ],
+      "en": [
+       "speaker",
+       "audio",
+       "microphone"
+      ]
+     }
+    },
+    {
+     "id": "electronics_storage",
+     "ar": "أجهزة تخزين",
+     "en": "Storage Devices",
+     "aliases": {
+      "ar": [
+       "هارديسك",
+       "فلاش"
+      ],
+      "en": [
+       "hard drive",
+       "ssd",
+       "nas"
+      ]
+     }
+    },
+    {
+     "id": "electronics_servers",
+     "ar": "خوادم",
+     "en": "Servers",
+     "aliases": {
+      "ar": [
+       "سيرفر",
+       "خادم"
+      ],
+      "en": [
+       "server"
+      ]
+     }
+    },
+    {
+     "id": "electronics_pos",
+     "ar": "أجهزة نقاط البيع",
+     "en": "POS Equipment",
+     "aliases": {
+      "ar": [
+       "كاشير",
+       "نقاط بيع"
+      ],
+      "en": [
+       "pos",
+       "cashier"
+      ]
+     }
+    },
+    {
+     "id": "electronics_security",
+     "ar": "أجهزة أمن ومراقبة",
+     "en": "Security & Surveillance Devices",
+     "aliases": {
+      "ar": [
+       "كاميرات مراقبة",
+       "انذار"
+      ],
+      "en": [
+       "cctv",
+       "alarm",
+       "surveillance"
+      ]
+     }
+    },
+    {
+     "id": "electronics_accessories",
+     "ar": "ملحقات إلكترونية",
+     "en": "Electronic Accessories",
+     "aliases": {
+      "ar": [
+       "شاحن",
+       "كيبل"
+      ],
+      "en": [
+       "charger",
+       "cable"
+      ]
+     }
+    },
+    {
+     "id": "electronics_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "furniture_fixtures",
+   "icon": "🪑",
+   "ar": "أثاث وتجهيزات",
+   "en": "Furniture & Fixtures",
+   "template": "furniture",
+   "aliases": {
+    "ar": [
+     "اثاث",
+     "مفروشات"
+    ],
+    "en": [
+     "furniture"
+    ]
+   },
+   "categories": [
+    {
+     "id": "furniture_desks",
+     "ar": "مكاتب",
+     "en": "Desks",
+     "aliases": {
+      "ar": [
+       "مكتب"
+      ],
+      "en": [
+       "desk"
+      ]
+     }
+    },
+    {
+     "id": "furniture_chairs",
+     "ar": "كراسي",
+     "en": "Chairs",
+     "aliases": {
+      "ar": [
+       "كرسي"
+      ],
+      "en": [
+       "chair"
+      ]
+     }
+    },
+    {
+     "id": "furniture_tables",
+     "ar": "طاولات",
+     "en": "Tables",
+     "aliases": {
+      "ar": [
+       "طاولة"
+      ],
+      "en": [
+       "table"
+      ]
+     }
+    },
+    {
+     "id": "furniture_cabinets",
+     "ar": "خزائن",
+     "en": "Cabinets",
+     "aliases": {
+      "ar": [
+       "خزانة",
+       "دولاب"
+      ],
+      "en": [
+       "cabinet",
+       "wardrobe"
+      ]
+     }
+    },
+    {
+     "id": "furniture_shelving",
+     "ar": "أرفف",
+     "en": "Shelving",
+     "aliases": {
+      "ar": [
+       "رف"
+      ],
+      "en": [
+       "shelf",
+       "rack"
+      ]
+     }
+    },
+    {
+     "id": "furniture_storage_units",
+     "ar": "وحدات تخزين",
+     "en": "Storage Units"
+    },
+    {
+     "id": "furniture_office",
+     "ar": "أثاث مكتبي",
+     "en": "Office Furniture"
+    },
+    {
+     "id": "furniture_residential",
+     "ar": "أثاث منزلي",
+     "en": "Residential Furniture",
+     "aliases": {
+      "ar": [
+       "كنب",
+       "سرير"
+      ],
+      "en": [
+       "sofa",
+       "bed"
+      ]
+     }
+    },
+    {
+     "id": "furniture_outdoor",
+     "ar": "أثاث خارجي",
+     "en": "Outdoor Furniture"
+    },
+    {
+     "id": "furniture_display_fixtures",
+     "ar": "تجهيزات عرض",
+     "en": "Display Fixtures",
+     "aliases": {
+      "ar": [
+       "فترينة",
+       "ستاند"
+      ],
+      "en": [
+       "showcase",
+       "stand"
+      ]
+     }
+    },
+    {
+     "id": "furniture_interior_fixtures",
+     "ar": "تجهيزات داخلية",
+     "en": "Interior Fixtures"
+    },
+    {
+     "id": "furniture_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "vehicles_machinery",
+   "icon": "🚗",
+   "ar": "مركبات وآليات",
+   "en": "Vehicles & Machinery",
+   "template": "vehicle",
+   "aliases": {
+    "ar": [
+     "مركبات",
+     "سيارات",
+     "اليات"
+    ],
+    "en": [
+     "vehicles",
+     "vehicle",
+     "machinery"
+    ]
+   },
+   "categories": [
+    {
+     "id": "vehicles_cars",
+     "ar": "سيارات",
+     "en": "Cars",
+     "aliases": {
+      "ar": [
+       "سيارة"
+      ],
+      "en": [
+       "car"
+      ]
+     },
+     "template": "car"
+    },
+    {
+     "id": "vehicles_trucks",
+     "ar": "شاحنات",
+     "en": "Trucks",
+     "aliases": {
+      "ar": [
+       "شاحنة",
+       "تريلا",
+       "دينا"
+      ],
+      "en": [
+       "truck",
+       "lorry"
+      ]
+     },
+     "template": "car"
+    },
+    {
+     "id": "vehicles_buses",
+     "ar": "حافلات",
+     "en": "Buses",
+     "aliases": {
+      "ar": [
+       "باص",
+       "حافلة"
+      ],
+      "en": [
+       "bus"
+      ]
+     },
+     "template": "car"
+    },
+    {
+     "id": "vehicles_motorcycles",
+     "ar": "دراجات نارية",
+     "en": "Motorcycles",
+     "aliases": {
+      "ar": [
+       "دباب",
+       "دراجة نارية"
+      ],
+      "en": [
+       "motorbike",
+       "motorcycle"
+      ]
+     },
+     "template": "car"
+    },
+    {
+     "id": "vehicles_special",
+     "ar": "مركبات خاصة",
+     "en": "Special Vehicles"
+    },
+    {
+     "id": "vehicles_mobile_heavy",
+     "ar": "معدات ثقيلة متحركة",
+     "en": "Mobile Heavy Machinery",
+     "template": "machinery"
+    },
+    {
+     "id": "vehicles_cranes",
+     "ar": "رافعات",
+     "en": "Cranes",
+     "aliases": {
+      "ar": [
+       "كرين"
+      ],
+      "en": [
+       "crane"
+      ]
+     },
+     "template": "crane"
+    },
+    {
+     "id": "vehicles_forklifts",
+     "ar": "رافعات شوكية",
+     "en": "Forklifts",
+     "aliases": {
+      "ar": [
+       "فوركلفت",
+       "رافعة شوكية"
+      ],
+      "en": [
+       "forklift"
+      ]
+     },
+     "template": "forklift"
+    },
+    {
+     "id": "vehicles_trailers",
+     "ar": "مقطورات",
+     "en": "Trailers",
+     "aliases": {
+      "ar": [
+       "مقطورة"
+      ],
+      "en": [
+       "trailer"
+      ]
+     }
+    },
+    {
+     "id": "vehicles_boats",
+     "ar": "قوارب",
+     "en": "Boats",
+     "aliases": {
+      "ar": [
+       "قارب",
+       "يخت"
+      ],
+      "en": [
+       "boat",
+       "yacht"
+      ]
+     }
+    },
+    {
+     "id": "vehicles_engines",
+     "ar": "محركات",
+     "en": "Engines",
+     "aliases": {
+      "ar": [
+       "محرك",
+       "مكينة"
+      ],
+      "en": [
+       "engine"
+      ]
+     },
+     "template": "equipment"
+    },
+    {
+     "id": "vehicles_plates_keys",
+     "ar": "لوحات ومفاتيح",
+     "en": "Plates & Keys",
+     "template": null
+    },
+    {
+     "id": "vehicles_documents",
+     "ar": "مستندات المركبة",
+     "en": "Vehicle Documents",
+     "aliases": {
+      "ar": [
+       "استمارة"
+      ],
+      "en": [
+       "registration"
+      ]
+     },
+     "template": null
+    },
+    {
+     "id": "vehicles_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "materials_supplies",
+   "icon": "🧱",
+   "ar": "مواد ومستلزمات",
+   "en": "Materials & Supplies",
+   "template": "product",
+   "aliases": {
+    "ar": [
+     "مواد",
+     "مستلزمات",
+     "خامات"
+    ],
+    "en": [
+     "materials",
+     "supplies"
+    ]
+   },
+   "categories": [
+    {
+     "id": "materials_raw",
+     "ar": "مواد خام",
+     "en": "Raw Materials",
+     "aliases": {
+      "ar": [
+       "خام"
+      ],
+      "en": [
+       "raw"
+      ]
+     }
+    },
+    {
+     "id": "materials_operating",
+     "ar": "مواد تشغيل",
+     "en": "Operating Supplies"
+    },
+    {
+     "id": "materials_packaging",
+     "ar": "مواد تغليف",
+     "en": "Packaging Materials",
+     "aliases": {
+      "ar": [
+       "كراتين",
+       "تغليف"
+      ],
+      "en": [
+       "boxes",
+       "wrap"
+      ]
+     }
+    },
+    {
+     "id": "materials_office",
+     "ar": "مواد مكتبية",
+     "en": "Office Supplies",
+     "aliases": {
+      "ar": [
+       "قرطاسية",
+       "ورق"
+      ],
+      "en": [
+       "stationery",
+       "paper"
+      ]
+     }
+    },
+    {
+     "id": "materials_cleaning",
+     "ar": "مواد نظافة",
+     "en": "Cleaning Supplies",
+     "aliases": {
+      "ar": [
+       "منظفات"
+      ],
+      "en": [
+       "detergent"
+      ]
+     }
+    },
+    {
+     "id": "materials_maintenance",
+     "ar": "مواد صيانة",
+     "en": "Maintenance Supplies"
+    },
+    {
+     "id": "materials_construction",
+     "ar": "مواد بناء",
+     "en": "Construction Materials",
+     "aliases": {
+      "ar": [
+       "اسمنت",
+       "حديد",
+       "بلك"
+      ],
+      "en": [
+       "cement",
+       "rebar",
+       "blocks"
+      ]
+     }
+    },
+    {
+     "id": "materials_electrical",
+     "ar": "مواد كهربائية",
+     "en": "Electrical Materials",
+     "aliases": {
+      "ar": [
+       "اسلاك",
+       "افياش"
+      ],
+      "en": [
+       "wire",
+       "sockets"
+      ]
+     }
+    },
+    {
+     "id": "materials_plumbing",
+     "ar": "مواد صحية",
+     "en": "Plumbing & Sanitary Materials",
+     "aliases": {
+      "ar": [
+       "مواسير",
+       "سباكة"
+      ],
+      "en": [
+       "pipes",
+       "plumbing"
+      ]
+     }
+    },
+    {
+     "id": "materials_consumables",
+     "ar": "مواد استهلاكية",
+     "en": "Consumables"
+    },
+    {
+     "id": "materials_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "spare_parts",
+   "icon": "🔩",
+   "ar": "قطع غيار",
+   "en": "Spare Parts",
+   "template": "parts",
+   "aliases": {
+    "ar": [
+     "اسبير",
+     "قطعة غيار"
+    ],
+    "en": [
+     "spare parts",
+     "spares"
+    ]
+   },
+   "categories": [
+    {
+     "id": "parts_mechanical",
+     "ar": "قطع غيار ميكانيكية",
+     "en": "Mechanical Parts"
+    },
+    {
+     "id": "parts_electrical",
+     "ar": "قطع غيار كهربائية",
+     "en": "Electrical Parts"
+    },
+    {
+     "id": "parts_electronic",
+     "ar": "قطع غيار إلكترونية",
+     "en": "Electronic Parts"
+    },
+    {
+     "id": "parts_vehicle",
+     "ar": "قطع غيار مركبات",
+     "en": "Vehicle Parts"
+    },
+    {
+     "id": "parts_equipment",
+     "ar": "قطع غيار معدات",
+     "en": "Equipment Parts"
+    },
+    {
+     "id": "parts_device",
+     "ar": "قطع غيار أجهزة",
+     "en": "Device Parts"
+    },
+    {
+     "id": "parts_filters",
+     "ar": "فلاتر",
+     "en": "Filters",
+     "aliases": {
+      "ar": [
+       "فلتر"
+      ],
+      "en": [
+       "filter"
+      ]
+     }
+    },
+    {
+     "id": "parts_belts",
+     "ar": "سيور",
+     "en": "Belts",
+     "aliases": {
+      "ar": [
+       "سير"
+      ],
+      "en": [
+       "belt"
+      ]
+     }
+    },
+    {
+     "id": "parts_batteries",
+     "ar": "بطاريات",
+     "en": "Batteries",
+     "aliases": {
+      "ar": [
+       "بطارية"
+      ],
+      "en": [
+       "battery"
+      ]
+     }
+    },
+    {
+     "id": "parts_motors",
+     "ar": "محركات",
+     "en": "Motors",
+     "aliases": {
+      "ar": [
+       "موتور"
+      ],
+      "en": [
+       "motor"
+      ]
+     }
+    },
+    {
+     "id": "parts_maintenance_consumables",
+     "ar": "مستهلكات صيانة",
+     "en": "Maintenance Consumables",
+     "aliases": {
+      "ar": [
+       "زيوت",
+       "شحوم"
+      ],
+      "en": [
+       "oil",
+       "grease"
+      ]
+     }
+    },
+    {
+     "id": "parts_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "products_merchandise",
+   "icon": "📦",
+   "ar": "منتجات وبضائع",
+   "en": "Products & Merchandise",
+   "template": "product",
+   "aliases": {
+    "ar": [
+     "منتجات",
+     "بضائع",
+     "بضاعة"
+    ],
+    "en": [
+     "products",
+     "merchandise",
+     "stock",
+     "goods"
+    ]
+   },
+   "categories": [
+    {
+     "id": "products_finished",
+     "ar": "منتجات جاهزة",
+     "en": "Finished Products"
+    },
+    {
+     "id": "products_for_sale",
+     "ar": "بضائع للبيع",
+     "en": "Merchandise"
+    },
+    {
+     "id": "products_components",
+     "ar": "مكونات",
+     "en": "Components",
+     "aliases": {
+      "ar": [
+       "مكون",
+       "قطع تجميع"
+      ],
+      "en": [
+       "component",
+       "part"
+      ]
+     }
+    },
+    {
+     "id": "products_kits",
+     "ar": "أطقم ومجموعات",
+     "en": "Kits & Sets",
+     "aliases": {
+      "ar": [
+       "طقم",
+       "مجموعة"
+      ],
+      "en": [
+       "kit",
+       "set",
+       "bundle"
+      ]
+     }
+    },
+    {
+     "id": "products_accessories",
+     "ar": "إكسسوارات",
+     "en": "Accessories"
+    },
+    {
+     "id": "products_packaging",
+     "ar": "تغليف",
+     "en": "Packaging"
+    },
+    {
+     "id": "products_promotional",
+     "ar": "مواد ترويجية",
+     "en": "Promotional Items",
+     "aliases": {
+      "ar": [
+       "هدايا دعائية",
+       "دعاية"
+      ],
+      "en": [
+       "promo",
+       "giveaway"
+      ]
+     }
+    },
+    {
+     "id": "products_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    },
+    {
+     "id": "products_samples",
+     "ar": "عينات",
+     "en": "Samples",
+     "deprecated": true
+    },
+    {
+     "id": "products_returned",
+     "ar": "منتجات مرتجعة",
+     "en": "Returned Products",
+     "deprecated": true
+    },
+    {
+     "id": "products_damaged",
+     "ar": "منتجات تالفة",
+     "en": "Damaged Products",
+     "deprecated": true
+    },
+    {
+     "id": "products_seasonal",
+     "ar": "منتجات موسمية",
+     "en": "Seasonal Products",
+     "deprecated": true
+    }
+   ]
+  },
+  {
+   "id": "art_collectibles",
+   "icon": "🎨",
+   "ar": "فن ومقتنيات",
+   "en": "Art & Collectibles",
+   "template": "art",
+   "aliases": {
+    "ar": [
+     "فن",
+     "فنون",
+     "مقتنيات",
+     "تحف"
+    ],
+    "en": [
+     "art",
+     "collectibles",
+     "collection"
+    ]
+   },
+   "categories": [
+    {
+     "id": "art_paintings",
+     "ar": "لوحات",
+     "en": "Paintings",
+     "aliases": {
+      "ar": [
+       "لوحة",
+       "رسم",
+       "رسمة"
+      ],
+      "en": [
+       "painting",
+       "canvas"
+      ]
+     }
+    },
+    {
+     "id": "art_sculptures",
+     "ar": "منحوتات",
+     "en": "Sculptures",
+     "aliases": {
+      "ar": [
+       "منحوتة",
+       "تمثال"
+      ],
+      "en": [
+       "sculpture",
+       "statue"
+      ]
+     }
+    },
+    {
+     "id": "art_works_on_paper",
+     "ar": "أعمال ورقية",
+     "en": "Works on Paper",
+     "aliases": {
+      "ar": [
+       "رسم ورقي"
+      ],
+      "en": [
+       "drawing"
+      ]
+     }
+    },
+    {
+     "id": "art_prints",
+     "ar": "مطبوعات",
+     "en": "Prints",
+     "aliases": {
+      "ar": [
+       "طباعة حجرية"
+      ],
+      "en": [
+       "print",
+       "lithograph"
+      ]
+     }
+    },
+    {
+     "id": "art_photography",
+     "ar": "تصوير فوتوغرافي",
+     "en": "Photography",
+     "aliases": {
+      "ar": [
+       "صورة"
+      ],
+      "en": [
+       "photograph",
+       "photo"
+      ]
+     }
+    },
+    {
+     "id": "art_digital",
+     "ar": "فن رقمي",
+     "en": "Digital Art",
+     "aliases": {
+      "ar": [
+       "رقمي"
+      ],
+      "en": [
+       "digital",
+       "nft"
+      ]
+     }
+    },
+    {
+     "id": "art_ceramics",
+     "ar": "خزف وفخار",
+     "en": "Ceramics & Pottery",
+     "aliases": {
+      "ar": [
+       "خزف",
+       "فخار",
+       "بورسلين"
+      ],
+      "en": [
+       "ceramic",
+       "pottery",
+       "porcelain"
+      ]
+     }
+    },
+    {
+     "id": "art_textiles",
+     "ar": "نسيج",
+     "en": "Textiles",
+     "aliases": {
+      "ar": [
+       "سجاد",
+       "سجادة",
+       "قماش"
+      ],
+      "en": [
+       "carpet",
+       "rug",
+       "tapestry"
+      ]
+     }
+    },
+    {
+     "id": "art_antiques",
+     "ar": "تحف",
+     "en": "Antiques",
+     "aliases": {
+      "ar": [
+       "تحفة",
+       "انتيك",
+       "انتيكات"
+      ],
+      "en": [
+       "antique"
+      ]
+     },
+     "template": "antiques"
+    },
+    {
+     "id": "art_memorabilia",
+     "ar": "مقتنيات تذكارية",
+     "en": "Memorabilia",
+     "aliases": {
+      "ar": [
+       "تذكار"
+      ],
+      "en": [
+       "souvenir"
+      ]
+     }
+    },
+    {
+     "id": "art_coins_medals",
+     "ar": "عملات وميداليات",
+     "en": "Coins & Medals",
+     "aliases": {
+      "ar": [
+       "عملة",
+       "ميدالية",
+       "وسام"
+      ],
+      "en": [
+       "coin",
+       "medal",
+       "numismatics"
+      ]
+     },
+     "template": "coins"
+    },
+    {
+     "id": "art_historical_arms",
+     "ar": "أسلحة تاريخية",
+     "en": "Historical Arms",
+     "aliases": {
+      "ar": [
+       "سيف",
+       "خنجر",
+       "سلاح قديم"
+      ],
+      "en": [
+       "sword",
+       "dagger",
+       "arms"
+      ]
+     },
+     "template": "antiques"
+    },
+    {
+     "id": "art_historical_objects",
+     "ar": "مقتنيات تاريخية",
+     "en": "Historical Objects",
+     "aliases": {
+      "ar": [
+       "اثار",
+       "اثري"
+      ],
+      "en": [
+       "artifact",
+       "antiquity"
+      ]
+     },
+     "template": "antiques"
+    },
+    {
+     "id": "art_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "jewellery_gemstones",
+   "icon": "💎",
+   "ar": "مجوهرات وأحجار",
+   "en": "Jewellery & Gemstones",
+   "template": "jewellery",
+   "aliases": {
+    "ar": [
+     "مجوهرات",
+     "حلي",
+     "ذهب",
+     "احجار"
+    ],
+    "en": [
+     "jewellery",
+     "jewelry",
+     "gems",
+     "gold"
+    ]
+   },
+   "categories": [
+    {
+     "id": "jewellery_diamonds",
+     "ar": "ألماس",
+     "en": "Diamonds",
+     "aliases": {
+      "ar": [
+       "الماس",
+       "الماسة"
+      ],
+      "en": [
+       "diamond"
+      ]
+     },
+     "template": "diamond"
+    },
+    {
+     "id": "jewellery_gems",
+     "ar": "أحجار كريمة",
+     "en": "Gemstones",
+     "aliases": {
+      "ar": [
+       "ياقوت",
+       "زمرد",
+       "فيروز",
+       "حجر كريم"
+      ],
+      "en": [
+       "ruby",
+       "emerald",
+       "sapphire",
+       "gemstone"
+      ]
+     },
+     "template": "gemstone"
+    },
+    {
+     "id": "jewellery_organic",
+     "ar": "أحجار عضوية",
+     "en": "Organic Gem Materials",
+     "aliases": {
+      "ar": [
+       "لؤلؤ",
+       "مرجان",
+       "كهرمان"
+      ],
+      "en": [
+       "pearl",
+       "coral",
+       "amber"
+      ]
+     },
+     "template": "gemstone"
+    },
+    {
+     "id": "jewellery_loose_stones",
+     "ar": "أحجار مفردة",
+     "en": "Loose Stones",
+     "template": "gemstone"
+    },
+    {
+     "id": "jewellery_rings",
+     "ar": "خواتم",
+     "en": "Rings",
+     "aliases": {
+      "ar": [
+       "خاتم",
+       "دبلة"
+      ],
+      "en": [
+       "ring"
+      ]
+     }
+    },
+    {
+     "id": "jewellery_necklaces",
+     "ar": "عقود",
+     "en": "Necklaces",
+     "aliases": {
+      "ar": [
+       "عقد",
+       "قلادة",
+       "سلسال"
+      ],
+      "en": [
+       "necklace",
+       "pendant",
+       "chain"
+      ]
+     }
+    },
+    {
+     "id": "jewellery_bracelets",
+     "ar": "أساور",
+     "en": "Bracelets",
+     "aliases": {
+      "ar": [
+       "سوار",
+       "اسورة"
+      ],
+      "en": [
+       "bracelet",
+       "bangle"
+      ]
+     }
+    },
+    {
+     "id": "jewellery_earrings",
+     "ar": "أقراط",
+     "en": "Earrings",
+     "aliases": {
+      "ar": [
+       "حلق",
+       "قرط"
+      ],
+      "en": [
+       "earring"
+      ]
+     }
+    },
+    {
+     "id": "jewellery_brooches",
+     "ar": "دبابيس",
+     "en": "Brooches",
+     "aliases": {
+      "ar": [
+       "بروش",
+       "دبوس"
+      ],
+      "en": [
+       "brooch",
+       "pin"
+      ]
+     }
+    },
+    {
+     "id": "jewellery_watches",
+     "ar": "ساعات",
+     "en": "Watches",
+     "aliases": {
+      "ar": [
+       "ساعة",
+       "رولكس"
+      ],
+      "en": [
+       "watch",
+       "timepiece"
+      ]
+     },
+     "template": "watch"
+    },
+    {
+     "id": "jewellery_other_jewellery",
+     "ar": "مجوهرات أخرى",
+     "en": "Other Jewellery"
+    },
+    {
+     "id": "jewellery_certificates",
+     "ar": "شهادات وتقارير",
+     "en": "Certificates & Reports",
+     "aliases": {
+      "ar": [
+       "شهادة",
+       "تقرير مختبر"
+      ],
+      "en": [
+       "certificate",
+       "report"
+      ]
+     },
+     "template": null
+    },
+    {
+     "id": "jewellery_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "books_documents",
+   "icon": "📚",
+   "ar": "كتب ووثائق",
+   "en": "Books & Documents",
+   "template": "books",
+   "aliases": {
+    "ar": [
+     "كتب",
+     "وثائق",
+     "مستندات"
+    ],
+    "en": [
+     "books",
+     "documents",
+     "papers"
+    ]
+   },
+   "categories": [
+    {
+     "id": "books_books",
+     "ar": "كتب",
+     "en": "Books",
+     "aliases": {
+      "ar": [
+       "كتاب"
+      ],
+      "en": [
+       "book"
+      ]
+     }
+    },
+    {
+     "id": "books_manuscripts",
+     "ar": "مخطوطات",
+     "en": "Manuscripts",
+     "aliases": {
+      "ar": [
+       "مخطوط",
+       "مخطوطة"
+      ],
+      "en": [
+       "manuscript"
+      ]
+     },
+     "template": "manuscripts"
+    },
+    {
+     "id": "books_qurans",
+     "ar": "مصاحف",
+     "en": "Qurans",
+     "aliases": {
+      "ar": [
+       "مصحف",
+       "قران"
+      ],
+      "en": [
+       "quran",
+       "koran",
+       "mushaf"
+      ]
+     },
+     "template": "manuscripts"
+    },
+    {
+     "id": "books_docs",
+     "ar": "وثائق",
+     "en": "Documents",
+     "aliases": {
+      "ar": [
+       "وثيقة",
+       "مستند"
+      ],
+      "en": [
+       "document"
+      ]
+     },
+     "template": "documents"
+    },
+    {
+     "id": "books_letters",
+     "ar": "رسائل",
+     "en": "Letters",
+     "aliases": {
+      "ar": [
+       "رسالة",
+       "خطاب"
+      ],
+      "en": [
+       "letter"
+      ]
+     },
+     "template": "documents"
+    },
+    {
+     "id": "books_decrees",
+     "ar": "فرمانات ومراسيم",
+     "en": "Decrees & Firmans",
+     "aliases": {
+      "ar": [
+       "فرمان",
+       "مرسوم"
+      ],
+      "en": [
+       "firman",
+       "decree"
+      ]
+     },
+     "template": "documents"
+    },
+    {
+     "id": "books_maps",
+     "ar": "خرائط",
+     "en": "Maps",
+     "aliases": {
+      "ar": [
+       "خريطة",
+       "اطلس"
+      ],
+      "en": [
+       "map",
+       "atlas"
+      ]
+     }
+    },
+    {
+     "id": "books_historical_photos",
+     "ar": "صور تاريخية",
+     "en": "Historical Photographs",
+     "aliases": {
+      "ar": [
+       "صورة قديمة"
+      ],
+      "en": [
+       "old photo"
+      ]
+     }
+    },
+    {
+     "id": "books_periodicals",
+     "ar": "مجلات ودوريات",
+     "en": "Journals & Periodicals",
+     "aliases": {
+      "ar": [
+       "مجلة",
+       "جريدة"
+      ],
+      "en": [
+       "magazine",
+       "journal",
+       "newspaper"
+      ]
+     }
+    },
+    {
+     "id": "books_archive",
+     "ar": "أرشيف",
+     "en": "Archive Material",
+     "aliases": {
+      "ar": [
+       "ارشيف"
+      ],
+      "en": [
+       "archive"
+      ]
+     }
+    },
+    {
+     "id": "books_certificates",
+     "ar": "شهادات",
+     "en": "Certificates",
+     "aliases": {
+      "ar": [
+       "شهادة"
+      ],
+      "en": [
+       "certificate"
+      ]
+     }
+    },
+    {
+     "id": "books_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "clothing_accessories",
+   "icon": "👕",
+   "ar": "ملابس وإكسسوارات",
+   "en": "Clothing & Accessories",
+   "template": "clothing",
+   "aliases": {
+    "ar": [
+     "ملابس",
+     "ازياء"
+    ],
+    "en": [
+     "clothing",
+     "apparel",
+     "fashion"
+    ]
+   },
+   "categories": [
+    {
+     "id": "clothing_clothing",
+     "ar": "ملابس",
+     "en": "Clothing",
+     "aliases": {
+      "ar": [
+       "ثوب",
+       "قميص"
+      ],
+      "en": [
+       "shirt",
+       "dress"
+      ]
+     }
+    },
+    {
+     "id": "clothing_footwear",
+     "ar": "أحذية",
+     "en": "Footwear",
+     "aliases": {
+      "ar": [
+       "حذاء",
+       "جزمة"
+      ],
+      "en": [
+       "shoes",
+       "shoe"
+      ]
+     }
+    },
+    {
+     "id": "clothing_bags",
+     "ar": "حقائب",
+     "en": "Bags",
+     "aliases": {
+      "ar": [
+       "شنطة",
+       "حقيبة"
+      ],
+      "en": [
+       "bag",
+       "handbag"
+      ]
+     }
+    },
+    {
+     "id": "clothing_eyewear",
+     "ar": "نظارات",
+     "en": "Eyewear",
+     "aliases": {
+      "ar": [
+       "نظارة"
+      ],
+      "en": [
+       "glasses",
+       "sunglasses"
+      ]
+     }
+    },
+    {
+     "id": "clothing_belts",
+     "ar": "أحزمة",
+     "en": "Belts",
+     "aliases": {
+      "ar": [
+       "حزام"
+      ],
+      "en": [
+       "belt"
+      ]
+     }
+    },
+    {
+     "id": "clothing_accessory_items",
+     "ar": "إكسسوارات",
+     "en": "Accessories"
+    },
+    {
+     "id": "clothing_heritage",
+     "ar": "أزياء تراثية",
+     "en": "Heritage Clothing",
+     "aliases": {
+      "ar": [
+       "تراثي",
+       "بشت"
+      ],
+      "en": [
+       "traditional"
+      ]
+     }
+    },
+    {
+     "id": "clothing_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "professional_equipment",
+   "icon": "🔬",
+   "ar": "معدات متخصصة",
+   "en": "Specialized Equipment",
+   "template": "equipment",
+   "aliases": {
+    "ar": [
+     "مهنية",
+     "مختبر",
+     "استوديو"
+    ],
+    "en": [
+     "professional",
+     "lab",
+     "studio"
+    ]
+   },
+   "categories": [
+    {
+     "id": "professional_lab",
+     "ar": "أجهزة مختبر",
+     "en": "Laboratory Equipment",
+     "aliases": {
+      "ar": [
+       "مختبر",
+       "مجهر",
+       "ميكروسكوب"
+      ],
+      "en": [
+       "laboratory",
+       "microscope"
+      ]
+     },
+     "template": "lab"
+    },
+    {
+     "id": "professional_measurement",
+     "ar": "أجهزة قياس وتحليل",
+     "en": "Measurement & Analysis Equipment",
+     "aliases": {
+      "ar": [
+       "تحليل",
+       "مطياف"
+      ],
+      "en": [
+       "analyzer",
+       "spectrometer"
+      ]
+     },
+     "template": "lab"
+    },
+    {
+     "id": "professional_imaging",
+     "ar": "معدات تصوير",
+     "en": "Imaging Equipment",
+     "aliases": {
+      "ar": [
+       "عدسة",
+       "اضاءة"
+      ],
+      "en": [
+       "lens",
+       "lighting"
+      ]
+     }
+    },
+    {
+     "id": "professional_artistic_tools",
+     "ar": "أدوات فنية",
+     "en": "Artistic Tools",
+     "aliases": {
+      "ar": [
+       "فرش",
+       "ألوان"
+      ],
+      "en": [
+       "brushes",
+       "easel"
+      ]
+     }
+    },
+    {
+     "id": "professional_production",
+     "ar": "معدات إنتاج",
+     "en": "Production Equipment"
+    },
+    {
+     "id": "professional_training",
+     "ar": "معدات تدريب",
+     "en": "Training Equipment"
+    },
+    {
+     "id": "professional_technical",
+     "ar": "معدات تقنية",
+     "en": "Technical Equipment"
+    },
+    {
+     "id": "professional_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "assets_property",
+   "icon": "🏢",
+   "ar": "أصول وممتلكات",
+   "en": "Assets & Property",
+   "template": null,
+   "deprecated": true,
+   "categories": [
+    {
+     "id": "assets_fixed",
+     "ar": "أصول ثابتة",
+     "en": "Fixed Assets",
+     "deprecated": true
+    },
+    {
+     "id": "assets_buildings",
+     "ar": "مبانٍ",
+     "en": "Buildings",
+     "deprecated": true
+    },
+    {
+     "id": "assets_land",
+     "ar": "أراضٍ",
+     "en": "Land",
+     "deprecated": true
+    },
+    {
+     "id": "assets_real_estate_units",
+     "ar": "وحدات عقارية",
+     "en": "Real Estate Units",
+     "deprecated": true
+    },
+    {
+     "id": "assets_fixtures",
+     "ar": "تجهيزات",
+     "en": "Fixtures",
+     "deprecated": true
+    },
+    {
+     "id": "assets_furniture",
+     "ar": "أثاث",
+     "en": "Furniture Assets",
+     "template": "furniture",
+     "deprecated": true
+    },
+    {
+     "id": "assets_equipment",
+     "ar": "أجهزة",
+     "en": "Equipment Assets",
+     "template": "equipment",
+     "deprecated": true
+    },
+    {
+     "id": "assets_leased",
+     "ar": "أصول مؤجرة",
+     "en": "Leased Assets",
+     "deprecated": true
+    },
+    {
+     "id": "assets_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "deprecated": true
+    }
+   ]
+  },
+  {
+   "id": "real_estate_property",
+   "icon": "🏢",
+   "ar": "عقارات وممتلكات ثابتة",
+   "en": "Real Estate & Fixed Property",
+   "template": null,
+   "aliases": {
+    "ar": [
+     "عقار",
+     "عقارات",
+     "ممتلكات"
+    ],
+    "en": [
+     "real estate",
+     "property"
+    ]
+   },
+   "categories": [
+    {
+     "id": "property_land",
+     "ar": "أراضٍ",
+     "en": "Land",
+     "aliases": {
+      "ar": [
+       "ارض",
+       "اراضي"
+      ],
+      "en": [
+       "plot"
+      ]
+     }
+    },
+    {
+     "id": "property_buildings",
+     "ar": "مبانٍ",
+     "en": "Buildings",
+     "aliases": {
+      "ar": [
+       "مبنى",
+       "مباني"
+      ],
+      "en": [
+       "building"
+      ]
+     }
+    },
+    {
+     "id": "property_units",
+     "ar": "وحدات عقارية",
+     "en": "Real Estate Units",
+     "aliases": {
+      "ar": [
+       "شقة",
+       "فيلا",
+       "محل"
+      ],
+      "en": [
+       "apartment",
+       "unit",
+       "villa"
+      ]
+     }
+    },
+    {
+     "id": "property_installations",
+     "ar": "منشآت ثابتة",
+     "en": "Fixed Installations",
+     "aliases": {
+      "ar": [
+       "تمديدات",
+       "منشأة"
+      ],
+      "en": [
+       "installation"
+      ]
+     }
+    },
+    {
+     "id": "property_fixtures",
+     "ar": "تجهيزات ثابتة",
+     "en": "Fixed Fixtures"
+    },
+    {
+     "id": "property_other",
+     "ar": "أخرى",
+     "en": "Other",
+     "other": true
+    }
+   ]
+  },
+  {
+   "id": "other",
+   "icon": "🧩",
+   "ar": "أخرى",
+   "en": "Other",
+   "template": null,
+   "aliases": {
+    "ar": [
+     "متنوع",
+     "عام"
+    ],
+    "en": [
+     "misc",
+     "general"
+    ]
+   },
+   "categories": []
+  }
+ ],
+ "previousMain": {
+  "id": "previous_categories",
+  "icon": "🗃️",
+  "ar": "تصنيفات سابقة",
+  "en": "Earlier Categories",
+  "template": null,
+  "aliases": {
+   "ar": [],
+   "en": []
+  },
+  "categories": [],
+  "onlyWhenUsed": true
+ },
+ "legacyCategoryMap": {
+  "c1": {
+   "main": "art_collectibles"
+  },
+  "c2": {
+   "main": "art_collectibles",
+   "category": "art_antiques"
+  },
+  "c3": {
+   "main": "books_documents"
+  },
+  "c4": {
+   "main": "art_collectibles",
+   "category": "art_historical_arms"
+  },
+  "c5": {
+   "main": "jewellery_gemstones"
+  },
+  "c6": {
+   "main": "art_collectibles"
+  },
+  "c7": {
+   "main": "art_collectibles"
+  },
+  "c8": {
+   "main": "books_documents"
+  },
+  "c9": {
+   "main": "art_collectibles"
+  },
+  "c10": {
+   "main": "vehicles_machinery"
+  },
+  "c11": {
+   "main": "art_collectibles"
+  },
+  "c12": {
+   "main": "art_collectibles"
+  },
+  "c13": {
+   "main": "art_collectibles"
+  },
+  "c14": {
+   "main": "books_documents"
+  },
+  "c15": {
+   "main": "furniture_fixtures"
+  },
+  "c16": {
+   "main": "jewellery_gemstones"
+  },
+  "c17": {
+   "main": "art_collectibles"
+  },
+  "c18": {
+   "main": "art_collectibles"
+  },
+  "c20": {
+   "main": "equipment_tools",
+   "mainOnly": true
+  },
+  "c21": {
+   "main": "art_collectibles"
+  }
+ },
+ "fieldUnits": {
+  "h": {
+   "ar": "ساعة",
+   "en": "h"
+  },
+  "km": {
+   "ar": "كم",
+   "en": "km"
+  },
+  "g": {
+   "ar": "غ",
+   "en": "g"
+  },
+  "ct": {
+   "ar": "قيراط",
+   "en": "ct"
+  },
+  "mm": {
+   "ar": "مم",
+   "en": "mm"
+  },
+  "m": {
+   "ar": "م",
+   "en": "m"
+  },
+  "kg": {
+   "ar": "كغ",
+   "en": "kg"
+  },
+  "t": {
+   "ar": "طن",
+   "en": "t"
+  },
+  "kw": {
+   "ar": "ك.واط",
+   "en": "kW"
+  },
+  "kva": {
+   "ar": "ك.ف.أ",
+   "en": "kVA"
+  },
+  "m3": {
+   "ar": "م³",
+   "en": "m³"
+  }
+ },
+ "fieldDefinitions": [
+  {
+   "id": "manufacturer",
+   "type": "text",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer"
+  },
+  {
+   "id": "asset_number",
+   "type": "identifier",
+   "ar": "رقم الأصل",
+   "en": "Asset Number"
+  },
+  {
+   "id": "manufacture_year",
+   "type": "year",
+   "ar": "سنة الصنع",
+   "en": "Year",
+   "validation": {
+    "min": 1600
+   }
+  },
+  {
+   "id": "operating_hours",
+   "type": "measurement",
+   "ar": "ساعات التشغيل",
+   "en": "Operating Hours",
+   "unit": "h",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "capacity",
+   "type": "text",
+   "ar": "القدرة / السعة",
+   "en": "Capacity / Power"
+  },
+  {
+   "id": "maintenance_date",
+   "type": "date",
+   "ar": "تاريخ الصيانة",
+   "en": "Maintenance Date",
+   "defaultVisible": false
+  },
+  {
+   "id": "next_maintenance",
+   "type": "date",
+   "ar": "الصيانة القادمة",
+   "en": "Next Maintenance"
+  },
+  {
+   "id": "imei",
+   "type": "identifier",
+   "ar": "IMEI",
+   "en": "IMEI",
+   "defaultVisible": false,
+   "validation": {
+    "pattern": "^[0-9 ]{14,17}$"
+   }
+  },
+  {
+   "id": "mac_address",
+   "type": "identifier",
+   "ar": "عنوان MAC",
+   "en": "MAC Address",
+   "defaultVisible": false,
+   "validation": {
+    "pattern": "^[0-9A-Fa-f]{2}([:-]?[0-9A-Fa-f]{2}){5}$"
+   }
+  },
+  {
+   "id": "purchase_date",
+   "type": "date",
+   "ar": "تاريخ الشراء",
+   "en": "Purchase Date"
+  },
+  {
+   "id": "warranty_expiry",
+   "type": "date",
+   "ar": "انتهاء الضمان",
+   "en": "Warranty Expiry"
+  },
+  {
+   "id": "vin",
+   "type": "identifier",
+   "ar": "رقم الهيكل",
+   "en": "VIN"
+  },
+  {
+   "id": "plate_number",
+   "type": "identifier",
+   "ar": "رقم اللوحة",
+   "en": "Plate Number"
+  },
+  {
+   "id": "odometer",
+   "type": "measurement",
+   "ar": "العداد",
+   "en": "Odometer",
+   "unit": "km",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "fuel_type",
+   "type": "select",
+   "ar": "نوع الوقود",
+   "en": "Fuel Type",
+   "options": [
+    {
+     "id": "petrol",
+     "ar": "بنزين",
+     "en": "Petrol"
+    },
+    {
+     "id": "diesel",
+     "ar": "ديزل",
+     "en": "Diesel"
+    },
+    {
+     "id": "hybrid",
+     "ar": "هجين",
+     "en": "Hybrid"
+    },
+    {
+     "id": "electric",
+     "ar": "كهربائي",
+     "en": "Electric"
+    },
+    {
+     "id": "gas",
+     "ar": "غاز",
+     "en": "Gas"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "registration_expiry",
+   "type": "date",
+   "ar": "انتهاء الاستمارة",
+   "en": "Registration Expiry"
+  },
+  {
+   "id": "insurance_expiry",
+   "type": "date",
+   "ar": "انتهاء التأمين",
+   "en": "Insurance Expiry"
+  },
+  {
+   "id": "artist",
+   "type": "text",
+   "ar": "الفنان",
+   "en": "Artist"
+  },
+  {
+   "id": "work_title",
+   "type": "text",
+   "ar": "عنوان العمل",
+   "en": "Title"
+  },
+  {
+   "id": "creation_year",
+   "type": "text",
+   "ar": "السنة",
+   "en": "Year"
+  },
+  {
+   "id": "medium",
+   "type": "text",
+   "ar": "الخامة / التقنية",
+   "en": "Medium"
+  },
+  {
+   "id": "dimensions",
+   "type": "text",
+   "ar": "الأبعاد",
+   "en": "Dimensions"
+  },
+  {
+   "id": "signature",
+   "type": "text",
+   "ar": "التوقيع",
+   "en": "Signature"
+  },
+  {
+   "id": "edition",
+   "type": "text",
+   "ar": "الطبعة",
+   "en": "Edition",
+   "defaultVisible": false
+  },
+  {
+   "id": "provenance",
+   "type": "multiline",
+   "ar": "المصدر (Provenance)",
+   "en": "Provenance"
+  },
+  {
+   "id": "exhibition_history",
+   "type": "multiline",
+   "ar": "تاريخ العرض",
+   "en": "Exhibition History",
+   "defaultVisible": false
+  },
+  {
+   "id": "literature",
+   "type": "multiline",
+   "ar": "المراجع والمنشورات",
+   "en": "Literature",
+   "defaultVisible": false
+  },
+  {
+   "id": "acquisition_date",
+   "type": "date",
+   "ar": "تاريخ الاقتناء",
+   "en": "Acquisition Date",
+   "defaultVisible": false
+  },
+  {
+   "id": "acquisition_source",
+   "type": "text",
+   "ar": "مصدر الاقتناء",
+   "en": "Acquisition Source",
+   "defaultVisible": false
+  },
+  {
+   "id": "metal",
+   "type": "select",
+   "ar": "المعدن",
+   "en": "Metal",
+   "options": [
+    {
+     "id": "yellow_gold",
+     "ar": "ذهب أصفر",
+     "en": "Yellow Gold"
+    },
+    {
+     "id": "white_gold",
+     "ar": "ذهب أبيض",
+     "en": "White Gold"
+    },
+    {
+     "id": "rose_gold",
+     "ar": "ذهب وردي",
+     "en": "Rose Gold"
+    },
+    {
+     "id": "platinum",
+     "ar": "بلاتين",
+     "en": "Platinum"
+    },
+    {
+     "id": "silver",
+     "ar": "فضة",
+     "en": "Silver"
+    },
+    {
+     "id": "steel",
+     "ar": "ستانلس ستيل",
+     "en": "Stainless Steel"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "metal_purity",
+   "type": "text",
+   "ar": "العيار",
+   "en": "Metal Purity"
+  },
+  {
+   "id": "gross_weight",
+   "type": "measurement",
+   "ar": "الوزن الإجمالي",
+   "en": "Gross Weight",
+   "unit": "g",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "stone_type",
+   "type": "text",
+   "ar": "نوع الحجر",
+   "en": "Stone Type"
+  },
+  {
+   "id": "stone_count",
+   "type": "number",
+   "ar": "عدد الأحجار",
+   "en": "Number of Stones",
+   "validation": {
+    "integer": true,
+    "min": 0
+   }
+  },
+  {
+   "id": "certificate",
+   "type": "text",
+   "ar": "الشهادة",
+   "en": "Certificate"
+  },
+  {
+   "id": "certificate_number",
+   "type": "identifier",
+   "ar": "رقم الشهادة",
+   "en": "Certificate Number"
+  },
+  {
+   "id": "carat_weight",
+   "type": "measurement",
+   "ar": "الوزن بالقيراط",
+   "en": "Weight",
+   "unit": "ct",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "measurements",
+   "type": "text",
+   "ar": "الأبعاد",
+   "en": "Measurements"
+  },
+  {
+   "id": "shape",
+   "type": "select",
+   "ar": "الشكل",
+   "en": "Shape",
+   "options": [
+    {
+     "id": "round",
+     "ar": "دائري",
+     "en": "Round"
+    },
+    {
+     "id": "oval",
+     "ar": "بيضاوي",
+     "en": "Oval"
+    },
+    {
+     "id": "cushion",
+     "ar": "وسادي",
+     "en": "Cushion"
+    },
+    {
+     "id": "emerald",
+     "ar": "زمردي",
+     "en": "Emerald"
+    },
+    {
+     "id": "pear",
+     "ar": "كمثري",
+     "en": "Pear"
+    },
+    {
+     "id": "marquise",
+     "ar": "ماركيز",
+     "en": "Marquise"
+    },
+    {
+     "id": "princess",
+     "ar": "برنسيس",
+     "en": "Princess"
+    },
+    {
+     "id": "heart",
+     "ar": "قلب",
+     "en": "Heart"
+    },
+    {
+     "id": "cabochon",
+     "ar": "كابوشون",
+     "en": "Cabochon"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "colour",
+   "type": "text",
+   "ar": "اللون",
+   "en": "Colour"
+  },
+  {
+   "id": "clarity",
+   "type": "text",
+   "ar": "النقاء",
+   "en": "Clarity"
+  },
+  {
+   "id": "treatment",
+   "type": "text",
+   "ar": "المعالجة",
+   "en": "Treatment"
+  },
+  {
+   "id": "origin",
+   "type": "text",
+   "ar": "المنشأ",
+   "en": "Origin"
+  },
+  {
+   "id": "laboratory",
+   "type": "text",
+   "ar": "المختبر",
+   "en": "Laboratory"
+  },
+  {
+   "id": "report_number",
+   "type": "identifier",
+   "ar": "رقم التقرير",
+   "en": "Report Number"
+  },
+  {
+   "id": "report_date",
+   "type": "date",
+   "ar": "تاريخ التقرير",
+   "en": "Report Date",
+   "defaultVisible": false
+  },
+  {
+   "id": "cut_grade",
+   "type": "select",
+   "ar": "القطع",
+   "en": "Cut",
+   "options": [
+    {
+     "id": "excellent",
+     "ar": "ممتاز",
+     "en": "Excellent"
+    },
+    {
+     "id": "very_good",
+     "ar": "جيد جداً",
+     "en": "Very Good"
+    },
+    {
+     "id": "good",
+     "ar": "جيد",
+     "en": "Good"
+    },
+    {
+     "id": "fair",
+     "ar": "مقبول",
+     "en": "Fair"
+    },
+    {
+     "id": "poor",
+     "ar": "ضعيف",
+     "en": "Poor"
+    }
+   ],
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   }
+  },
+  {
+   "id": "colour_grade",
+   "type": "text",
+   "ar": "درجة اللون",
+   "en": "Colour Grade",
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   }
+  },
+  {
+   "id": "clarity_grade",
+   "type": "text",
+   "ar": "درجة النقاء",
+   "en": "Clarity Grade",
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   }
+  },
+  {
+   "id": "polish",
+   "type": "select",
+   "ar": "الصقل",
+   "en": "Polish",
+   "options": [
+    {
+     "id": "excellent",
+     "ar": "ممتاز",
+     "en": "Excellent"
+    },
+    {
+     "id": "very_good",
+     "ar": "جيد جداً",
+     "en": "Very Good"
+    },
+    {
+     "id": "good",
+     "ar": "جيد",
+     "en": "Good"
+    },
+    {
+     "id": "fair",
+     "ar": "مقبول",
+     "en": "Fair"
+    },
+    {
+     "id": "poor",
+     "ar": "ضعيف",
+     "en": "Poor"
+    }
+   ],
+   "defaultVisible": false,
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   }
+  },
+  {
+   "id": "symmetry",
+   "type": "select",
+   "ar": "التماثل",
+   "en": "Symmetry",
+   "options": [
+    {
+     "id": "excellent",
+     "ar": "ممتاز",
+     "en": "Excellent"
+    },
+    {
+     "id": "very_good",
+     "ar": "جيد جداً",
+     "en": "Very Good"
+    },
+    {
+     "id": "good",
+     "ar": "جيد",
+     "en": "Good"
+    },
+    {
+     "id": "fair",
+     "ar": "مقبول",
+     "en": "Fair"
+    },
+    {
+     "id": "poor",
+     "ar": "ضعيف",
+     "en": "Poor"
+    }
+   ],
+   "defaultVisible": false,
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   }
+  },
+  {
+   "id": "fluorescence",
+   "type": "select",
+   "ar": "التألق",
+   "en": "Fluorescence",
+   "defaultVisible": false,
+   "showWhen": {
+    "field": "gem_type",
+    "refIn": [
+     "gem_diamond"
+    ]
+   },
+   "options": [
+    {
+     "id": "none",
+     "ar": "لا يوجد",
+     "en": "None"
+    },
+    {
+     "id": "faint",
+     "ar": "خفيف",
+     "en": "Faint"
+    },
+    {
+     "id": "medium",
+     "ar": "متوسط",
+     "en": "Medium"
+    },
+    {
+     "id": "strong",
+     "ar": "قوي",
+     "en": "Strong"
+    },
+    {
+     "id": "very_strong",
+     "ar": "قوي جداً",
+     "en": "Very Strong"
+    }
+   ]
+  },
+  {
+   "id": "author",
+   "type": "text",
+   "ar": "المؤلف",
+   "en": "Author"
+  },
+  {
+   "id": "document_title",
+   "type": "text",
+   "ar": "العنوان",
+   "en": "Title"
+  },
+  {
+   "id": "document_date",
+   "type": "text",
+   "ar": "التاريخ",
+   "en": "Date"
+  },
+  {
+   "id": "languages",
+   "type": "multiselect",
+   "ar": "اللغة",
+   "en": "Language",
+   "options": [
+    {
+     "id": "ar",
+     "ar": "العربية",
+     "en": "Arabic"
+    },
+    {
+     "id": "en",
+     "ar": "الإنجليزية",
+     "en": "English"
+    },
+    {
+     "id": "fa",
+     "ar": "الفارسية",
+     "en": "Persian"
+    },
+    {
+     "id": "tr",
+     "ar": "التركية العثمانية",
+     "en": "Ottoman Turkish"
+    },
+    {
+     "id": "ur",
+     "ar": "الأردية",
+     "en": "Urdu"
+    },
+    {
+     "id": "fr",
+     "ar": "الفرنسية",
+     "en": "French"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "publisher",
+   "type": "text",
+   "ar": "الناشر",
+   "en": "Publisher"
+  },
+  {
+   "id": "publication_place",
+   "type": "text",
+   "ar": "مكان النشر",
+   "en": "Place of Publication",
+   "defaultVisible": false
+  },
+  {
+   "id": "document_number",
+   "type": "identifier",
+   "ar": "رقم المخطوط / الوثيقة",
+   "en": "Manuscript / Document Number"
+  },
+  {
+   "id": "material",
+   "type": "text",
+   "ar": "المادة",
+   "en": "Material"
+  },
+  {
+   "id": "page_count",
+   "type": "number",
+   "ar": "عدد الصفحات",
+   "en": "Number of Pages",
+   "validation": {
+    "integer": true,
+    "min": 0
+   }
+  },
+  {
+   "id": "inventory_status",
+   "type": "select",
+   "ar": "حالة المخزون",
+   "en": "Inventory Status",
+   "options": [
+    {
+     "id": "normal",
+     "ar": "عادي",
+     "en": "Normal"
+    },
+    {
+     "id": "sample",
+     "ar": "عينة",
+     "en": "Sample"
+    },
+    {
+     "id": "returned",
+     "ar": "مرتجع",
+     "en": "Returned"
+    },
+    {
+     "id": "damaged",
+     "ar": "تالف",
+     "en": "Damaged"
+    },
+    {
+     "id": "seasonal",
+     "ar": "موسمي",
+     "en": "Seasonal"
+    },
+    {
+     "id": "reserved",
+     "ar": "محجوز",
+     "en": "Reserved"
+    },
+    {
+     "id": "quarantined",
+     "ar": "معزول للفحص",
+     "en": "Quarantined"
+    },
+    {
+     "id": "out_of_service",
+     "ar": "خارج الخدمة",
+     "en": "Out of Service"
+    }
+   ]
+  },
+  {
+   "id": "supplier",
+   "type": "text",
+   "ar": "المورّد",
+   "en": "Supplier"
+  },
+  {
+   "id": "purchase_price",
+   "type": "currency",
+   "ar": "سعر الشراء",
+   "en": "Purchase Price"
+  },
+  {
+   "id": "selling_price",
+   "type": "currency",
+   "ar": "سعر البيع",
+   "en": "Selling Price"
+  },
+  {
+   "id": "reorder_level",
+   "type": "number",
+   "ar": "حد إعادة الطلب",
+   "en": "Reorder Level",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "batch_number",
+   "type": "identifier",
+   "ar": "رقم الدفعة",
+   "en": "Batch"
+  },
+  {
+   "id": "expiry_date",
+   "type": "date",
+   "ar": "تاريخ الانتهاء",
+   "en": "Expiry Date"
+  },
+  {
+   "id": "watch_brand",
+   "type": "catalog",
+   "ar": "البراند",
+   "en": "Brand",
+   "catalog": {
+    "domain": "watch",
+    "entityType": "brand",
+    "parent": null
+   },
+   "noun": "brand",
+   "quick": true,
+   "mirrors": "brand"
+  },
+  {
+   "id": "watch_collection",
+   "type": "catalog",
+   "ar": "المجموعة",
+   "en": "Collection",
+   "catalog": {
+    "domain": "watch",
+    "entityType": "collection",
+    "parent": "watch_brand"
+   },
+   "noun": "collection"
+  },
+  {
+   "id": "watch_model",
+   "type": "catalog",
+   "ar": "الموديل / العائلة",
+   "en": "Model / Family",
+   "catalog": {
+    "domain": "watch",
+    "entityType": "model",
+    "parent": "watch_collection"
+   },
+   "noun": "model",
+   "defaultVisible": false
+  },
+  {
+   "id": "watch_reference",
+   "type": "catalog",
+   "ar": "المرجع",
+   "en": "Reference",
+   "catalog": {
+    "domain": "watch",
+    "entityType": "reference",
+    "parent": "watch_model"
+   },
+   "noun": "reference",
+   "quick": true
+  },
+  {
+   "id": "watch_variant",
+   "type": "text",
+   "ar": "الإصدار / فترة الإنتاج",
+   "en": "Variant / Production Period",
+   "defaultVisible": false
+  },
+  {
+   "id": "case_material",
+   "type": "text",
+   "ar": "مادة العلبة",
+   "en": "Case Material"
+  },
+  {
+   "id": "case_diameter",
+   "type": "measurement",
+   "ar": "قطر العلبة",
+   "en": "Case Diameter",
+   "unit": "mm",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "dial",
+   "type": "text",
+   "ar": "المينا",
+   "en": "Dial"
+  },
+  {
+   "id": "movement_caliber",
+   "type": "text",
+   "ar": "الحركة / الكاليبر",
+   "en": "Movement / Caliber"
+  },
+  {
+   "id": "movement_type",
+   "type": "select",
+   "ar": "نوع الحركة",
+   "en": "Movement Type",
+   "options": [
+    {
+     "id": "automatic",
+     "ar": "أوتوماتيك",
+     "en": "Automatic"
+    },
+    {
+     "id": "manual",
+     "ar": "تعبئة يدوية",
+     "en": "Manual Winding"
+    },
+    {
+     "id": "quartz",
+     "ar": "كوارتز",
+     "en": "Quartz"
+    },
+    {
+     "id": "spring_drive",
+     "ar": "سبرنغ درايف",
+     "en": "Spring Drive"
+    },
+    {
+     "id": "solar",
+     "ar": "شمسية",
+     "en": "Solar"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "bracelet_strap",
+   "type": "text",
+   "ar": "السوار / الحزام",
+   "en": "Bracelet / Strap"
+  },
+  {
+   "id": "clasp",
+   "type": "text",
+   "ar": "القفل",
+   "en": "Clasp",
+   "defaultVisible": false
+  },
+  {
+   "id": "water_resistance",
+   "type": "measurement",
+   "ar": "مقاومة الماء",
+   "en": "Water Resistance",
+   "unit": "m",
+   "validation": {
+    "min": 0
+   },
+   "defaultVisible": false
+  },
+  {
+   "id": "limited_edition_number",
+   "type": "identifier",
+   "ar": "رقم الإصدار المحدود",
+   "en": "Limited Edition Number",
+   "defaultVisible": false
+  },
+  {
+   "id": "watch_box",
+   "type": "select",
+   "ar": "العلبة الأصلية",
+   "en": "Box",
+   "options": [
+    {
+     "id": "yes",
+     "ar": "نعم",
+     "en": "Yes"
+    },
+    {
+     "id": "no",
+     "ar": "لا",
+     "en": "No"
+    },
+    {
+     "id": "unknown",
+     "ar": "غير معروف",
+     "en": "Unknown"
+    }
+   ]
+  },
+  {
+   "id": "watch_papers",
+   "type": "select",
+   "ar": "الأوراق / الضمان",
+   "en": "Papers",
+   "options": [
+    {
+     "id": "yes",
+     "ar": "نعم",
+     "en": "Yes"
+    },
+    {
+     "id": "no",
+     "ar": "لا",
+     "en": "No"
+    },
+    {
+     "id": "unknown",
+     "ar": "غير معروف",
+     "en": "Unknown"
+    }
+   ]
+  },
+  {
+   "id": "warranty_card",
+   "type": "select",
+   "ar": "بطاقة الضمان",
+   "en": "Warranty Card",
+   "options": [
+    {
+     "id": "yes",
+     "ar": "نعم",
+     "en": "Yes"
+    },
+    {
+     "id": "no",
+     "ar": "لا",
+     "en": "No"
+    },
+    {
+     "id": "unknown",
+     "ar": "غير معروف",
+     "en": "Unknown"
+    }
+   ],
+   "defaultVisible": false
+  },
+  {
+   "id": "purchase_source",
+   "type": "text",
+   "ar": "مصدر الشراء",
+   "en": "Purchase Source",
+   "defaultVisible": false
+  },
+  {
+   "id": "last_service_date",
+   "type": "date",
+   "ar": "تاريخ آخر صيانة",
+   "en": "Last Service Date",
+   "defaultVisible": false
+  },
+  {
+   "id": "service_provider",
+   "type": "text",
+   "ar": "جهة الصيانة",
+   "en": "Service Provider",
+   "defaultVisible": false
+  },
+  {
+   "id": "service_notes",
+   "type": "multiline",
+   "ar": "ملاحظات الصيانة",
+   "en": "Service Notes",
+   "defaultVisible": false
+  },
+  {
+   "id": "vehicle_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "vehicle",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "vehicle_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "vehicle",
+    "entityType": "model",
+    "parent": "vehicle_manufacturer"
+   },
+   "noun": "model",
+   "quick": true
+  },
+  {
+   "id": "vehicle_trim",
+   "type": "text",
+   "ar": "الفئة / الطراز",
+   "en": "Trim / Variant"
+  },
+  {
+   "id": "exterior_colour",
+   "type": "text",
+   "ar": "اللون الخارجي",
+   "en": "Exterior Colour"
+  },
+  {
+   "id": "interior_colour",
+   "type": "text",
+   "ar": "اللون الداخلي",
+   "en": "Interior Colour",
+   "defaultVisible": false
+  },
+  {
+   "id": "transmission",
+   "type": "select",
+   "ar": "ناقل الحركة",
+   "en": "Transmission",
+   "options": [
+    {
+     "id": "automatic",
+     "ar": "أوتوماتيك",
+     "en": "Automatic"
+    },
+    {
+     "id": "manual",
+     "ar": "عادي (يدوي)",
+     "en": "Manual"
+    },
+    {
+     "id": "cvt",
+     "ar": "CVT",
+     "en": "CVT"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "engine",
+   "type": "text",
+   "ar": "المحرك",
+   "en": "Engine",
+   "defaultVisible": false
+  },
+  {
+   "id": "engine_capacity",
+   "type": "text",
+   "ar": "سعة المحرك",
+   "en": "Engine Capacity",
+   "defaultVisible": false
+  },
+  {
+   "id": "cylinder_count",
+   "type": "number",
+   "ar": "عدد السلندرات",
+   "en": "Cylinder Count",
+   "validation": {
+    "integer": true,
+    "min": 0,
+    "max": 24
+   },
+   "defaultVisible": false
+  },
+  {
+   "id": "drive_type",
+   "type": "select",
+   "ar": "نظام الدفع",
+   "en": "Drive Type",
+   "defaultVisible": false,
+   "options": [
+    {
+     "id": "fwd",
+     "ar": "دفع أمامي",
+     "en": "FWD"
+    },
+    {
+     "id": "rwd",
+     "ar": "دفع خلفي",
+     "en": "RWD"
+    },
+    {
+     "id": "awd",
+     "ar": "دفع كلي",
+     "en": "AWD"
+    },
+    {
+     "id": "four_wd",
+     "ar": "دفع رباعي",
+     "en": "4WD"
+    }
+   ]
+  },
+  {
+   "id": "country_of_manufacture",
+   "type": "text",
+   "ar": "بلد الصنع",
+   "en": "Country of Manufacture",
+   "defaultVisible": false
+  },
+  {
+   "id": "machine_type",
+   "type": "select",
+   "ar": "نوع الآلية",
+   "en": "Machine Type",
+   "options": [
+    {
+     "id": "excavator",
+     "ar": "حفار",
+     "en": "Excavator"
+    },
+    {
+     "id": "wheel_loader",
+     "ar": "شيول (لودر)",
+     "en": "Wheel Loader"
+    },
+    {
+     "id": "backhoe_loader",
+     "ar": "باكهو",
+     "en": "Backhoe Loader"
+    },
+    {
+     "id": "bulldozer",
+     "ar": "بلدوزر",
+     "en": "Bulldozer"
+    },
+    {
+     "id": "motor_grader",
+     "ar": "جريدر",
+     "en": "Motor Grader"
+    },
+    {
+     "id": "skid_steer",
+     "ar": "بوبكات (سكيد ستير)",
+     "en": "Skid Steer"
+    },
+    {
+     "id": "forklift",
+     "ar": "رافعة شوكية",
+     "en": "Forklift"
+    },
+    {
+     "id": "crane",
+     "ar": "رافعة",
+     "en": "Crane"
+    },
+    {
+     "id": "telehandler",
+     "ar": "رافعة تلسكوبية",
+     "en": "Telehandler"
+    },
+    {
+     "id": "road_roller",
+     "ar": "مدحلة",
+     "en": "Road Roller"
+    },
+    {
+     "id": "paver",
+     "ar": "فرادة أسفلت",
+     "en": "Paver"
+    },
+    {
+     "id": "articulated_hauler",
+     "ar": "قلاب مفصلي",
+     "en": "Articulated Hauler"
+    },
+    {
+     "id": "agricultural",
+     "ar": "آلية زراعية",
+     "en": "Agricultural Machinery"
+    },
+    {
+     "id": "trailer",
+     "ar": "مقطورة",
+     "en": "Trailer"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other Machinery"
+    }
+   ]
+  },
+  {
+   "id": "machinery_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "machinery",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "machinery_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "machinery",
+    "entityType": "model",
+    "parent": "machinery_manufacturer"
+   },
+   "noun": "model",
+   "quick": true
+  },
+  {
+   "id": "machine_variant",
+   "type": "text",
+   "ar": "الإصدار",
+   "en": "Variant",
+   "defaultVisible": false
+  },
+  {
+   "id": "engine_power",
+   "type": "measurement",
+   "ar": "قدرة المحرك",
+   "en": "Engine Power",
+   "unit": "kw",
+   "validation": {
+    "min": 0
+   },
+   "defaultVisible": false
+  },
+  {
+   "id": "operating_weight",
+   "type": "measurement",
+   "ar": "الوزن التشغيلي",
+   "en": "Operating Weight",
+   "unit": "t",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "excavator",
+     "wheel_loader",
+     "bulldozer",
+     "backhoe_loader",
+     "motor_grader",
+     "skid_steer",
+     "road_roller"
+    ]
+   }
+  },
+  {
+   "id": "bucket_capacity",
+   "type": "measurement",
+   "ar": "سعة الجردل",
+   "en": "Bucket Capacity",
+   "unit": "m3",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "excavator",
+     "wheel_loader",
+     "backhoe_loader",
+     "skid_steer"
+    ]
+   }
+  },
+  {
+   "id": "lift_capacity",
+   "type": "measurement",
+   "ar": "حمولة الرفع",
+   "en": "Lift Capacity",
+   "unit": "kg",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "forklift",
+     "telehandler"
+    ],
+    "always": [
+     "vehicles_forklifts"
+    ]
+   }
+  },
+  {
+   "id": "max_lift_height",
+   "type": "measurement",
+   "ar": "أقصى ارتفاع رفع",
+   "en": "Maximum Lift Height",
+   "unit": "mm",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "forklift",
+     "telehandler"
+    ],
+    "always": [
+     "vehicles_forklifts"
+    ]
+   }
+  },
+  {
+   "id": "forklift_power",
+   "type": "select",
+   "ar": "الوقود / البطارية",
+   "en": "Fuel / Battery Type",
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "forklift"
+    ],
+    "always": [
+     "vehicles_forklifts"
+    ]
+   },
+   "options": [
+    {
+     "id": "diesel",
+     "ar": "ديزل",
+     "en": "Diesel"
+    },
+    {
+     "id": "lpg",
+     "ar": "غاز",
+     "en": "LPG"
+    },
+    {
+     "id": "electric",
+     "ar": "كهربائي / بطارية",
+     "en": "Electric / Battery"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "mast_type",
+   "type": "text",
+   "ar": "نوع الصاري",
+   "en": "Mast Type",
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "forklift"
+    ],
+    "always": [
+     "vehicles_forklifts"
+    ]
+   }
+  },
+  {
+   "id": "max_lifting_capacity",
+   "type": "measurement",
+   "ar": "أقصى حمولة رفع",
+   "en": "Maximum Lifting Capacity",
+   "unit": "t",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "crane"
+    ],
+    "always": [
+     "vehicles_cranes"
+    ]
+   }
+  },
+  {
+   "id": "boom_length",
+   "type": "measurement",
+   "ar": "طول الذراع",
+   "en": "Boom Length",
+   "unit": "m",
+   "validation": {
+    "min": 0
+   },
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "crane",
+     "telehandler"
+    ],
+    "always": [
+     "vehicles_cranes"
+    ]
+   }
+  },
+  {
+   "id": "crane_type",
+   "type": "select",
+   "ar": "نوع الرافعة",
+   "en": "Crane Type",
+   "showWhen": {
+    "field": "machine_type",
+    "in": [
+     "crane"
+    ],
+    "always": [
+     "vehicles_cranes"
+    ]
+   },
+   "options": [
+    {
+     "id": "mobile",
+     "ar": "متحركة",
+     "en": "Mobile"
+    },
+    {
+     "id": "tower",
+     "ar": "برجية",
+     "en": "Tower"
+    },
+    {
+     "id": "crawler",
+     "ar": "مجنزرة",
+     "en": "Crawler"
+    },
+    {
+     "id": "truck_mounted",
+     "ar": "محمولة على شاحنة",
+     "en": "Truck-Mounted"
+    },
+    {
+     "id": "overhead",
+     "ar": "علوية",
+     "en": "Overhead"
+    },
+    {
+     "id": "other",
+     "ar": "أخرى",
+     "en": "Other"
+    }
+   ]
+  },
+  {
+   "id": "forklift_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "forklift",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "forklift_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "forklift",
+    "entityType": "model",
+    "parent": "forklift_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "crane_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "crane",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "crane_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "crane",
+    "entityType": "model",
+    "parent": "crane_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "generator_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "generator",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "generator_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "generator",
+    "entityType": "model",
+    "parent": "generator_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "prime_power",
+   "type": "measurement",
+   "ar": "القدرة الأساسية",
+   "en": "Prime Power",
+   "unit": "kva",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "standby_power",
+   "type": "measurement",
+   "ar": "القدرة الاحتياطية",
+   "en": "Standby Power",
+   "unit": "kva",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "voltage",
+   "type": "text",
+   "ar": "الجهد",
+   "en": "Voltage"
+  },
+  {
+   "id": "frequency",
+   "type": "select",
+   "ar": "التردد",
+   "en": "Frequency",
+   "options": [
+    {
+     "id": "hz50",
+     "ar": "50 هرتز",
+     "en": "50 Hz"
+    },
+    {
+     "id": "hz60",
+     "ar": "60 هرتز",
+     "en": "60 Hz"
+    }
+   ]
+  },
+  {
+   "id": "pump_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "pump",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "pump_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "pump",
+    "entityType": "model",
+    "parent": "pump_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "compressor_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "compressor",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "compressor_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "compressor",
+    "entityType": "model",
+    "parent": "compressor_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "tools_brand",
+   "type": "catalog",
+   "ar": "البراند",
+   "en": "Brand",
+   "catalog": {
+    "domain": "tools",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "brand",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "tools_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "tools",
+    "entityType": "model",
+    "parent": "tools_brand"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "electronics_brand",
+   "type": "catalog",
+   "ar": "البراند",
+   "en": "Brand",
+   "catalog": {
+    "domain": "electronics",
+    "entityType": "brand",
+    "parent": null
+   },
+   "noun": "brand",
+   "quick": true,
+   "mirrors": "brand"
+  },
+  {
+   "id": "electronics_family",
+   "type": "catalog",
+   "ar": "عائلة المنتج",
+   "en": "Product Family",
+   "catalog": {
+    "domain": "electronics",
+    "entityType": "family",
+    "parent": "electronics_brand"
+   },
+   "noun": "family"
+  },
+  {
+   "id": "electronics_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "electronics",
+    "entityType": "model",
+    "parent": "electronics_family"
+   },
+   "noun": "model",
+   "quick": true
+  },
+  {
+   "id": "processor",
+   "type": "text",
+   "ar": "المعالج",
+   "en": "Processor",
+   "defaultVisible": false
+  },
+  {
+   "id": "ram",
+   "type": "text",
+   "ar": "الذاكرة (RAM)",
+   "en": "RAM",
+   "defaultVisible": false
+  },
+  {
+   "id": "storage_capacity",
+   "type": "text",
+   "ar": "التخزين",
+   "en": "Storage",
+   "defaultVisible": false
+  },
+  {
+   "id": "screen_size",
+   "type": "text",
+   "ar": "حجم الشاشة",
+   "en": "Screen Size",
+   "defaultVisible": false
+  },
+  {
+   "id": "lab_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "lab",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "lab_family",
+   "type": "catalog",
+   "ar": "عائلة الجهاز",
+   "en": "Product Family",
+   "catalog": {
+    "domain": "lab",
+    "entityType": "family",
+    "parent": "lab_manufacturer"
+   },
+   "noun": "family"
+  },
+  {
+   "id": "lab_model",
+   "type": "catalog",
+   "ar": "الموديل",
+   "en": "Model",
+   "catalog": {
+    "domain": "lab",
+    "entityType": "model",
+    "parent": "lab_family"
+   },
+   "noun": "model",
+   "quick": true
+  },
+  {
+   "id": "technology",
+   "type": "text",
+   "ar": "التقنية",
+   "en": "Technology"
+  },
+  {
+   "id": "measurement_range",
+   "type": "text",
+   "ar": "مدى القياس",
+   "en": "Measurement Range",
+   "defaultVisible": false
+  },
+  {
+   "id": "resolution",
+   "type": "text",
+   "ar": "الدقة",
+   "en": "Resolution",
+   "defaultVisible": false
+  },
+  {
+   "id": "calibration_date",
+   "type": "date",
+   "ar": "تاريخ المعايرة",
+   "en": "Calibration Date"
+  },
+  {
+   "id": "next_calibration",
+   "type": "date",
+   "ar": "المعايرة القادمة",
+   "en": "Next Calibration"
+  },
+  {
+   "id": "jewellery_brand",
+   "type": "catalog",
+   "ar": "البراند / الصانع",
+   "en": "Brand / Maker",
+   "catalog": {
+    "domain": "jewellery",
+    "entityType": "brand",
+    "parent": null
+   },
+   "noun": "maker",
+   "quick": true,
+   "mirrors": "brand"
+  },
+  {
+   "id": "jewellery_collection",
+   "type": "catalog",
+   "ar": "المجموعة",
+   "en": "Collection",
+   "catalog": {
+    "domain": "jewellery",
+    "entityType": "collection",
+    "parent": "jewellery_brand"
+   },
+   "noun": "collection"
+  },
+  {
+   "id": "jewellery_model",
+   "type": "text",
+   "ar": "الموديل",
+   "en": "Model",
+   "defaultVisible": false
+  },
+  {
+   "id": "jewellery_reference",
+   "type": "identifier",
+   "ar": "المرجع",
+   "en": "Reference",
+   "defaultVisible": false
+  },
+  {
+   "id": "gem_type",
+   "type": "catalog",
+   "ar": "نوع الحجر",
+   "en": "Gemstone Type",
+   "catalog": {
+    "domain": "gem",
+    "entityType": "type",
+    "parent": null
+   },
+   "noun": "gem_type",
+   "quick": true,
+   "supersedes": [
+    "stone_type"
+   ]
+  },
+  {
+   "id": "gem_variety",
+   "type": "catalog",
+   "ar": "الصنف",
+   "en": "Variety",
+   "catalog": {
+    "domain": "gem",
+    "entityType": "variety",
+    "parent": "gem_type"
+   },
+   "noun": "variety"
+  },
+  {
+   "id": "gem_laboratory",
+   "type": "catalog",
+   "ar": "المختبر",
+   "en": "Laboratory",
+   "catalog": {
+    "domain": "gem_lab",
+    "entityType": "laboratory",
+    "parent": null
+   },
+   "noun": "laboratory",
+   "supersedes": [
+    "laboratory"
+   ]
+  },
+  {
+   "id": "art_artist",
+   "type": "catalog",
+   "ar": "الفنان",
+   "en": "Artist",
+   "catalog": {
+    "domain": "art",
+    "entityType": "artist",
+    "parent": null
+   },
+   "noun": "artist",
+   "quick": true,
+   "supersedes": [
+    "artist"
+   ]
+  },
+  {
+   "id": "support",
+   "type": "text",
+   "ar": "الحامل",
+   "en": "Support",
+   "defaultVisible": false
+  },
+  {
+   "id": "culture_country",
+   "type": "text",
+   "ar": "الثقافة / البلد",
+   "en": "Culture / Country"
+  },
+  {
+   "id": "period",
+   "type": "text",
+   "ar": "الحقبة",
+   "en": "Period"
+  },
+  {
+   "id": "dynasty_reign",
+   "type": "text",
+   "ar": "السلالة / العهد",
+   "en": "Dynasty / Reign"
+  },
+  {
+   "id": "maker",
+   "type": "text",
+   "ar": "الصانع",
+   "en": "Maker"
+  },
+  {
+   "id": "technique",
+   "type": "text",
+   "ar": "التقنية",
+   "en": "Technique"
+  },
+  {
+   "id": "date_century",
+   "type": "text",
+   "ar": "التاريخ / القرن",
+   "en": "Date / Century"
+  },
+  {
+   "id": "marks_inscriptions",
+   "type": "multiline",
+   "ar": "العلامات / النقوش",
+   "en": "Marks / Inscriptions"
+  },
+  {
+   "id": "coin_country",
+   "type": "text",
+   "ar": "البلد",
+   "en": "Country"
+  },
+  {
+   "id": "ruler_period",
+   "type": "text",
+   "ar": "الحاكم / الحقبة",
+   "en": "Ruler / Period"
+  },
+  {
+   "id": "denomination",
+   "type": "text",
+   "ar": "الفئة",
+   "en": "Denomination"
+  },
+  {
+   "id": "coin_year",
+   "type": "text",
+   "ar": "السنة",
+   "en": "Year"
+  },
+  {
+   "id": "mint",
+   "type": "text",
+   "ar": "دار السك",
+   "en": "Mint"
+  },
+  {
+   "id": "coin_metal",
+   "type": "text",
+   "ar": "المعدن",
+   "en": "Metal"
+  },
+  {
+   "id": "coin_weight",
+   "type": "measurement",
+   "ar": "الوزن",
+   "en": "Weight",
+   "unit": "g",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "coin_diameter",
+   "type": "measurement",
+   "ar": "القطر",
+   "en": "Diameter",
+   "unit": "mm",
+   "validation": {
+    "min": 0
+   }
+  },
+  {
+   "id": "coin_grade",
+   "type": "text",
+   "ar": "الدرجة / الحالة",
+   "en": "Grade / Condition"
+  },
+  {
+   "id": "catalog_reference",
+   "type": "identifier",
+   "ar": "المرجع",
+   "en": "Reference"
+  },
+  {
+   "id": "book_author",
+   "type": "catalog",
+   "ar": "المؤلف",
+   "en": "Author",
+   "catalog": {
+    "domain": "author",
+    "entityType": "author",
+    "parent": null
+   },
+   "noun": "author",
+   "quick": true,
+   "supersedes": [
+    "author"
+   ]
+  },
+  {
+   "id": "scribe",
+   "type": "text",
+   "ar": "الناسخ",
+   "en": "Scribe"
+  },
+  {
+   "id": "hijri_date",
+   "type": "text",
+   "ar": "التاريخ الهجري",
+   "en": "Hijri Date"
+  },
+  {
+   "id": "gregorian_date",
+   "type": "text",
+   "ar": "التاريخ الميلادي",
+   "en": "Gregorian Date"
+  },
+  {
+   "id": "script",
+   "type": "text",
+   "ar": "الخط",
+   "en": "Script"
+  },
+  {
+   "id": "folio_count",
+   "type": "number",
+   "ar": "عدد الأوراق",
+   "en": "Number of Folios",
+   "validation": {
+    "integer": true,
+    "min": 0
+   }
+  },
+  {
+   "id": "binding",
+   "type": "text",
+   "ar": "التجليد",
+   "en": "Binding"
+  },
+  {
+   "id": "issuer",
+   "type": "text",
+   "ar": "المُصدِر",
+   "en": "Issuer"
+  },
+  {
+   "id": "recipient",
+   "type": "text",
+   "ar": "المُرسَل إليه",
+   "en": "Recipient"
+  },
+  {
+   "id": "period_reign",
+   "type": "text",
+   "ar": "الحقبة / العهد",
+   "en": "Period / Reign"
+  },
+  {
+   "id": "seal_tughra",
+   "type": "text",
+   "ar": "الختم / الطغراء",
+   "en": "Seal / Tughra"
+  },
+  {
+   "id": "parts_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المصنعة",
+   "en": "Manufacturer",
+   "catalog": {
+    "domain": "parts",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer",
+   "quick": true,
+   "mirrors": "brand"
+  },
+  {
+   "id": "part_number",
+   "type": "identifier",
+   "ar": "رقم القطعة",
+   "en": "Part Number"
+  },
+  {
+   "id": "oem_number",
+   "type": "identifier",
+   "ar": "رقم OEM",
+   "en": "OEM Number"
+  },
+  {
+   "id": "compatible_manufacturer",
+   "type": "catalog",
+   "ar": "الشركة المتوافقة",
+   "en": "Compatible Manufacturer",
+   "catalog": {
+    "domain": "vehicle",
+    "entityType": "manufacturer",
+    "parent": null
+   },
+   "noun": "manufacturer"
+  },
+  {
+   "id": "compatible_model",
+   "type": "catalog",
+   "ar": "الموديل المتوافق",
+   "en": "Compatible Model",
+   "catalog": {
+    "domain": "vehicle",
+    "entityType": "model",
+    "parent": "compatible_manufacturer"
+   },
+   "noun": "model"
+  },
+  {
+   "id": "product_brand",
+   "type": "catalog",
+   "ar": "البراند",
+   "en": "Brand",
+   "catalog": {
+    "domain": "product",
+    "entityType": "brand",
+    "parent": null
+   },
+   "noun": "brand",
+   "mirrors": "brand"
+  },
+  {
+   "id": "product_line",
+   "type": "text",
+   "ar": "خط المنتج",
+   "en": "Product Line",
+   "defaultVisible": false
+  },
+  {
+   "id": "product_model",
+   "type": "text",
+   "ar": "الموديل",
+   "en": "Model",
+   "defaultVisible": false
+  },
+  {
+   "id": "furniture_maker",
+   "type": "catalog",
+   "ar": "البراند / الصانع",
+   "en": "Brand / Maker",
+   "catalog": {
+    "domain": "furniture",
+    "entityType": "maker",
+    "parent": null
+   },
+   "noun": "maker",
+   "quick": true,
+   "mirrors": "brand",
+   "supersedes": [
+    "manufacturer"
+   ]
+  },
+  {
+   "id": "collection_name",
+   "type": "text",
+   "ar": "المجموعة",
+   "en": "Collection",
+   "defaultVisible": false
+  },
+  {
+   "id": "model_name",
+   "type": "text",
+   "ar": "الموديل",
+   "en": "Model",
+   "defaultVisible": false
+  },
+  {
+   "id": "fashion_brand",
+   "type": "catalog",
+   "ar": "البراند",
+   "en": "Brand",
+   "catalog": {
+    "domain": "fashion",
+    "entityType": "brand",
+    "parent": null
+   },
+   "noun": "brand",
+   "quick": true,
+   "mirrors": "brand"
+  },
+  {
+   "id": "size",
+   "type": "text",
+   "ar": "المقاس",
+   "en": "Size"
+  },
+  {
+   "id": "season",
+   "type": "text",
+   "ar": "الموسم",
+   "en": "Season",
+   "defaultVisible": false
+  }
+ ],
+ "fieldTemplates": {
+  "equipment": [
+   "manufacturer",
+   "asset_number",
+   "manufacture_year",
+   "capacity",
+   "operating_hours",
+   "next_maintenance",
+   "maintenance_date"
+  ],
+  "electronics": [
+   "electronics_brand",
+   "electronics_family",
+   "electronics_model",
+   "purchase_date",
+   "warranty_expiry",
+   "asset_number",
+   "imei",
+   "mac_address",
+   "processor",
+   "ram",
+   "storage_capacity",
+   "screen_size"
+  ],
+  "furniture": [
+   "furniture_maker",
+   "collection_name",
+   "model_name",
+   "material",
+   "colour",
+   "dimensions",
+   "manufacture_year",
+   "purchase_date"
+  ],
+  "vehicle": [
+   "manufacturer",
+   "manufacture_year",
+   "vin",
+   "plate_number",
+   "odometer",
+   "fuel_type",
+   "registration_expiry",
+   "insurance_expiry"
+  ],
+  "car": [
+   "vehicle_manufacturer",
+   "vehicle_model",
+   "manufacture_year",
+   "vehicle_trim",
+   "vin",
+   "plate_number",
+   "exterior_colour",
+   "interior_colour",
+   "fuel_type",
+   "transmission",
+   "engine",
+   "engine_capacity",
+   "cylinder_count",
+   "drive_type",
+   "odometer",
+   "country_of_manufacture",
+   "purchase_date",
+   "purchase_price",
+   "registration_expiry",
+   "insurance_expiry"
+  ],
+  "machinery": [
+   "machine_type",
+   "machinery_manufacturer",
+   "machinery_model",
+   "machine_variant",
+   "manufacture_year",
+   "asset_number",
+   "engine",
+   "engine_power",
+   "operating_weight",
+   "bucket_capacity",
+   "lift_capacity",
+   "max_lift_height",
+   "forklift_power",
+   "mast_type",
+   "max_lifting_capacity",
+   "boom_length",
+   "crane_type",
+   "capacity",
+   "operating_hours",
+   "fuel_type",
+   "country_of_manufacture",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "forklift": [
+   "forklift_manufacturer",
+   "forklift_model",
+   "manufacture_year",
+   "asset_number",
+   "lift_capacity",
+   "max_lift_height",
+   "forklift_power",
+   "mast_type",
+   "operating_hours",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "crane": [
+   "crane_manufacturer",
+   "crane_model",
+   "crane_type",
+   "manufacture_year",
+   "asset_number",
+   "max_lifting_capacity",
+   "boom_length",
+   "operating_hours",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "generator": [
+   "generator_manufacturer",
+   "generator_model",
+   "manufacture_year",
+   "asset_number",
+   "prime_power",
+   "standby_power",
+   "voltage",
+   "frequency",
+   "fuel_type",
+   "engine",
+   "operating_hours",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "pump": [
+   "pump_manufacturer",
+   "pump_model",
+   "manufacture_year",
+   "asset_number",
+   "capacity",
+   "operating_hours",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "compressor": [
+   "compressor_manufacturer",
+   "compressor_model",
+   "manufacture_year",
+   "asset_number",
+   "capacity",
+   "operating_hours",
+   "maintenance_date",
+   "next_maintenance"
+  ],
+  "tools": [
+   "tools_brand",
+   "tools_model",
+   "asset_number",
+   "purchase_date",
+   "warranty_expiry",
+   "maintenance_date"
+  ],
+  "lab": [
+   "lab_manufacturer",
+   "lab_family",
+   "lab_model",
+   "manufacture_year",
+   "asset_number",
+   "technology",
+   "measurement_range",
+   "resolution",
+   "calibration_date",
+   "next_calibration",
+   "maintenance_date",
+   "warranty_expiry"
+  ],
+  "watch": [
+   "watch_brand",
+   "watch_collection",
+   "watch_model",
+   "watch_reference",
+   "watch_variant",
+   "manufacture_year",
+   "case_material",
+   "case_diameter",
+   "dial",
+   "movement_caliber",
+   "movement_type",
+   "bracelet_strap",
+   "clasp",
+   "water_resistance",
+   "limited_edition_number",
+   "watch_box",
+   "watch_papers",
+   "warranty_card",
+   "purchase_date",
+   "purchase_source",
+   "last_service_date",
+   "service_provider",
+   "service_notes"
+  ],
+  "art": [
+   "art_artist",
+   "work_title",
+   "creation_year",
+   "medium",
+   "support",
+   "dimensions",
+   "signature",
+   "provenance",
+   "edition",
+   "exhibition_history",
+   "literature",
+   "acquisition_date",
+   "acquisition_source"
+  ],
+  "antiques": [
+   "culture_country",
+   "period",
+   "dynasty_reign",
+   "maker",
+   "material",
+   "technique",
+   "date_century",
+   "dimensions",
+   "marks_inscriptions",
+   "provenance",
+   "acquisition_date",
+   "acquisition_source"
+  ],
+  "coins": [
+   "coin_country",
+   "ruler_period",
+   "denomination",
+   "coin_year",
+   "mint",
+   "coin_metal",
+   "coin_weight",
+   "coin_diameter",
+   "coin_grade",
+   "catalog_reference",
+   "provenance"
+  ],
+  "jewellery": [
+   "jewellery_brand",
+   "jewellery_collection",
+   "jewellery_model",
+   "jewellery_reference",
+   "metal",
+   "metal_purity",
+   "gross_weight",
+   "stone_type",
+   "stone_count",
+   "certificate",
+   "certificate_number"
+  ],
+  "gemstone": [
+   "gem_type",
+   "gem_variety",
+   "carat_weight",
+   "measurements",
+   "shape",
+   "colour",
+   "clarity",
+   "treatment",
+   "origin",
+   "gem_laboratory",
+   "report_number",
+   "report_date",
+   "cut_grade",
+   "colour_grade",
+   "clarity_grade",
+   "polish",
+   "symmetry",
+   "fluorescence"
+  ],
+  "diamond": [
+   "carat_weight",
+   "measurements",
+   "shape",
+   "cut_grade",
+   "colour_grade",
+   "clarity_grade",
+   "polish",
+   "symmetry",
+   "fluorescence",
+   "treatment",
+   "origin",
+   "gem_laboratory",
+   "report_number",
+   "report_date"
+  ],
+  "books": [
+   "book_author",
+   "document_title",
+   "document_date",
+   "languages",
+   "publisher",
+   "edition",
+   "publication_place",
+   "document_number",
+   "material",
+   "dimensions",
+   "page_count",
+   "provenance"
+  ],
+  "manuscripts": [
+   "book_author",
+   "scribe",
+   "document_title",
+   "document_date",
+   "hijri_date",
+   "gregorian_date",
+   "languages",
+   "script",
+   "material",
+   "folio_count",
+   "dimensions",
+   "binding",
+   "provenance",
+   "document_number"
+  ],
+  "documents": [
+   "issuer",
+   "recipient",
+   "document_title",
+   "document_date",
+   "period_reign",
+   "languages",
+   "material",
+   "seal_tughra",
+   "dimensions",
+   "provenance",
+   "document_number"
+  ],
+  "product": [
+   "product_brand",
+   "product_line",
+   "product_model",
+   "inventory_status",
+   "supplier",
+   "purchase_price",
+   "selling_price",
+   "reorder_level",
+   "batch_number",
+   "expiry_date"
+  ],
+  "parts": [
+   "parts_manufacturer",
+   "part_number",
+   "oem_number",
+   "compatible_manufacturer",
+   "compatible_model",
+   "inventory_status",
+   "supplier",
+   "purchase_price",
+   "selling_price",
+   "reorder_level",
+   "batch_number"
+  ],
+  "clothing": [
+   "fashion_brand",
+   "collection_name",
+   "model_name",
+   "size",
+   "colour",
+   "material",
+   "season",
+   "country_of_manufacture"
+  ]
+ },
+ "onboardingMainCategories": [
+  "equipment_tools",
+  "electronics_devices",
+  "furniture_fixtures",
+  "vehicles_machinery",
+  "products_merchandise",
+  "art_collectibles",
+  "jewellery_gemstones",
+  "books_documents",
+  "other"
+ ]
+}

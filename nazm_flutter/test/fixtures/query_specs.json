@@ -1,0 +1,506 @@
+[
+ {
+  "input": {},
+  "ok": true,
+  "filters": [
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "mainCategoryId": "equipment_tools"
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "mainCategoryId",
+    "op": "eq",
+    "value": "equipment_tools"
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "updatedAt": {
+     "lt": 1700000000000
+    }
+   },
+   "sort": {
+    "field": "updatedAt",
+    "direction": "asc"
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "updatedAt",
+    "op": "lt",
+    "value": 1700000000000
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "updatedAt",
+   "direction": "asc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "locationId": {
+     "in": [
+      "loc_a",
+      "loc_b"
+     ]
+    },
+    "hasImages": false
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "locationId",
+    "op": "in",
+    "value": [
+     "loc_a",
+     "loc_b"
+    ]
+   },
+   {
+    "field": "hasImages",
+    "op": "eq",
+    "value": false
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "locationId": {
+     "exists": false
+    }
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "locationId",
+    "op": "exists",
+    "value": false
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": [
+    {
+     "field": "categoryId",
+     "op": "eq",
+     "value": "x"
+    }
+   ]
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "categoryId",
+    "op": "eq",
+    "value": "x"
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "valuationCurrency": "SAR",
+    "valuationMidpoint": {
+     "gt": 1500
+    }
+   },
+   "sort": {
+    "field": "valuation",
+    "direction": "desc"
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "valuationCurrency",
+    "op": "eq",
+    "value": "SAR"
+   },
+   {
+    "field": "valuationMidpoint",
+    "op": "gt",
+    "value": 1500
+   },
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "valuation",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "filters": {
+    "deleted": true
+   }
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": true
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "text": "  مولدٌ  كهربائي "
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": "مولد كهربايي",
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "text": "   "
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 50,
+  "projection": "full"
+ },
+ {
+  "input": {
+   "limit": 200,
+   "projection": "list"
+  },
+  "ok": true,
+  "filters": [
+   {
+    "field": "deleted",
+    "op": "eq",
+    "value": false
+   }
+  ],
+  "text": null,
+  "sort": {
+   "field": "createdAt",
+   "direction": "desc"
+  },
+  "limit": 200,
+  "projection": "list"
+ },
+ {
+  "input": {
+   "filters": {
+    "secret": "x"
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "field:secret"
+ },
+ {
+  "input": {
+   "filters": {
+    "sku": {
+     "in": [
+      "a"
+     ]
+    }
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "op:sku.in"
+ },
+ {
+  "input": {
+   "filters": {
+    "valuationMidpoint": {
+     "gt": 1
+    }
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "valuationMidpoint needs valuationCurrency"
+ },
+ {
+  "input": {
+   "sort": {
+    "field": "valuation"
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "valuation sort needs valuationCurrency"
+ },
+ {
+  "input": {
+   "sort": {
+    "field": "price"
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "sort:price"
+ },
+ {
+  "input": {
+   "sort": {
+    "field": "name",
+    "direction": "up"
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "sort.direction"
+ },
+ {
+  "input": {
+   "limit": 0
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "limit"
+ },
+ {
+  "input": {
+   "limit": 201
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "limit"
+ },
+ {
+  "input": {
+   "limit": 1.5
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "limit"
+ },
+ {
+  "input": {
+   "projection": "everything"
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "projection"
+ },
+ {
+  "input": {
+   "extra": 1
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "extra"
+ },
+ {
+  "input": {
+   "filters": {
+    "locationId": {
+     "in": []
+    }
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "locationId.in"
+ },
+ {
+  "input": {
+   "filters": {
+    "locationId": {
+     "in": [
+      "l0",
+      "l1",
+      "l2",
+      "l3",
+      "l4",
+      "l5",
+      "l6",
+      "l7",
+      "l8",
+      "l9",
+      "l10",
+      "l11",
+      "l12",
+      "l13",
+      "l14",
+      "l15",
+      "l16",
+      "l17",
+      "l18",
+      "l19",
+      "l20",
+      "l21",
+      "l22",
+      "l23",
+      "l24",
+      "l25",
+      "l26",
+      "l27",
+      "l28",
+      "l29",
+      "l30"
+     ]
+    }
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "locationId.in"
+ },
+ {
+  "input": {
+   "filters": {
+    "hasImages": "yes"
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "hasImages.eq"
+ },
+ {
+  "input": {
+   "filters": {
+    "quantity": {
+     "gte": "3"
+    }
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "quantity.gte"
+ },
+ {
+  "input": {
+   "filters": {
+    "categoryId": ""
+   }
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "categoryId.eq"
+ },
+ {
+  "input": {
+   "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "ok": false,
+  "code": "query/invalid",
+  "detail": "text"
+ }
+]
