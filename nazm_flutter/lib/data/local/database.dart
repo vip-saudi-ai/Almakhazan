@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
 
 import '../../core/versions.dart';
+import 'connection/connection.dart';
 import 'tables.dart';
 
 part 'database.g.dart';
@@ -35,7 +35,7 @@ class NazmDatabase extends _$NazmDatabase {
   NazmDatabase(super.executor);
 
   /// Opens the on-device database in the app's support directory.
-  factory NazmDatabase.open({String name = 'nazm'}) => NazmDatabase(driftDatabase(name: name));
+  factory NazmDatabase.open({String name = 'nazm'}) => NazmDatabase(openConnection(name));
 
   @override
   int get schemaVersion => Versions.databaseSchema;
@@ -48,7 +48,8 @@ class NazmDatabase extends _$NazmDatabase {
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       // WAL keeps readers (lists) unblocked by a long writer (import,
-      // restore). In-memory test databases report 'memory' and ignore it.
+      // restore). In-memory and web databases report another mode and
+      // ignore it.
       await customSelect('PRAGMA journal_mode = WAL').get();
     },
   );

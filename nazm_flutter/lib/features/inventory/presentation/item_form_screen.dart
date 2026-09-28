@@ -3,6 +3,7 @@
 // valuation are optional. Save & Add Next keeps the classification and never
 // carries an identifier (SKU, barcode, serial) to the next record.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -433,7 +434,9 @@ class _NodeSheetState extends State<_NodeSheet> {
               child: ListView.builder(
                 itemCount: shown.length,
                 itemBuilder: (context, i) => ListTile(
-                  leading: shown[i].icon == null ? null : Text(shown[i].icon!, style: const TextStyle(fontSize: 20)),
+                  leading: kIsWeb || shown[i].icon == null
+                      ? null
+                      : Text(shown[i].icon!, style: const TextStyle(fontSize: 20)),
                   title: Text(shown[i].label(language)),
                   onTap: () => Navigator.of(context).pop(shown[i]),
                 ),

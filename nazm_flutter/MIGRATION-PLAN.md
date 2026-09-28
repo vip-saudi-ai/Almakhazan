@@ -268,3 +268,21 @@ This work runs in a Linux container. `flutter analyze`, `flutter test`
 if the Android SDK can be installed; **iOS builds, TestFlight, camera and
 scanner device tests require macOS/Xcode and real devices** and are reported
 as blocked until run there.
+
+## Web preview (not a release target)
+
+A Flutter Web build exists only so the migration can be looked at in a
+browser; iOS and Android remain the targets. Build:
+`flutter build web --release --no-web-resources-cdn`, then set
+`<base href="./">` in `build/web/index.html` for hosting under a sub-path.
+
+- Database: sql.js (`web/sql-wasm.*`, SQLite 1.12.0) through drift's legacy
+  web backend, persisted in IndexedDB. The new wasm backend needs
+  `sqlite3.wasm` from GitHub, which this environment cannot reach.
+- Fonts: Noto Sans and Noto Sans Arabic are bundled (web only); CanvasKit is
+  served from the build, so the page makes no external requests.
+- No emoji font is bundled (~10 MB), so category emoji show as a plain icon
+  on the web only.
+- Verified in Chromium: language gate, add item, reload persists the item,
+  Overview totals from the aggregate. Found and fixed a web-only bug:
+  `newId` used `1 << 32`, which is 0 under JavaScript semantics.

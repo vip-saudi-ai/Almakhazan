@@ -1,6 +1,7 @@
 // NAZM's design tokens and themes, from the reference (styles/tokens.css).
 // Screens use these tokens (via Theme and NazmColors), never literal colours.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// Brand palette.
@@ -153,6 +154,10 @@ abstract final class NazmTheme {
     );
     return ThemeData(
       useMaterial3: true,
+      // The web preview bundles its fonts (no request to a font server); the
+      // phones keep their system fonts.
+      fontFamily: kIsWeb ? 'NotoSans' : null,
+      fontFamilyFallback: kIsWeb ? const ['NotoSansArabic'] : null,
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: surface,

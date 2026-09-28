@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -135,7 +136,11 @@ class _ItemRow extends ConsumerWidget {
       minTileHeight: NazmTheme.minTarget + 12,
       leading: CircleAvatar(
         backgroundColor: context.nazm.brandSoft,
-        child: Text((taxonomy?.node(item.mainCategoryId)?.icon) ?? '📦', style: const TextStyle(fontSize: 18)),
+        // The web preview bundles no emoji font (it would add ~10 MB), so it
+        // shows a plain icon where the phones show the category's emoji.
+        child: kIsWeb
+            ? Icon(Icons.inventory_2_outlined, size: 20, color: Theme.of(context).colorScheme.primary)
+            : Text((taxonomy?.node(item.mainCategoryId)?.icon) ?? '📦', style: const TextStyle(fontSize: 18)),
       ),
       title: Text(
         item.name.isEmpty ? '—' : item.name,

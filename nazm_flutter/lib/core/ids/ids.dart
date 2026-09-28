@@ -7,6 +7,7 @@ final Random _random = Random.secure();
 /// `itmmukriy538vly2o1plgew6`. Created on the device, kept forever, and the
 /// same id a record will have in the cloud.
 String newId(String prefix) {
-  String r() => _random.nextInt(1 << 32).toRadixString(36);
+  // Two 16-bit halves: on the web `1 << 32` is a JavaScript shift and yields 0.
+  String r() => (_random.nextInt(0x10000) * 0x10000 + _random.nextInt(0x10000)).toRadixString(36);
   return '$prefix${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}${r()}${r()}';
 }

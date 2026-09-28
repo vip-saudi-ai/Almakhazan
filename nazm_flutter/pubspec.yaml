@@ -34,3 +34,21 @@ flutter:
   assets:
     - assets/catalog/
     - assets/taxonomy/
+  # Noto Sans and Noto Sans Arabic (SIL Open Font License 1.1), used by the
+  # web preview so no font is fetched from a third-party server; the phones
+  # use their system fonts.
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans_400Regular.ttf
+        - asset: assets/fonts/NotoSans_500Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSans_700Bold.ttf
+          weight: 700
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic_400Regular.ttf
+        - asset: assets/fonts/NotoSansArabic_500Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansArabic_700Bold.ttf
+          weight: 700
