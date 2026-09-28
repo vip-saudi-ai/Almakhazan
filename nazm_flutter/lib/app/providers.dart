@@ -5,9 +5,13 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/local/database.dart';
+import '../data/local/drift_item_repository.dart';
+import '../features/catalogs/domain/catalog_service.dart';
+import '../features/taxonomy/domain/builtin_taxonomy.dart';
 import 'config/features.dart';
 
 /// The device database. Overridden in tests with an in-memory one.
@@ -16,6 +20,28 @@ final databaseProvider = Provider<NazmDatabase>((ref) {
   ref.onDispose(db.close);
   return db;
 });
+
+/// The inventory, through its repository contract (the device one today).
+final itemRepositoryProvider = Provider<DriftItemRepository>((ref) => DriftItemRepository(ref.watch(databaseProvider)));
+
+/// The bundled catalog, loaded group by group as pickers need it.
+final catalogServiceProvider = Provider<CatalogService>((ref) => CatalogService(rootBundle.loadString));
+
+/// The built-in classification library.
+final taxonomyProvider = FutureProvider<BuiltinTaxonomy>(
+  (ref) async => BuiltinTaxonomy.fromJson(await rootBundle.loadString('assets/taxonomy/taxonomy.json')),
+);
+
+/// Moves on after every inventory write; lists, counts and the overview
+/// watch it and ask their repository again.
+class InventoryRevision extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+final inventoryRevisionProvider = NotifierProvider<InventoryRevision, int>(InventoryRevision.new);
 
 final featureFlagsProvider = Provider<FeatureFlags>((ref) => FeatureFlags.release.consistent);
 
